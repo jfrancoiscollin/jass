@@ -48,6 +48,8 @@ class CurriculumErrorAutopsyTemplateTests(unittest.TestCase):
         self.assertIn("fresh_action_pairing_and_ranker_screen", TEMPLATE)
         self.assertIn("pool-curriculum-error-1468-pool1", TEMPLATE)
         self.assertIn("pool-curriculum-error-1468-pool2", TEMPLATE)
+        self.assertIn("openings.fen|failed", TEMPLATE)
+        self.assertIn('--expected-state "$expected_state"', TEMPLATE)
 
 
 if __name__ == "__main__":
