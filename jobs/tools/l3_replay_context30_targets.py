@@ -19,6 +19,12 @@ The scientific recipe is intentionally not configurable here:
 * black POV probability output in [0, 1].
 
 No shuffled control, self-play, oracle, EGDB label or search score is consumed.
+
+This adapter is executed beside the immutable historical builder blob used by
+the original CONTEXT_30 experiment.  Its calls therefore deliberately use the
+legacy builder ABI (one-argument ``context_matrix`` and only the original
+cross-fit keyword arguments).  Newer builder defaults are compatible with that
+ABI, which also keeps the adapter testable on the current tree.
 """
 
 from __future__ import annotations
@@ -69,6 +75,12 @@ def _unique_sentinel_game_id(game_ids: np.ndarray) -> np.uint64:
     raise ValueError("cannot allocate a unique synthetic holdout game id")
 
 
+def historical_context_matrix(features: np.ndarray) -> np.ndarray:
+    """Build CTX1 through the immutable historical one-argument ABI."""
+
+    return base.context_matrix(features)
+
+
 def train_only_oof_predictions(
     contexts: np.ndarray,
     outcomes: np.ndarray,
@@ -108,11 +120,6 @@ def train_only_oof_predictions(
         y_ext,
         games_ext,
         x.shape[0],
-        group_ids=games_ext,
-        group_name="game_id",
-        row_weighting="uniform",
-        components=base.CONTEXT_SCHEMAS[CONTEXT_SCHEMA],
-        require_convergence=False,
         fold_count=FOLD_COUNT,
         fold_seed=FOLD_SEED,
         ridge=RIDGE,
@@ -135,6 +142,7 @@ def train_only_oof_predictions(
         "synthetic_row_used_in_oof_training": False,
         "synthetic_row_included_in_output_targets": False,
         "historical_train_recipe_unchanged": True,
+        "historical_builder_abi": "legacy_20260811",
     }
     return real, mapping
 
@@ -167,7 +175,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     )
     if not bool(np.all(np.isin(outcomes, (-1.0, 0.0, 1.0)))):
         raise ValueError("JNNW contains invalid WDL")
-    contexts = base.context_matrix(features, CONTEXT_SCHEMA)
+    contexts = historical_context_matrix(features)
     games = np.asarray(metadata["game_id"], dtype=np.uint64)
     predictions, mapping = train_only_oof_predictions(contexts, outcomes, games)
 
