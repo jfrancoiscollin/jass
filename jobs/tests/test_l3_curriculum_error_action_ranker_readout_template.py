@@ -27,6 +27,12 @@ class ActionRankerReadoutTemplateTests(unittest.TestCase):
         self.assertIn("RANKER_SOURCE_ATTEMPT", TEXT)
         self.assertIn("source identity mismatch", TEXT)
 
+    def test_failure_logs_are_published_for_auditable_diagnosis(self):
+        self.assertIn("for log in tests fetch autopsy", TEXT)
+        self.assertIn('cp "$W/$log.log" "$ART/$log.log"', TEXT)
+        for name in ("tests", "fetch", "autopsy"):
+            self.assertIn(f'$W/{name}.log', TEXT)
+
 
 if __name__ == "__main__":
     unittest.main()

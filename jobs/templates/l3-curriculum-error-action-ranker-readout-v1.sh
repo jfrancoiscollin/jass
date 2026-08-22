@@ -12,7 +12,17 @@ mkdir -p "$W" "$IN" "$ART"
 RES="$W/RESULTS.txt"; : >"$RES"
 say(){ echo "$*" | tee -a "$RES"; }
 die(){ say "ABORT: $*"; exit 1; }
-finalize(){ rc=$?; trap - EXIT ERR TERM INT; set +e; cp "$RES" "$ART/RESULTS.txt" 2>/dev/null || true; rm -rf "$IN"; exit "$rc"; }
+finalize(){
+  rc=$?
+  trap - EXIT ERR TERM INT
+  set +e
+  cp "$RES" "$ART/RESULTS.txt" 2>/dev/null || true
+  for log in tests fetch autopsy; do
+    [ -s "$W/$log.log" ] && cp "$W/$log.log" "$ART/$log.log"
+  done
+  rm -rf "$IN"
+  exit "$rc"
+}
 trap finalize EXIT
 trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a "$RES"; exit "$rc"' ERR
 
