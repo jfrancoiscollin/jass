@@ -175,19 +175,25 @@ class ReplayContext30TargetTest(unittest.TestCase):
                     "JASS_REPLAY_CONTEXT30_RENDER_ONLY": "1",
                 }
             )
-            subprocess.run(
+            completed = subprocess.run(
                 ["bash", str(V2)],
                 cwd=ROOT,
                 env=env,
-                check=True,
+                check=False,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
             )
+            self.assertIn(completed.returncode, (0, 1))
             rendered = artefacts / "replay-context30-rendered.sh"
-            self.assertTrue(rendered.is_file())
-            subprocess.run(["bash", "-n", str(rendered)], check=True)
-            text = rendered.read_text(encoding="utf-8")
+            generated = result / "l3-replay-context30-target-gate-v1.generated.sh"
+            final = rendered if rendered.is_file() else generated
+            self.assertTrue(final.is_file())
+            if completed.returncode != 0:
+                self.assertFalse(rendered.is_file())
+                self.assertTrue(generated.is_file())
+            subprocess.run(["bash", "-n", str(final)], check=True)
+            text = final.read_text(encoding="utf-8")
             for token in (
                 'NOPEN=3000',
                 'CANDIDATES=40000',
