@@ -24,6 +24,7 @@ CURRICULUM_CODE="18c38a33ae78c9c2e8e2df62fca266da28dacead"
 CURRICULUM_ROOT="r2:jass-data/runs/$CURRICULUM_JOB/$CURRICULUM_ATTEMPT"
 CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
 NSH=16
+WORKERS=4
 PAIRS=353
 MAX_PROJECTED_MINUTES=60
 CACHE_MB=128
@@ -152,27 +153,56 @@ python3 jobs/tools/l3_curriculum_error_residual_atlas.py worker \
 preflight_seconds=$SECONDS
 max_pairs_per_shard=$(( (PAIRS + NSH - 1) / NSH ))
 projected_seconds=$(( preflight_seconds * max_pairs_per_shard ))
-python3 - "$W/preflight.json" "$ART/cost-preflight.json" "$preflight_seconds" "$projected_seconds" "$MAX_PROJECTED_MINUTES" <<'PY'
+waves=$(( (NSH + WORKERS - 1) / WORKERS ))
+projected_seconds=$(( projected_seconds * waves ))
+python3 - "$W/preflight.json" "$ART/cost-preflight.json" "$preflight_seconds" "$projected_seconds" "$MAX_PROJECTED_MINUTES" "$WORKERS" "$waves" <<'PY'
 import json,sys
-src,out=sys.argv[1:3]; elapsed,projected,limit=map(int,sys.argv[3:])
+src,out=sys.argv[1:3]; elapsed,projected,limit,workers,waves=map(int,sys.argv[3:])
 row=json.load(open(src)); passed=row.get('pairs')==1 and projected<=limit*60
 json.dump({'schema':'jass.curriculum_error_residual_cost.v1','sample_pairs':row.get('pairs'),
- 'elapsed_seconds':elapsed,'projected_parallel_seconds':projected,'limit_minutes':limit,'passed':passed},open(out,'w'),indent=2,sort_keys=True)
+ 'elapsed_seconds':elapsed,'projected_parallel_seconds':projected,'workers':workers,
+ 'waves':waves,'limit_minutes':limit,'passed':passed},open(out,'w'),indent=2,sort_keys=True)
 if not passed: raise SystemExit('residual atlas projected runtime exceeds limit')
 PY
 
 stage pv-leaf-jacobian-shards
-pids=()
-for shard in $(seq 0 $((NSH-1))); do
-  python3 jobs/tools/l3_curriculum_error_residual_atlas.py worker \
-    --atlas-shard "$IN/atlas-shard-$shard.json" --jass "$J" --champion "$W/curriculum.pjtw" \
-    --search-params "$ART/search-params.txt" --shard "$shard" --nshards "$NSH" \
-    --out "$SHARDS/shard-$shard.json" >"$W/worker-$shard.log" 2>&1 &
-  pids+=("$!")
+failed=0; : >"$W/worker-failures.txt"
+for batch_start in $(seq 0 "$WORKERS" $((NSH-1))); do
+  pids=(); shards=()
+  for shard in $(seq "$batch_start" $((batch_start+WORKERS-1))); do
+    [ "$shard" -lt "$NSH" ] || continue
+    python3 jobs/tools/l3_curriculum_error_residual_atlas.py worker \
+      --atlas-shard "$IN/atlas-shard-$shard.json" --jass "$J" --champion "$W/curriculum.pjtw" \
+      --search-params "$ART/search-params.txt" --shard "$shard" --nshards "$NSH" \
+      --out "$SHARDS/shard-$shard.json" >"$W/worker-$shard.log" 2>&1 &
+    pids+=("$!"); shards+=("$shard")
+  done
+  for index in "${!pids[@]}"; do
+    if wait "${pids[$index]}"; then rc=0; else rc=$?; failed=1; fi
+    [ "$rc" -eq 0 ] || printf 'shard=%s rc=%s\n' "${shards[$index]}" "$rc" >>"$W/worker-failures.txt"
+  done
 done
-failed=0
-for pid in "${pids[@]}"; do wait "$pid" || failed=1; done
-[ "$failed" -eq 0 ] || die "one or more residual workers failed"
+if [ "$failed" -ne 0 ]; then
+  python3 - "$W" "$SHARDS" "$ART/worker-root-cause.json" "$WORKERS" <<'PY_WORKERS'
+import json,re,sys
+from pathlib import Path
+w,shards,out=map(Path,sys.argv[1:4]); workers=int(sys.argv[4]); failures=[]
+for line in (w/'worker-failures.txt').read_text().splitlines():
+ match=re.fullmatch(r'shard=(\d+) rc=(\d+)',line)
+ if not match: raise SystemExit(f'malformed worker failure line: {line!r}')
+ shard,rc=map(int,match.groups()); path=w/f'worker-{shard}.log'
+ lines=path.read_text(errors='replace').splitlines() if path.exists() else []
+ failures.append({'shard':shard,'returncode':rc,'log_tail':lines[-40:]})
+payload={'schema':'jass.curriculum_error_residual_worker_failure.v1',
+ 'verdict':'JASS_CURRICULUM_ERROR_RESIDUAL_WORKER_FAILURE_READY',
+ 'workers':workers,'failures':failures,'failed_shards':[row['shard'] for row in failures],
+ 'completed_shards':len(list(shards.glob('shard-*.json'))),
+ 'fits':0,'strength_games':0,'selfplay_games':0,'frozen_reads':0,'promotion_authorized':False}
+out.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+PY_WORKERS
+  : >"$ART/JASS_CURRICULUM_ERROR_RESIDUAL_WORKER_FAILURE_READY"
+  die "one or more residual workers failed; see worker-root-cause.json"
+fi
 [ "$(find "$SHARDS" -name 'shard-*.json' | wc -l)" -eq "$NSH" ] || die "residual shard count drift"
 
 stage sealed-discovery-confirm-aggregate
@@ -204,6 +234,7 @@ readout={'schema':'jass.curriculum_error_residual_terminal.v1','verdict':report[
  'selected_canonical_buckets':report['selected_canonical_buckets'],
  'selected_full_columns':report['selected_full_columns'],
  'orientation_symmetry_fraction':report['orientation_symmetry_fraction'],
+ 'forced_controls':report['forced_controls'],
  'coordinate_replication_fraction':report['coordinate_replication_fraction'],
  'confirm':report['confirm'],'gates':report['gates'],'failed_gates':report['failed_gates'],
  'fit_authorized':report['passed'],'next_stage':report['next_stage'],
@@ -215,6 +246,9 @@ markers={report['verdict'],'JASS_CURRICULUM_ERROR_RESIDUAL_ATLAS_READY',
  f"SELECTED_BUCKETS__{report['selected_canonical_buckets']}",
  f"ORIENTATION_SYMMETRY_FRACTION__{clean(report['orientation_symmetry_fraction'])}",
  f"COORDINATE_REPLICATION_FRACTION__{clean(report['coordinate_replication_fraction'])}",
+ f"FORCED_CONTROLS__{report['forced_controls']['total']}",
+ f"FORCED_CONTROL_FRACTION__{clean(report['forced_controls']['fraction'])}",
+ f"INFORMATIVE_CONFIRM_PAIRS__{report['forced_controls']['informative_confirm_pairs']}",
  'WEIGHTS_BIT_IDENTICAL__TRUE','NEW_SELFPLAY__0','FITS__0','STRENGTH_GAMES__0',
  'FROZEN_READS__0','PROMOTION_AUTHORIZED__FALSE',
  ('NEXT_STAGE_RECOMMENDED__LOCAL_RESIDUAL_REFIT' if report['passed'] else 'NEXT_STAGE__NONE'),

@@ -138,7 +138,7 @@ def _ranked_actions(decision: dict[str, Any]) -> list[str]:
     )
 
 
-def _rival(decision: dict[str, Any], *, label: str) -> tuple[str, str]:
+def _rival(decision: dict[str, Any], *, label: str) -> tuple[str | None, str]:
     teacher = str(decision["exact_teacher_action"])
     historical = str(decision["historical_action"])
     if label == "error" or historical != teacher:
@@ -146,9 +146,14 @@ def _rival(decision: dict[str, Any], *, label: str) -> tuple[str, str]:
         mode = "historical_action"
     else:
         rival = next((action for action in _ranked_actions(decision) if action != teacher), "")
-        mode = "exact_runner_up"
-    if not rival or rival == teacher:
-        raise ValueError(f"{label}: no distinct teacher/rival action")
+        mode = "exact_runner_up" if rival else "forced_single_legal_action"
+    if rival == teacher:
+        raise ValueError(f"{label}: rival unexpectedly equals teacher")
+    if not rival:
+        values = decision.get("action_values") or {}
+        if label != "control" or historical != teacher or set(values) != {teacher}:
+            raise ValueError(f"{label}: no distinct teacher/rival action outside a forced control")
+        return None, mode
     return rival, mode
 
 
@@ -224,6 +229,30 @@ def analyse_decision(
     teacher = str(decision["exact_teacher_action"])
     rival, rival_mode = _rival(decision, label=label)
     fen = str(decision["source"]["fen"])
+    if rival is None:
+        # A single-legal-action control has no ranking that a coefficient
+        # update can damage.  It remains authenticated in the population but
+        # contributes neither a fabricated zero margin nor an observation to
+        # the paired control test.  The aggregate caps this population at 5%.
+        image_actions = {
+            search_atlas._mapped_image_action(action)
+            for action in decision["action_values"]
+        }
+        if image_actions != {search_atlas._mapped_image_action(teacher)}:
+            raise ValueError("forced control exact-image action cardinality drift")
+        return {
+            "label": label,
+            "source": decision["source"],
+            "teacher_action": teacher,
+            "rival_action": None,
+            "rival_mode": rival_mode,
+            "forced_single_action": True,
+            "historical_regret_cp": float(decision["historical_regret_cp"]),
+            "orientation_cosine": None,
+            "original": None,
+            "exact_image": None,
+            "gradient": [],
+        }
     original = _orientation(
         engine=engine, referee=referee, extractor=extractor,
         root_fen=fen, teacher_action=teacher, rival_action=rival,
@@ -251,6 +280,7 @@ def analyse_decision(
         "teacher_action": teacher,
         "rival_action": rival,
         "rival_mode": rival_mode,
+        "forced_single_action": False,
         "historical_regret_cp": float(decision["historical_regret_cp"]),
         "orientation_cosine": _cosine(original["gradient"], exact_image["gradient"]),
         "original": original,
@@ -399,12 +429,19 @@ def aggregate(
     vectors: dict[tuple[int,str],dict[int,float]] = {}
     representatives: dict[int,int] = {}
     cosines: dict[str,list[float]] = defaultdict(list)
+    forced_controls: dict[str,int] = defaultdict(int)
     total_buckets = int(_patterns_module().TOTAL_BUCKETS)
     for pair in rows:
         for label in ("error","control"):
             decision=pair[label]
             vectors[(int(pair["pair_id"]),label)] = _gradient(decision)
-            cosines[f"{pair['split']}:{label}"].append(float(decision["orientation_cosine"]))
+            forced = bool(decision.get("forced_single_action", False))
+            if forced:
+                if label != "control" or decision.get("rival_mode") != "forced_single_legal_action":
+                    raise ValueError("forced-action marker outside a certified control")
+                forced_controls[str(pair["split"])] += 1
+            else:
+                cosines[f"{pair['split']}:{label}"].append(float(decision["orientation_cosine"]))
             for item in decision["gradient"]:
                 bucket=int(item["coordinate"]) % total_buckets
                 rep=int(item["representative_full_column"])
@@ -439,9 +476,20 @@ def aggregate(
     direction={int(item["coordinate"]):float(item["sign"])/direction_norm for item in selected}
 
     confirm_rows=by_split["confirm"]
+    informative_confirm=[
+        row for row in confirm_rows
+        if not bool(row["control"].get("forced_single_action",False))
+    ]
     error_projection=[_project(vectors[(int(row["pair_id"]),"error")],direction) for row in confirm_rows]
-    control_projection=[_project(vectors[(int(row["pair_id"]),"control")],direction) for row in confirm_rows]
-    paired=[left-right for left,right in zip(error_projection,control_projection,strict=True)]
+    paired_error_projection=[
+        _project(vectors[(int(row["pair_id"]),"error")],direction)
+        for row in informative_confirm
+    ]
+    control_projection=[
+        _project(vectors[(int(row["pair_id"]),"control")],direction)
+        for row in informative_confirm
+    ]
+    paired=[left-right for left,right in zip(paired_error_projection,control_projection,strict=True)]
     error_boot=_bootstrap(error_projection,samples=bootstrap_samples,seed=seed)
     control_boot=_bootstrap(control_projection,samples=bootstrap_samples,seed=seed+1)
     paired_boot=_bootstrap(paired,samples=bootstrap_samples,seed=seed+2)
@@ -464,6 +512,9 @@ def aggregate(
     all_cosines=[value for values in cosines.values() for value in values]
     symmetry_fraction=(sum(value>=min_orientation_cosine for value in all_cosines)/len(all_cosines)
                        if all_cosines else 0.0)
+    forced_total=sum(forced_controls.values())
+    forced_fraction=forced_total/len(rows) if rows else 1.0
+    informative_confirm_fraction=len(informative_confirm)/len(confirm_rows)
     full_columns=sorted({representatives[int(item["bucket"])] for item in selected})
 
     gates={
@@ -474,6 +525,8 @@ def aggregate(
         "confirm_controls_not_harmed_95": bool(control_boot["ci95"][0] is not None and control_boot["ci95"][0] >= -0.02),
         "paired_error_minus_control_positive_95": bool(paired_boot["ci95"][0] is not None and paired_boot["ci95"][0] > 0.0),
         "paired_sign_flip_p_le_0_025": pvalue <= 0.025,
+        "forced_control_fraction_le_0_05": forced_fraction <= 0.05,
+        "informative_confirm_pair_fraction_ge_0_95": informative_confirm_fraction >= 0.95,
     }
     passed=all(gates.values())
     region={
@@ -507,6 +560,13 @@ def aggregate(
             for key,values in sorted(cosines.items())
         },
         "orientation_symmetry_fraction":symmetry_fraction,
+        "forced_controls":{
+            "total":forced_total,"fraction":forced_fraction,
+            "by_split":{split:int(forced_controls.get(split,0)) for split in by_split},
+            "excluded_from_control_and_paired_statistics":True,
+            "informative_confirm_pairs":len(informative_confirm),
+            "informative_confirm_fraction":informative_confirm_fraction,
+        },
         "coordinate_replication_fraction":replication,
         "confirm":{
             "error_projection":error_boot,"control_projection":control_boot,

@@ -46,6 +46,13 @@ La même mesure est refaite sur l’image exacte. Les deux gradients sont moyenn
 et leur cosinus est audité. Le moteur de production n’utilisera jamais l’image
 exacte : elle reste un instrument de mesure.
 
+Un contrôle à coup légal unique n’a aucun classement alternatif et donc aucun
+Jacobien enseignant–rival définissable. Il reste authentifié dans la population
+mais est marqué `forced_single_legal_action` et exclu des statistiques contrôle
+et appariées : le remplacer par un vecteur nul fabriquerait artificiellement
+une paire favorable. Le protocole échoue si ces contrôles dépassent 5 % de la
+population ou si moins de 95 % des paires `confirm` restent informatives.
+
 ## Sélection scellée
 
 `discovery` fixe une seule direction bornée :
@@ -66,9 +73,16 @@ hypothèse agrégée, ce qui évite une déclaration multiple bucket par bucket 
 - permutation appariée par paire, 10 000 signes, `p <= 0,025` ;
 - au moins 90 % des mesures original/image ont un cosinus non négatif ;
 - entre 8 et 128 buckets canoniques.
+- contrôles forcés au plus 5 % et au moins 95 % de paires `confirm`
+  informatives.
 
 Le bootstrap utilise 100 000 tirages et la seed `2026082222`. Il n’existe aucun
 balayage post-hoc des seuils sur `confirm`.
+
+L’exécution utilise quatre workers à la fois. Cette borne ne modifie aucune
+observation ni aucun gate ; elle empêche seulement la duplication simultanée
+des tables exact-fold dans seize processus. Tout échec de worker publie son
+shard, son code retour et les 40 dernières lignes du traceback.
 
 ## Sorties et suite conditionnelle
 
