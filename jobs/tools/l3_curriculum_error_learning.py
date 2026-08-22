@@ -124,6 +124,82 @@ def _split(opening_id: str, seed: int) -> str:
     return "discovery" if int.from_bytes(digest[:8], "big") % 2 == 0 else "confirm"
 
 
+def _component_label(opening_ids: Iterable[str]) -> str:
+    members = sorted(str(value) for value in opening_ids)
+    if len(members) == 1:
+        return members[0]
+    return "exact-state-component:" + hashlib.sha256(_canonical(members)).hexdigest()
+
+
+def _split_exact_state_components(
+    rows: Iterable[dict[str, Any]], *, split_seed: int
+) -> tuple[dict[str, str], dict[str, Any]]:
+    """Keep the opening split sealed while collapsing exact transpositions.
+
+    The graph uses only opening identities and exact-symmetry state keys.  It is
+    therefore fixed before any deep score or regret exists.  Connected
+    openings are an indivisible split unit, which makes cross-split state
+    leakage impossible without discarding otherwise valid fresh campaigns.
+    """
+    materialized = list(rows)
+    opening_ids = sorted({str(row["opening_id"]) for row in materialized})
+    parent = {opening_id: opening_id for opening_id in opening_ids}
+
+    def find(value: str) -> str:
+        root = value
+        while parent[root] != root:
+            root = parent[root]
+        while parent[value] != value:
+            next_value = parent[value]
+            parent[value] = root
+            value = next_value
+        return root
+
+    def union(left: str, right: str) -> None:
+        left_root, right_root = find(left), find(right)
+        if left_root == right_root:
+            return
+        low, high = sorted((left_root, right_root))
+        parent[high] = low
+
+    state_owner: dict[str, str] = {}
+    shared_state_edges = 0
+    for row in materialized:
+        opening_id = str(row["opening_id"])
+        state_key = str(row["exact_state_key"])
+        previous = state_owner.setdefault(state_key, opening_id)
+        if previous != opening_id:
+            union(previous, opening_id)
+            shared_state_edges += 1
+
+    components: dict[str, list[str]] = defaultdict(list)
+    for opening_id in opening_ids:
+        components[find(opening_id)].append(opening_id)
+    component_rows = sorted(
+        (sorted(members) for members in components.values()),
+        key=lambda members: tuple(members),
+    )
+    opening_splits: dict[str, str] = {}
+    component_counts: dict[str, int] = defaultdict(int)
+    opening_counts: dict[str, int] = defaultdict(int)
+    for members in component_rows:
+        split = _split(_component_label(members), split_seed)
+        component_counts[split] += 1
+        opening_counts[split] += len(members)
+        for opening_id in members:
+            opening_splits[opening_id] = split
+    if len(set(opening_splits.values())) != 2:
+        raise ValueError("exact-state component split lacks discovery or confirmation rows")
+    return opening_splits, {
+        "method": "exact_state_components_sha256_parity",
+        "components": len(component_rows),
+        "shared_state_edges": shared_state_edges,
+        "largest_component_openings": max(map(len, component_rows), default=0),
+        "components_by_split": dict(sorted(component_counts.items())),
+        "openings_by_split": dict(sorted(opening_counts.items())),
+    }
+
+
 def _exact_state_key(fen: str) -> str:
     """Canonical key under the exact rot180+colour-swap game symmetry."""
     wm, wk, bm, bk, stm = _fen_bits(fen)
@@ -188,7 +264,6 @@ def prepare_games(game_dirs: Iterable[Path], *, split_seed: int) -> dict[str, An
                     "source_file": str(path),
                     "source_game_id": game.get("game_id"),
                     "opening_id": opening_id,
-                    "split": _split(opening_id, split_seed),
                     "outcome": outcome,
                     "ply": ply,
                     "fen": fens[ply],
@@ -197,23 +272,23 @@ def prepare_games(game_dirs: Iterable[Path], *, split_seed: int) -> dict[str, An
                     "stratum": _stratum(fens[ply], str(move)),
                 }
             )
-    splits = {row["opening_id"]: row["split"] for row in rows}
-    if len(set(splits.values())) != 2:
-        raise ValueError("opening split lacks discovery or confirmation rows")
+    splits, split_components = _split_exact_state_components(rows, split_seed=split_seed)
+    for row in rows:
+        row["split"] = splits[str(row["opening_id"])]
     state_splits: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         state_splits[str(row["exact_state_key"])].add(str(row["split"]))
     leaked_states = [key for key, values in state_splits.items() if len(values) > 1]
     if leaked_states:
-        raise ValueError(
-            f"{len(leaked_states)} exact-symmetry state(s) cross discovery/confirm"
+        raise AssertionError(
+            f"component split invariant failed: {len(leaked_states)} state(s) leaked"
         )
     return {
         "schema": SCHEMA_SELECTION,
         "split": {
             "unit": "opening_id",
             "seed": split_seed,
-            "method": "sha256_parity",
+            **split_components,
             "leakage": False,
             "exact_symmetry_state_overlap": 0,
         },
