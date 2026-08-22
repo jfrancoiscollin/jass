@@ -30,8 +30,11 @@ class ReplayContext30LauncherV3Test(unittest.TestCase):
             'bash "$FINAL"',
         ):
             self.assertIn(token, text)
-        self.assertNotIn("--gen-selfplay", text)
-        self.assertNotIn("PROMOTION_AUTHORIZED__TRUE", text)
+        # These strings occur only inside the fail-closed audit tuple applied to
+        # the final generated script; they are not executable v3 commands.
+        self.assertIn("surviving=[token for token in forbidden if token in text]", text)
+        self.assertEqual(text.count("'--gen-selfplay'"), 1)
+        self.assertEqual(text.count("'PROMOTION_AUTHORIZED__TRUE'"), 1)
 
     def test_complete_v3_render_path_materialises_locked_final_script(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
