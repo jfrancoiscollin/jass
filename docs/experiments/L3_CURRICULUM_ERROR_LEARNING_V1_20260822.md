@@ -122,6 +122,9 @@ Seulement après PASS de A :
 - exiger au moins 64 ouvertures sources, au plus 2 % des graines dans une même
   ouverture et une capacité théorique suffisante pour 500 000 positions ;
 - publier la filiation exacte `record_index → opening_id/game_uid/ply/regret` ;
+- pendant la génération, publier le sidecar `JSSU1` qui relie chaque
+  `opening_id` généré à l'index exact du record source ; le `JSM2` permet alors
+  de joindre chaque ligne du corpus à sa graine sans modifier les octets JNNW ;
 
 - démarrer 100 % des parties depuis les graines d'erreur confirmées ;
 - générer exactement 500 000 nouvelles positions avec CURRICULUM comme parent ;

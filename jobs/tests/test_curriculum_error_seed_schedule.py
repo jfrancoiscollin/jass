@@ -14,6 +14,7 @@ class CurriculumErrorSeedScheduleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         source = MAIN.read_text(encoding="utf-8")
+        cls.source = source
         start = source.index("int run_gen_data_wdl_mode")
         end = source.index("int run_gen_tdleaf_mode", start)
         cls.generator = source[start:end]
@@ -51,6 +52,17 @@ class CurriculumErrorSeedScheduleTests(unittest.TestCase):
             "seed_reuses=0",
         ):
             self.assertIn(token, self.spec)
+
+    def test_seed_usage_sidecar_closes_generation_lineage(self) -> None:
+        for token in (
+            'a == "--seed-usage-out"',
+            "--seed-usage-out requires --seed-file",
+            'seed_usage << "JSSU1\\topening_id\\tseed_index\\n"',
+            "seed_usage << opening_count << '\\t' << opening_seed_index",
+            '<< " seed_usage_rows=" << (seed_usage_path ? opening_count : 0)',
+        ):
+            self.assertIn(token, self.generator)
+        self.assertIn("--seed-usage-out PATH", self.source)
 
 
 if __name__ == "__main__":
