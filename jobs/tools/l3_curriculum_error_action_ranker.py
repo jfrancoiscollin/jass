@@ -118,11 +118,20 @@ def _load_source(
         raise ValueError("fresh action atlas pair coverage drift")
     if [int(row["pair_id"]) for row in matched_rows] != expected_ids:
         raise ValueError("fresh action matched pair coverage drift")
+    split_names = ("discovery", "confirm")
+    unknown_splits = sorted(
+        {str(row.get("split", "")) for row in matched_rows} - set(split_names)
+    )
+    if unknown_splits:
+        raise ValueError(f"fresh action matched pair split drift: {unknown_splits}")
     matched = {int(row["pair_id"]): row for row in matched_rows}
     judged = {int(row["pair_id"]): row for row in atlas_rows}
     counts = {
         "matched_pairs": int(pairs["matched_pairs"]),
-        "pairs_by_split": {key: len([row for row in matched_rows if row.get("split") == key]) for key in by_split},
+        "pairs_by_split": {
+            key: len([row for row in matched_rows if row.get("split") == key])
+            for key in split_names
+        },
         "informative_errors_by_split": {}, "reclassified_by_split": {},
     }
     return matched, judged, identities, counts
