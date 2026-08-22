@@ -92,7 +92,7 @@ def train_only_oof_predictions(
         raise ValueError("train-only context corpus is too small for five folds")
     if not bool(np.all(np.isfinite(x))) or not bool(np.all(np.isfinite(y))):
         raise ValueError("train-only context arrays contain non-finite values")
-    if not bool(np.all(np.isin(y, (-1.0, 0.0, 1.0))):
+    if not bool(np.all(np.isin(y, (-1.0, 0.0, 1.0)))):
         raise ValueError("terminal outcomes must be in {-1,0,1}")
 
     sentinel_game = _unique_sentinel_game_id(games)
@@ -165,7 +165,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         np.where(records["stm"] == 1, records["wdl"], -records["wdl"]),
         dtype=np.float64,
     )
-    if not bool(np.all(np.isin(outcomes, (-1.0, 0.0, 1.0))):
+    if not bool(np.all(np.isin(outcomes, (-1.0, 0.0, 1.0)))):
         raise ValueError("JNNW contains invalid WDL")
     contexts = base.context_matrix(features, CONTEXT_SCHEMA)
     games = np.asarray(metadata["game_id"], dtype=np.uint64)

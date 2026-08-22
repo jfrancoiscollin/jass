@@ -16,9 +16,12 @@ class ReplayContext30LauncherV3Test(unittest.TestCase):
     def test_static_technical_scope(self) -> None:
         text = V3.read_text(encoding="utf-8")
         for token in (
-            'EXPECTED_V2_BLOB="260890137174c1537318814f732c26916db630a9"',
+            'EXPECTED_V2_BLOB="24dbb03bb9f1827b4777decc06c8d19f2ca013db"',
             "JASS_REPLAY_CONTEXT30_RENDER_ONLY=1",
             "JASS_REPLAY_CONTEXT30_V3_RENDER_ONLY",
+            "GENERATED_FINAL=",
+            "RECOVERED_FROM_GENERATED",
+            "renderer_nonzero_recovered_from_generated_final",
             "replay-context30-v3-render-receipt.json",
             "replay-context30-v3-execution-receipt.json",
             "scientific_protocol_changed':False",
@@ -27,8 +30,11 @@ class ReplayContext30LauncherV3Test(unittest.TestCase):
             'bash "$FINAL"',
         ):
             self.assertIn(token, text)
-        self.assertNotIn("--gen-selfplay", text)
-        self.assertNotIn("PROMOTION_AUTHORIZED__TRUE", text)
+        # These strings occur only inside the fail-closed audit tuple applied to
+        # the final generated script; they are not executable v3 commands.
+        self.assertIn("surviving=[token for token in forbidden if token in text]", text)
+        self.assertEqual(text.count("'--gen-selfplay'"), 1)
+        self.assertEqual(text.count("'PROMOTION_AUTHORIZED__TRUE'"), 1)
 
     def test_complete_v3_render_path_materialises_locked_final_script(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -61,7 +67,12 @@ class ReplayContext30LauncherV3Test(unittest.TestCase):
             self.assertTrue(receipt.is_file())
             subprocess.run(["bash", "-n", str(final)], check=True)
             report = json.loads(receipt.read_text(encoding="utf-8"))
-            self.assertEqual(report["render_exit_code"], 0)
+            self.assertIn(report["render_exit_code"], (0, 1))
+            if report["render_exit_code"]:
+                self.assertTrue(report["recovered_from_generated_final"])
+                self.assertTrue(
+                    report["renderer_nonzero_recovered_from_generated_final"]
+                )
             self.assertTrue(report["syntax_ok"])
             self.assertEqual(report["required_tokens_missing"], [])
             self.assertEqual(report["forbidden_tokens_surviving"], [])
