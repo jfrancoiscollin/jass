@@ -61,7 +61,7 @@ forbidden=(
  '--gen-selfplay','PROMOTION_AUTHORIZED__TRUE',
 )
 surviving=[token for token in forbidden if token in text]
-fit_count=text.count('pattern_jass/tools/train_stream_exact.py \\\n')
+fit_count=text.count('"$PY" pattern_jass/tools/train_stream_exact.py')
 syntax_ok=False
 if final.is_file():
  import subprocess
