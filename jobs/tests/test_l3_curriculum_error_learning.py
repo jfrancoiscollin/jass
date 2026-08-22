@@ -147,6 +147,7 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             "nshards": 1,
             "teacher_depth": 10,
             "judge_depth": 12,
+            "max_rows": 0,
             "rows": rows,
         }
         report, region, seeds = learning.aggregate(
@@ -200,6 +201,7 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             "nshards": 1,
             "teacher_depth": 10,
             "judge_depth": 12,
+            "max_rows": 0,
             "rows": rows,
         }
         report, region, _seeds = learning.aggregate(

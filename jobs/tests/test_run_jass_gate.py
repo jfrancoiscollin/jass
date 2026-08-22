@@ -77,6 +77,7 @@ class RunJassGateTests(unittest.TestCase):
             max_plies=160,
             nshards=16,
             openings_file="open.fen",
+            dump_games_dir=None,
         )
         values.update(overrides)
         return SimpleNamespace(**values)
@@ -94,6 +95,10 @@ class RunJassGateTests(unittest.TestCase):
         command = B.command_for(self._bounded_args(movetime=0.25), 0)
         self.assertEqual(command[command.index("--movetime") + 1], "0.25")
         self.assertNotIn("--depth", command)
+
+    def test_bounded_complete_dump_is_forwarded(self):
+        command = B.command_for(self._bounded_args(dump_games_dir="full-games"), 4)
+        self.assertEqual(command[command.index("--dump-games-dir") + 1], "full-games")
 
     def test_legacy_shared_fingerprint_is_backward_compatible(self):
         args = self._bounded_args(
