@@ -33,29 +33,44 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "duplicate game identity"):
                 learning.prepare_games([root], split_seed=17)
 
-    def test_prepare_rejects_a_state_transposition_across_splits(self) -> None:
+    def test_prepare_keeps_state_transpositions_in_one_split_component(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            wanted = {"discovery": None, "confirm": None}
+            connected = ["transposition-a", "transposition-b"]
+            connected_split = learning._split(
+                learning._component_label(connected), 17
+            )
+            independent = None
             for value in range(100):
-                split = learning._split(str(value), 17)
-                if wanted[split] is None:
-                    wanted[split] = value
-                if all(item is not None for item in wanted.values()):
+                if learning._split(str(value), 17) != connected_split:
+                    independent = str(value)
                     break
-            for index, (split, opening_id) in enumerate(wanted.items(), 1):
+            self.assertIsNotNone(independent)
+            games = [
+                (connected[0], START),
+                (connected[1], START),
+                (str(independent), "W:W21-40:B1-20"),
+            ]
+            for index, (opening_id, fen) in enumerate(games, 1):
                 payload = {
                     "game_id": index,
                     "opening_id": opening_id,
-                    "opening": START,
+                    "opening": fen,
                     "jass_is_white": True,
-                    "jass_score": 0.0 if split == "discovery" else 1.0,
+                    "jass_score": 0.5,
                     "moves": ["31-26"],
-                    "fens": [START, "B:W26,32-50:B1-20"],
+                    "fens": [fen, "B:W26,32-50:B1-20"],
                 }
                 (root / f"game-{index:03d}.json").write_text(json.dumps(payload))
-            with self.assertRaisesRegex(ValueError, "cross discovery/confirm"):
-                learning.prepare_games([root], split_seed=17)
+            report = learning.prepare_games([root], split_seed=17)
+            by_opening = {
+                row["opening_id"]: row["split"] for row in report["rows"]
+            }
+            self.assertEqual(by_opening[connected[0]], by_opening[connected[1]])
+            self.assertNotEqual(by_opening[connected[0]], by_opening[str(independent)])
+            self.assertEqual(report["split"]["components"], 2)
+            self.assertEqual(report["split"]["largest_component_openings"], 2)
+            self.assertEqual(report["split"]["exact_symmetry_state_overlap"], 0)
 
     def test_prepare_keeps_all_champion_turns_and_splits_by_opening(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

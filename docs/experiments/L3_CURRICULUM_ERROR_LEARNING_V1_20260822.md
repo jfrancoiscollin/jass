@@ -50,12 +50,15 @@ Implémentation : `jobs/tools/l3_curriculum_error_learning.py`.
 
 ### Split scellé
 
-`prepare` affecte chaque `opening_id` à `discovery` ou `confirm` par hash avant
-toute recherche profonde. Toutes les décisions d'une ouverture restent dans la
-même moitié. Chaque coup joué par CURRICULUM est conservé. Le prepareur échoue
-si une position, canonisée sous la symétrie exacte rot180+colour-swap, apparaît
-dans les deux moitiés : une transposition ne peut donc pas contaminer la
-confirmation.
+`prepare` construit avant toute recherche profonde les composantes connexes
+`opening_id ↔ état canonique` puis affecte chaque composante à `discovery` ou
+`confirm` par hash scellé. Le graphe ne lit ni issue, ni score, ni regret.
+Toutes les décisions d'une ouverture restent dans la même moitié, et deux
+ouvertures qui transposent vers le même état sous la symétrie exacte
+rot180+colour-swap restent elles aussi ensemble. Chaque coup joué par
+CURRICULUM est conservé et une transposition ne peut contaminer la
+confirmation. Le certificat publie le nombre de composantes, leur taille
+maximale et les comptes d'ouvertures par split.
 
 ### Regret
 
