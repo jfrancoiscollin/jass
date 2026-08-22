@@ -254,6 +254,72 @@ class CurriculumErrorLearningTests(unittest.TestCase):
         self.assertEqual(report["loss_error_openings"], 0)
         self.assertFalse(region["fit_authorized"])
 
+    def test_repair_seed_catalogue_is_canonical_bounded_and_traceable(self) -> None:
+        selection = {
+            "schema": learning.SCHEMA_SELECTION,
+            "decisions": 2,
+            "rows": [{"ordinal": 0}, {"ordinal": 1}],
+        }
+        digest = hashlib.sha256(learning._canonical(selection)).hexdigest()
+        column = learning._pattern_columns(START)[0]
+        rows = [
+            {
+                "ordinal": index,
+                "game_uid": "g",
+                "opening_id": "o",
+                "split": "discovery",
+                "outcome": "loss",
+                "ply": 10 + 4 * index,
+                "fen": START,
+                "exact_state_key": learning._exact_state_key(START),
+                "move_differs": True,
+                "regret_cp": 100 + index,
+            }
+            for index in range(2)
+        ]
+        shard = {
+            "schema": learning.SCHEMA_SHARD,
+            "selection_sha256": digest,
+            "champion_sha256": "b" * 64,
+            "jass_sha256": "c" * 64,
+            "search_params_sha256": "d" * 64,
+            "shard": 0,
+            "nshards": 1,
+            "teacher_depth": 10,
+            "judge_depth": 12,
+            "max_rows": 0,
+            "rows": rows,
+        }
+        region = {
+            "schema": learning.SCHEMA_REGION,
+            "fit_authorized": True,
+            "selection_sha256": digest,
+            "champion_sha256": "b" * 64,
+            "pattern_columns_full": [column],
+        }
+        report, lineage, seeds = learning.make_repair_seeds(
+            selection,
+            [shard],
+            region,
+            min_regret_cp=50,
+            max_per_opening=64,
+            min_ply_gap=2,
+            selection_seed=23,
+            target_positions=1,
+            max_plies=200,
+            min_source_openings=1,
+            max_opening_share=1.0,
+        )
+        self.assertEqual(report["verdict"], "JASS_CURRICULUM_REPAIR_SEEDS_READY")
+        self.assertTrue(report["generation_authorized"])
+        self.assertEqual(report["seed_positions"], 1)
+        self.assertTrue(report["canonical_unique"])
+        self.assertEqual(len(lineage["rows"]), 1)
+        self.assertEqual(lineage["rows"][0]["record_index"], 0)
+        self.assertEqual(seeds[:4], b"JNNW")
+        self.assertEqual(struct.unpack_from("<I", seeds, 4)[0], 1)
+        self.assertEqual(hashlib.sha256(seeds).hexdigest(), report["seeds_sha256"])
+
     def test_error_inference_has_one_vote_per_opening(self) -> None:
         rows = [
             {

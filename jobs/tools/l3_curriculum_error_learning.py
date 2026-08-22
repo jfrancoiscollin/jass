@@ -42,6 +42,7 @@ SCHEMA_SHARD = "jass.l3_curriculum_error_shard.v1"
 SCHEMA_REPORT = "jass.l3_curriculum_error_autopsy.v1"
 SCHEMA_REGION = "jass.l3_curriculum_error_region.v1"
 SCHEMA_SHAM_REPORT = "jass.l3_curriculum_sham_region.v1"
+SCHEMA_REPAIR_SEEDS = "jass.l3_curriculum_repair_seeds.v1"
 JNNW_RECORD = struct.Struct("<QQQQBi b".replace(" ", ""))
 JNNW_MAGIC = b"JNNW"
 
@@ -698,6 +699,214 @@ def aggregate(
     return report, region, seeds_payload
 
 
+def make_repair_seeds(
+    selection: dict[str, Any],
+    shards: list[dict[str, Any]],
+    error_region: dict[str, Any],
+    *,
+    min_regret_cp: int,
+    max_per_opening: int,
+    min_ply_gap: int,
+    selection_seed: int,
+    target_positions: int,
+    max_plies: int,
+    min_source_openings: int,
+    max_opening_share: float,
+) -> tuple[dict[str, Any], dict[str, Any], bytes]:
+    """Expand a confirmed region into bounded, traceable generation seeds.
+
+    Region inference keeps one statistical vote per opening.  Corpus generation
+    has a different requirement: enough distinct causal states to support a
+    finite target without replaying one state repeatedly.  This stage therefore
+    admits multiple *qualified* decisions per opening, while enforcing temporal,
+    canonical-identity and opening-concentration guards fixed before generation.
+    """
+    if min_regret_cp <= 0 or max_per_opening <= 0 or min_ply_gap < 0:
+        raise ValueError("invalid repair-seed regret/cap/gap contract")
+    if target_positions <= 0 or max_plies <= 0 or min_source_openings <= 0:
+        raise ValueError("invalid repair-seed target/opening contract")
+    if not 0.0 < max_opening_share <= 1.0:
+        raise ValueError("max_opening_share must be in (0,1]")
+    expected = len(shards)
+    if not shards or {int(row.get("shard", -1)) for row in shards} != set(range(expected)):
+        raise ValueError("repair-seed source shards are incomplete")
+    if any(row.get("schema") != SCHEMA_SHARD for row in shards):
+        raise ValueError("repair-seed source shard schema drift")
+    if any(int(row.get("nshards", -1)) != expected for row in shards):
+        raise ValueError("repair-seed shard count contract drift")
+    if any(int(row.get("max_rows", -1)) != 0 for row in shards):
+        raise ValueError("repair-seed builder refuses cost-preflight shards")
+    selection_sha = hashlib.sha256(_canonical(selection)).hexdigest()
+    if any(row.get("selection_sha256") != selection_sha for row in shards):
+        raise ValueError("repair-seed selection hash mismatch")
+    rows = [row for shard in shards for row in shard.get("rows", [])]
+    rows.sort(key=lambda row: int(row["ordinal"]))
+    if [int(row["ordinal"]) for row in rows] != list(range(int(selection["decisions"]))):
+        raise ValueError("repair-seed shards do not cover every selected decision")
+    if error_region.get("schema") != SCHEMA_REGION or error_region.get("fit_authorized") is not True:
+        raise ValueError("repair seeds require a confirmed error region")
+    if error_region.get("selection_sha256") != selection_sha:
+        raise ValueError("repair region and selection differ")
+    confirmed_columns = {int(value) for value in error_region.get("pattern_columns_full", [])}
+    if not confirmed_columns:
+        raise ValueError("repair region is empty")
+
+    column_cache: dict[str, set[int]] = {}
+    candidates: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        if (
+            row.get("outcome") != "loss"
+            or not bool(row.get("move_differs"))
+            or int(row.get("regret_cp", 0)) < min_regret_cp
+        ):
+            continue
+        state_key = str(row["exact_state_key"])
+        if _exact_state_key(str(row["fen"])) != state_key:
+            raise ValueError("repair-seed FEN and exact canonical state differ")
+        if state_key not in column_cache:
+            column_cache[state_key] = set(_pattern_columns(str(row["fen"])))
+        columns = column_cache[state_key]
+        hit_columns = sorted(columns & confirmed_columns)
+        if not hit_columns:
+            continue
+        candidates[str(row["opening_id"])].append({**row, "confirmed_columns": hit_columns})
+
+    eligible: dict[str, list[dict[str, Any]]] = {}
+    for opening_id, opening_rows in candidates.items():
+        ranked = sorted(
+            opening_rows,
+            key=lambda row: (
+                -int(row["regret_cp"]),
+                hashlib.sha256(
+                    f"{selection_seed}|{opening_id}|{row['game_uid']}|{row['ply']}|{row['exact_state_key']}".encode()
+                ).digest(),
+                int(row["ordinal"]),
+            ),
+        )
+        by_game_plies: dict[str, list[int]] = defaultdict(list)
+        kept: list[dict[str, Any]] = []
+        for row in ranked:
+            game_uid = str(row["game_uid"])
+            ply = int(row["ply"])
+            if any(abs(ply - previous) < min_ply_gap for previous in by_game_plies[game_uid]):
+                continue
+            by_game_plies[game_uid].append(ply)
+            kept.append(row)
+            if len(kept) >= max_per_opening:
+                break
+        if kept:
+            eligible[opening_id] = kept
+
+    opening_order = sorted(
+        eligible,
+        key=lambda opening_id: (
+            hashlib.sha256(f"{selection_seed}|{opening_id}".encode()).digest(),
+            opening_id,
+        ),
+    )
+    selected: list[dict[str, Any]] = []
+    canonical_seen: set[str] = set()
+    for rank in range(max_per_opening):
+        for opening_id in opening_order:
+            opening_rows = eligible[opening_id]
+            if rank >= len(opening_rows):
+                continue
+            row = opening_rows[rank]
+            state_key = str(row["exact_state_key"])
+            if state_key in canonical_seen:
+                continue
+            canonical_seen.add(state_key)
+            selected.append(row)
+
+    opening_counts: dict[str, int] = defaultdict(int)
+    lineage_rows: list[dict[str, Any]] = []
+    records: list[bytes] = []
+    for index, row in enumerate(selected):
+        opening_id = str(row["opening_id"])
+        opening_counts[opening_id] += 1
+        record = _seed_record(str(row["fen"]))
+        records.append(record)
+        lineage_rows.append(
+            {
+                "record_index": index,
+                "opening_id": opening_id,
+                "game_uid": str(row["game_uid"]),
+                "split": str(row["split"]),
+                "ply": int(row["ply"]),
+                "regret_cp": int(row["regret_cp"]),
+                "exact_state_key": str(row["exact_state_key"]),
+                "confirmed_columns": list(row["confirmed_columns"]),
+                "fen": str(row["fen"]),
+                "record_sha256": hashlib.sha256(record).hexdigest(),
+            }
+        )
+    seed_count = len(records)
+    source_openings = len(opening_counts)
+    realised_max_share = max(opening_counts.values(), default=0) / max(seed_count, 1)
+    theoretical_max_positions = seed_count * 2 * (max_plies + 1)
+    generation_authorized = bool(
+        source_openings >= min_source_openings
+        and realised_max_share <= max_opening_share
+        and theoretical_max_positions >= target_positions
+    )
+    champion_values = {str(shard.get("champion_sha256", "")) for shard in shards}
+    jass_values = {str(shard.get("jass_sha256", "")) for shard in shards}
+    search_values = {str(shard.get("search_params_sha256", "")) for shard in shards}
+    if any(len(values) != 1 or not next(iter(values)) for values in (champion_values, jass_values, search_values)):
+        raise ValueError("repair-seed source identities are not byte-unique")
+    if next(iter(champion_values)) != str(error_region.get("champion_sha256")):
+        raise ValueError("repair-seed champion differs from confirmed region")
+    payload = JNNW_MAGIC + struct.pack("<I", seed_count) + b"".join(records)
+    lineage = {
+        "schema": SCHEMA_REPAIR_SEEDS,
+        "selection_sha256": selection_sha,
+        "error_region_sha256": hashlib.sha256(_canonical(error_region)).hexdigest(),
+        "selection_seed": selection_seed,
+        "rows": lineage_rows,
+    }
+    report = {
+        "schema": SCHEMA_REPAIR_SEEDS,
+        "verdict": (
+            "JASS_CURRICULUM_REPAIR_SEEDS_READY"
+            if generation_authorized
+            else "JASS_CURRICULUM_REPAIR_SEEDS_INSUFFICIENT"
+        ),
+        "generation_authorized": generation_authorized,
+        "selection_sha256": selection_sha,
+        "error_region_sha256": lineage["error_region_sha256"],
+        "lineage_sha256": hashlib.sha256(_canonical(lineage)).hexdigest(),
+        "seeds_sha256": hashlib.sha256(payload).hexdigest(),
+        "champion_sha256": next(iter(champion_values)),
+        "jass_sha256": next(iter(jass_values)),
+        "search_params_sha256": next(iter(search_values)),
+        "seed_positions": seed_count,
+        "source_openings": source_openings,
+        "candidate_openings": len(candidates),
+        "canonical_unique": len(canonical_seen) == seed_count,
+        "max_seeds_per_opening_realised": max(opening_counts.values(), default=0),
+        "max_opening_share_realised": realised_max_share,
+        "theoretical_max_positions": theoretical_max_positions,
+        "target_positions": target_positions,
+        "guards": {
+            "min_regret_cp": min_regret_cp,
+            "max_per_opening": max_per_opening,
+            "min_ply_gap": min_ply_gap,
+            "selection_seed": selection_seed,
+            "pair_openings": True,
+            "max_trajectories_per_exact_seed": 2,
+            "max_plies": max_plies,
+            "min_source_openings": min_source_openings,
+            "max_opening_share": max_opening_share,
+            "target_positions": target_positions,
+        },
+        "fit_count": 0,
+        "strength_games": 0,
+        "frozen_reads": 0,
+        "promotion_authorized": False,
+    }
+    return report, lineage, payload
+
+
 def make_sham_region(
     selection: dict[str, Any],
     shards: list[dict[str, Any]],
@@ -913,6 +1122,21 @@ def main(argv: list[str] | None = None) -> int:
     sham.add_argument("--sham-seed", type=int, default=2026082217)
     sham.add_argument("--report", type=Path, required=True)
     sham.add_argument("--region", type=Path, required=True)
+    repair = sub.add_parser("repair-seeds")
+    repair.add_argument("--selection", type=Path, required=True)
+    repair.add_argument("--shard", action="append", type=Path, required=True)
+    repair.add_argument("--error-region", type=Path, required=True)
+    repair.add_argument("--min-regret-cp", type=int, default=50)
+    repair.add_argument("--max-per-opening", type=int, default=64)
+    repair.add_argument("--min-ply-gap", type=int, default=2)
+    repair.add_argument("--selection-seed", type=int, default=2026082218)
+    repair.add_argument("--target-positions", type=int, default=500_000)
+    repair.add_argument("--max-plies", type=int, default=200)
+    repair.add_argument("--min-source-openings", type=int, default=64)
+    repair.add_argument("--max-opening-share", type=float, default=0.02)
+    repair.add_argument("--report", type=Path, required=True)
+    repair.add_argument("--lineage", type=Path, required=True)
+    repair.add_argument("--seeds", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command == "prepare":
         payload = prepare_games(args.games_dir, split_seed=args.split_seed)
@@ -950,7 +1174,7 @@ def main(argv: list[str] | None = None) -> int:
             "verdict": report["verdict"],
             "fit_authorized": report["fit_authorized"],
         }
-    else:
+    elif args.command == "sham-region":
         selection = json.loads(args.selection.read_text(encoding="utf-8"))
         shards = [json.loads(path.read_text(encoding="utf-8")) for path in args.shard]
         error_region = json.loads(args.error_region.read_text(encoding="utf-8"))
@@ -965,6 +1189,35 @@ def main(argv: list[str] | None = None) -> int:
         )
         _publish([(args.report, _canonical(report)), (args.region, _canonical(region))])
         summary = {"schema": report["schema"], "verdict": report["verdict"], "fit_authorized": True}
+    else:
+        selection = json.loads(args.selection.read_text(encoding="utf-8"))
+        shards = [json.loads(path.read_text(encoding="utf-8")) for path in args.shard]
+        error_region = json.loads(args.error_region.read_text(encoding="utf-8"))
+        report, lineage, seeds = make_repair_seeds(
+            selection,
+            shards,
+            error_region,
+            min_regret_cp=args.min_regret_cp,
+            max_per_opening=args.max_per_opening,
+            min_ply_gap=args.min_ply_gap,
+            selection_seed=args.selection_seed,
+            target_positions=args.target_positions,
+            max_plies=args.max_plies,
+            min_source_openings=args.min_source_openings,
+            max_opening_share=args.max_opening_share,
+        )
+        _publish(
+            [
+                (args.report, _canonical(report)),
+                (args.lineage, _canonical(lineage)),
+                (args.seeds, seeds),
+            ]
+        )
+        summary = {
+            "schema": report["schema"],
+            "verdict": report["verdict"],
+            "generation_authorized": report["generation_authorized"],
+        }
     print(json.dumps(summary, sort_keys=True))
     return 0
 
