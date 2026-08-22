@@ -23,12 +23,13 @@ CURRICULUM_ATTEMPT="20260814T191555Z-18c38a33"
 CURRICULUM_CODE="18c38a33ae78c9c2e8e2df62fca266da28dacead"
 CURRICULUM_ROOT="r2:jass-data/runs/$CURRICULUM_JOB/$CURRICULUM_ATTEMPT"
 CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
-NOPEN=384
-CANDIDATES=12000
-POOL_SEED_1=2026082213
-POOL_SEED_2=2026082214
-SPLIT_SEED=2026082215
-MATCH_SEED=2026082216
+NOPEN="${NOPEN:-384}"
+CANDIDATES="${CANDIDATES:-12000}"
+POOL_SEED_1="${POOL_SEED_1:-2026082213}"
+POOL_SEED_2="${POOL_SEED_2:-2026082214}"
+SPLIT_SEED="${SPLIT_SEED:-2026082215}"
+MATCH_SEED="${MATCH_SEED:-2026082216}"
+ACTION_SOURCE_ONLY="${ACTION_SOURCE_ONLY:-0}"
 NSH=16
 PAR=16
 MOVETIME=0.1
@@ -42,7 +43,9 @@ Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=
 EXCLUDE_SPECS="pool-replay-b-promotion-1454-pool1|r2:jass-data/runs/cpx62-1454-l3-replay-b-vs-curriculum-promotion-v1/20260821T155257Z-9e79c9d4|artefacts/replay-b-promotion-pool1-openings.fen
 pool-replay-b-promotion-1454-pool2|r2:jass-data/runs/cpx62-1454-l3-replay-b-vs-curriculum-promotion-v1/20260821T155257Z-9e79c9d4|artefacts/replay-b-promotion-pool2-openings.fen
 pool-replay-context30-1464-pool1|r2:jass-data/runs/cpx62-1464-l3-replay-context30-target-gate-v1/20260822T080732Z-cfd7b7b2|artefacts/replay-context30-target-pool1-openings.fen
-pool-replay-context30-1464-pool2|r2:jass-data/runs/cpx62-1464-l3-replay-context30-target-gate-v1/20260822T080732Z-cfd7b7b2|artefacts/replay-context30-target-pool2-openings.fen"
+pool-replay-context30-1464-pool2|r2:jass-data/runs/cpx62-1464-l3-replay-context30-target-gate-v1/20260822T080732Z-cfd7b7b2|artefacts/replay-context30-target-pool2-openings.fen
+pool-curriculum-error-1468-pool1|r2:jass-data/runs/cpx62-1468-l3-curriculum-error-autopsy-v1/20260822T134756Z-746421c7|artefacts/curriculum-error-pool1-openings.fen
+pool-curriculum-error-1468-pool2|r2:jass-data/runs/cpx62-1468-l3-curriculum-error-autopsy-v1/20260822T134756Z-746421c7|artefacts/curriculum-error-pool2-openings.fen"
 
 MON=""
 monitor(){
@@ -149,7 +152,7 @@ while IFS='|' read -r label prefix remote_path; do
     >"$W/fetch-$label.log" 2>&1 || die "historical pool fetch failed: $label"
   EXCL_ARGS+=(--exclude "$IN/$label.fen"); EXCL_NAMES+=("$label")
 done <<<"$EXCLUDE_SPECS"
-[ "${#EXCL_NAMES[@]}" -eq 5 ] || die "exclusion count drift"
+[ "${#EXCL_NAMES[@]}" -eq 7 ] || die "exclusion count drift"
 
 generate_pool(){
   local index="$1" seed="$2" out="curriculum-error-pool${1}-openings"
@@ -237,6 +240,55 @@ for shard in $(seq 0 $((NSH-1))); do
 done
 for pid in "${pids[@]}"; do wait "$pid"; done
 [ "$(find "$SHARDS" -name 'shard-*.json' | wc -l)" -eq "$NSH" ] || die "autopsy shard count drift"
+
+if [ "$ACTION_SOURCE_ONLY" = 1 ]; then
+  stage authenticate-and-publish-fresh-action-source
+  python3 - "$ART" "$CURRICULUM_SHA" "$EXPECTED_CODE_SHA" "$POOL_SEED_1" \
+    "$POOL_SEED_2" "$SPLIT_SEED" <<'PY_ACTION_SOURCE'
+import hashlib,json,sys
+from pathlib import Path
+art=Path(sys.argv[1]); model_sha=sys.argv[2]; code=sys.argv[3]
+pool_seeds=[int(sys.argv[4]),int(sys.argv[5])]; split_seed=int(sys.argv[6])
+selection=json.load(open(art/'error-selection.json'))
+shards=[json.load(open(art/'autopsy-shards'/f'shard-{i}.json')) for i in range(16)]
+if selection.get('games')!=1536 or selection.get('decisions',0)<50000:
+ raise SystemExit('fresh action source cardinality drift')
+if {int(row.get('shard',-1)) for row in shards}!=set(range(16)):
+ raise SystemExit('fresh action source shards incomplete')
+rows=[item for shard in shards for item in shard.get('rows',[])]
+if len(rows)!=selection['decisions']:
+ raise SystemExit('fresh action source row coverage drift')
+identities={}
+for key in ('champion_sha256','jass_sha256','search_params_sha256'):
+ values={str(row.get(key,'')) for row in shards}
+ if len(values)!=1 or not next(iter(values)): raise SystemExit(f'{key} identity drift')
+ identities[key]=next(iter(values))
+if identities['champion_sha256']!=model_sha: raise SystemExit('champion hash drift')
+diff=sum(bool(row.get('move_differs')) for row in rows)
+loss_errors=sum(row.get('outcome')=='loss' and float(row.get('regret_cp',0))>=50 for row in rows)
+payload={'schema':'jass.curriculum_error_action_source_terminal.v1',
+ 'verdict':'JASS_CURRICULUM_ERROR_ACTION_SOURCE_READY','source_code_sha':code,
+ **identities,'selection_sha256':hashlib.sha256((art/'error-selection.json').read_bytes()).hexdigest(),
+ 'transitions_sha256':hashlib.sha256((art/'error-transitions.json').read_bytes()).hexdigest(),
+ 'campaign':{'pools':2,'openings_per_pool':384,'games':1536,'native_movetime_seconds':.1,
+  'pool_seeds':pool_seeds,'split_seed':split_seed,'same_byte_identical_champion_both_sides':True,
+  'all_trajectories_dumped':True,'disjoint_from_1468_and_prior_force_pools':True},
+ 'decisions':selection['decisions'],'deep_action_differences':diff,
+ 'raw_loss_errors_ge_50cp':loss_errors,'autopsy_shards':16,
+ 'pattern_bucket_aggregate_reads':0,'pattern_eval_fits':0,'production_model_fits':0,
+ 'new_selfplay_games':1536,'strength_games':0,'frozen_reads':0,
+ 'promotion_authorized':False,'automatic_continuation':False,
+ 'next_stage':'fresh_action_pairing_and_ranker_screen'}
+(art/'JASS_CONTROL_SUMMARY.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+PY_ACTION_SOURCE
+  : >"$ART/JASS_CURRICULUM_ERROR_ACTION_SOURCE_READY"
+  : >"$ART/PATTERN_BUCKET_AGGREGATE_READS__0"
+  : >"$ART/PATTERNEVAL_FITS__0"; : >"$ART/STRENGTH_GAMES__0"
+  : >"$ART/FROZEN_READS__0"; : >"$ART/PROMOTION_AUTHORIZED__FALSE"
+  stage completed
+  say "JASS_CURRICULUM_ERROR_ACTION_SOURCE_READY games=1536 bucket_aggregate=0 fits=0 force=0"
+  exit 0
+fi
 
 stage aggregate-discovery-confirmation-and-publish-verdict
 shard_args=(); for shard in $(seq 0 $((NSH-1))); do shard_args+=(--shard "$SHARDS/shard-$shard.json"); done
