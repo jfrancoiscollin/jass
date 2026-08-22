@@ -15,6 +15,8 @@ def decision(label: str, values: dict[int, float], pair_id: int) -> dict:
         "teacher_action": "31-27",
         "rival_action": "31-26",
         "rival_mode": "historical_action" if label == "error" else "exact_runner_up",
+        "informative_ranking": True,
+        "reclassified_exact_non_error": False,
         "forced_single_action": False,
         "historical_regret_cp": 80.0 if label == "error" else 0.0,
         "orientation_cosine": 1.0,
@@ -34,7 +36,25 @@ def forced_control(pair_id: int) -> dict:
     row.update({
         "rival_action": None,
         "rival_mode": "forced_single_legal_action",
+        "informative_ranking": False,
+        "reclassified_exact_non_error": False,
         "forced_single_action": True,
+        "orientation_cosine": None,
+    })
+    return row
+
+
+def reclassified_error(pair_id: int) -> dict:
+    row = decision("error", {}, pair_id)
+    row.update({
+        "teacher_action": "31-27",
+        "rival_action": None,
+        "rival_mode": "exact_reclassified_historical_optimal",
+        "reclassification_reason": "exact_reclassified_historical_optimal",
+        "informative_ranking": False,
+        "reclassified_exact_non_error": True,
+        "forced_single_action": False,
+        "historical_regret_cp": 0.0,
         "orientation_cosine": None,
     })
     return row
@@ -95,6 +115,60 @@ class CurriculumErrorResidualAtlasTests(unittest.TestCase):
         self.assertIsNone(rival)
         self.assertEqual(mode, "forced_single_legal_action")
 
+    def test_exact_teacher_equal_historical_reclassifies_source_error(self) -> None:
+        rival, mode = residual._rival(
+            {
+                "exact_teacher_action": "31-27",
+                "historical_action": "31-27",
+                "historical_regret_cp": 0.0,
+                "action_values": {
+                    "31-27": {"twice_root_cp": 20},
+                    "31-26": {"twice_root_cp": 10},
+                },
+            },
+            label="error",
+        )
+        self.assertIsNone(rival)
+        self.assertEqual(mode, "exact_reclassified_historical_optimal")
+
+    def test_subthreshold_exact_error_is_excluded_even_when_move_differs(self) -> None:
+        rival, mode = residual._rival(
+            {
+                "exact_teacher_action": "31-27",
+                "historical_action": "31-26",
+                "historical_regret_cp": 12.0,
+                "action_values": {
+                    "31-27": {"twice_root_cp": 24},
+                    "31-26": {"twice_root_cp": 0},
+                },
+            },
+            label="error",
+        )
+        self.assertIsNone(rival)
+        self.assertEqual(mode, "exact_reclassified_below_50cp")
+
+    def test_reclassified_error_short_circuits_before_any_search(self) -> None:
+        result = residual.analyse_decision(
+            {
+                "exact_teacher_action": "31-27",
+                "historical_action": "31-27",
+                "historical_regret_cp": 0.0,
+                "source": {"fen": "W:W31:B20", "opening_id": "o"},
+                "action_values": {
+                    "31-27": {"twice_root_cp": 20},
+                    "31-26": {"twice_root_cp": 10},
+                },
+            },
+            label="error",
+            engine=None,
+            referee=None,
+            extractor=None,
+            depth=12,
+        )
+        self.assertFalse(result["informative_ranking"])
+        self.assertTrue(result["reclassified_exact_non_error"])
+        self.assertEqual(result["gradient"], [])
+
     def test_confirmed_fixed_direction_authorizes_region(self) -> None:
         report, region = residual.aggregate(
             make_shards(),
@@ -106,6 +180,7 @@ class CurriculumErrorResidualAtlasTests(unittest.TestCase):
             bootstrap_samples=2000,
             permutation_samples=2000,
             seed=17,
+            expected_informative_errors=80,
         )
         self.assertTrue(report["passed"])
         self.assertEqual(
@@ -132,6 +207,7 @@ class CurriculumErrorResidualAtlasTests(unittest.TestCase):
             bootstrap_samples=1000,
             permutation_samples=1000,
             seed=23,
+            expected_informative_errors=80,
         )
         self.assertTrue(report["passed"])
         forced = report["forced_controls"]
@@ -140,6 +216,33 @@ class CurriculumErrorResidualAtlasTests(unittest.TestCase):
         self.assertTrue(forced["excluded_from_control_and_paired_statistics"])
         self.assertEqual(report["confirm"]["control_projection"]["n"], 39)
         self.assertEqual(report["confirm"]["paired_error_minus_control"]["n"], 39)
+
+    def test_reclassified_non_error_excludes_whole_pair_without_zero_vote(self) -> None:
+        shards = make_shards()
+        source_pair = next(
+            row for shard in shards for row in shard["rows"] if row["pair_id"] == 40
+        )
+        source_pair["error"] = reclassified_error(40)
+        report, _region = residual.aggregate(
+            shards,
+            min_discovery_hits=6,
+            min_region_buckets=2,
+            max_region_buckets=8,
+            min_orientation_cosine=0.0,
+            min_coordinate_replication=0.70,
+            bootstrap_samples=1000,
+            permutation_samples=1000,
+            seed=31,
+            expected_informative_errors=79,
+        )
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["pairs"], 80)
+        self.assertEqual(report["informative_error_pairs"], 79)
+        reclassified = report["reclassified_exact_non_errors"]
+        self.assertEqual(reclassified["total"], 1)
+        self.assertTrue(reclassified["excluded_with_their_controls_from_fit_statistics"])
+        self.assertFalse(reclassified["zero_vectors_used_as_observations"])
+        self.assertEqual(report["confirm"]["error_projection"]["n"], 39)
 
     def test_excess_forced_controls_fail_closed(self) -> None:
         shards = make_shards()
@@ -158,6 +261,7 @@ class CurriculumErrorResidualAtlasTests(unittest.TestCase):
             bootstrap_samples=500,
             permutation_samples=500,
             seed=29,
+            expected_informative_errors=80,
         )
         self.assertFalse(report["passed"])
         self.assertFalse(report["gates"]["forced_control_fraction_le_0_05"])
@@ -175,6 +279,7 @@ class CurriculumErrorResidualAtlasTests(unittest.TestCase):
             bootstrap_samples=500,
             permutation_samples=500,
             seed=19,
+            expected_informative_errors=80,
         )
         self.assertFalse(report["passed"])
         self.assertIsNone(report["next_stage"])

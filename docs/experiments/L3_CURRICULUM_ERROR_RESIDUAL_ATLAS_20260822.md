@@ -53,6 +53,16 @@ et appariées : le remplacer par un vecteur nul fabriquerait artificiellement
 une paire favorable. Le protocole échoue si ces contrôles dépassent 5 % de la
 population ou si moins de 95 % des paires `confirm` restent informatives.
 
+Le matching des 353 paires a précédé le juge profond exactement symétrisé de
+1476. Ce juge a préenregistré 290 erreurs exactes de regret au moins 50 cp. Les
+63 autres lignes sont ensuite passées sous ce seuil ; certaines ont même une
+action enseignante exacte identique à l’action historique et un regret nul.
+Ces lignes restent authentifiées mais la paire entière (pseudo-erreur et
+contrôle associé) est exclue de toute sélection et de toute statistique de fit.
+Elles ne sont jamais transformées en observations nulles. Le job exige
+exactement 290 paires informatives ; tout autre compte signale une dérive de
+1476 et avorte.
+
 ## Sélection scellée
 
 `discovery` fixe une seule direction bornée :
@@ -75,6 +85,7 @@ hypothèse agrégée, ce qui évite une déclaration multiple bucket par bucket 
 - entre 8 et 128 buckets canoniques.
 - contrôles forcés au plus 5 % et au moins 95 % de paires `confirm`
   informatives.
+- exactement 290 erreurs exactes informatives sur les 353 paires authentifiées.
 
 Le bootstrap utilise 100 000 tirages et la seed `2026082222`. Il n’existe aucun
 balayage post-hoc des seuils sur `confirm`.
