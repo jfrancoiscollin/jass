@@ -11,7 +11,7 @@ set -Eeuo pipefail
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 cd "$JASS_CODE_DIR"
 
-EXPECTED_V2_BLOB="260890137174c1537318814f732c26916db630a9"
+EXPECTED_V2_BLOB="24dbb03bb9f1827b4777decc06c8d19f2ca013db"
 V2_SOURCE="jobs/templates/l3-replay-context30-target-gate-v2.sh"
 V2_COPY="$JASS_RESULT_DIR/l3-replay-context30-target-gate-v2.certified.sh"
 FINAL="$JASS_ARTEFACT_DIR/replay-context30-rendered.sh"
