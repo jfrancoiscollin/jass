@@ -93,6 +93,66 @@ class ReplayContext30TargetTest(unittest.TestCase):
         self.assertFalse(mapping["adapter"]["synthetic_row_included_in_output_targets"])
         self.assertTrue(mapping["adapter"]["historical_train_recipe_unchanged"])
 
+    def test_adapter_uses_only_the_immutable_historical_builder_abi(self) -> None:
+        class LegacyBuilderProxy:
+            def __init__(self, delegate):
+                self.delegate = delegate
+                self.context_calls = 0
+                self.cross_fit_calls = 0
+
+            def context_matrix(self, features):
+                self.context_calls += 1
+                return self.delegate.context_matrix(features)
+
+            def cross_fitted_predictions(
+                self,
+                matrix,
+                outcomes,
+                game_ids,
+                train_count,
+                *,
+                fold_count,
+                fold_seed,
+                ridge,
+                max_iterations,
+                tolerance,
+                line_search_steps,
+            ):
+                self.cross_fit_calls += 1
+                return self.delegate.cross_fitted_predictions(
+                    matrix,
+                    outcomes,
+                    game_ids,
+                    train_count,
+                    fold_count=fold_count,
+                    fold_seed=fold_seed,
+                    ridge=ridge,
+                    max_iterations=max_iterations,
+                    tolerance=tolerance,
+                    line_search_steps=line_search_steps,
+                )
+
+        proxy = LegacyBuilderProxy(BASE)
+        original = TARGETS.base
+        try:
+            TARGETS.base = proxy
+            features = np.zeros((10, 120), dtype=np.float32)
+            contexts = TARGETS.historical_context_matrix(features)
+            games = np.asarray(self._game_ids_covering_folds(per_fold=2), dtype=np.uint64)
+            outcomes = np.resize(np.asarray([-1.0, 0.0, 1.0]), len(games))
+            predictions, mapping = TARGETS.train_only_oof_predictions(
+                contexts,
+                outcomes,
+                games,
+            )
+        finally:
+            TARGETS.base = original
+
+        self.assertEqual(proxy.context_calls, 1)
+        self.assertEqual(proxy.cross_fit_calls, 1)
+        self.assertEqual(predictions.shape, outcomes.shape)
+        self.assertEqual(mapping["adapter"]["historical_builder_abi"], "legacy_20260811")
+
     def test_force_classification_requires_two_pool_replication(self) -> None:
         positive = {
             "pool_rates": [0.51, 0.52],
