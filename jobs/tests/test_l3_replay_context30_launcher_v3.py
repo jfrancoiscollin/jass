@@ -16,7 +16,7 @@ class ReplayContext30LauncherV3Test(unittest.TestCase):
     def test_static_technical_scope(self) -> None:
         text = V3.read_text(encoding="utf-8")
         for token in (
-            'EXPECTED_V2_BLOB="260890137174c1537318814f732c26916db630a9"',
+            'EXPECTED_V2_BLOB="24dbb03bb9f1827b4777decc06c8d19f2ca013db"',
             "JASS_REPLAY_CONTEXT30_RENDER_ONLY=1",
             "JASS_REPLAY_CONTEXT30_V3_RENDER_ONLY",
             "replay-context30-v3-render-receipt.json",
