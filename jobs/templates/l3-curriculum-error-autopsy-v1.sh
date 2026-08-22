@@ -192,6 +192,9 @@ python3 jobs/tools/run_jass_gate_bounded.py --jass "$J" \
 stage seal-opening-split-and-prepare-every-champion-decision
 python3 jobs/tools/l3_curriculum_error_learning.py prepare --games-dir "$GAMES1" --games-dir "$GAMES2" \
   --split-seed "$SPLIT_SEED" --out "$ART/error-selection.json" >"$W/prepare.log" 2>&1
+python3 jobs/tools/l3_curriculum_error_learning.py transitions --selection "$ART/error-selection.json" \
+  --games-dir "$GAMES1" --games-dir "$GAMES2" --out "$ART/error-transitions.json" \
+  >"$W/transitions.log" 2>&1
 
 stage depth10-depth12-cost-preflight
 mkdir -p "$W/preflight"
@@ -199,6 +202,7 @@ T0=$(date +%s)
 pids=()
 for shard in $(seq 0 $((NSH-1))); do
   python3 jobs/tools/l3_curriculum_error_learning.py worker --selection "$ART/error-selection.json" \
+    --transitions "$ART/error-transitions.json" \
     --jass "$J" --champion "$W/curriculum.pjtw" --search-params "$ART/search-params.txt" \
     --teacher-depth "$TEACHER_DEPTH" --judge-depth "$JUDGE_DEPTH" --symmetry-rows 32 \
     --max-rows "$PREFLIGHT_ROWS_PER_SHARD" --shard "$shard" --nshards "$NSH" \
@@ -225,6 +229,7 @@ stage analyse-every-decision-depth10-depth12
 pids=()
 for shard in $(seq 0 $((NSH-1))); do
   python3 jobs/tools/l3_curriculum_error_learning.py worker --selection "$ART/error-selection.json" \
+    --transitions "$ART/error-transitions.json" \
     --jass "$J" --champion "$W/curriculum.pjtw" --search-params "$ART/search-params.txt" \
     --teacher-depth "$TEACHER_DEPTH" --judge-depth "$JUDGE_DEPTH" --symmetry-rows 32 \
     --shard "$shard" --nshards "$NSH" --out "$SHARDS/shard-$shard.json" \

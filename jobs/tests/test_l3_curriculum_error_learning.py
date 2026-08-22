@@ -27,6 +27,68 @@ class CurriculumErrorLearningTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "resolves to 2 legal moves"):
             learning._resolve_historical_move("21x32", "21>32*27 21>32*28", cv)
 
+    def test_ambiguous_capture_is_resolved_only_by_authenticated_successor(self) -> None:
+        cv = learning._cv_module()
+        wanted = "B:W32:B1"
+
+        class FakeReferee:
+            def set_position_fen(self, _fen: str) -> None:
+                self.child = ""
+
+            def apply_move(self, move: object) -> bool:
+                self.child = wanted if tuple(move.captures) == (27,) else "B:W33:B1"
+                return True
+
+            def current_fen(self) -> str:
+                return self.child
+
+        move, disambiguated = learning._resolve_historical_transition(
+            "21x32",
+            "21>32*27 21>32*28",
+            cv,
+            fen=START,
+            next_fen=wanted,
+            referee=FakeReferee(),
+        )
+        self.assertTrue(disambiguated)
+        self.assertEqual((move.frm, move.to, move.captures), (21, 32, (27,)))
+
+    def test_transition_sidecar_authenticates_games_and_selection_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "games-pool1"
+            root.mkdir()
+            game = {
+                "game_id": 1,
+                "opening_id": "opening-1",
+                "opening": START,
+                "jass_is_white": True,
+                "jass_score": 0.0,
+                "moves": ["31-26"],
+                "fens": [START, "B:W26,32-50:B1-20"],
+            }
+            path = root / "game-00000000.json"
+            path.write_text(json.dumps(game))
+            uid = learning._game_uid(game)
+            selection = {
+                "schema": learning.SCHEMA_SELECTION,
+                "decisions": 1,
+                "sources": [{"path": f"/sealed/games-pool1/{path.name}", "sha256": learning.sha256(path)}],
+                "rows": [
+                    {
+                        "ordinal": 0,
+                        "game_uid": uid,
+                        "ply": 0,
+                        "fen": START,
+                        "actual_move": "31-26",
+                    }
+                ],
+            }
+            sidecar = learning.build_transition_sidecar(selection, [root])
+            self.assertEqual(sidecar["schema"], learning.SCHEMA_TRANSITIONS)
+            self.assertEqual(sidecar["games"], 1)
+            self.assertEqual(sidecar["decisions"], 1)
+            self.assertEqual(sidecar["transitions"][0]["next_fen"], game["fens"][1])
+
     def test_prepare_rejects_a_copied_game(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -175,9 +237,12 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             "judge_depth": 12,
             "max_rows": 0,
             "historical_move_resolution": {
-                "method": "dump_legal_unique_endpoints",
+                "method": learning.RESOLUTION_METHOD,
                 "rows": len(rows),
                 "endpoint_only_captures": 0,
+                "successor_state_validated": len(rows),
+                "successor_state_disambiguations": 0,
+                "transition_sidecar_sha256": "e" * 64,
                 "ambiguous": 0,
                 "unresolved": 0,
             },
@@ -254,9 +319,12 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             "judge_depth": 12,
             "max_rows": 0,
             "historical_move_resolution": {
-                "method": "dump_legal_unique_endpoints",
+                "method": learning.RESOLUTION_METHOD,
                 "rows": len(rows),
                 "endpoint_only_captures": 0,
+                "successor_state_validated": len(rows),
+                "successor_state_disambiguations": 0,
+                "transition_sidecar_sha256": "e" * 64,
                 "ambiguous": 0,
                 "unresolved": 0,
             },
@@ -314,9 +382,12 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             "judge_depth": 12,
             "max_rows": 0,
             "historical_move_resolution": {
-                "method": "dump_legal_unique_endpoints",
+                "method": learning.RESOLUTION_METHOD,
                 "rows": len(rows),
                 "endpoint_only_captures": 0,
+                "successor_state_validated": len(rows),
+                "successor_state_disambiguations": 0,
+                "transition_sidecar_sha256": "e" * 64,
                 "ambiguous": 0,
                 "unresolved": 0,
             },

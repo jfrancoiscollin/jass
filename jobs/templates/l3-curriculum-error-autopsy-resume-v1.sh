@@ -90,6 +90,28 @@ timeout 1800s python3 jobs/tools/fetch_result_files.py --prefix "$SOURCE_ROOT" \
   --file artefacts/search-params.txt=search-params.txt \
   --out-dir "$IN" --report "$ART/verified-1468-selection.json" --expected-state failed \
   >"$W/fetch-selection.log" 2>&1
+mapfile -t GAME_SPECS < <(python3 - "$IN/error-selection.json" <<'PY_GAMES'
+import json,sys
+from pathlib import Path
+selection=json.load(open(sys.argv[1]))
+for source in selection.get('sources',[]):
+ parts=Path(source['path']).parts
+ indices=[i for i,p in enumerate(parts) if p in {'games-pool1','games-pool2'}]
+ if len(indices)!=1: raise SystemExit(f"unstable source path: {source['path']}")
+ rel='/'.join(parts[indices[0]:])
+ print(f'artefacts/{rel}={rel}')
+PY_GAMES
+)
+[ "${#GAME_SPECS[@]}" -eq 1536 ] || die "sealed game source count drift"
+GAME_ARGS=(); for spec in "${GAME_SPECS[@]}"; do GAME_ARGS+=(--file "$spec"); done
+timeout 3600s python3 jobs/tools/fetch_result_files.py --prefix "$SOURCE_ROOT" \
+  "${GAME_ARGS[@]}" --out-dir "$IN/source-games" \
+  --report "$ART/verified-1468-games.json" --expected-state failed \
+  >"$W/fetch-games.log" 2>&1
+python3 jobs/tools/l3_curriculum_error_learning.py transitions \
+  --selection "$IN/error-selection.json" \
+  --games-dir "$IN/source-games/games-pool1" --games-dir "$IN/source-games/games-pool2" \
+  --out "$ART/error-transitions.json" >"$W/transitions.log" 2>&1
 timeout 1800s python3 jobs/tools/fetch_result_files.py --prefix "$CURRICULUM_ROOT" \
   --file artefacts/D-c-prior-then-current.pjtw.gz=curriculum.pjtw.gz \
   --file artefacts/JASS_CONTROL_SUMMARY.json=curriculum-summary.json \
@@ -119,11 +141,16 @@ if champ.get('model_raw_sha256')!=model_sha or champ.get('same_model_both_sides'
  raise SystemExit('champion certificate drift')
 actual=hashlib.sha256((work/'curriculum.pjtw').read_bytes()).hexdigest()
 if actual!=model_sha: raise SystemExit(f'CURRICULUM raw hash drift: {actual}')
+transitions=json.load(open(art/'error-transitions.json'))
+if transitions.get('schema')!='jass.l3_curriculum_error_transitions.v1' or transitions.get('games')!=1536 or transitions.get('decisions')!=79110:
+ raise SystemExit('transition sidecar drift')
 (art/'resume-source-certificate.json').write_text(json.dumps({
  'schema':'jass.curriculum_error_resume_source.v1','verdict':'JASS_CURRICULUM_ERROR_SELECTION_REUSED',
  'source_job':source[0],'source_attempt':source[1],'source_code_sha':source[2],
  'selection_sha256':hashlib.sha256((src/'error-selection.json').read_bytes()).hexdigest(),
  'games':1536,'decisions':79110,'campaign_replayed':False,'new_selfplay_games':0,
+ 'transition_sidecar_sha256':hashlib.sha256((art/'error-transitions.json').read_bytes()).hexdigest(),
+ 'successor_states_authenticated':79110,
  'champion_sha256':actual,'promotion_authorized':False},indent=2,sort_keys=True)+'\n')
 PY_AUTH
 
@@ -149,6 +176,7 @@ mkdir -p "$W/preflight"
 T0=$(date +%s); pids=()
 for shard in $(seq 0 $((NSH-1))); do
   python3 jobs/tools/l3_curriculum_error_learning.py worker --selection "$IN/error-selection.json" \
+    --transitions "$ART/error-transitions.json" \
     --jass "$J" --champion "$W/curriculum.pjtw" --search-params "$ART/search-params.txt" \
     --teacher-depth "$TEACHER_DEPTH" --judge-depth "$JUDGE_DEPTH" --symmetry-rows 32 \
     --max-rows "$PREFLIGHT_ROWS_PER_SHARD" --shard "$shard" --nshards "$NSH" \
@@ -165,11 +193,17 @@ elapsed=max(int(sys.argv[4]),1); maximum=int(sys.argv[5]); total=json.load(open(
 shards=[json.load(open(p)) for p in root.glob('shard-*.json')]
 rows=sum(len(row['rows']) for row in shards)
 captures=sum(row['historical_move_resolution']['endpoint_only_captures'] for row in shards)
+validated=sum(row['historical_move_resolution']['successor_state_validated'] for row in shards)
+disambiguated=sum(row['historical_move_resolution']['successor_state_disambiguations'] for row in shards)
+transition_hashes={row['historical_move_resolution']['transition_sidecar_sha256'] for row in shards}
 if rows!=64: raise SystemExit(f'cost preflight row drift: {rows}')
+if validated!=rows or len(transition_hashes)!=1: raise SystemExit('cost preflight transition validation drift')
 projected=elapsed*total/rows/60
 payload={'schema':'jass.curriculum_error_cost_preflight.v1','sample_rows':rows,'total_decisions':total,
  'elapsed_seconds':elapsed,'projected_minutes':projected,'maximum_minutes':maximum,'passed':projected<=maximum,
- 'historical_endpoint_only_captures_resolved':captures,'ambiguous':0,'unresolved':0}
+ 'historical_endpoint_only_captures_resolved':captures,
+ 'successor_state_validated':validated,'successor_state_disambiguations':disambiguated,
+ 'transition_sidecar_sha256':next(iter(transition_hashes)),'ambiguous':0,'unresolved':0}
 out.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
 if projected>maximum: raise SystemExit(f'projected autopsy {projected:.1f} min exceeds {maximum}')
 PY_COST
@@ -178,6 +212,7 @@ stage analyse-every-decision-depth10-depth12
 pids=()
 for shard in $(seq 0 $((NSH-1))); do
   python3 jobs/tools/l3_curriculum_error_learning.py worker --selection "$IN/error-selection.json" \
+    --transitions "$ART/error-transitions.json" \
     --jass "$J" --champion "$W/curriculum.pjtw" --search-params "$ART/search-params.txt" \
     --teacher-depth "$TEACHER_DEPTH" --judge-depth "$JUDGE_DEPTH" --symmetry-rows 32 \
     --shard "$shard" --nshards "$NSH" --out "$SHARDS/shard-$shard.json" \
@@ -204,6 +239,10 @@ if report['champion_sha256']!=model_sha or region['champion_sha256']!=model_sha:
 if report['verdict'] not in {'JASS_CURRICULUM_ERROR_REGION_CONFIRMED','JASS_CURRICULUM_ERROR_REGION_NOT_ESTABLISHED'}: raise SystemExit('verdict drift')
 resolution=report.get('historical_move_resolution',{})
 if resolution.get('passed') is not True or resolution.get('ambiguous')!=0 or resolution.get('unresolved')!=0: raise SystemExit('historical move resolution drift')
+if resolution.get('method')!='dump_legal_endpoints_and_authenticated_successor_state': raise SystemExit('transition resolution method drift')
+if resolution.get('successor_state_validated')!=79110: raise SystemExit('not every successor state was validated')
+source_cert=json.load(open(art/'resume-source-certificate.json'))
+if resolution.get('transition_sidecar_sha256')!=source_cert.get('transition_sidecar_sha256'): raise SystemExit('transition sidecar identity drift')
 payload={**report,'schema':'jass.curriculum_error_autopsy_resume_terminal.v1','source_code_sha':code,
  'source_campaign':{'job_id':'cpx62-1468-l3-curriculum-error-autopsy-v1','attempt_id':'20260822T134756Z-746421c7',
   'games':1536,'all_trajectories_dumped':True,'selection_reused':True},

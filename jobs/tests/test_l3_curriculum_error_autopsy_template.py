@@ -18,6 +18,8 @@ class CurriculumErrorAutopsyTemplateTests(unittest.TestCase):
             "TEACHER_DEPTH=10",
             "JUDGE_DEPTH=12",
             "--dump-games-dir",
+            'transitions --selection "$ART/error-selection.json"',
+            '--transitions "$ART/error-transitions.json"',
             "--min-error-openings 64",
             "--min-confirmed-buckets 8",
             "JASS_CURRICULUM_ERROR_REGION_CONFIRMED",
