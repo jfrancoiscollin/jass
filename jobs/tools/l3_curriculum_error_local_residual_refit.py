@@ -34,7 +34,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
     import l3_curriculum_error_residual_atlas as atlas  # type: ignore
 
 
-SCHEMA = "jass.l3_curriculum_error_local_residual_refit.v1"
+SCHEMA = "jass.l3_curriculum_error_local_residual_refit.v2"
 SHAM_SCHEMA = "jass.l3_curriculum_error_sham_region.v1"
 PJTW_MAGIC = 0x57544A50
 PJSW_MAGIC = 0x57534A50
@@ -134,6 +134,61 @@ def _rows(shards: list[dict[str, Any]], report: dict[str, Any]) -> list[dict[str
     if len(result) != int(report.get("pairs", -1)):
         raise ValueError("residual row/report cardinality drift")
     return result
+
+
+def _informative_rows(
+    rows: list[dict[str, Any]], report: dict[str, Any]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Authenticate and remove pairs reclassified by the exact judge.
+
+    Pair matching predates exact re-judging, so the sealed atlas still contains
+    every one of the 353 authenticated source pairs.  A source error later
+    reclassified below the preregistered 50 cp threshold must remove the whole
+    pair (including its matched control) from every fit, sham, calibration and
+    confirmation statistic.  Keeping its empty error gradient as a favourable
+    zero would bias all four screens.
+    """
+    expected = int(report.get("informative_error_pairs", -1))
+    reclassification = report.get("reclassified_exact_non_errors")
+    if expected != 290:
+        raise ValueError("atlas informative exact-error cardinality is not 290")
+    if not isinstance(reclassification, dict):
+        raise ValueError("atlas exact non-error reclassification audit is absent")
+    if reclassification.get("excluded_with_their_controls_from_fit_statistics") is not True:
+        raise ValueError("atlas does not exclude reclassified matched controls")
+    if reclassification.get("zero_vectors_used_as_observations") is not False:
+        raise ValueError("atlas admits reclassified zero vectors as observations")
+
+    excluded = [
+        pair for pair in rows
+        if bool(pair.get("error", {}).get("reclassified_exact_non_error", False))
+    ]
+    informative = [
+        pair for pair in rows
+        if not bool(pair.get("error", {}).get("reclassified_exact_non_error", False))
+    ]
+    if len(excluded) != int(reclassification.get("total", -1)):
+        raise ValueError("atlas reclassified exact non-error cardinality drift")
+    if len(informative) != expected or len(excluded) != len(rows) - expected:
+        raise ValueError("atlas informative/reclassified pair partition drift")
+    for pair in excluded:
+        error = pair["error"]
+        if (
+            error.get("informative_ranking") is not False
+            or error.get("gradient") != []
+            or error.get("rival_action") is not None
+            or error.get("reclassification_reason") not in {
+                "exact_reclassified_historical_optimal",
+                "exact_reclassified_below_50cp",
+            }
+        ):
+            raise ValueError("reclassified exact non-error row contract drift")
+    if any(
+        bool(pair["error"].get("reclassified_exact_non_error", False))
+        for pair in informative
+    ):
+        raise ValueError("reclassified pair leaked into informative rows")
+    return informative, excluded
 
 
 def _representatives(rows: Iterable[dict[str, Any]], total: int) -> dict[int, int]:
@@ -475,7 +530,8 @@ def fit(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("region promotion guard drift")
     if sha256(args.champion) != str(region.get("champion_sha256")):
         raise ValueError("champion differs from confirmed error region")
-    rows = _rows(shards, report)
+    source_rows = _rows(shards, report)
+    rows, excluded_rows = _informative_rows(source_rows, report)
     patterns, train_stream = _patterns()
     total = int(patterns.TOTAL_BUCKETS)
     header, model, scale, n_pat, n_ext = _load_model(args.champion)
@@ -533,6 +589,10 @@ def fit(args: argparse.Namespace) -> dict[str, Any]:
         "region": {"path": str(args.region), "sha256": sha256(args.region)},
         "champion": {"path": str(args.champion), "sha256": sha256(args.champion)},
         "shards": [{"path": str(path), "sha256": sha256(path)} for path in args.shard],
+        "source_pairs": len(source_rows),
+        "informative_error_pairs": len(rows),
+        "reclassified_exact_non_error_pairs_excluded": len(excluded_rows),
+        "reclassified_pairs_used_in_fit_or_statistics": 0,
         "split": {
             "unit": "sealed opening_transposition_component then discovery opening hash",
             "seed": args.split_seed,

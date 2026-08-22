@@ -33,7 +33,52 @@ def pair(pair_id: int, split: str, error: dict[int, float], control: dict[int, f
     }
 
 
+def reclassified_pair(pair_id: int, split: str = "discovery") -> dict:
+    result = pair(pair_id, split, {}, {1: 1.0})
+    result["error"].update({
+        "informative_ranking": False,
+        "reclassified_exact_non_error": True,
+        "reclassification_reason": "exact_reclassified_historical_optimal",
+        "rival_action": None,
+        "gradient": [],
+    })
+    return result
+
+
 class CurriculumErrorLocalResidualRefitTests(unittest.TestCase):
+    def test_reclassified_pair_and_control_are_excluded_from_every_fit_statistic(self) -> None:
+        rows = [
+            pair(index, "discovery", {0: 1.0}, {1: 1.0})
+            for index in range(290)
+        ] + [
+            reclassified_pair(index)
+            for index in range(290, 353)
+        ]
+        report = {
+            "informative_error_pairs": 290,
+            "reclassified_exact_non_errors": {
+                "total": 63,
+                "excluded_with_their_controls_from_fit_statistics": True,
+                "zero_vectors_used_as_observations": False,
+            },
+        }
+        informative, excluded = refit._informative_rows(rows, report)
+        self.assertEqual(len(informative), 290)
+        self.assertEqual(len(excluded), 63)
+        self.assertFalse(any(row["pair_id"] >= 290 for row in informative))
+
+    def test_refit_fails_closed_on_non_290_informative_atlas(self) -> None:
+        report = {
+            "informative_error_pairs": 289,
+            "reclassified_exact_non_errors": {
+                "total": 1,
+                "excluded_with_their_controls_from_fit_statistics": True,
+                "zero_vectors_used_as_observations": False,
+            },
+        }
+        with self.assertRaisesRegex(ValueError, "not 290"):
+            refit._informative_rows([reclassified_pair(0)], report)
+
     def test_matches_same_pattern_and_phase_support(self) -> None:
         rows = [
             pair(index, "discovery", {1: 1.0}, {2: 0.5})

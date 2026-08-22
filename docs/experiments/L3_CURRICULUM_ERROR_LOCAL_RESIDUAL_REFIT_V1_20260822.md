@@ -61,6 +61,12 @@ le même juge, afin de mesurer le transfert à travers la recherche native :
 - absence de hausse hors région ;
 - symétrie exacte et calibration conservées.
 
+Le refit authentifie les 353 paires sources, mais exige exactement les 290
+erreurs qui restent >= 50 cp après le juge exact. Les 63 sources reclassées et
+leurs contrôles appariés sont exclues ensemble du matching sham, du choix du
+pas, de la calibration et de la confirmation. Un gradient nul reclassé ne peut
+donc jamais compter comme observation favorable.
+
 Seulement après ce second écran peuvent être lancés deux pools frais disjoints
 de force, native 0,1 s primaire et Q00 d9 diagnostic. Aucune promotion n'est
 automatique.
