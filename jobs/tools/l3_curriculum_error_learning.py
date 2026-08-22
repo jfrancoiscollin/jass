@@ -41,6 +41,7 @@ SCHEMA_SELECTION = "jass.l3_curriculum_error_selection.v1"
 SCHEMA_SHARD = "jass.l3_curriculum_error_shard.v1"
 SCHEMA_REPORT = "jass.l3_curriculum_error_autopsy.v1"
 SCHEMA_REGION = "jass.l3_curriculum_error_region.v1"
+SCHEMA_SHAM_REPORT = "jass.l3_curriculum_sham_region.v1"
 JNNW_RECORD = struct.Struct("<QQQQBi b".replace(" ", ""))
 JNNW_MAGIC = b"JNNW"
 
@@ -622,6 +623,146 @@ def aggregate(
     return report, region, seeds_payload
 
 
+def make_sham_region(
+    selection: dict[str, Any],
+    shards: list[dict[str, Any]],
+    error_region: dict[str, Any],
+    *,
+    min_regret_cp: int,
+    max_control_regret_cp: int,
+    match_seed: int,
+    sham_seed: int,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build an equal-size, visit-matched control region for the local-fit sham arm."""
+    expected = len(shards)
+    if not shards or {int(row.get("shard", -1)) for row in shards} != set(range(expected)):
+        raise ValueError("sham source shards are incomplete")
+    if any(row.get("schema") != SCHEMA_SHARD for row in shards):
+        raise ValueError("sham source shard schema drift")
+    if any(int(row.get("nshards", -1)) != expected for row in shards):
+        raise ValueError("sham source shard count drift")
+    if any(int(row.get("max_rows", -1)) != 0 for row in shards):
+        raise ValueError("sham region refuses cost-preflight shards")
+    selection_sha = hashlib.sha256(_canonical(selection)).hexdigest()
+    if any(row.get("selection_sha256") != selection_sha for row in shards):
+        raise ValueError("sham source selection hash mismatch")
+    rows = [row for shard in shards for row in shard.get("rows", [])]
+    rows.sort(key=lambda row: int(row["ordinal"]))
+    if [int(row["ordinal"]) for row in rows] != list(range(int(selection["decisions"]))):
+        raise ValueError("sham source shards do not cover every selected decision")
+    if error_region.get("schema") != SCHEMA_REGION or error_region.get("fit_authorized") is not True:
+        raise ValueError("sham region requires a confirmed error region")
+    if error_region.get("selection_sha256") != selection_sha:
+        raise ValueError("error region and sham selection differ")
+    error_columns = sorted({int(value) for value in error_region.get("pattern_columns_full", [])})
+    if not error_columns:
+        raise ValueError("confirmed error region is empty")
+    if len(error_columns) != len(error_region.get("confirmation", [])):
+        raise ValueError("confirmed error region column/confirmation drift")
+
+    errors = _one_per_opening(
+        row for row in rows
+        if row["outcome"] == "loss" and bool(row["move_differs"])
+        and int(row["regret_cp"]) >= min_regret_cp
+    )
+    controls = _matched_controls(
+        errors, rows, seed=match_seed, max_control_regret=max_control_regret_cp
+    )
+    if len(controls) / max(len(errors), 1) < 0.8:
+        raise ValueError("matched-control fraction no longer satisfies the confirmed gate")
+    error_counts = _bucket_counts(errors)
+    control_counts = _bucket_counts(controls)
+    candidates = [
+        column for column, hits in control_counts.items()
+        if hits > 0 and column not in set(error_columns)
+        and hits >= error_counts.get(column, 0)
+    ]
+    if len(candidates) < len(error_columns):
+        raise ValueError("insufficient control-typical buckets for equal-size sham region")
+
+    available = set(candidates)
+    matches: list[dict[str, Any]] = []
+    for error_column in sorted(
+        error_columns,
+        key=lambda column: (-error_counts.get(column, 0), column),
+    ):
+        target_hits = error_counts.get(error_column, 0)
+        chosen = min(
+            available,
+            key=lambda column: (
+                abs(control_counts[column] - target_hits),
+                hashlib.sha256(f"{sham_seed}|{error_column}|{column}".encode("utf-8")).digest(),
+                column,
+            ),
+        )
+        available.remove(chosen)
+        matches.append({
+            "full_pattern_column": chosen,
+            "sham_source": "matched_non_loss_controls",
+            "matched_to_error_column": error_column,
+            "target_error_hits": target_hits,
+            "control_hits": control_counts[chosen],
+            "error_hits": error_counts.get(chosen, 0),
+            "absolute_visit_mismatch": abs(control_counts[chosen] - target_hits),
+        })
+    sham_columns = sorted(int(row["full_pattern_column"]) for row in matches)
+    champion_sha = {str(row.get("champion_sha256", "")) for row in shards}
+    jass_sha = {str(row.get("jass_sha256", "")) for row in shards}
+    search_sha = {str(row.get("search_params_sha256", "")) for row in shards}
+    if any(len(values) != 1 or not next(iter(values)) for values in (champion_sha, jass_sha, search_sha)):
+        raise ValueError("sham source identities are not byte-unique")
+    champion = next(iter(champion_sha))
+    if champion != error_region.get("champion_sha256"):
+        raise ValueError("sham champion differs from confirmed error region")
+    sham_region = {
+        "schema": SCHEMA_REGION,
+        "fold": "exact_rot180_colour_swap",
+        "fit_authorized": True,
+        "selection_sha256": selection_sha,
+        "champion_sha256": champion,
+        "jass_sha256": next(iter(jass_sha)),
+        "search_params_sha256": next(iter(search_sha)),
+        "pattern_columns_full": sham_columns,
+        "extras": [],
+        "selection": {
+            "kind": "matched_control_sham",
+            "unit": "opening_id",
+            "same_bucket_count_as_error_region": True,
+            "match_seed": match_seed,
+            "sham_seed": sham_seed,
+            "min_regret_cp": min_regret_cp,
+            "max_control_regret_cp": max_control_regret_cp,
+        },
+        "confirmation": sorted(matches, key=lambda row: int(row["full_pattern_column"])),
+        "strict_fit_contract": {
+            "train_dense_extras": False,
+            "train_pattern_mg_and_eg": True,
+            "freeze_everything_else_at_champion": True,
+        },
+        "promotion_authorized": False,
+    }
+    report = {
+        "schema": SCHEMA_SHAM_REPORT,
+        "verdict": "JASS_CURRICULUM_SHAM_REGION_READY",
+        "selection_sha256": selection_sha,
+        "error_region_sha256": hashlib.sha256(_canonical(error_region)).hexdigest(),
+        "champion_sha256": champion,
+        "error_buckets": len(error_columns),
+        "sham_buckets": len(sham_columns),
+        "overlap_buckets": len(set(error_columns) & set(sham_columns)),
+        "matched_error_openings": len(errors),
+        "matched_control_openings": len(controls),
+        "match_seed": match_seed,
+        "sham_seed": sham_seed,
+        "matches": matches,
+        "fit_authorized": True,
+        "promotion_authorized": False,
+    }
+    if report["overlap_buckets"] != 0 or report["error_buckets"] != report["sham_buckets"]:
+        raise ValueError("sham equal-size/disjoint contract failed")
+    return report, sham_region
+
+
 def _publish(outputs: list[tuple[Path, bytes]]) -> None:
     resolved = [path.resolve(strict=False) for path, _payload in outputs]
     if len(resolved) != len(set(resolved)):
@@ -687,6 +828,16 @@ def main(argv: list[str] | None = None) -> int:
     combine.add_argument("--report", type=Path, required=True)
     combine.add_argument("--region", type=Path, required=True)
     combine.add_argument("--seeds", type=Path, required=True)
+    sham = sub.add_parser("sham-region")
+    sham.add_argument("--selection", type=Path, required=True)
+    sham.add_argument("--shard", action="append", type=Path, required=True)
+    sham.add_argument("--error-region", type=Path, required=True)
+    sham.add_argument("--min-regret-cp", type=int, default=50)
+    sham.add_argument("--max-control-regret-cp", type=int, default=10)
+    sham.add_argument("--match-seed", type=int, default=2026082216)
+    sham.add_argument("--sham-seed", type=int, default=2026082217)
+    sham.add_argument("--report", type=Path, required=True)
+    sham.add_argument("--region", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command == "prepare":
         payload = prepare_games(args.games_dir, split_seed=args.split_seed)
@@ -696,7 +847,7 @@ def main(argv: list[str] | None = None) -> int:
         payload = analyse_shard(args)
         _publish([(args.out, _canonical(payload))])
         summary = {"schema": payload["schema"], "rows": len(payload["rows"])}
-    else:
+    elif args.command == "aggregate":
         selection = json.loads(args.selection.read_text(encoding="utf-8"))
         shards = [json.loads(path.read_text(encoding="utf-8")) for path in args.shard]
         report, region, seeds = aggregate(
@@ -724,6 +875,21 @@ def main(argv: list[str] | None = None) -> int:
             "verdict": report["verdict"],
             "fit_authorized": report["fit_authorized"],
         }
+    else:
+        selection = json.loads(args.selection.read_text(encoding="utf-8"))
+        shards = [json.loads(path.read_text(encoding="utf-8")) for path in args.shard]
+        error_region = json.loads(args.error_region.read_text(encoding="utf-8"))
+        report, region = make_sham_region(
+            selection,
+            shards,
+            error_region,
+            min_regret_cp=args.min_regret_cp,
+            max_control_regret_cp=args.max_control_regret_cp,
+            match_seed=args.match_seed,
+            sham_seed=args.sham_seed,
+        )
+        _publish([(args.report, _canonical(report)), (args.region, _canonical(region))])
+        summary = {"schema": report["schema"], "verdict": report["verdict"], "fit_authorized": True}
     print(json.dumps(summary, sort_keys=True))
     return 0
 
