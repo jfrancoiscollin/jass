@@ -99,15 +99,29 @@ for source in selection.get('sources',[]):
  indices=[i for i,p in enumerate(parts) if p in {'games-pool1','games-pool2'}]
  if len(indices)!=1: raise SystemExit(f"unstable source path: {source['path']}")
  rel='/'.join(parts[indices[0]:])
- print(f'artefacts/{rel}={rel}')
+ print(f"artefacts/{rel}={rel.replace('/', '__')}")
 PY_GAMES
 )
 [ "${#GAME_SPECS[@]}" -eq 1536 ] || die "sealed game source count drift"
 GAME_ARGS=(); for spec in "${GAME_SPECS[@]}"; do GAME_ARGS+=(--file "$spec"); done
 timeout 3600s python3 jobs/tools/fetch_result_files.py --prefix "$SOURCE_ROOT" \
-  "${GAME_ARGS[@]}" --out-dir "$IN/source-games" \
+  "${GAME_ARGS[@]}" --out-dir "$IN/source-games-flat" \
   --report "$ART/verified-1468-games.json" --expected-state failed \
   >"$W/fetch-games.log" 2>&1
+python3 - "$IN/source-games-flat" "$IN/source-games" <<'PY_LAYOUT'
+import os,sys
+from pathlib import Path
+flat,out=map(Path,sys.argv[1:3])
+paths=sorted(flat.glob('games-pool*__game-*.json'))
+if len(paths)!=1536: raise SystemExit(f'flat game source count drift: {len(paths)}')
+for source in paths:
+ pool,name=source.name.split('__',1)
+ if pool not in {'games-pool1','games-pool2'} or '/' in name or '\\' in name:
+  raise SystemExit(f'unsafe flat game source: {source.name}')
+ destination=out/pool/name
+ destination.parent.mkdir(parents=True,exist_ok=True)
+ os.link(source,destination)
+PY_LAYOUT
 python3 jobs/tools/l3_curriculum_error_learning.py transitions \
   --selection "$IN/error-selection.json" \
   --games-dir "$IN/source-games/games-pool1" --games-dir "$IN/source-games/games-pool2" \

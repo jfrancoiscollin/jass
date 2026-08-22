@@ -34,6 +34,9 @@ class CurriculumErrorAutopsyResumeTemplateTests(unittest.TestCase):
             "dump_legal_endpoints_and_authenticated_successor_state",
             '--transitions "$ART/error-transitions.json"',
             'GAME_SPECS',
+            "rel.replace('/', '__')",
+            "source-games-flat",
+            "os.link(source,destination)",
             "resolution.get('ambiguous')!=0",
             "JASS_CURRICULUM_ERROR_REGION_CONFIRMED",
         ):
