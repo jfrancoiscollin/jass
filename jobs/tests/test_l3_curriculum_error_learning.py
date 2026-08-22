@@ -171,6 +171,24 @@ class CurriculumErrorLearningTests(unittest.TestCase):
         self.assertEqual(seeds[:4], b"JNNW")
         self.assertEqual(struct.unpack_from("<I", seeds, 4)[0], 24)
         self.assertEqual(len(seeds), 8 + 24 * 38)
+        sham_report, sham_region = learning.make_sham_region(
+            selection,
+            [shard],
+            region,
+            min_regret_cp=50,
+            max_control_regret_cp=10,
+            match_seed=19,
+            sham_seed=23,
+        )
+        self.assertEqual(sham_report["verdict"], "JASS_CURRICULUM_SHAM_REGION_READY")
+        self.assertEqual(sham_report["error_buckets"], sham_report["sham_buckets"])
+        self.assertEqual(sham_report["overlap_buckets"], 0)
+        self.assertEqual(
+            len(sham_region["pattern_columns_full"]), len(region["pattern_columns_full"])
+        )
+        self.assertFalse(
+            set(sham_region["pattern_columns_full"]) & set(region["pattern_columns_full"])
+        )
 
     def test_aggregate_refuses_terminal_loss_without_regret(self) -> None:
         selection = {"schema": learning.SCHEMA_SELECTION, "decisions": 2, "rows": []}
