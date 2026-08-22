@@ -69,7 +69,7 @@ for gate,value in report['mechanistic_gates'].items():
     (art/f"GATE__{gate.upper()}__{str(value).upper()}").touch()
 architecture=report.get('fixed_architecture')
 if architecture:
-    (art/'FIXED__CANONICAL_EQUIVARIANT__ALPHA_100__ADV_25__MARGIN_GT50_LE100__CAP_75').touch()
+    (art/'FIXED__PAIRED_IMAGE_D9__CANONICAL_EQUIVARIANT__ALPHA_100__ADV_25__MARGIN_GT50_LE100__CAP_75').touch()
 for name,value in (
     ('VALIDATION_DECISION_PAYLOAD_READS',0),('OUTER_CONFIRM_DECISION_PAYLOAD_READS',0),
     ('DIAGNOSTIC_FITS',0),('STRENGTH_GAMES',0),('FROZEN_READS',0),

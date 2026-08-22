@@ -174,7 +174,7 @@ def analyze(report: dict[str, Any], readout: dict[str, Any]) -> dict[str, Any]:
 
     passed = all(gates.values())
     architecture = {
-        "family": "canonical_equivariant_pairwise_ridge_root_trace_residual_with_annular_risk_gate",
+        "family": "paired_exact_image_canonical_equivariant_pairwise_ridge_root_trace_residual_with_annular_risk_gate",
         "features": list(ranker.FEATURE_NAMES),
         "feature_depths": list(ranker.FEATURE_DEPTHS),
         "alpha": FIXED_ALPHA,
@@ -183,13 +183,24 @@ def analyze(report: dict[str, Any], readout: dict[str, Any]) -> dict[str, Any]:
         "baseline_d9_margin_upper_closed_cp": FIXED_MARGIN_UPPER_CLOSED_CP,
         "correction_cap_cp": ranker.CORRECTION_CAP_CP,
         "anchor": "CURRICULUM_Q00_d9",
-        "additional_search_nodes": 0,
+        "additional_search": {
+            "scope": "only_after_original_d9_margin_enters_open_closed_50_100_cp_annulus",
+            "operation": "one_exact_image_Q00_d9_root_trace",
+            "outside_annulus": "none",
+            "causal_control": "aligned_and_shuffled_arms_must_pay_identical_trace_cost",
+        },
         "canonical_coordinates": "lexicographic_min_of_exact_state_and_its_exact_image",
         "canonical_tie_break": "action_code_in_canonical_coordinates",
-        "trace_transport": "remap_completed_d6_d9_root_trace_without_new_search",
+        "trace_transport": "average_original_and_mapped_exact_image_completed_d6_d9_root_traces_in_canonical_coordinates",
         "symmetry": "equivariant_by_construction_map_selected_action_back_to_caller_orientation",
+        "runtime_consensus": "abstain_if_original_and_exact_image_legal_sets_or_intervention_eligibility_disagree",
         "intervention": "only_if_50_lt_baseline_margin_le_100_and_predicted_advantage_ge_25",
         "abstention": "bit_identical_to_CURRICULUM_outside_annulus",
+        "required_validation_controls": [
+            "same_cost_shuffled_residual",
+            "same_cost_zero_residual",
+            "unaltered_CURRICULUM_secondary",
+        ],
     }
     return {
         "schema": SCHEMA,

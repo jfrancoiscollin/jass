@@ -35,7 +35,7 @@ class AnnulusPreregistrationTemplateTests(unittest.TestCase):
             self.assertIn(token, TEXT)
 
     def test_fixed_architecture_marker_has_no_grid(self):
-        self.assertIn("FIXED__CANONICAL_EQUIVARIANT__ALPHA_100__ADV_25__MARGIN_GT50_LE100__CAP_75", TEXT)
+        self.assertIn("FIXED__PAIRED_IMAGE_D9__CANONICAL_EQUIVARIANT__ALPHA_100__ADV_25__MARGIN_GT50_LE100__CAP_75", TEXT)
         self.assertIn("architectures=1", TEXT)
 
 
