@@ -92,6 +92,8 @@ def command_for(args: argparse.Namespace, shard: int) -> list[str]:
             "--results-jsonl",
             str(Path(args.work_dir) / f"games.{shard}.jsonl"),
         ])
+    if getattr(args, "dump_games_dir", None):
+        command.extend(["--dump-games-dir", str(Path(args.dump_games_dir))])
     if args.movetime is not None:
         command.extend(["--movetime", str(args.movetime)])
     else:
@@ -216,6 +218,34 @@ def run_gate(args: argparse.Namespace) -> dict:
 
     logs = [out_dir / f"gate.{shard}.log" for shard in range(args.nshards)]
     result = parse_result_files(logs, args.nshards)
+    if args.dump_games_dir:
+        dump_dir = Path(args.dump_games_dir)
+        with open(args.openings_file, encoding="utf-8") as stream:
+            opening_count = sum(
+                1 for line in stream if line.split("#", 1)[0].strip()
+            )
+        expected_games = opening_count * args.pairs * 2
+        dumps = sorted(dump_dir.glob("game-*.json"))
+        if len(dumps) != expected_games:
+            raise ValueError(
+                f"complete game dumps contain {len(dumps)} files, expected {expected_games}"
+            )
+        indices = []
+        for path in dumps:
+            row = json.loads(path.read_text(encoding="utf-8"))
+            if row.get("schema") != "jass.complete_game_dump.v1":
+                raise ValueError(f"{path}: complete game dump schema drift")
+            if len(row.get("fens", [])) != len(row.get("moves", [])) + 1:
+                raise ValueError(f"{path}: incomplete game trajectory")
+            indices.append(int(row["game_id"]))
+        if set(indices) != set(range(expected_games)) or len(indices) != len(set(indices)):
+            raise ValueError("complete game dump indices are not a unique complete range")
+        result["complete_game_dumps"] = {
+            "schema": "jass.complete_game_dump_set.v1",
+            "directory": str(dump_dir),
+            "games": expected_games,
+            "trajectory_contract_valid": True,
+        }
     if args.paired_bootstrap_samples > 0:
         with open(args.openings_file, encoding="utf-8") as stream:
             openings = [
@@ -280,6 +310,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--paired-bootstrap-samples", type=int, default=0,
                         help="when positive, retain per-game results and cluster-bootstrap openings")
     parser.add_argument("--paired-bootstrap-seed", type=int, default=20260814)
+    parser.add_argument("--dump-games-dir",
+                        help="retain and validate immutable complete trajectories for every game")
     parser.add_argument("--work-dir", required=True)
     parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)

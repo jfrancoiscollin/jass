@@ -239,19 +239,27 @@ def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("judge_depth must be strictly deeper than teacher_depth")
     cv = _cv_module()
     ctx = _ctx_module()
+    search_params_path = Path(args.search_params)
+    search_params = search_params_path.read_text(encoding="utf-8").strip()
+    if not search_params or "\n" in search_params:
+        raise ValueError("search-params file must contain one non-empty fingerprint line")
     engine = cv.JassEngine(
         args.jass,
         label=f"curriculum-autopsy-s{args.shard}",
         pattern_path=args.champion,
-        search_params=args.search_params,
+        search_params=search_params,
     )
     referee = cv.Referee(args.jass)
     output: list[dict[str, Any]] = []
     try:
+        selected_rows = 0
         for source in selection["rows"]:
             ordinal = int(source["ordinal"])
             if ordinal % args.nshards != args.shard:
                 continue
+            if args.max_rows and selected_rows >= args.max_rows:
+                break
+            selected_rows += 1
             fen = str(source["fen"])
             actual = cv.parse_scan_move(str(source["actual_move"]))
             best, best_root = ctx._search(engine, fen, args.teacher_depth)
@@ -305,11 +313,12 @@ def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
         "selection_sha256": sha256(selection_path),
         "champion_sha256": sha256(Path(args.champion)),
         "jass_sha256": sha256(Path(args.jass)),
-        "search_params_sha256": sha256(Path(args.search_params)),
+        "search_params_sha256": sha256(search_params_path),
         "shard": args.shard,
         "nshards": args.nshards,
         "teacher_depth": args.teacher_depth,
         "judge_depth": args.judge_depth,
+        "max_rows": args.max_rows,
         "rows": output,
     }
 
@@ -525,8 +534,11 @@ def aggregate(
     search_params_sha256 = authenticated_shard_value("search_params_sha256")
     teacher_depths = {int(shard.get("teacher_depth", -1)) for shard in shards}
     judge_depths = {int(shard.get("judge_depth", -1)) for shard in shards}
+    max_rows = {int(shard.get("max_rows", -1)) for shard in shards}
     if len(teacher_depths) != 1 or len(judge_depths) != 1:
         raise ValueError("shard depth contract drift")
+    if max_rows != {0}:
+        raise ValueError("aggregate refuses cost-preflight shards")
     teacher_depth = next(iter(teacher_depths))
     judge_depth = next(iter(judge_depths))
     if teacher_depth <= 0 or judge_depth <= teacher_depth:
@@ -655,6 +667,8 @@ def main(argv: list[str] | None = None) -> int:
     worker.add_argument("--teacher-depth", type=int, default=10)
     worker.add_argument("--judge-depth", type=int, default=12)
     worker.add_argument("--symmetry-rows", type=int, default=32)
+    worker.add_argument("--max-rows", type=int, default=0,
+                        help="bounded deterministic rows per shard for cost preflight; 0 means all")
     worker.add_argument("--shard", type=int, required=True)
     worker.add_argument("--nshards", type=int, required=True)
     worker.add_argument("--out", type=Path, required=True)

@@ -56,6 +56,10 @@ def main(argv):
     p.add_argument("--results-jsonl", default=None,
                    help="optional per-game JSONL for paired opening-level inference; each shard "
                         "must write a distinct path")
+    p.add_argument("--dump-games-dir", default=None,
+                   help="optional directory for immutable complete per-game JSON dumps "
+                        "(opening, moves and FEN trajectory); global game indices make "
+                        "concurrent shard filenames disjoint")
     p.add_argument("--openings-file", default=None,
                    help="play from custom opening FENs (one per line, '#' comments). With deterministic "
                         "search each (opening, colour) is ONE unique game, so the built-in 9-opening pool "
@@ -88,6 +92,9 @@ def main(argv):
     a_wins = b_wins = draws = 0
     t0 = time.time()
     results_handle = open(args.results_jsonl, "w", encoding="utf-8") if args.results_jsonl else None
+    dump_dir = Path(args.dump_games_dir) if args.dump_games_dir else None
+    if dump_dir is not None:
+        dump_dir.mkdir(parents=True, exist_ok=True)
     for game_index, opening_index, pair_index, opening, a_is_white in specs:
         white, black = (a, b) if a_is_white else (b, a)
         error = None
@@ -116,6 +123,28 @@ def main(argv):
             else:
                 b_wins += 1
                 score_a = 0.0
+            if dump_dir is not None:
+                dump_path = dump_dir / f"game-{game_index:08d}.json"
+                payload = {
+                    "schema": "jass.complete_game_dump.v1",
+                    "game_id": game_index,
+                    "opening_id": hashlib.sha256(opening.encode("utf-8")).hexdigest()[:16],
+                    "opening_index": opening_index,
+                    "opening": opening,
+                    "pair_index": pair_index,
+                    "jass_is_white": a_is_white,
+                    "jass_score": score_a,
+                    "outcome": outcome,
+                    "reason": r.reason,
+                    "plies": r.plies,
+                    "moves": list(r.moves),
+                    "fens": list(r.fens),
+                }
+                if len(payload["fens"]) != len(payload["moves"]) + 1:
+                    raise RuntimeError("complete game trajectory contract drift")
+                with dump_path.open("x", encoding="utf-8") as handle:
+                    json.dump(payload, handle, indent=2, sort_keys=True)
+                    handle.write("\n")
         if results_handle:
             results_handle.write(json.dumps({
                 "game_index": game_index,
