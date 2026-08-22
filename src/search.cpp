@@ -1627,6 +1627,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                  << " searched=" << trace_index
                  << " bestmove=" << root_trace_move(iter_best)
                  << " score=" << iter_score
+                 << " nodes=" << s.nodes
                  << " alpha=" << alpha
                  << " beta=" << beta
                  << " complete=" << (!s.stopped && cur_alpha < beta ? 1 : 0);
