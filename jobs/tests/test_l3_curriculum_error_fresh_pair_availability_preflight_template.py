@@ -48,6 +48,9 @@ class FreshPairAvailabilityTemplateTest(unittest.TestCase):
         ):
             self.assertIn(token, self.text)
 
+    def test_accepts_the_preregistered_anchored_oos_adapter(self) -> None:
+        self.assertIn("anchored-local-refit-oos", self.text)
+
     def test_only_root_profiles_are_computed(self) -> None:
         self.assertIn("l3_curriculum_search_error_atlas.py profile", self.text)
         self.assertNotIn("l3_curriculum_search_error_atlas.py atlas", self.text)

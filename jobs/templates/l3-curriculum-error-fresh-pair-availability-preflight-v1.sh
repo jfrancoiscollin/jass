@@ -80,7 +80,7 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a
 trap 'exit 143' TERM
 trap 'exit 130' INT
 
-[[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-(fresh-pair|endgame-abstention)-availability-preflight-v1$ ]] || die "invalid job nomenclature"
+[[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-(fresh-pair|endgame-abstention|anchored-local-refit-oos)-availability-preflight-v1$ ]] || die "invalid job nomenclature"
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ] || die "worktree contract mismatch"
