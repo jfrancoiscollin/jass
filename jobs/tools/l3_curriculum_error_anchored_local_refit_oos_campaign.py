@@ -21,6 +21,31 @@ PAIR_COUNT = sum(PAIR_COUNT_BY_POOL.values())
 STOP_RULE = "first_300_valid_pairs_per_pool_in_frozen_pre_target_order"
 
 
+def _check_availability_contract(
+    preregistration: dict[str, Any],
+    availability_report: dict[str, Any],
+    lattice: dict[str, Any],
+) -> None:
+    availability._validate_preregistration(preregistration)
+    if (
+        availability_report.get("schema") != availability.SCHEMA_TERMINAL
+        or availability_report.get("verdict") != availability.READY
+        or availability_report.get("passed") is not True
+        or availability_report.get("oos_target_reconstruction_authorized") is not True
+        or availability_report.get("pairs_required_by_pool") != PAIR_COUNT_BY_POOL
+    ):
+        raise ValueError("anchored OOS availability authorization drift")
+    if (
+        lattice.get("schema") != availability.SCHEMA_LATTICE
+        or int(lattice.get("pair_count_required", -1)) != PAIR_COUNT
+        or lattice.get("pair_count_required_by_pool") != PAIR_COUNT_BY_POOL
+        or lattice.get("selection_rule") != STOP_RULE
+        or lattice.get("candidate_order_fixed_before_targets") is not True
+        or int(lattice.get("exact_action_value_reads", -1)) != 0
+    ):
+        raise ValueError("anchored OOS lattice/per-pool order drift")
+
+
 def prepare(
     preregistration: dict[str, Any],
     availability_report: dict[str, Any],
@@ -29,6 +54,7 @@ def prepare(
     profile_selection: dict[str, Any],
     profile_shards: list[dict[str, Any]],
 ) -> tuple[dict[str, Any], list[str]]:
+    _check_availability_contract(preregistration, availability_report, lattice)
     return base.prepare_with_contract(
         preregistration,
         availability_report,
@@ -84,6 +110,14 @@ def audit(
     *,
     champion_sha256: str,
 ) -> dict[str, Any]:
+    if (
+        pairs.get("candidate_order_fixed_before_targets") is not True
+        or pairs.get("label_based_ranking") is not False
+        or pairs.get("stop_rule") != STOP_RULE
+        or pairs.get("pairs_by_pool") != PAIR_COUNT_BY_POOL
+        or int(pairs.get("maximum_states_per_source_game", -1)) > 2
+    ):
+        raise ValueError("anchored OOS finalized selection-rule drift")
     rows, identities = base._load_fresh_rows(pairs, shards, pair_count=PAIR_COUNT)
     if Counter(row["source_pool"] for row in rows) != Counter(PAIR_COUNT_BY_POOL):
         raise ValueError("anchored OOS dataset is not exactly 300 pairs per pool")
