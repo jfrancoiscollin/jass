@@ -58,7 +58,7 @@ class CurriculumErrorAutopsyTemplateTests(unittest.TestCase):
             "cpx62-1492-l3-curriculum-error-autopsy-v1/20260822T212256Z-454b3862",
             TEMPLATE,
         )
-        self.assertIn('[ "${#EXCL_NAMES[@]}" -eq 9 ]', TEMPLATE)
+        self.assertIn("EXPECTED_EXCLUSION_COUNT=9", TEMPLATE)
 
     def test_loss_first_source_stops_before_deep_targets(self):
         for token in (
@@ -68,8 +68,19 @@ class CurriculumErrorAutopsyTemplateTests(unittest.TestCase):
             "DEEP_TARGET_COMPUTATIONS__0",
             "loss_first_all_legal_sibling_labeling",
             "'deep_target_computations':0",
+            "EXPECTED_EXCLUSION_COUNT=30",
+            "pool-context2-curriculum-alpha30-first3000",
+            "pool-replay-doe-1451-pool2",
         ):
             self.assertIn(token, TEMPLATE)
+        legacy = TEMPLATE.split(
+            'LOSS_FIRST_LEGACY_EXCLUDE_SPECS="', 1
+        )[1].split('"\n\nEXPECTED_EXCLUSION_COUNT=9', 1)[0]
+        recent = TEMPLATE.split('EXCLUDE_SPECS="', 1)[1].split(
+            '"\n\nLOSS_FIRST_LEGACY_EXCLUDE_SPECS=', 1
+        )[0]
+        self.assertEqual(len(legacy.splitlines()), 21)
+        self.assertEqual(len(recent.splitlines()), 8)
 
 
 if __name__ == "__main__":

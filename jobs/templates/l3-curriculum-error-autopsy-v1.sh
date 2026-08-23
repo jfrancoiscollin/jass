@@ -50,6 +50,34 @@ pool-curriculum-error-1468-pool2|r2:jass-data/runs/cpx62-1468-l3-curriculum-erro
 pool-curriculum-error-1492-pool1|r2:jass-data/runs/cpx62-1492-l3-curriculum-error-autopsy-v1/20260822T212256Z-454b3862|artefacts/curriculum-error-pool1-openings.fen
 pool-curriculum-error-1492-pool2|r2:jass-data/runs/cpx62-1492-l3-curriculum-error-autopsy-v1/20260822T212256Z-454b3862|artefacts/curriculum-error-pool2-openings.fen"
 
+LOSS_FIRST_LEGACY_EXCLUDE_SPECS="pool-context2-curriculum-alpha30-first3000|r2:jass-data/runs/cpx62-1398-l3-context2-curriculum-alpha30-fresh3000-pool1-v1/20260818T061513Z-f60336ca|artefacts/context2-curriculum-alpha30-pool1-openings.fen
+pool-context2-curriculum-alpha30-second3000|r2:jass-data/runs/cpx62-1401-l3-context2-curriculum-alpha30-fresh3000-pool2-v1/20260818T073556Z-f60336ca|artefacts/context2-curriculum-alpha30-pool2-openings.fen
+pool-context2-alpha100-first3000|r2:jass-data/runs/cpx62-1386-l3-context2-alpha100-fresh3000-pool1-v1/20260817T145036Z-05554755|artefacts/context2-alpha100-pool1-openings.fen
+pool-context2-primary-first3000|r2:jass-data/runs/cpx62-1375-l3-context2-primary-pool1-v1/20260817T025306Z-3393763d|artefacts/context2-primary-pool1-openings.fen
+pool-context2-primary-second3000|r2:jass-data/runs/cpx62-1377-l3-context2-primary-pool2-v1/20260817T030349Z-3393763d|artefacts/context2-primary-pool2-openings.fen
+pool-context30-causal-first3000|r2:jass-data/runs/cpx62-1360-l3-context30-causal-pool1-v1/20260816T075225Z-196d5e1d|artefacts/context30-causal-pool1-openings.fen
+pool-context30-causal-second3000|r2:jass-data/runs/cpx62-1361-l3-context30-causal-pool2-v1/20260816T080325Z-196d5e1d|artefacts/context30-causal-pool2-openings.fen
+pool-d-champion-first3000|r2:jass-data/runs/cpx62-1348-jass-d-champion-fresh3000-pool-v1/20260815T065455Z-18c38a33|artefacts/d-champion-fresh3000-openings.fen
+pool-d-champion-replication3000|r2:jass-data/runs/cpx62-1351-jass-d-champion-replication3000-pool-v1/20260815T083517Z-18c38a33|artefacts/d-champion-replication3000-openings.fen
+pool-abcd-highn1500|r2:jass-data/runs/home-1108-l3-pure-reverse-seed-scale4m-independent-readout-v1/20260731T034759Z-3351b160|artefacts/reverse-seed-scale4m-readout-openings.fen
+pool-abcd-source500|r2:jass-data/runs/home-0984bis-l3-pure-turnover-l2-preflight-v2/20260726T122615Z-5ef14ffe|artefacts/turnover-l2-eval-openings.fen
+pool-big3000|r2:jass-data/runs/cpx62-1154-l3-big-opening-pool-v1/20260802T120251Z-9b57e0aa|artefacts/big3000-openings.fen
+pool-big3000b|r2:jass-data/runs/cpx62-1183-l3-second-big-opening-pool/20260805T155017Z-cd9064f9|artefacts/big3000b-openings.fen
+pool-vol8m|r2:jass-data/runs/home-1004-l3-pure-volume8m-preflight-v2/20260727T211936Z-90d3aad1|artefacts/vol8m-eval-openings.fen
+pool-succession|r2:jass-data/runs/home-0995-l3-pure-turnover-succession-preflight-v2/20260727T054246Z-f20e59d0|artefacts/turnover-succession-openings.fen
+pool-context3-1419-force-pool1|r2:jass-data/runs/cpx62-1419-l3-context3-two-pool-force-v1/20260819T112556Z-8adc506a|artefacts/ctx3-force-pool1-openings.fen
+pool-context3-1419-force-pool2|r2:jass-data/runs/cpx62-1419-l3-context3-two-pool-force-v1/20260819T112556Z-8adc506a|artefacts/ctx3-force-pool2-openings.fen
+pool-context3-1428-force-pool1|r2:jass-data/runs/cpx62-1428-l3-context3-two-pool-force-exact-extras-v2/20260820T005123Z-17517b38|artefacts/ctx3-force-pool1-openings.fen
+pool-context3-1428-force-pool2|r2:jass-data/runs/cpx62-1428-l3-context3-two-pool-force-exact-extras-v2/20260820T005123Z-17517b38|artefacts/ctx3-force-pool2-openings.fen
+pool-replay-doe-1451-pool1|r2:jass-data/runs/cpx62-1451-l3-exploratory-replay-force-resume-v3/20260821T063856Z-b9b6d9ad|artefacts/replay-doe-pool1-openings.fen
+pool-replay-doe-1451-pool2|r2:jass-data/runs/cpx62-1451-l3-exploratory-replay-force-resume-v3/20260821T063856Z-b9b6d9ad|artefacts/replay-doe-pool2-openings.fen"
+
+EXPECTED_EXCLUSION_COUNT=9
+if [ "$LOSS_FIRST_SOURCE_ONLY" = 1 ]; then
+  EXCLUDE_SPECS="$LOSS_FIRST_LEGACY_EXCLUDE_SPECS"$'\n'"$EXCLUDE_SPECS"
+  EXPECTED_EXCLUSION_COUNT=30
+fi
+
 MON=""
 monitor(){
   ( t0=$(date +%s); while true; do
@@ -187,7 +215,7 @@ while IFS='|' read -r label prefix remote_path expected_state; do
     >"$W/fetch-$label.log" 2>&1 || die "historical pool fetch failed: $label"
   EXCL_ARGS+=(--exclude "$IN/$label.fen"); EXCL_NAMES+=("$label")
 done <<<"$EXCLUDE_SPECS"
-[ "${#EXCL_NAMES[@]}" -eq 9 ] || die "exclusion count drift"
+[ "${#EXCL_NAMES[@]}" -eq "$EXPECTED_EXCLUSION_COUNT" ] || die "exclusion count drift"
 
 generate_pool(){
   local index="$1" seed="$2" out="curriculum-error-pool${1}-openings"
