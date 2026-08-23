@@ -24,22 +24,33 @@ CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1
 CURRICULUM_ROOT="r2:jass-data/runs/$CURRICULUM_JOB/$CURRICULUM_ATTEMPT"
 PREREG_ROOT="r2:jass-data/runs/$PREREG_SOURCE_JOB/$PREREG_SOURCE_ATTEMPT"
 TRAINING_ROOT="r2:jass-data/runs/$TRAINING_SOURCE_JOB/$TRAINING_SOURCE_ATTEMPT"
-NOPEN=1920
-CANDIDATES=60000
-POOL_SEED_1=2026082264
-POOL_SEED_2=2026082265
-SPLIT_SEED=2026082266
+NOPEN="${AVAILABILITY_OPENINGS_PER_POOL:-1920}"
+SOURCE_GAMES_EXPECTED=$((NOPEN * 4))
+CANDIDATES="${AVAILABILITY_OPENING_CANDIDATES:-60000}"
+POOL_SEED_1="${AVAILABILITY_POOL_SEED_1:-2026082264}"
+POOL_SEED_2="${AVAILABILITY_POOL_SEED_2:-2026082265}"
+SPLIT_SEED="${AVAILABILITY_SPLIT_SEED:-2026082266}"
+AVAILABILITY_MODULE="${AVAILABILITY_MODULE:-jobs.tools.l3_curriculum_error_fresh_pair_availability_preflight}"
+AVAILABILITY_TOOL="${AVAILABILITY_TOOL:-jobs/tools/l3_curriculum_error_fresh_pair_availability_preflight.py}"
+PREREG_EXPECTED_VERDICT="${PREREG_EXPECTED_VERDICT:-JASS_CURRICULUM_ERROR_RESIDUAL_POWER_EXTENSION_PREREGISTERED}"
+PREREG_AVAILABILITY_AUTH_KEY="${PREREG_AVAILABILITY_AUTH_KEY:-fresh_pair_mining_authorized}"
+READY_VERDICT="${AVAILABILITY_READY_VERDICT:-JASS_CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY_READY}"
+NOT_ESTABLISHED_VERDICT="${AVAILABILITY_NOT_ESTABLISHED_VERDICT:-JASS_CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY_NOT_ESTABLISHED}"
+CAMPAIGN_NAME="${AVAILABILITY_CAMPAIGN_NAME:-CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY}"
+EXPECTED_EXCLUSION_COUNT="${AVAILABILITY_EXPECTED_EXCLUSION_COUNT:-5}"
 NSH=16
 PAR=16
 MOVETIME=0.1
 PROFILE_PREFLIGHT_ROWS=1
-MAX_PROFILE_MINUTES=180
+MAX_PROFILE_MINUTES="${AVAILABILITY_MAX_PROFILE_MINUTES:-180}"
 CACHE_MB=128
 
 EXCLUDE_SPECS="pool-curriculum-error-1492-pool1|r2:jass-data/runs/cpx62-1492-l3-curriculum-error-autopsy-v1/20260822T212256Z-454b3862|artefacts/curriculum-error-pool1-openings.fen
 pool-curriculum-error-1492-pool2|r2:jass-data/runs/cpx62-1492-l3-curriculum-error-autopsy-v1/20260822T212256Z-454b3862|artefacts/curriculum-error-pool2-openings.fen
 pool-curriculum-error-1504-pool1|r2:jass-data/runs/cpx62-1504-l3-curriculum-error-autopsy-v1/20260823T000356Z-ca1b91e1|artefacts/curriculum-error-pool1-openings.fen
 pool-curriculum-error-1504-pool2|r2:jass-data/runs/cpx62-1504-l3-curriculum-error-autopsy-v1/20260823T000356Z-ca1b91e1|artefacts/curriculum-error-pool2-openings.fen"
+[ -z "${AVAILABILITY_EXTRA_EXCLUDE_SPECS:-}" ] || EXCLUDE_SPECS="$EXCLUDE_SPECS
+$AVAILABILITY_EXTRA_EXCLUDE_SPECS"
 
 MON=""
 monitor(){
@@ -48,7 +59,7 @@ monitor(){
         printf 'time_fr=%s\n' "$(TZ=Europe/Paris date '+%Y-%m-%dT%H:%M:%S%z')"
         printf 'phase=%s\n' "$(cat "$STAGE" 2>/dev/null || echo unknown)"
         printf 'elapsed_min=%d\n' "$(( ($(date +%s)-t0)/60 ))"
-        printf 'games_dumped=%s/7680\n' "$(find "$GAMES1" "$GAMES2" -name 'game-*.json' 2>/dev/null | wc -l)"
+        printf 'games_dumped=%s/%s\n' "$(find "$GAMES1" "$GAMES2" -name 'game-*.json' 2>/dev/null | wc -l)" "$SOURCE_GAMES_EXPECTED"
         printf 'profile_shards=%s/16\n' "$(find "$PROFILES" -name 'shard-*.json' 2>/dev/null | wc -l)"
       } >"$PROG.tmp"
       mv "$PROG.tmp" "$PROG"; cp "$PROG" "$ART/PROGRESS.txt"
@@ -69,7 +80,7 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a
 trap 'exit 143' TERM
 trap 'exit 130' INT
 
-[[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-fresh-pair-availability-preflight-v1$ ]] || die "invalid job nomenclature"
+[[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-(fresh-pair|endgame-abstention)-availability-preflight-v1$ ]] || die "invalid job nomenclature"
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ] || die "worktree contract mismatch"
@@ -78,16 +89,20 @@ trap 'exit 130' INT
 [ "${FRESH_TRAJECTORY_MINING_ONLY:-0}" = 1 ] && [ "${NO_EXACT_ACTION_TARGETS:-0}" = 1 ] || die "target-free mining guards missing"
 [ "${NO_FIT:-0}" = 1 ] && [ "${NO_PATTERNEVAL_FIT:-0}" = 1 ] && [ "${NO_STRENGTH_GAMES:-0}" = 1 ] || die "fit/force guards missing"
 [ "${NO_FROZEN_READ:-0}" = 1 ] && [ "${NO_AUTOMATIC_PROMOTION:-0}" = 1 ] && [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "continuation guards missing"
-say "experiment=CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY games=7680 pools=2 targets=0 fits=0"
+say "experiment=$CAMPAIGN_NAME games=$SOURCE_GAMES_EXPECTED pools=2 targets=0 fits=0"
 monitor
 
 stage repository-contract-tests
-python3 -m py_compile jobs/tools/l3_curriculum_error_fresh_pair_availability_preflight.py
-python3 -m unittest \
-  jobs.tests.test_l3_curriculum_error_fresh_pair_availability_preflight \
-  jobs.tests.test_l3_curriculum_error_fresh_pair_availability_preflight_template \
-  jobs.tests.test_l3_curriculum_error_residual_power_extension_preregistration \
-  jobs.tests.test_l3_curriculum_search_error_atlas >"$W/tests.log" 2>&1
+python3 -m py_compile "$AVAILABILITY_TOOL"
+test_modules=(
+  jobs.tests.test_l3_curriculum_error_fresh_pair_availability_preflight
+  jobs.tests.test_l3_curriculum_error_fresh_pair_availability_preflight_template
+  jobs.tests.test_l3_curriculum_error_residual_power_extension_preregistration
+  jobs.tests.test_l3_curriculum_search_error_atlas
+)
+[ -z "${AVAILABILITY_EXTRA_TEST_MODULES:-}" ] || read -r -a extra_test_modules <<<"$AVAILABILITY_EXTRA_TEST_MODULES"
+[ -z "${AVAILABILITY_EXTRA_TEST_MODULES:-}" ] || test_modules+=("${extra_test_modules[@]}")
+python3 -m unittest "${test_modules[@]}" >"$W/tests.log" 2>&1
 
 stage fetch-authenticate-preregistration-training-cost-and-curriculum
 timeout 1800s python3 jobs/tools/fetch_result_files.py --prefix "$PREREG_ROOT" \
@@ -108,16 +123,23 @@ timeout 1800s python3 jobs/tools/fetch_result_files.py --prefix "$CURRICULUM_ROO
 gunzip -t "$IN/curriculum.pjtw.gz"; gunzip -c "$IN/curriculum.pjtw.gz" >"$W/curriculum.pjtw"
 python3 - "$IN" "$ART" "$PREREG_SOURCE_JOB" "$PREREG_SOURCE_ATTEMPT" "$PREREG_SOURCE_CODE" \
   "$TRAINING_SOURCE_JOB" "$TRAINING_SOURCE_ATTEMPT" "$TRAINING_SOURCE_CODE" \
-  "$CURRICULUM_JOB" "$CURRICULUM_ATTEMPT" "$CURRICULUM_CODE" "$CURRICULUM_SHA" <<'PY_AUTH'
-import hashlib,json,sys
+  "$CURRICULUM_JOB" "$CURRICULUM_ATTEMPT" "$CURRICULUM_CODE" "$CURRICULUM_SHA" \
+  "$PREREG_EXPECTED_VERDICT" "$PREREG_AVAILABILITY_AUTH_KEY" "$AVAILABILITY_MODULE" \
+  "$NOPEN" "$SOURCE_GAMES_EXPECTED" "$POOL_SEED_1" "$POOL_SEED_2" "$SPLIT_SEED" <<'PY_AUTH'
+import hashlib,importlib,json,sys
 from pathlib import Path
-src,art=map(Path,sys.argv[1:3]); prereg=tuple(sys.argv[3:6]); training=tuple(sys.argv[6:9]); curriculum=tuple(sys.argv[9:12]); champion=sys.argv[12]
+src,art=map(Path,sys.argv[1:3]); prereg=tuple(sys.argv[3:6]); training=tuple(sys.argv[6:9]); curriculum=tuple(sys.argv[9:12]); champion=sys.argv[12]; expected_verdict=sys.argv[13]; availability_key=sys.argv[14]; contract=importlib.import_module(sys.argv[15]); nopen=int(sys.argv[16]); games=int(sys.argv[17]); seeds=list(map(int,sys.argv[18:21]))
 for name,want in (("verified-preregistration.json",prereg),("verified-training-cost.json",training),("verified-curriculum.json",curriculum)):
  receipt=json.load(open(art/name)); got=(receipt.get('job_id'),receipt.get('attempt_id'),receipt.get('code_sha'))
  if got!=want or receipt.get('result_state')!='completed' or receipt.get('exit_code')!=0: raise SystemExit(f'{name} identity/state drift got={got} want={want}')
 registration=json.load(open(src/'preregistration.json')); training_summary=json.load(open(src/'training-summary.json')); cost=json.load(open(src/'historical-exact-cost.json'))
-if registration.get('verdict')!='JASS_CURRICULUM_ERROR_RESIDUAL_POWER_EXTENSION_PREREGISTERED' or registration.get('passed') is not True: raise SystemExit('1514 preregistration drift')
-if registration.get('fresh_pair_mining_authorized') is not True or registration.get('fresh_target_reconstruction_authorized') is not False: raise SystemExit('1514 authorization drift')
+if registration.get('verdict')!=expected_verdict or registration.get('passed') is not True: raise SystemExit('preregistration verdict drift')
+if registration.get(availability_key) is not True or registration.get('fresh_target_reconstruction_authorized') is not False: raise SystemExit('preregistration authorization drift')
+validator=getattr(contract,'_validate_preregistration',None)
+if validator is not None: validator(registration)
+campaign=registration.get('protocol',{}).get('fresh_campaign')
+if campaign is not None:
+ if int(campaign.get('openings_per_pool',-1))!=nopen or int(campaign.get('games_exact',-1))!=games or list(campaign.get('pool_seeds',[]))!=seeds[:2] or int(campaign.get('split_seed',-1))!=seeds[2]: raise SystemExit('shell/preregistration campaign drift')
 if training_summary.get('verdict')!='JASS_CURRICULUM_ERROR_TRACE_RESIDUAL_TRAINING_NOT_ESTABLISHED': raise SystemExit('1508 training verdict drift')
 if cost.get('passed') is not True or int(cost.get('total_pairs',0))<=0: raise SystemExit('1508 exact cost drift')
 (art/'source-chain.json').write_text(json.dumps({'preregistration':{'job':prereg[0],'attempt':prereg[1],'code_sha':prereg[2]},'training_cost':{'job':training[0],'attempt':training[1],'code_sha':training[2]},'curriculum':{'job':curriculum[0],'attempt':curriculum[1],'code_sha':curriculum[2],'model_raw_sha256':champion}},indent=2,sort_keys=True)+'\n')
@@ -153,7 +175,7 @@ while IFS='|' read -r label prefix remote_path; do
     >"$W/fetch-$label.log" 2>&1 || die "historical pool fetch failed: $label"
   EXCL_ARGS+=(--exclude "$IN/$label.fen"); EXCL_NAMES+=("$label")
 done <<<"$EXCLUDE_SPECS"
-[ "${#EXCL_NAMES[@]}" -eq 5 ] || die "exclusion count drift"
+[ "${#EXCL_NAMES[@]}" -eq "$EXPECTED_EXCLUSION_COUNT" ] || die "exclusion count drift"
 
 generate_pool(){
   local index="$1" seed="$2" out="fresh-pair-pool${1}-openings"
@@ -185,22 +207,23 @@ python3 jobs/tools/run_jass_gate_bounded.py --jass "$J" --pattern-a "$W/curricul
   --openings-file "$ART/fresh-pair-pool2-openings.fen" --movetime "$MOVETIME" --pairs 1 --max-plies 160 \
   --nshards "$NSH" --max-parallel "$PAR" --timeout 21600 --game-timeout 180 \
   --dump-games-dir "$GAMES2" --work-dir "$W/gate-pool2" --out "$ART/campaign-pool2.json" >"$W/campaign-pool2.log" 2>&1
-[ "$(find "$GAMES1" "$GAMES2" -name 'game-*.json' | wc -l)" -eq 7680 ] || die "fresh game count drift"
-python3 - "$ART/campaign-pool1.json" "$ART/campaign-pool2.json" <<'PY_CAMPAIGN'
+[ "$(find "$GAMES1" "$GAMES2" -name 'game-*.json' | wc -l)" -eq "$SOURCE_GAMES_EXPECTED" ] || die "fresh game count drift"
+python3 - "$ART/campaign-pool1.json" "$ART/campaign-pool2.json" "$((NOPEN * 2))" <<'PY_CAMPAIGN'
 import json,sys
-for path in sys.argv[1:]:
+expected=int(sys.argv[-1])
+for path in sys.argv[1:-1]:
  row=json.load(open(path))
- if row.get('complete') is not True or int(row.get('n',-1))!=3840:
+ if row.get('complete') is not True or int(row.get('n',-1))!=expected:
   raise SystemExit(f'incomplete fresh campaign: {path} {row}')
  dumps=row.get('complete_game_dumps',{})
- if dumps.get('trajectory_contract_valid') is not True or int(dumps.get('games',-1))!=3840:
+ if dumps.get('trajectory_contract_valid') is not True or int(dumps.get('games',-1))!=expected:
   raise SystemExit(f'fresh dump contract drift: {path} {dumps}')
 PY_CAMPAIGN
 
 stage prepare-loss-trajectories-without-action-targets
 python3 jobs/tools/l3_curriculum_error_learning.py prepare --games-dir "$GAMES1" --games-dir "$GAMES2" \
   --split-seed "$SPLIT_SEED" --out "$ART/fresh-error-selection.json" >"$W/prepare-games.log" 2>&1
-python3 -m jobs.tools.l3_curriculum_error_fresh_pair_availability_preflight prepare \
+python3 -m "$AVAILABILITY_MODULE" prepare \
   --selection "$ART/fresh-error-selection.json" --output "$ART/fresh-profile-selection.json" >"$W/prepare-profiles.log" 2>&1
 
 stage root-trace-profile-cost-preflight
@@ -235,7 +258,7 @@ for pid in "${pids[@]}"; do wait "$pid"; done
 
 stage audit-availability-lattice-and-cost-without-targets
 profile_args=(); for shard in $(seq 0 $((NSH-1))); do profile_args+=(--profile-shard "$PROFILES/shard-$shard.json"); done
-python3 -m jobs.tools.l3_curriculum_error_fresh_pair_availability_preflight audit \
+python3 -m "$AVAILABILITY_MODULE" audit \
   --preregistration "$IN/preregistration.json" --selection "$ART/fresh-profile-selection.json" \
   "${profile_args[@]}" --profile-cost "$ART/profile-cost-preflight.json" \
   --historical-exact-cost "$IN/historical-exact-cost.json" \
@@ -243,29 +266,30 @@ python3 -m jobs.tools.l3_curriculum_error_fresh_pair_availability_preflight audi
 
 stage authenticate-and-publish-terminal-verdict
 python3 - "$ART" "$EXPECTED_CODE_SHA" "$PREREG_SOURCE_JOB" "$PREREG_SOURCE_ATTEMPT" "$PREREG_SOURCE_CODE" \
-  "$CURRICULUM_SHA" "$POOL_SEED_1" "$POOL_SEED_2" "$SPLIT_SEED" <<'PY_FINAL'
-import json,sys
+  "$CURRICULUM_SHA" "$POOL_SEED_1" "$POOL_SEED_2" "$SPLIT_SEED" \
+  "$AVAILABILITY_MODULE" "$READY_VERDICT" "$NOT_ESTABLISHED_VERDICT" \
+  "$NOPEN" "$SOURCE_GAMES_EXPECTED" "$EXPECTED_EXCLUSION_COUNT" <<'PY_FINAL'
+import importlib,json,sys
 from pathlib import Path
-from jobs.tools import l3_curriculum_error_fresh_pair_availability_preflight as availability_contract
-art=Path(sys.argv[1]); code=sys.argv[2]; prereg=tuple(sys.argv[3:6]); champion=sys.argv[6]; seeds=list(map(int,sys.argv[7:10]))
+art=Path(sys.argv[1]); code=sys.argv[2]; prereg=tuple(sys.argv[3:6]); champion=sys.argv[6]; seeds=list(map(int,sys.argv[7:10])); availability_contract=importlib.import_module(sys.argv[10]); ready=sys.argv[11]; not_established=sys.argv[12]; nopen=int(sys.argv[13]); expected_games=int(sys.argv[14]); exclusions=int(sys.argv[15])
 report=json.load(open(art/'fresh-pair-availability.json')); lattice=json.load(open(art/'fresh-pair-lattice.json'))
-if report.get('verdict') not in {'JASS_CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY_READY','JASS_CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY_NOT_ESTABLISHED'}: raise SystemExit('availability verdict drift')
+if report.get('verdict') not in {ready,not_established}: raise SystemExit('availability verdict drift')
 for key in ('new_targets','exact_action_value_reads','holdout_reads','fits','pattern_eval_fits','production_model_fits','strength_games','frozen_reads'):
  if int(report.get(key,-1))!=0: raise SystemExit(f'forbidden counter drift {key}')
-if report.get('new_selfplay_games')!=7680 or lattice.get('exact_action_value_reads')!=0: raise SystemExit('fresh trajectory scope drift')
+if report.get('new_selfplay_games')!=expected_games or lattice.get('exact_action_value_reads')!=0: raise SystemExit('fresh trajectory scope drift')
 payload={**report,'schema':availability_contract.SCHEMA_TERMINAL,'code_sha':code,
  'preregistration_source':{'job':prereg[0],'attempt':prereg[1],'code_sha':prereg[2]},
- 'champion_sha256':champion,'campaign':{'pools':2,'openings_per_pool':1920,'games':7680,
+ 'champion_sha256':champion,'campaign':{'pools':2,'openings_per_pool':nopen,'games':expected_games,
  'pool_seeds':seeds[:2],'split_seed':seeds[2],'same_byte_identical_champion_both_sides':True,
- 'disjoint_from_1492_1504_and_static_pool':True},'weights_bit_identical':True,
+ 'historical_exclusion_count':exclusions,'historical_and_mutual_opening_disjointness_certified':True},'weights_bit_identical':True,
  'automatic_continuation':False,'promotion_authorized':False}
 (art/'JASS_CONTROL_SUMMARY.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
 (art/report['verdict']).touch()
-for name in ('NEW_TARGETS__0','EXACT_ACTION_VALUE_READS__0','HOLDOUT_READS__0','FITS__0','PATTERNEVAL_FITS__0','PRODUCTION_MODEL_FITS__0','STRENGTH_GAMES__0','NEW_SELFPLAY__7680','FROZEN_READS__0','PRODUCTION_RULE_AUTHORIZED__FALSE','PROMOTION_AUTHORIZED__FALSE','AUTOMATIC_CONTINUATION__FALSE'):
+for name in ('NEW_TARGETS__0','EXACT_ACTION_VALUE_READS__0','HOLDOUT_READS__0','FITS__0','PATTERNEVAL_FITS__0','PRODUCTION_MODEL_FITS__0','STRENGTH_GAMES__0',f'NEW_SELFPLAY__{expected_games}','FROZEN_READS__0','PRODUCTION_RULE_AUTHORIZED__FALSE','PROMOTION_AUTHORIZED__FALSE','AUTOMATIC_CONTINUATION__FALSE'):
  (art/name).touch()
 if report.get('fresh_target_reconstruction_authorized'):
  (art/'FRESH_TARGET_RECONSTRUCTION_AUTHORIZED__TRUE').touch()
 PY_FINAL
 VERDICT=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["verdict"])' "$ART/JASS_CONTROL_SUMMARY.json")
 stage completed
-say "$VERDICT games=7680 targets=0 fits=0 strength=0 frozen=0 promotion=false"
+say "$VERDICT games=$SOURCE_GAMES_EXPECTED targets=0 fits=0 strength=0 frozen=0 promotion=false"
