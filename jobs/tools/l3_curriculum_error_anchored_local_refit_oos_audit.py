@@ -21,6 +21,7 @@ from jobs.tools import l3_curriculum_error_residual_ridge_path_screen as ridge
 
 
 SCHEMA = "jass.l3_curriculum_error_anchored_local_refit_oos_audit.v1"
+SCHEMA_TERMINAL = "jass.curriculum_error_anchored_local_refit_oos_audit_terminal.v1"
 READY = "JASS_CURRICULUM_ERROR_ANCHORED_LOCAL_REFIT_OOS_PASSED"
 NOT_ESTABLISHED = "JASS_CURRICULUM_ERROR_ANCHORED_LOCAL_REFIT_OOS_NOT_ESTABLISHED"
 FIT_TERMINAL_SCHEMA = "jass.curriculum_error_anchored_local_refit_terminal.v1"

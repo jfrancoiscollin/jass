@@ -319,26 +319,47 @@ def _empty_cache(catalog: dict[str, Any]) -> dict[str, Any]:
 def _accepted(
     lattice: dict[str, Any], judgments: dict[str, dict[str, Any]],
     *, pair_count: int | None = None,
+    pair_count_by_pool: dict[str, int] | None = None,
 ) -> tuple[list[dict[str, Any]], set[str], list[str]]:
-    if pair_count is None:
+    if pair_count_by_pool is not None:
+        pair_count_by_pool = {
+            str(pool): int(count) for pool, count in pair_count_by_pool.items()
+        }
+        if not pair_count_by_pool or any(count <= 0 for count in pair_count_by_pool.values()):
+            raise ValueError("fresh per-pool pair quotas must be positive")
+        total = sum(pair_count_by_pool.values())
+        if pair_count is not None and pair_count != total:
+            raise ValueError("fresh total/per-pool pair quota drift")
+        pair_count = total
+    elif pair_count is None:
         pair_count = FRESH_PAIRS
     accepted: list[dict[str, Any]] = []
+    accepted_by_pool: Counter[str] = Counter()
     used: set[str] = set()
     unresolved: list[str] = []
     # Never commit a later edge while an earlier eligible edge is still
-    # unlabelled: that would make the selected set depend on batch size.
-    blocked_by_unknown_prefix = False
+    # unlabelled.  With per-pool quotas, each pool owns an independent frozen
+    # prefix so an unlabelled pool1 edge cannot make pool2 depend on batch size.
+    blocked_by_unknown_prefix: set[str] = set()
     for edge_index, edge in enumerate(lattice["candidate_edges"]):
+        pool = str(edge["source_pool"])
+        if pair_count_by_pool is not None:
+            if pool not in pair_count_by_pool:
+                raise ValueError(f"fresh lattice contains unexpected pool {pool!r}")
+            if accepted_by_pool[pool] >= pair_count_by_pool[pool]:
+                continue
         left = str(edge["left_exact_state_key"])
         right = str(edge["right_exact_state_key"])
         if left in used or right in used:
             continue
         missing = [key for key in (left, right) if key not in judgments]
         if missing:
-            blocked_by_unknown_prefix = True
+            blocked_by_unknown_prefix.add(
+                pool if pair_count_by_pool is not None else "__global__"
+            )
             unresolved.extend(missing)
             continue
-        if blocked_by_unknown_prefix:
+        if "__global__" in blocked_by_unknown_prefix or pool in blocked_by_unknown_prefix:
             continue
         lrow, rrow = judgments[left], judgments[right]
         lbad = str(lrow["exact_teacher_action"]) != str(lrow["historical_action"])
@@ -353,8 +374,14 @@ def _accepted(
             "error_exact_state_key": error,
             "control_exact_state_key": control,
         })
+        accepted_by_pool[pool] += 1
         used.update((left, right))
-        if len(accepted) == pair_count:
+        complete = (
+            all(accepted_by_pool[pool] == count for pool, count in pair_count_by_pool.items())
+            if pair_count_by_pool is not None
+            else len(accepted) == pair_count
+        )
+        if complete:
             break
     return accepted, used, unresolved
 
@@ -362,8 +389,14 @@ def _accepted(
 def plan_batch(
     lattice: dict[str, Any], catalog: dict[str, Any], cache: dict[str, Any] | None,
     *, max_states: int, pair_count: int | None = None,
+    pair_count_by_pool: dict[str, int] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    if pair_count is None:
+    if pair_count_by_pool is not None:
+        expected_pair_count = sum(int(value) for value in pair_count_by_pool.values())
+        if pair_count is not None and pair_count != expected_pair_count:
+            raise ValueError("fresh total/per-pool planner quota drift")
+        pair_count = expected_pair_count
+    elif pair_count is None:
         pair_count = FRESH_PAIRS
     if catalog.get("schema") != SCHEMA_CATALOG or catalog.get("lattice_sha256") != _digest(lattice):
         raise ValueError("fresh catalog/lattice identity drift")
@@ -372,7 +405,12 @@ def plan_batch(
     if cache.get("schema") != SCHEMA_CACHE or cache.get("catalog_sha256") != _digest(catalog):
         raise ValueError("fresh target cache identity drift")
     judgments = cache["judgments"]
-    accepted, _used, unresolved = _accepted(lattice, judgments, pair_count=pair_count)
+    accepted, _used, unresolved = _accepted(
+        lattice,
+        judgments,
+        pair_count=pair_count,
+        pair_count_by_pool=pair_count_by_pool,
+    )
     if len(accepted) == pair_count:
         return {
             "schema": SCHEMA_PLAN,
@@ -493,12 +531,21 @@ def ingest(
 def finalize_pairs_and_shards(
     lattice: dict[str, Any], catalog: dict[str, Any], cache: dict[str, Any],
     *, pair_count: int | None = None,
+    pair_count_by_pool: dict[str, int] | None = None,
     stop_rule: str = "first_300_valid_pairs_in_frozen_pre_target_order",
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    if pair_count is None:
+    if pair_count_by_pool is not None:
+        expected_pair_count = sum(int(value) for value in pair_count_by_pool.values())
+        if pair_count is not None and pair_count != expected_pair_count:
+            raise ValueError("fresh total/per-pool finalization quota drift")
+        pair_count = expected_pair_count
+    elif pair_count is None:
         pair_count = FRESH_PAIRS
     accepted, _used, _unresolved = _accepted(
-        lattice, cache["judgments"], pair_count=pair_count
+        lattice,
+        cache["judgments"],
+        pair_count=pair_count,
+        pair_count_by_pool=pair_count_by_pool,
     )
     if len(accepted) != pair_count:
         raise ValueError(f"fresh exact target cache has {len(accepted)}/{pair_count} pairs")
@@ -543,6 +590,10 @@ def finalize_pairs_and_shards(
         "strength_games": 0,
         "promotion_authorized": False,
     }
+    if pair_count_by_pool is not None and pair_payload["pairs_by_pool"] != dict(
+        sorted((str(pool), int(count)) for pool, count in pair_count_by_pool.items())
+    ):
+        raise ValueError("fresh finalized per-pool pair quota drift")
     pairs_digest = _digest(pair_payload)
     identity = cache.get("identities") or {}
     shards = []
