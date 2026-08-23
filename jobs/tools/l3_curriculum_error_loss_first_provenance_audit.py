@@ -24,6 +24,7 @@ SOURCE_VERDICT = "JASS_CURRICULUM_ERROR_ACTION_FLIP_TAIL_AUTOPSY_READY"
 SOURCE_CODE = "8b315eafa95df2eea2c69b51b90f0dbada9109a5"
 EXPECTED_COUNTS = {
     "pairs": 600,
+    "states": 1200,
     "error_interventions": 272,
     "control_interventions": 309,
     "error_positive_interventions": 152,
