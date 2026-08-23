@@ -160,32 +160,37 @@ def build_candidates(
         raise ValueError("source decision cardinality drift")
     legal_lines = learning._dump_legal_lines(jass, [str(row["fen"]) for row in rows])
     calibrated = learning._cv_module()
+    referee = calibrated.Referee(jass)
     materialized = []
-    for index, (row, transition, legal_line) in enumerate(zip(rows, next_rows, legal_lines, strict=True)):
-        if int(row.get("ordinal", -1)) != index or int(transition.get("ordinal", -1)) != index:
-            raise ValueError("source ordinal drift")
-        legal = _legal_moves(legal_line)
-        actual = learning._resolve_historical_transition(
-            str(row["actual_move"]), legal_line, str(transition["next_fen"]),
-            str(row["fen"]), calibrated,
-        )
-        actual_apply = actual.jass_apply_str()
-        pool = _pool_from_source(str(row["source_file"]))
-        structural = _structural(str(row["fen"]), actual_apply, len(legal))
-        key = hashlib.sha256(
-            f"{seed}|{pool}|{row['opening_id']}|{row['game_uid']}|{row['exact_state_key']}|{row['ply']}".encode()
-        ).hexdigest()
-        # Deliberately omit outcome, terminal score and source path.  Tests
-        # assert invariance to arbitrary outcome permutations.
-        materialized.append({
-            "candidate_key": key, "source_ordinal": index, "pool": pool,
-            "game_uid": str(row["game_uid"]), "opening_id": str(row["opening_id"]),
-            "ply": int(row["ply"]), "fen": str(row["fen"]),
-            "exact_state_key": str(row["exact_state_key"]),
-            "historical_action": actual_apply,
-            "legal_actions": sorted(move.jass_apply_str() for move in legal),
-            "structural": structural,
-        })
+    try:
+        for index, (row, transition, legal_line) in enumerate(zip(rows, next_rows, legal_lines, strict=True)):
+            if int(row.get("ordinal", -1)) != index or int(transition.get("ordinal", -1)) != index:
+                raise ValueError("source ordinal drift")
+            legal = _legal_moves(legal_line)
+            actual, _disambiguated = learning._resolve_historical_transition(
+                str(row["actual_move"]), legal_line, calibrated,
+                fen=str(row["fen"]), next_fen=str(transition["next_fen"]),
+                referee=referee,
+            )
+            actual_apply = actual.jass_apply_str()
+            pool = _pool_from_source(str(row["source_file"]))
+            structural = _structural(str(row["fen"]), actual_apply, len(legal))
+            key = hashlib.sha256(
+                f"{seed}|{pool}|{row['opening_id']}|{row['game_uid']}|{row['exact_state_key']}|{row['ply']}".encode()
+            ).hexdigest()
+            # Deliberately omit outcome, terminal score and source path.  Tests
+            # assert invariance to arbitrary outcome permutations.
+            materialized.append({
+                "candidate_key": key, "source_ordinal": index, "pool": pool,
+                "game_uid": str(row["game_uid"]), "opening_id": str(row["opening_id"]),
+                "ply": int(row["ply"]), "fen": str(row["fen"]),
+                "exact_state_key": str(row["exact_state_key"]),
+                "historical_action": actual_apply,
+                "legal_actions": sorted(move.jass_apply_str() for move in legal),
+                "structural": structural,
+            })
+    finally:
+        referee.close()
     selected=[]; by_opening=Counter(); by_game=Counter(); canonical=set()
     for row in sorted(materialized, key=lambda item: (item["candidate_key"], item["source_ordinal"])):
         if by_opening[(row["pool"], row["opening_id"])] >= MAX_CANDIDATES_PER_OPENING:
