@@ -367,6 +367,20 @@ def _search_leaf(engine: Any, fen: str, depth: int) -> dict[str,Any]:
 
 def _label_state(row: dict[str,Any],*,engine:Any,referee:Any,extractor:ExactFeatureExtractor) -> dict[str,Any]:
     fen=str(row["fen"]); image_fen=ctx.exact_image_fen(fen); actions=list(row["legal_actions"])
+    shallow_original={
+        str(item["action"]):float(item["score"])
+        for item in row["shallow_trace"]["original"]["depths"]["9"]["moves"]
+    }
+    shallow_image={
+        atlas._mapped_image_action(str(item["action"])):float(item["score"])
+        for item in row["shallow_trace"]["exact_image"]["depths"]["9"]["moves"]
+    }
+    if set(shallow_original)!=set(actions) or set(shallow_image)!=set(actions):
+        raise ValueError("shallow action values do not cover all legal siblings")
+    shallow_symmetrised={
+        action:(shallow_original[action]+shallow_image[action])/2.0
+        for action in actions
+    }
     by_depth={}; vectors={}
     for depth in TEACHER_DEPTHS:
         original_values={}; image_values={}; search_rows={}
@@ -413,7 +427,12 @@ def _label_state(row: dict[str,Any],*,engine:Any,referee:Any,extractor:ExactFeat
             comparisons.append({
                 "teacher":teacher12,"sibling":sibling,"teacher_margin_cp":margin,
                 "bounded_margin_cp":min(MARGIN_CAP_CP,margin),
+                "baseline_shallow_margin_cp":shallow_symmetrised[teacher12]-shallow_symmetrised[sibling],
+                "baseline_original_margin_cp":shallow_original[teacher12]-shallow_original[sibling],
+                "baseline_exact_image_margin_cp":shallow_image[teacher12]-shallow_image[sibling],
                 "pair_weight":1.0/max(len(actions)-1,1),
+                "original_gradient":{str(key):value for key,value in sorted(original_gradient.items())},
+                "exact_image_gradient":{str(key):value for key,value in sorted(image_gradient.items())},
                 "gradient":{str(key):value for key,value in sorted(gradient.items())},
             })
     listwise={action:max(-MARGIN_CAP_CP,min(0.0,float(d12["symmetrised_values_cp"][action])-max(d12["symmetrised_values_cp"].values()))) for action in actions}
@@ -422,6 +441,10 @@ def _label_state(row: dict[str,Any],*,engine:Any,referee:Any,extractor:ExactFeat
         "game_uid":row["game_uid"],"exact_state_key":row["exact_state_key"],"fen":fen,
         "historical_action":historical,"structural":row["structural"],"instability":row["instability"],
         "legal_actions":actions,"teacher_action":teacher12 if accepted else None,
+        "baseline_shallow_scores_cp":{
+            "original":shallow_original,"exact_image":shallow_image,
+            "symmetrised":shallow_symmetrised,
+        },
         "accepted":accepted,"label":label,"depth_top_agreement":depth_top_agreement,
         "wdl_ordering_agreement":wdl_agreement,"symmetry_ordering_agreement":symmetry_agreement,
         "fixed_depth_exact":True,"regret_cp_by_depth":{str(k):v for k,v in regrets.items()},
