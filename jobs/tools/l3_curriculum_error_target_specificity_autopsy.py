@@ -20,6 +20,7 @@ from typing import Any
 import numpy as np
 
 from jobs.tools import l3_curriculum_error_endgame_abstention_confirmation as confirmation
+from jobs.tools import l3_curriculum_error_endgame_abstention_preregistration as endgame_prereg
 from jobs.tools import l3_curriculum_error_fresh_powered_confirmation as fresh
 from jobs.tools import l3_curriculum_error_fresh_tail_autopsy as tail
 from jobs.tools import l3_curriculum_error_residual_ridge_path_screen as ridge
@@ -37,6 +38,7 @@ SHAM_REPLICATES = 1000
 SHAM_SEED = 2026082314
 BOOTSTRAP_SAMPLES = 200_000
 BOOTSTRAP_SEED = 2026082315
+SOURCE_BOOTSTRAP_SEED = endgame_prereg.BOOTSTRAP_SEED
 MIN_SUPPORT_RANK = 3
 MIN_COEFFICIENT_COSINE = 0.50
 MIN_ERROR_INTERVENTIONS = 24
@@ -349,7 +351,7 @@ def autopsy(
         cap_cp=100.0, threshold_cp=10.0, mode="strict_both_change",
     )
     decisions, rule_proof = confirmation._apply_endgame_abstention(fresh_rows, base_decisions)
-    reproduced = confirmation._metrics(decisions, seed=2026082307)
+    reproduced = confirmation._metrics(decisions, seed=SOURCE_BOOTSTRAP_SEED)
     reproduced_compact = {key: value for key, value in reproduced.items() if key != "paired_values_cp"}
     if not tail._same(reproduced_compact, fresh_report.get("metrics")):
         raise ValueError("1524 endgame-abstention metric reproduction drift")
