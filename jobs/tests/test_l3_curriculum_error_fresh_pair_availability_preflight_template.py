@@ -16,13 +16,14 @@ class FreshPairAvailabilityTemplateTest(unittest.TestCase):
 
     def test_target_free_scope_and_cardinality_are_explicit(self) -> None:
         for token in (
-            "NOPEN=1920",
-            "games_dumped=%s/7680",
+            "AVAILABILITY_OPENINGS_PER_POOL:-1920",
+            "SOURCE_GAMES_EXPECTED=$((NOPEN * 4))",
+            "games_dumped=%s/%s",
             "NO_EXACT_ACTION_TARGETS",
             "FRESH_TRAJECTORY_MINING_ONLY",
             "NEW_TARGETS__0",
             "EXACT_ACTION_VALUE_READS__0",
-            "NEW_SELFPLAY__7680",
+            "f'NEW_SELFPLAY__{expected_games}'",
         ):
             self.assertIn(token, self.text)
 
@@ -31,8 +32,19 @@ class FreshPairAvailabilityTemplateTest(unittest.TestCase):
             "cpx62-1492-l3-curriculum-error-autopsy-v1",
             "cpx62-1504-l3-curriculum-error-autopsy-v1",
             "--exclude data/dilf_combinations.fen",
-            "POOL_SEED_1=2026082264",
-            "POOL_SEED_2=2026082265",
+            "AVAILABILITY_POOL_SEED_1:-2026082264",
+            "AVAILABILITY_POOL_SEED_2:-2026082265",
+        ):
+            self.assertIn(token, self.text)
+
+    def test_contract_can_only_be_scaled_through_explicit_environment(self) -> None:
+        for token in (
+            "AVAILABILITY_MODULE",
+            "PREREG_EXPECTED_VERDICT",
+            "PREREG_AVAILABILITY_AUTH_KEY",
+            "AVAILABILITY_EXTRA_EXCLUDE_SPECS",
+            "AVAILABILITY_EXPECTED_EXCLUSION_COUNT",
+            "AVAILABILITY_MAX_PROFILE_MINUTES",
         ):
             self.assertIn(token, self.text)
 

@@ -339,18 +339,29 @@ def _validate_preregistration(report: dict[str, Any]) -> None:
         raise ValueError("frozen fresh-pair protocol drift")
 
 
-def audit(
+def audit_with_contract(
     preregistration: dict[str, Any],
     selection: dict[str, Any],
     shards: list[dict[str, Any]],
     profile_cost: dict[str, Any],
     historical_exact_cost: dict[str, Any],
+    *,
+    preregistration_validator: Any = _validate_preregistration,
+    source_games: int = SOURCE_GAMES,
+    pair_count: int = power.FRESH_PAIRS,
+    mining_seed: int = power.MINING_SEED,
+    min_eligible_states: int = MIN_ELIGIBLE_STATES,
+    min_eligible_games: int = MIN_ELIGIBLE_GAMES,
+    min_eligible_openings: int = MIN_ELIGIBLE_OPENINGS,
+    min_raw_pair_capacity: int = MIN_RAW_PAIR_CAPACITY,
+    min_raw_pair_capacity_per_pool: int = MIN_RAW_PAIR_CAPACITY_PER_POOL,
+    max_exact_target_minutes: float = MAX_EXACT_TARGET_MINUTES,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    _validate_preregistration(preregistration)
+    preregistration_validator(preregistration)
     if selection.get("schema") != SCHEMA_SELECTION or selection.get("target_free") is not True:
         raise ValueError("profile selection drift")
-    if int(selection.get("source_games", -1)) != SOURCE_GAMES:
-        raise ValueError(f"fresh campaign must contain exactly {SOURCE_GAMES} games")
+    if int(selection.get("source_games", -1)) != source_games:
+        raise ValueError(f"fresh campaign must contain exactly {source_games} games")
     if len(shards) != 16 or {int(row.get("shard", -1)) for row in shards} != set(range(16)):
         raise ValueError("profile shards incomplete")
     digest = hashlib.sha256(_canonical(selection)).hexdigest()
@@ -366,7 +377,7 @@ def audit(
     if forbidden:
         raise ValueError(f"profile payload contains exact targets: {sorted(forbidden)}")
 
-    raw = [_candidate_row(row, seed=power.MINING_SEED) for row in rows]
+    raw = [_candidate_row(row, seed=mining_seed) for row in rows]
     annulus = [
         row
         for row in raw
@@ -384,7 +395,7 @@ def audit(
         state_seen.add(state)
         game_counts[game] += 1
         selected.append(row)
-    edges, capacities = _lattice(selected, seed=power.MINING_SEED)
+    edges, capacities = _lattice(selected, seed=mining_seed)
     total_capacity = sum(capacities.values())
 
     if profile_cost.get("passed") is not True:
@@ -393,7 +404,7 @@ def audit(
     hist_minutes = float(historical_exact_cost.get("projected_minutes", 0.0))
     if hist_total <= 0 or hist_minutes <= 0.0 or historical_exact_cost.get("passed") is not True:
         raise ValueError("historical exact-target cost certificate drift")
-    projected_exact_minutes = hist_minutes * power.FRESH_PAIRS / hist_total
+    projected_exact_minutes = hist_minutes * pair_count / hist_total
     games = {str(row["game_uid"]) for row in selected}
     openings = {str(row["opening_id"]) for row in selected}
     pool_counts = {
@@ -401,23 +412,23 @@ def audit(
         for pool in ("pool1", "pool2")
     }
     gates = {
-        "source_games_exactly_7680": int(selection["source_games"]) == SOURCE_GAMES,
+        f"source_games_exactly_{source_games}": int(selection["source_games"]) == source_games,
         "both_pools_profiled": all(int(selection["rows_by_pool"].get(pool, 0)) > 0 for pool in ("pool1", "pool2")),
-        "eligible_states_at_least_1800": len(selected) >= MIN_ELIGIBLE_STATES,
-        "eligible_games_at_least_900": len(games) >= MIN_ELIGIBLE_GAMES,
-        "eligible_openings_at_least_900": len(openings) >= MIN_ELIGIBLE_OPENINGS,
-        "raw_pair_capacity_at_least_900": total_capacity >= MIN_RAW_PAIR_CAPACITY,
-        "pool1_capacity_at_least_360": capacities["pool1"] >= MIN_RAW_PAIR_CAPACITY_PER_POOL,
-        "pool2_capacity_at_least_360": capacities["pool2"] >= MIN_RAW_PAIR_CAPACITY_PER_POOL,
+        f"eligible_states_at_least_{min_eligible_states}": len(selected) >= min_eligible_states,
+        f"eligible_games_at_least_{min_eligible_games}": len(games) >= min_eligible_games,
+        f"eligible_openings_at_least_{min_eligible_openings}": len(openings) >= min_eligible_openings,
+        f"raw_pair_capacity_at_least_{min_raw_pair_capacity}": total_capacity >= min_raw_pair_capacity,
+        f"pool1_capacity_at_least_{min_raw_pair_capacity_per_pool}": capacities["pool1"] >= min_raw_pair_capacity_per_pool,
+        f"pool2_capacity_at_least_{min_raw_pair_capacity_per_pool}": capacities["pool2"] >= min_raw_pair_capacity_per_pool,
         "canonical_states_unique": len(state_seen) == len(selected),
         "maximum_two_states_per_game": max(game_counts.values(), default=0) <= MAX_STATES_PER_GAME,
-        "exact_target_cost_at_most_360_minutes": projected_exact_minutes <= MAX_EXACT_TARGET_MINUTES,
+        f"exact_target_cost_at_most_{int(max_exact_target_minutes)}_minutes": projected_exact_minutes <= max_exact_target_minutes,
         "exact_action_targets_absent": not forbidden,
     }
     passed = all(gates.values())
     lattice = {
         "schema": "jass.l3_curriculum_error_fresh_pair_lattice.v1",
-        "mining_seed": power.MINING_SEED,
+        "mining_seed": mining_seed,
         "candidate_order_fixed_before_targets": True,
         "candidate_states": selected,
         "candidate_edges": edges,
@@ -430,7 +441,7 @@ def audit(
         "schema": SCHEMA_REPORT,
         "verdict": READY if passed else NOT_ESTABLISHED,
         "passed": passed,
-        "fresh_pair_count_required": power.FRESH_PAIRS,
+        "fresh_pair_count_required": pair_count,
         "source_games": int(selection["source_games"]),
         "profiled_states": len(rows),
         "annulus_states_before_caps": len(annulus),
@@ -448,7 +459,7 @@ def audit(
         },
         "profile_cost": profile_cost,
         "historical_exact_target_cost": historical_exact_cost,
-        "projected_exact_target_minutes_for_300_pairs": projected_exact_minutes,
+        "projected_exact_target_minutes": projected_exact_minutes,
         "gates": gates,
         "failed_gates": sorted(key for key, value in gates.items() if not value),
         "fresh_target_reconstruction_authorized": passed,
@@ -459,13 +470,34 @@ def audit(
         "pattern_eval_fits": 0,
         "production_model_fits": 0,
         "strength_games": 0,
-        "new_selfplay_games": SOURCE_GAMES,
+        "new_selfplay_games": source_games,
         "frozen_reads": 0,
         "production_rule_authorized": False,
         "promotion_authorized": False,
         "automatic_continuation": False,
         "next_stage": "fresh_exact_label_and_powered_confirmation" if passed else None,
     }
+    return report, lattice
+
+
+def audit(
+    preregistration: dict[str, Any],
+    selection: dict[str, Any],
+    shards: list[dict[str, Any]],
+    profile_cost: dict[str, Any],
+    historical_exact_cost: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Historical 1515 contract retained byte-for-byte at its public API."""
+    report, lattice = audit_with_contract(
+        preregistration,
+        selection,
+        shards,
+        profile_cost,
+        historical_exact_cost,
+    )
+    report["projected_exact_target_minutes_for_300_pairs"] = report[
+        "projected_exact_target_minutes"
+    ]
     return report, lattice
 
 
