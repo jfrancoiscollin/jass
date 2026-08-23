@@ -1,3 +1,6 @@
+import pathlib
+import subprocess
+import sys
 import unittest
 from unittest import mock
 
@@ -21,6 +24,21 @@ class LossFirstLabelsNoBookTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "failed to disable book"):
                 target.NoBookJassEngine.__init__(engine, "jass")
             close.assert_called_once_with()
+
+    def test_direct_script_execution_can_import_jobs_package(self):
+        root = pathlib.Path(__file__).resolve().parents[2]
+        script = root / "jobs/tools/l3_curriculum_error_loss_first_sibling_labels_nobook.py"
+        proc = subprocess.run(
+            [sys.executable, str(script), "--help"],
+            cwd=root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=30,
+        )
+        combined = proc.stdout + proc.stderr
+        self.assertNotIn("ModuleNotFoundError", combined)
+        self.assertNotIn("No module named 'jobs'", combined)
 
 
 if __name__ == "__main__":

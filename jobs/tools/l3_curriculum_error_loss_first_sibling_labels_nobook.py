@@ -8,6 +8,18 @@ a book hit returns depth=0 and is not a completed fixed-depth teacher search.
 """
 from __future__ import annotations
 
+# This wrapper is invoked both as ``python -m ...`` and directly by the
+# preregistered shell template after a technical-only path substitution.
+# Direct script execution sets sys.path[0] to jobs/tools, so make the repo root
+# importable without changing any scientific inputs or runtime behaviour.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    repo_root = str(Path(__file__).resolve().parents[2])
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
+
 from jobs.tools import l3_curriculum_error_loss_first_sibling_labels as base
 
 
