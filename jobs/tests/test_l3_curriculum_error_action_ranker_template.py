@@ -14,8 +14,9 @@ class ActionRankerTemplateTests(unittest.TestCase):
         for token in (
             "ACTION_SOURCE_JOB",
             "JASS_CURRICULUM_ERROR_ACTION_SOURCE_READY",
-            "pool_seeds')!=[2026082231,2026082232]",
-            "split_seed')!=2026082233",
+            'EXPECTED_SOURCE_POOL_SEED_1="${EXPECTED_SOURCE_POOL_SEED_1:-2026082231}"',
+            'EXPECTED_SOURCE_POOL_SEED_2="${EXPECTED_SOURCE_POOL_SEED_2:-2026082232}"',
+            'EXPECTED_SOURCE_SPLIT_SEED="${EXPECTED_SOURCE_SPLIT_SEED:-2026082233}"',
             "pattern_bucket_aggregate_reads",
             "PATTERNEVAL_FITS__0",
         ):
@@ -42,6 +43,24 @@ class ActionRankerTemplateTests(unittest.TestCase):
             "NO_AUTOMATIC_PROMOTION",
         ):
             self.assertIn(guard, TEXT)
+
+    def test_coverage_mode_stops_before_action_values_or_ranker_fit(self):
+        for token in (
+            'COVERAGE_ONLY="${COVERAGE_ONLY:-0}"',
+            'BUDGET_ROWS_PER_SPLIT="${BUDGET_ROWS_PER_SPLIT:-1024}"',
+            "l3_curriculum_error_paired_coverage_screen.py",
+            "paired-image-feature-only-relative-coverage-screen",
+            "EXACT_ACTION_VALUE_READS__0",
+            "OUTER_CONFIRM_PROFILE_ROWS_EXAMINED__0",
+            "RESIDUAL_FIT_AUTHORIZED__FALSE",
+            "source-exclude-1492-pool1.json",
+            "source-exclude-1492-pool2.json",
+        ):
+            self.assertIn(token, TEXT)
+        coverage_block = TEXT.split('if [ "$COVERAGE_ONLY" = 1 ]; then', 2)[-1].split(
+            "stage atlas-cost-preflight", 1
+        )[0]
+        self.assertIn("exit 0", coverage_block)
 
 
 if __name__ == "__main__":
