@@ -43,3 +43,26 @@ training model, and apply the 200k-bootstrap/1,000-sham gates fixed by 1514.
 
 A failure closes this powered extension; it does not authorize retuning or
 opening historical holdouts.
+
+## Exact-label implementation contract
+
+The confirmatory job downloads only the byte-authenticated game dumps that
+contain target-free lattice states.  It resolves every endpoint-only
+historical capture against the authenticated successor FEN before comparing a
+move; raw display strings are never treated as lossless actions.
+
+Exact symmetrised depth-12 action values are then computed in bounded batches.
+After each batch, the selector replays the lattice from its first edge.  It
+cannot commit a later edge while an earlier eligible edge still lacks a label,
+so changing the batch size cannot change the selected population.  A pair is
+accepted only when one endpoint's exact teacher disagrees with its historical
+action and the matched endpoint's exact teacher agrees.  State reuse is
+forbidden, and the process stops at the first 300 accepted pairs.
+
+The final 300-pair atlas is repacked only from authenticated batch rows with
+one common champion, engine and Q00 identity.  The real residual and all 1,000
+shams fit immutable 1508 training targets only.  Fresh labels and values are
+read exclusively for the 200,000-sample confirmatory bootstrap and the frozen
+intervention, control, symmetry and sham gates.  A PASS authorizes a separate
+production-rule/refit preregistration; it does not itself publish weights,
+play strength games, read frozen cohorts or promote a model.
