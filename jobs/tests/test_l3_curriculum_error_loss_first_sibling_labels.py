@@ -78,14 +78,19 @@ class LossFirstSiblingLabelsTests(unittest.TestCase):
         permuted = copy.deepcopy(original)
         for row in permuted["rows"]:
             row["outcome"] = "draw"
+        fake_cv = mock.Mock()
+        fake_cv.parse_jass_fen.return_value = ("W", [31, 32], [], [1, 2], [])
+        fake_referee = fake_cv.Referee.return_value
         with (
             mock.patch.object(labels, "MIN_SELECTED_PER_POOL", 1),
             mock.patch.object(
                 learning, "_dump_legal_lines", return_value=["31>27 32>28"] * 2
             ),
+            mock.patch.object(learning, "_cv_module", return_value=fake_cv),
             mock.patch.object(
-                learning, "_resolve_historical_transition", return_value=FakeMove()
-            ),
+                learning, "_resolve_historical_transition",
+                return_value=(FakeMove(), False),
+            ) as resolver,
         ):
             left = labels.build_candidates(
                 original, transitions(original), source_summary(), prereg(),
@@ -98,6 +103,16 @@ class LossFirstSiblingLabelsTests(unittest.TestCase):
         self.assertEqual(left["candidates"], right["candidates"])
         self.assertNotIn("outcome", left["candidates"][0])
         self.assertTrue(left["canonical_unique"])
+        self.assertEqual(fake_cv.Referee.call_count, 2)
+        self.assertEqual(fake_referee.close.call_count, 2)
+        self.assertEqual(resolver.call_count, 4)
+        for call in resolver.call_args_list:
+            self.assertEqual(len(call.args), 3)
+            self.assertIs(call.args[2], fake_cv)
+            self.assertEqual(
+                set(call.kwargs), {"fen", "next_fen", "referee"}
+            )
+            self.assertIs(call.kwargs["referee"], fake_referee)
 
     def test_profile_selection_is_one_state_per_opening(self):
         candidates = {
