@@ -100,7 +100,7 @@ def receipt(name,want):
  if got!=(*want,'completed',0): raise SystemExit(f'{name} identity/state drift got={got} want={want}')
 receipt('verified-source.json',tuple(sys.argv[3:6])); receipt('verified-preregistration.json',tuple(sys.argv[6:9])); receipt('verified-curriculum.json',tuple(sys.argv[9:12]))
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
-if sha(inp/'curriculum.pjtw')!=sys.argv[12]: raise SystemExit('CURRICULUM raw hash drift')
+if sha(inp.parent/'work'/'curriculum.pjtw')!=sys.argv[12]: raise SystemExit('CURRICULUM raw hash drift')
 source=json.load(open(inp/'source-summary.json')); prereg=json.load(open(inp/'preregistration.json'))
 if source.get('source_code_sha')!=sys.argv[5] or source.get('selection_sha256')!=sha(inp/'source-selection.json') or source.get('transitions_sha256')!=sha(inp/'source-transitions.json'):
  raise SystemExit('loss-first source content identity drift')

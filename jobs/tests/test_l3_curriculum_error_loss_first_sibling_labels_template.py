@@ -33,6 +33,10 @@ class LossFirstSiblingLabelsTemplateTests(unittest.TestCase):
         ):
             self.assertIn(token, TEMPLATE)
 
+    def test_authenticates_the_decompressed_work_model(self):
+        self.assertIn("sha(inp.parent/'work'/'curriculum.pjtw')", TEMPLATE)
+        self.assertNotIn("sha(inp/'curriculum.pjtw')", TEMPLATE)
+
     def test_preflight_and_forbidden_actions(self):
         for token in (
             "MAX_PROJECTED_MINUTES=480",
