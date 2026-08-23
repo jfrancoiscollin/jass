@@ -25,6 +25,19 @@ class LossFirstLabelsNoBookTests(unittest.TestCase):
                 target.NoBookJassEngine.__init__(engine, "jass")
             close.assert_called_once_with()
 
+    def test_main_installs_terminal_adapter_and_restores_hooks(self):
+        original_engine = target.base.cv.JassEngine
+        original_search_leaf = target.base._search_leaf
+        original_extractor = target.base.ExactFeatureExtractor
+        with mock.patch.object(target.terminal_fix, "install") as install, \
+             mock.patch.object(target.base, "main", return_value=17) as base_main:
+            self.assertEqual(target.main(), 17)
+        install.assert_called_once_with()
+        base_main.assert_called_once_with()
+        self.assertIs(target.base.cv.JassEngine, original_engine)
+        self.assertIs(target.base._search_leaf, original_search_leaf)
+        self.assertIs(target.base.ExactFeatureExtractor, original_extractor)
+
     def test_direct_script_execution_can_import_jobs_package(self):
         root = pathlib.Path(__file__).resolve().parents[2]
         script = root / "jobs/tools/l3_curriculum_error_loss_first_sibling_labels_nobook.py"
