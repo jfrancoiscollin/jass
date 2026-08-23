@@ -57,7 +57,7 @@ for row,name in ((summary,'summary'),(report,'report')):
   if row.get(key)!=0: raise SystemExit(f'{name} forbidden source counter drift {key}')
 PY_AUTH
 atlas_args=(); for shard in $(seq 0 15); do atlas_args+=(--atlas-shard "$IN/atlas-$shard.json"); done
-python3 jobs/tools/l3_curriculum_error_residual_ridge_path_screen.py \
+python3 -m jobs.tools.l3_curriculum_error_residual_ridge_path_screen \
   --preregistration "$IN/preregistration.json" --training-report "$IN/training-report.json" \
   --failed-model "$IN/failed-model.json" --pairs "$IN/gate-fit-pairs.json" \
   "${atlas_args[@]}" --report "$ART/ridge-path-screen.json" >"$W/screen.log" 2>&1
