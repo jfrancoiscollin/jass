@@ -43,6 +43,13 @@ at least four inside and outside observations in each pool, is at least
 the negative loss mass.  These conditions are diagnostics, not a production
 gate and not a multiple-testing corrected confirmation.
 
+Because phase was not one of those fixed binary risk factors, any phase rule is
+explicitly post-hoc.  The report nevertheless publishes full phase and
+pool-by-phase slices for both errors and controls, plus the exact symmetric
+counterfactual that replaces every endgame intervention by the unmodified
+CURRICULUM anchor.  This calculation may motivate a new preregistration; it is
+not evidence that validates the phase rule.
+
 ## Fail-closed continuation
 
 The job computes no new exact target, fits no fresh label or PatternEval model,

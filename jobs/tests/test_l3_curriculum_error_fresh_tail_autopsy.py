@@ -83,6 +83,21 @@ class FreshTailAutopsyTests(unittest.TestCase):
         self.assertTrue(selected["descriptively_pool_stable"])
         self.assertTrue(selected["fresh_1517_reuse_for_validation_forbidden"])
 
+    def test_endgame_abstention_is_symmetric_and_discovery_only(self):
+        rows = [
+            {"pair_id": 0, "role": "error", "source_pool": "pool1", "phase": "endgame", "intervention": True, "improvement_cp": -1000.0},
+            {"pair_id": 0, "role": "control", "source_pool": "pool1", "phase": "endgame", "intervention": True, "improvement_cp": 100.0},
+            {"pair_id": 1, "role": "error", "source_pool": "pool2", "phase": "midgame", "intervention": True, "improvement_cp": 200.0},
+            {"pair_id": 1, "role": "control", "source_pool": "pool2", "phase": "midgame", "intervention": False, "improvement_cp": 0.0},
+        ]
+        report = autopsy._phase_abstention_counterfactual(rows, excluded_phase="endgame")
+        self.assertEqual(report["removed_interventions"], {"control": 1, "error": 1})
+        self.assertEqual(report["all_pairs"]["error"]["mean"], 100.0)
+        self.assertEqual(report["all_pairs"]["control"]["mean"], 0.0)
+        self.assertEqual(report["all_pairs"]["paired"]["mean"], 100.0)
+        self.assertFalse(report["production_authorized"])
+        self.assertTrue(report["fresh_1517_reuse_for_validation_forbidden"])
+
     def test_source_authentication_rejects_positive_or_unaudited_source(self):
         summary = {
             "schema": autopsy.SOURCE_TERMINAL_SCHEMA,

@@ -312,6 +312,62 @@ def _group(records: list[dict[str, Any]], key: str) -> dict[str, Any]:
     return {name: _distribution(values) for name, values in sorted(grouped.items())}
 
 
+def _group_joint(records: list[dict[str, Any]], keys: tuple[str, ...]) -> dict[str, Any]:
+    grouped: dict[str, list[float]] = defaultdict(list)
+    for row in records:
+        grouped["|".join(str(row[key]) for key in keys)].append(float(row["improvement_cp"]))
+    return {name: _distribution(values) for name, values in sorted(grouped.items())}
+
+
+def _phase_abstention_counterfactual(
+    detailed: list[dict[str, Any]], *, excluded_phase: str
+) -> dict[str, Any]:
+    by_pair: dict[int, dict[str, dict[str, Any]]] = defaultdict(dict)
+    for row in detailed:
+        by_pair[int(row["pair_id"])][str(row["role"])] = row
+    if any(set(roles) != {"error", "control"} for roles in by_pair.values()):
+        raise ValueError("phase counterfactual pair coverage drift")
+    values: dict[str, list[float]] = {"error": [], "control": [], "paired": []}
+    by_pool: dict[str, dict[str, list[float]]] = defaultdict(
+        lambda: {"error": [], "control": [], "paired": []}
+    )
+    removed = Counter()
+    retained_positive = []
+    for pair_id in sorted(by_pair):
+        roles = by_pair[pair_id]
+        adjusted = {}
+        for role in ("error", "control"):
+            row = roles[role]
+            abstain = bool(row["intervention"]) and row["phase"] == excluded_phase
+            adjusted[role] = 0.0 if abstain else float(row["improvement_cp"])
+            if abstain:
+                removed[role] += 1
+            elif row["intervention"] and role == "error":
+                retained_positive.append(float(row["improvement_cp"]) > 0.0)
+        paired = adjusted["error"] - adjusted["control"]
+        pool = str(roles["error"]["source_pool"])
+        if pool != str(roles["control"]["source_pool"]):
+            raise ValueError("phase counterfactual pair pool drift")
+        for key, value in (("error", adjusted["error"]), ("control", adjusted["control"]), ("paired", paired)):
+            values[key].append(value); by_pool[pool][key].append(value)
+    return {
+        "rule": f"abstain_when_phase_equals_{excluded_phase}",
+        "status": "posthoc_discovery_only_not_confirmed",
+        "pairs": len(by_pair),
+        "removed_interventions": dict(sorted(removed.items())),
+        "remaining_error_positive_realization_rate": (
+            float(np.mean(retained_positive)) if retained_positive else None
+        ),
+        "all_pairs": {key: _distribution(series) for key, series in values.items()},
+        "by_pool": {
+            pool: {key: _distribution(series) for key, series in rows.items()}
+            for pool, rows in sorted(by_pool.items())
+        },
+        "fresh_1517_reuse_for_validation_forbidden": True,
+        "production_authorized": False,
+    }
+
+
 def _correlation(records: list[dict[str, Any]], key: str) -> float | None:
     rows = [row for row in records if row.get(key) is not None]
     if len(rows) < 3:
@@ -506,6 +562,19 @@ def autopsy(
             "by_dominant_feature": _group(error_interventions, "dominant_feature"),
             "by_dominant_feature_family": _group(error_interventions, "dominant_feature_family"),
         },
+        "control_intervention_slices": {
+            "by_pool": _group(control_interventions, "source_pool"),
+            "by_phase": _group(control_interventions, "phase"),
+            "by_piece_count": _group(control_interventions, "piece_count"),
+            "by_king_count": _group(control_interventions, "king_count"),
+        },
+        "joint_intervention_slices": {
+            "error_by_pool_phase": _group_joint(error_interventions, ("source_pool", "phase")),
+            "control_by_pool_phase": _group_joint(control_interventions, ("source_pool", "phase")),
+        },
+        "posthoc_endgame_abstention": _phase_abstention_counterfactual(
+            detailed, excluded_phase="endgame"
+        ),
         "correlations_with_realized_improvement": {
             key: _correlation(error_interventions, key) for key in (
                 "predicted_advantage_cp", "guard_margin_cp", "proxy_cp",
