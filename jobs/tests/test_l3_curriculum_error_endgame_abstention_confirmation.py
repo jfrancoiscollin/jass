@@ -22,12 +22,12 @@ def registration() -> dict:
                 "openings_per_pool": prereg.OPENINGS_PER_POOL,
                 "pool_seeds": list(prereg.POOL_SEEDS),
                 "split_seed": prereg.SPLIT_SEED,
+                "target_free_before_candidate_order": True,
             },
             "fresh_pair_mining": {
                 "pair_count_exact": prereg.FRESH_PAIRS,
                 "seed": prereg.MINING_SEED,
                 "maximum_states_per_source_game": 2,
-                "target_free_before_candidate_order": True,
             },
             "fresh_confirmation": {
                 "bootstrap_samples": prereg.BOOTSTRAP_SAMPLES,
