@@ -111,25 +111,36 @@ def _profile_rows(shards: list[dict[str, Any]], selection: dict[str, Any]) -> di
     return {int(row["source"]["ordinal"]): row for row in rows}
 
 
-def prepare(
+def prepare_with_contract(
     preregistration: dict[str, Any],
     availability_report: dict[str, Any],
     lattice: dict[str, Any],
     source_selection: dict[str, Any],
     profile_selection: dict[str, Any],
     profile_shards: list[dict[str, Any]],
+    *,
+    preregistration_check: Any = None,
+    availability_schema: str = availability.SCHEMA_TERMINAL,
+    availability_verdict: str = availability.READY,
+    lattice_schema: str = "jass.l3_curriculum_error_fresh_pair_lattice.v1",
+    mining_seed: int = power.MINING_SEED,
+    pair_count: int | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
-    _check_preregistration(preregistration)
+    if preregistration_check is None:
+        preregistration_check = _check_preregistration
+    if pair_count is None:
+        pair_count = FRESH_PAIRS
+    preregistration_check(preregistration)
     if (
-        availability_report.get("schema") != availability.SCHEMA_TERMINAL
-        or availability_report.get("verdict") != availability.READY
+        availability_report.get("schema") != availability_schema
+        or availability_report.get("verdict") != availability_verdict
         or availability_report.get("passed") is not True
         or availability_report.get("fresh_target_reconstruction_authorized") is not True
     ):
         raise ValueError("fresh confirmation requires passed 1515 availability")
     if (
-        lattice.get("schema") != "jass.l3_curriculum_error_fresh_pair_lattice.v1"
-        or int(lattice.get("mining_seed", -1)) != power.MINING_SEED
+        lattice.get("schema") != lattice_schema
+        or int(lattice.get("mining_seed", -1)) != mining_seed
         or lattice.get("candidate_order_fixed_before_targets") is not True
         or int(lattice.get("exact_action_value_reads", -1)) != 0
     ):
@@ -140,8 +151,8 @@ def prepare(
         raise ValueError("fresh profile selection schema drift")
     by_ordinal = _profile_rows(profile_shards, profile_selection)
     candidate_states = list(lattice.get("candidate_states", []))
-    if len(candidate_states) < 2 * FRESH_PAIRS:
-        raise ValueError("fresh lattice has fewer than 600 candidate states")
+    if len(candidate_states) < 2 * pair_count:
+        raise ValueError(f"fresh lattice has fewer than {2 * pair_count} candidate states")
     state_pool = {
         str(row["exact_state_key"]): str(row["source_pool"])
         for row in candidate_states
@@ -218,6 +229,24 @@ def prepare(
     return prepared, paths
 
 
+def prepare(
+    preregistration: dict[str, Any],
+    availability_report: dict[str, Any],
+    lattice: dict[str, Any],
+    source_selection: dict[str, Any],
+    profile_selection: dict[str, Any],
+    profile_shards: list[dict[str, Any]],
+) -> tuple[dict[str, Any], list[str]]:
+    return prepare_with_contract(
+        preregistration,
+        availability_report,
+        lattice,
+        source_selection,
+        profile_selection,
+        profile_shards,
+    )
+
+
 def normalize(
     prepared: dict[str, Any],
     lattice: dict[str, Any],
@@ -288,8 +317,11 @@ def _empty_cache(catalog: dict[str, Any]) -> dict[str, Any]:
 
 
 def _accepted(
-    lattice: dict[str, Any], judgments: dict[str, dict[str, Any]]
+    lattice: dict[str, Any], judgments: dict[str, dict[str, Any]],
+    *, pair_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], set[str], list[str]]:
+    if pair_count is None:
+        pair_count = FRESH_PAIRS
     accepted: list[dict[str, Any]] = []
     used: set[str] = set()
     unresolved: list[str] = []
@@ -322,15 +354,17 @@ def _accepted(
             "control_exact_state_key": control,
         })
         used.update((left, right))
-        if len(accepted) == FRESH_PAIRS:
+        if len(accepted) == pair_count:
             break
     return accepted, used, unresolved
 
 
 def plan_batch(
     lattice: dict[str, Any], catalog: dict[str, Any], cache: dict[str, Any] | None,
-    *, max_states: int,
+    *, max_states: int, pair_count: int | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    if pair_count is None:
+        pair_count = FRESH_PAIRS
     if catalog.get("schema") != SCHEMA_CATALOG or catalog.get("lattice_sha256") != _digest(lattice):
         raise ValueError("fresh catalog/lattice identity drift")
     if cache is None:
@@ -338,8 +372,8 @@ def plan_batch(
     if cache.get("schema") != SCHEMA_CACHE or cache.get("catalog_sha256") != _digest(catalog):
         raise ValueError("fresh target cache identity drift")
     judgments = cache["judgments"]
-    accepted, _used, unresolved = _accepted(lattice, judgments)
-    if len(accepted) == FRESH_PAIRS:
+    accepted, _used, unresolved = _accepted(lattice, judgments, pair_count=pair_count)
+    if len(accepted) == pair_count:
         return {
             "schema": SCHEMA_PLAN,
             "status": "complete",
@@ -365,7 +399,7 @@ def plan_batch(
                 break
     if not requested:
         raise ValueError(
-            f"fresh exact labels exhaust lattice at {len(accepted)}/{FRESH_PAIRS} pairs"
+            f"fresh exact labels exhaust lattice at {len(accepted)}/{pair_count} pairs"
         )
     if len(requested) % 2:
         raise ValueError("fresh exact target planner ended with an unpairable state")
@@ -457,11 +491,17 @@ def ingest(
 
 
 def finalize_pairs_and_shards(
-    lattice: dict[str, Any], catalog: dict[str, Any], cache: dict[str, Any]
+    lattice: dict[str, Any], catalog: dict[str, Any], cache: dict[str, Any],
+    *, pair_count: int | None = None,
+    stop_rule: str = "first_300_valid_pairs_in_frozen_pre_target_order",
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    accepted, _used, _unresolved = _accepted(lattice, cache["judgments"])
-    if len(accepted) != FRESH_PAIRS:
-        raise ValueError(f"fresh exact target cache has {len(accepted)}/{FRESH_PAIRS} pairs")
+    if pair_count is None:
+        pair_count = FRESH_PAIRS
+    accepted, _used, _unresolved = _accepted(
+        lattice, cache["judgments"], pair_count=pair_count
+    )
+    if len(accepted) != pair_count:
+        raise ValueError(f"fresh exact target cache has {len(accepted)}/{pair_count} pairs")
     pairs = []
     for pair_id, row in enumerate(accepted):
         pairs.append({
@@ -487,13 +527,13 @@ def finalize_pairs_and_shards(
     pair_payload = {
         "schema": atlas.SCHEMA_PAIRS,
         "matching_passed": True,
-        "matched_pairs": FRESH_PAIRS,
-        "pairs_by_split": {"fresh_confirmation": FRESH_PAIRS},
+        "matched_pairs": pair_count,
+        "pairs_by_split": {"fresh_confirmation": pair_count},
         "pairs_by_pool": dict(sorted(Counter(row["source_pool"] for row in pairs).items())),
         "pairs": pairs,
         "subset": "fresh_confirmation",
         "candidate_order_fixed_before_targets": True,
-        "stop_rule": "first_300_valid_pairs_in_frozen_pre_target_order",
+        "stop_rule": stop_rule,
         "label_based_ranking": False,
         "error_openings": len(error_openings),
         "control_openings": len(control_openings),
@@ -536,13 +576,16 @@ def finalize_pairs_and_shards(
 
 
 def _load_fresh_rows(
-    pairs: dict[str, Any], shards: list[dict[str, Any]]
+    pairs: dict[str, Any], shards: list[dict[str, Any]],
+    *, pair_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    if pair_count is None:
+        pair_count = FRESH_PAIRS
     if (
         pairs.get("schema") != atlas.SCHEMA_PAIRS
         or pairs.get("subset") != "fresh_confirmation"
         or pairs.get("matching_passed") is not True
-        or int(pairs.get("matched_pairs", -1)) != FRESH_PAIRS
+        or int(pairs.get("matched_pairs", -1)) != pair_count
     ):
         raise ValueError("fresh confirmation pair source drift")
     if len(shards) != NSHARDS or {int(row.get("shard", -1)) for row in shards} != set(range(NSHARDS)):
@@ -563,9 +606,9 @@ def _load_fresh_rows(
         identities[key] = next(iter(values))
     profiles = {int(row["pair_id"]): row for row in pairs["pairs"]}
     judged = {int(row["pair_id"]): row for shard in shards for row in shard["rows"]}
-    if set(profiles) != set(range(FRESH_PAIRS)) or set(judged) != set(profiles):
+    if set(profiles) != set(range(pair_count)) or set(judged) != set(profiles):
         raise ValueError("fresh confirmation pair coverage drift")
-    ordered_profiles = [profiles[index] for index in range(FRESH_PAIRS)]
+    ordered_profiles = [profiles[index] for index in range(pair_count)]
     if [int(row["edge_index"]) for row in ordered_profiles] != sorted(
         int(row["edge_index"]) for row in ordered_profiles
     ):
@@ -585,7 +628,7 @@ def _load_fresh_rows(
     if max(game_counts.values(), default=0) > 2:
         raise ValueError("fresh confirmation exceeds two states per source game")
     rows = []
-    for pair_id in range(FRESH_PAIRS):
+    for pair_id in range(pair_count):
         row = {"pair_id": pair_id, "source_pool": profiles[pair_id]["source_pool"]}
         for role in ("error", "control"):
             profile = profiles[pair_id][role]
