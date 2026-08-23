@@ -17,6 +17,7 @@ class EndgameAbstentionPreregistrationTemplateTests(unittest.TestCase):
             "HYPOTHESES__1", "FRESH_PAIRS__600", "PHASE_RULE__ABSTAIN_ENDGAME",
             "NEW_TARGETS__0", "FITS__0", "STRENGTH_GAMES__0",
             "PRODUCTION_REFIT_AUTHORIZED__FALSE", "PROMOTION_AUTHORIZED__FALSE",
+            "DISCOVERY_SOURCE_JOB", "--discovery-job", "--discovery-attempt", "--discovery-code",
         ):
             self.assertIn(marker, TEMPLATE)
         for forbidden in ("run_match", "queue/pending", "l3_curriculum_search_error_atlas.py atlas"):
