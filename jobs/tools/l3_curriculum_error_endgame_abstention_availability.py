@@ -47,7 +47,7 @@ def _validate_preregistration(report: dict[str, Any]) -> None:
         or int(mining.get("pair_count_exact", -1)) != prereg.FRESH_PAIRS
         or int(mining.get("seed", -1)) != prereg.MINING_SEED
         or int(mining.get("maximum_states_per_source_game", -1)) != base.MAX_STATES_PER_GAME
-        or mining.get("target_free_before_candidate_order") is not True
+        or campaign.get("target_free_before_candidate_order") is not True
         or rule.get("abstain_exact_value") != "endgame"
         or rule.get("all_other_phases_use_frozen_residual_bit_identically") is not True
     ):

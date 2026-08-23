@@ -25,12 +25,12 @@ def registration() -> dict:
                 "openings_per_pool": prereg.OPENINGS_PER_POOL,
                 "pool_seeds": list(prereg.POOL_SEEDS),
                 "split_seed": prereg.SPLIT_SEED,
+                "target_free_before_candidate_order": True,
             },
             "fresh_pair_mining": {
                 "pair_count_exact": prereg.FRESH_PAIRS,
                 "seed": prereg.MINING_SEED,
                 "maximum_states_per_source_game": base.MAX_STATES_PER_GAME,
-                "target_free_before_candidate_order": True,
             },
         },
     }
@@ -44,6 +44,14 @@ class EndgameAbstentionAvailabilityTests(unittest.TestCase):
             endgame._validate_preregistration(row)
         row = registration()
         row["frozen_hypothesis"]["phase_rule"]["abstain_exact_value"] = "midgame"
+        with self.assertRaisesRegex(ValueError, "protocol drift"):
+            endgame._validate_preregistration(row)
+
+    def test_target_free_guard_is_read_from_the_frozen_campaign(self) -> None:
+        row = registration()
+        endgame._validate_preregistration(row)
+        row["protocol"]["fresh_campaign"].pop("target_free_before_candidate_order")
+        row["protocol"]["fresh_pair_mining"]["target_free_before_candidate_order"] = True
         with self.assertRaisesRegex(ValueError, "protocol drift"):
             endgame._validate_preregistration(row)
 
