@@ -246,13 +246,14 @@ python3 - "$ART" "$EXPECTED_CODE_SHA" "$PREREG_SOURCE_JOB" "$PREREG_SOURCE_ATTEM
   "$CURRICULUM_SHA" "$POOL_SEED_1" "$POOL_SEED_2" "$SPLIT_SEED" <<'PY_FINAL'
 import json,sys
 from pathlib import Path
+from jobs.tools import l3_curriculum_error_fresh_pair_availability_preflight as availability_contract
 art=Path(sys.argv[1]); code=sys.argv[2]; prereg=tuple(sys.argv[3:6]); champion=sys.argv[6]; seeds=list(map(int,sys.argv[7:10]))
 report=json.load(open(art/'fresh-pair-availability.json')); lattice=json.load(open(art/'fresh-pair-lattice.json'))
 if report.get('verdict') not in {'JASS_CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY_READY','JASS_CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY_NOT_ESTABLISHED'}: raise SystemExit('availability verdict drift')
 for key in ('new_targets','exact_action_value_reads','holdout_reads','fits','pattern_eval_fits','production_model_fits','strength_games','frozen_reads'):
  if int(report.get(key,-1))!=0: raise SystemExit(f'forbidden counter drift {key}')
 if report.get('new_selfplay_games')!=7680 or lattice.get('exact_action_value_reads')!=0: raise SystemExit('fresh trajectory scope drift')
-payload={**report,'schema':'jass.curriculum_error_fresh_pair_availability_terminal.v1','code_sha':code,
+payload={**report,'schema':availability_contract.SCHEMA_TERMINAL,'code_sha':code,
  'preregistration_source':{'job':prereg[0],'attempt':prereg[1],'code_sha':prereg[2]},
  'champion_sha256':champion,'campaign':{'pools':2,'openings_per_pool':1920,'games':7680,
  'pool_seeds':seeds[:2],'split_seed':seeds[2],'same_byte_identical_champion_both_sides':True,
