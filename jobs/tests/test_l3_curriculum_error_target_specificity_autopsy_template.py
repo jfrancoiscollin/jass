@@ -36,6 +36,12 @@ class TargetSpecificityAutopsyTemplateTests(unittest.TestCase):
         ):
             self.assertIn(token, self.text)
 
+    def test_subspace_code_is_authenticated_from_signed_terminal(self):
+        self.assertIn("subspace-summary.json", self.text)
+        self.assertIn("summary.get('code_sha')!=want[2]", self.text)
+        self.assertIn("JASS_CURRICULUM_ERROR_RESIDUAL_STABLE_SUBSPACE_READY", self.text)
+        self.assertIn('>"$W/auth.log" 2>&1', self.text)
+
     def test_never_runs_engine_or_strength_tools(self):
         forbidden = (
             "match_runner", "selfplay", "play-games", "frozen",

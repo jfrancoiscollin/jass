@@ -16,7 +16,7 @@ die(){ say "ABORT: $*"; exit 1; }
 finalize(){
   rc=$?; trap - EXIT ERR TERM INT; set +e
   cp "$RES" "$ART/RESULTS.txt" 2>/dev/null || true
-  for name in tests fetch-training fetch-fresh fetch-subspace autopsy; do
+  for name in tests fetch-training fetch-fresh fetch-subspace auth autopsy; do
     [ -s "$W/$name.log" ] && cp "$W/$name.log" "$ART/$name.log"
   done
   rm -rf "$IN"; exit "$rc"
@@ -75,16 +75,23 @@ timeout 1800s python3 jobs/tools/fetch_result_files.py --prefix "$SUBSPACE_ROOT"
   --out-dir "$IN" --report "$ART/verified-subspace-source.json" \
   --expected-state completed >"$W/fetch-subspace.log" 2>&1
 
-python3 - "$ART" \
+python3 - "$ART" "$IN" \
   "$TRAINING_SOURCE_JOB" "$TRAINING_SOURCE_ATTEMPT" "$TRAINING_SOURCE_CODE" \
   "$FRESH_SOURCE_JOB" "$FRESH_SOURCE_ATTEMPT" "$FRESH_SOURCE_CODE" \
-  "$SUBSPACE_SOURCE_JOB" "$SUBSPACE_SOURCE_ATTEMPT" "$SUBSPACE_SOURCE_CODE" <<'PY_AUTH'
+  "$SUBSPACE_SOURCE_JOB" "$SUBSPACE_SOURCE_ATTEMPT" "$SUBSPACE_SOURCE_CODE" >"$W/auth.log" 2>&1 <<'PY_AUTH'
 import json,sys
 from pathlib import Path
-art=Path(sys.argv[1]); wants=[tuple(sys.argv[i:i+3]) for i in (2,5,8)]
-for name,want in zip(('verified-training-source.json','verified-fresh-source.json','verified-subspace-source.json'),wants):
- row=json.load(open(art/name)); got=(row.get('job_id'),row.get('attempt_id'),row.get('code_sha'))
+art,inputs=map(Path,sys.argv[1:3]); wants=[tuple(sys.argv[i:i+3]) for i in (3,6,9)]
+names=('verified-training-source.json','verified-fresh-source.json','verified-subspace-source.json')
+receipts=[json.load(open(art/name)) for name in names]
+for name,row,want in zip(names[:2],receipts[:2],wants[:2]):
+ got=(row.get('job_id'),row.get('attempt_id'),row.get('code_sha'))
  if got!=want or row.get('result_state')!='completed' or row.get('exit_code')!=0: raise SystemExit(f'{name} identity/state drift got={got} want={want}')
+row,want=receipts[2],wants[2]
+got=(row.get('job_id'),row.get('attempt_id'))
+if got!=want[:2] or row.get('result_state')!='completed' or row.get('exit_code')!=0: raise SystemExit(f'{names[2]} path/state drift got={got} want={want[:2]}')
+summary=json.load(open(inputs/'subspace-summary.json'))
+if (summary.get('code_sha')!=want[2] or summary.get('verdict')!='JASS_CURRICULUM_ERROR_RESIDUAL_STABLE_SUBSPACE_READY' or summary.get('passed') is not True): raise SystemExit(f'{names[2]} signed terminal identity/verdict drift')
 PY_AUTH
 
 training_shards=(); fresh_shards=()
