@@ -121,7 +121,7 @@ def prepare(
 ) -> tuple[dict[str, Any], list[str]]:
     _check_preregistration(preregistration)
     if (
-        availability_report.get("schema") != "jass.l3_curriculum_error_fresh_pair_availability_terminal.v1"
+        availability_report.get("schema") != availability.SCHEMA_TERMINAL
         or availability_report.get("verdict") != availability.READY
         or availability_report.get("passed") is not True
         or availability_report.get("fresh_target_reconstruction_authorized") is not True

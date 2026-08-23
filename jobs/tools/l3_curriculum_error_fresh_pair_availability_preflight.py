@@ -27,6 +27,7 @@ from jobs.tools import l3_curriculum_search_error_atlas as profiles
 # dumper can consume this deliberately different, role-tagged risk set.
 SCHEMA_SELECTION = profiles.SCHEMA_SELECTION
 SCHEMA_REPORT = "jass.l3_curriculum_error_fresh_pair_availability_preflight.v1"
+SCHEMA_TERMINAL = "jass.curriculum_error_fresh_pair_availability_terminal.v1"
 READY = "JASS_CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY_READY"
 NOT_ESTABLISHED = "JASS_CURRICULUM_ERROR_FRESH_PAIR_AVAILABILITY_NOT_ESTABLISHED"
 SOURCE_GAMES = 7680

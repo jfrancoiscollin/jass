@@ -24,6 +24,53 @@ def profile(state):
 
 
 class FreshPoweredConfirmationTests(unittest.TestCase):
+    def test_prepare_accepts_the_exact_1515_terminal_schema(self):
+        availability_report = {
+            "schema": fresh.availability.SCHEMA_TERMINAL,
+            "verdict": fresh.availability.READY,
+            "passed": True,
+            "fresh_target_reconstruction_authorized": True,
+        }
+        lattice = {
+            "schema": "jass.l3_curriculum_error_fresh_pair_lattice.v1",
+            "mining_seed": fresh.power.MINING_SEED,
+            "candidate_order_fixed_before_targets": True,
+            "exact_action_value_reads": 0,
+            "candidate_states": [
+                {"ordinal": 0, "exact_state_key": "a", "source_pool": "pool1"},
+                {"ordinal": 1, "exact_state_key": "b", "source_pool": "pool1"},
+            ],
+            "candidate_edges": [{
+                "left_exact_state_key": "a",
+                "right_exact_state_key": "b",
+                "source_pool": "pool1",
+                "candidate_edge_order_sha256": "00" * 32,
+            }],
+        }
+        source_selection = {
+            "schema": fresh.learning.SCHEMA_SELECTION,
+            "sources": [{"path": "artefacts/games-pool1/game-0.json"}],
+            "rows": [
+                {"ordinal": 0, "exact_state_key": "a", "source_file": "games-pool1/game-0.json"},
+                {"ordinal": 1, "exact_state_key": "b", "source_file": "games-pool1/game-0.json"},
+            ],
+        }
+        profile_selection = {"schema": fresh.atlas.SCHEMA_SELECTION, "rows": []}
+        profiles = {
+            0: {"source": {"exact_state_key": "a"}},
+            1: {"source": {"exact_state_key": "b"}},
+        }
+        with (
+            mock.patch.object(fresh, "FRESH_PAIRS", 1),
+            mock.patch.object(fresh, "_check_preregistration"),
+            mock.patch.object(fresh, "_profile_rows", return_value=profiles),
+        ):
+            prepared, paths = fresh.prepare(
+                {}, availability_report, lattice, source_selection, profile_selection, []
+            )
+        self.assertEqual(prepared["candidate_states"], 2)
+        self.assertEqual(paths, ["artefacts/games-pool1/game-0.json"])
+
     def test_unknown_prefix_blocks_later_acceptance(self):
         lattice = {
             "candidate_edges": [
