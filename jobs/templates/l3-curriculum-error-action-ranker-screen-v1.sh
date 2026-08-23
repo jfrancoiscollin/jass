@@ -31,6 +31,11 @@ MAX_PROFILE_MINUTES=240
 MAX_ATLAS_MINUTES=480
 BOOTSTRAP=10000
 CACHE_MB=128
+BUDGET_ROWS_PER_SPLIT="${BUDGET_ROWS_PER_SPLIT:-1024}"
+COVERAGE_ONLY="${COVERAGE_ONLY:-0}"
+EXPECTED_SOURCE_POOL_SEED_1="${EXPECTED_SOURCE_POOL_SEED_1:-2026082231}"
+EXPECTED_SOURCE_POOL_SEED_2="${EXPECTED_SOURCE_POOL_SEED_2:-2026082232}"
+EXPECTED_SOURCE_SPLIT_SEED="${EXPECTED_SOURCE_SPLIT_SEED:-2026082233}"
 
 MON=""
 monitor(){
@@ -61,7 +66,11 @@ trap 'exit 143' TERM
 trap 'exit 130' INT
 
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
-[[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-action-ranker-screen-v1$ ]] || die "invalid job nomenclature"
+if [ "$COVERAGE_ONLY" = 1 ]; then
+  [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-paired-coverage-screen-v1$ ]] || die "invalid coverage job nomenclature"
+else
+  [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-action-ranker-screen-v1$ ]] || die "invalid ranker job nomenclature"
+fi
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] || die "job worktree must be detached"
 [ -z "$(git status --porcelain)" ] || die "job worktree must start clean"
@@ -79,9 +88,11 @@ monitor
 
 stage repository-contract-tests
 python3 -m py_compile jobs/tools/l3_curriculum_search_error_atlas.py \
-  jobs/tools/l3_curriculum_error_action_ranker.py
+  jobs/tools/l3_curriculum_error_action_ranker.py \
+  jobs/tools/l3_curriculum_error_paired_coverage_screen.py
 python3 -m unittest jobs.tests.test_l3_curriculum_search_error_atlas \
   jobs.tests.test_l3_curriculum_error_action_ranker \
+  jobs.tests.test_l3_curriculum_error_paired_coverage_screen \
   jobs.tests.test_l3_curriculum_error_learning >"$W/tests.log" 2>&1
 
 stage fetch-authenticate-fresh-action-source-and-champion
@@ -89,6 +100,12 @@ SOURCE_ARGS=()
 for shard in $(seq 0 $((NSH-1))); do
   SOURCE_ARGS+=(--file "artefacts/autopsy-shards/shard-$shard.json=source-shard-$shard.json")
 done
+if [ "$COVERAGE_ONLY" = 1 ]; then
+  SOURCE_ARGS+=(
+    --file "artefacts/verified-exclude-pool-curriculum-error-1492-pool1.json=source-exclude-1492-pool1.json"
+    --file "artefacts/verified-exclude-pool-curriculum-error-1492-pool2.json=source-exclude-1492-pool2.json"
+  )
+fi
 timeout 3600s python3 jobs/tools/fetch_result_files.py --prefix "$SOURCE_ROOT" \
   --file artefacts/error-selection.json=error-selection.json \
   --file artefacts/search-params.txt=search-params.txt \
@@ -102,10 +119,14 @@ timeout 1800s python3 jobs/tools/fetch_result_files.py --prefix "$CURRICULUM_ROO
   >"$W/fetch-curriculum.log" 2>&1
 gunzip -t "$IN/curriculum.pjtw.gz"; gunzip -c "$IN/curriculum.pjtw.gz" >"$W/curriculum.pjtw"
 python3 - "$IN" "$ART" "$SOURCE_JOB" "$SOURCE_ATTEMPT" "$SOURCE_CODE" \
-  "$CURRICULUM_JOB" "$CURRICULUM_ATTEMPT" "$CURRICULUM_CODE" "$CURRICULUM_SHA" <<'PY_AUTH'
+  "$CURRICULUM_JOB" "$CURRICULUM_ATTEMPT" "$CURRICULUM_CODE" "$CURRICULUM_SHA" \
+  "$EXPECTED_SOURCE_POOL_SEED_1" "$EXPECTED_SOURCE_POOL_SEED_2" \
+  "$EXPECTED_SOURCE_SPLIT_SEED" "$COVERAGE_ONLY" <<'PY_AUTH'
 import hashlib,json,sys
 from pathlib import Path
 src,art=map(Path,sys.argv[1:3]); source=tuple(sys.argv[3:6]); curriculum=tuple(sys.argv[6:9]); model_sha=sys.argv[9]
+pool_seeds=[int(sys.argv[10]),int(sys.argv[11])]; split_seed=int(sys.argv[12])
+coverage_only=bool(int(sys.argv[13]))
 for name,want in (("verified-action-source.json",source),("verified-curriculum.json",curriculum)):
  receipt=json.load(open(art/name)); got=(receipt.get('job_id'),receipt.get('attempt_id'),receipt.get('code_sha'))
  if got!=want or receipt.get('result_state')!='completed' or receipt.get('exit_code')!=0:
@@ -113,11 +134,17 @@ for name,want in (("verified-action-source.json",source),("verified-curriculum.j
 summary=json.load(open(src/'source-summary.json')); selection=json.load(open(src/'error-selection.json'))
 if summary.get('verdict')!='JASS_CURRICULUM_ERROR_ACTION_SOURCE_READY': raise SystemExit('source verdict drift')
 campaign=summary.get('campaign',{})
-if campaign.get('pool_seeds')!=[2026082231,2026082232] or campaign.get('split_seed')!=2026082233:
+if campaign.get('pool_seeds')!=pool_seeds or campaign.get('split_seed')!=split_seed:
  raise SystemExit('fresh action source seeds drift')
 if not campaign.get('disjoint_from_1468_and_prior_force_pools'): raise SystemExit('source disjointness drift')
 if summary.get('pattern_bucket_aggregate_reads')!=0 or summary.get('pattern_eval_fits')!=0 or summary.get('strength_games')!=0:
  raise SystemExit('source forbidden-action drift')
+if coverage_only:
+ expected_1492=('cpx62-1492-l3-curriculum-error-autopsy-v1','20260822T212256Z-454b3862','454b386229810dc5897d1eb955f7c379d536e920')
+ for name in ('source-exclude-1492-pool1.json','source-exclude-1492-pool2.json'):
+  prior=json.load(open(src/name)); got=(prior.get('job_id'),prior.get('attempt_id'),prior.get('code_sha'))
+  if got!=expected_1492 or prior.get('result_state')!='completed' or prior.get('exit_code')!=0:
+   raise SystemExit(f'1492 exclusion receipt drift: {name} {got}')
 if selection.get('schema')!='jass.l3_curriculum_error_selection.v1' or selection.get('decisions')!=summary.get('decisions'):
  raise SystemExit('source selection drift')
 if hashlib.sha256((src/'error-selection.json').read_bytes()).hexdigest()!=summary.get('selection_sha256'):
@@ -125,7 +152,7 @@ if hashlib.sha256((src/'error-selection.json').read_bytes()).hexdigest()!=summar
 (art/'fresh-action-source-certificate.json').write_text(json.dumps({
  'schema':'jass.curriculum_error_action_source_certificate.v1','job_id':source[0],'attempt_id':source[1],
  'code_sha':source[2],'decisions':selection['decisions'],'champion_sha256':model_sha,
- 'pool_seeds':[2026082231,2026082232],'split_seed':2026082233,'disjoint':True,
+ 'pool_seeds':pool_seeds,'split_seed':split_seed,'disjoint':True,
  'pattern_bucket_aggregate_reads':0,'production_fits':0,'promotion_authorized':False},indent=2,sort_keys=True)+'\n')
 PY_AUTH
 [ "$(sha256sum "$W/curriculum.pjtw" | awk '{print $1}')" = "$CURRICULUM_SHA" ] || die "CURRICULUM raw hash drift"
@@ -154,7 +181,7 @@ source_args=(); for shard in $(seq 0 $((NSH-1))); do source_args+=(--source-shar
 python3 jobs/tools/l3_curriculum_search_error_atlas.py prepare \
   --selection "$IN/error-selection.json" "${source_args[@]}" \
   --min-regret-cp 50 --max-control-regret-cp 10 --candidates-per-error 16 \
-  --budget-rows-per-split 1024 --out "$ART/profile-selection.json" >"$W/prepare.log" 2>&1
+  --budget-rows-per-split "$BUDGET_ROWS_PER_SPLIT" --out "$ART/profile-selection.json" >"$W/prepare.log" 2>&1
 SOURCE_ERRORS=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["error_openings"])' "$ART/profile-selection.json")
 if [ "$SOURCE_ERRORS" -lt "$MIN_SOURCE_ERRORS" ]; then
   python3 - "$ART" "$SOURCE_ERRORS" "$EXPECTED_CODE_SHA" "$SOURCE_JOB" "$SOURCE_ATTEMPT" <<'PY_SUPPORT_FAIL'
@@ -223,6 +250,52 @@ PY_MATCH_FAIL
   : >"$ART/JASS_CURRICULUM_ERROR_ACTION_MATCHING_NOT_ESTABLISHED"
   stage completed-scientific-matching-fail
   say "JASS_CURRICULUM_ERROR_ACTION_MATCHING_NOT_ESTABLISHED matched=$MATCHED/$SOURCE_ERRORS"
+  exit 0
+fi
+
+if [ "$COVERAGE_ONLY" = 1 ]; then
+  stage paired-image-feature-only-relative-coverage-screen
+  python3 jobs/tools/l3_curriculum_error_paired_coverage_screen.py \
+    --pairs "$ART/matched-pairs.json" --report "$ART/paired-coverage-screen.json" \
+    >"$W/coverage.log" 2>&1
+  python3 - "$ART" "$EXPECTED_CODE_SHA" "$SOURCE_JOB" "$SOURCE_ATTEMPT" \
+    "$SOURCE_CODE" "$CURRICULUM_SHA" <<'PY_COVERAGE'
+import json,re,sys
+from pathlib import Path
+art=Path(sys.argv[1]); code,job,attempt,source_code,champion_sha=sys.argv[2:]
+report=json.load(open(art/'paired-coverage-screen.json'))
+if report.get('verdict') not in {
+ 'JASS_CURRICULUM_ERROR_PAIRED_COVERAGE_SCREEN_READY',
+ 'JASS_CURRICULUM_ERROR_PAIRED_COVERAGE_SCREEN_NOT_ESTABLISHED'}:
+ raise SystemExit('coverage verdict drift')
+for key in ('exact_action_value_reads','diagnostic_fits','pattern_eval_fits','strength_games',
+            'new_selfplay_games','frozen_reads','outer_confirm_action_value_reads',
+            'outer_confirm_profile_rows_examined'):
+ if report.get(key)!=0: raise SystemExit(f'coverage forbidden counter drift: {key}')
+if report.get('residual_fit_authorized') is not False or report.get('promotion_authorized') is not False:
+ raise SystemExit('coverage screen exposed forbidden authorization')
+payload={**report,'code_sha':code,'source_job':job,'source_attempt':attempt,
+ 'source_code_sha':source_code,'champion_sha256':champion_sha,
+ 'weights_bit_identical':True,'automatic_continuation':False}
+(art/'JASS_CONTROL_SUMMARY.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+(art/report['verdict']).touch()
+clean=lambda value: re.sub(r'[^A-Za-z0-9.+-]+','_',str(value)).strip('_')
+gate=report['fixed_gate']; audit=report['feature_audit_metrics']['roles']
+(art/f"FIXED_GATE__Q20_{clean(gate['lower_margin_cp'])}__Q60_{clean(gate['upper_margin_cp'])}").touch()
+for role in ('error','control'):
+ row=audit[role]
+ (art/f"AUDIT_{role.upper()}__N_{row['profiles']}__ELIGIBLE_{row['eligible']}__RATE_{clean(row['eligible_rate'])}").touch()
+for name,value in report['gates'].items():
+ (art/f"GATE__{name.upper()}__{str(value).upper()}").touch()
+for marker in ('EXACT_ACTION_VALUE_READS__0','OUTER_CONFIRM_ACTION_VALUE_READS__0',
+ 'OUTER_CONFIRM_PROFILE_ROWS_EXAMINED__0','DIAGNOSTIC_FITS__0','PATTERNEVAL_FITS__0',
+ 'STRENGTH_GAMES__0','NEW_SELFPLAY__0','FROZEN_READS__0',
+ 'RESIDUAL_FIT_AUTHORIZED__FALSE','PROMOTION_AUTHORIZED__FALSE'):
+ (art/marker).touch()
+PY_COVERAGE
+  VERDICT=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["verdict"])' "$ART/JASS_CONTROL_SUMMARY.json")
+  stage completed-feature-only-coverage-screen
+  say "$VERDICT action_targets=0 fits=0 confirm_profiles=0 strength=0"
   exit 0
 fi
 
