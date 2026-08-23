@@ -221,7 +221,16 @@ def _fit(matrix: np.ndarray, target_values: np.ndarray, penalty: float) -> dict[
     x = matrix[active]
     y = target_values[active]
     if not len(x):
-        raise ValueError("bucket treatment fit has zero active pairs")
+        dimension = matrix.shape[1]
+        return {
+            "coefficient": np.zeros(dimension, dtype=float),
+            "active_pairs": 0,
+            "rank": 0,
+            "condition_number": 1.0,
+            "active_mask": active,
+            "inverse": np.eye(dimension, dtype=float) / penalty,
+            "x": x,
+        }
     gram = x.T @ x / len(x)
     coefficient = np.linalg.solve(
         gram + penalty * np.eye(x.shape[1]), x.T @ y / len(x)
@@ -351,8 +360,14 @@ def _sham_maxima(evaluations: list[dict[str, Any]]) -> list[float]:
             signs = signs_by_pool[training_pool]
             active = train_fit["active_mask"]
             x = train_fit["x"]
-            y = train_matrix["target"][active, None] * signs[active]
-            coefficients = train_fit["inverse"] @ (x.T @ y / len(x))
+            if train_fit["active_pairs"] == 0:
+                coefficients = np.zeros(
+                    (int(evaluation["config"]["dimension"]), SHAM_REPLICATES),
+                    dtype=float,
+                )
+            else:
+                y = train_matrix["target"][active, None] * signs[active]
+                coefficients = train_fit["inverse"] @ (x.T @ y / len(x))
             heldout = evaluation["matrices"][heldout_pool]
             error_retained = heldout["error_active"][:, None] & ((heldout["error"] @ coefficients) > 0.0)
             control_retained = heldout["control_active"][:, None] & ((heldout["control"] @ coefficients) > 0.0)

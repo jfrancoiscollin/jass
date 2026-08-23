@@ -82,6 +82,22 @@ class BucketTreatmentAtlasTests(unittest.TestCase):
         self.assertEqual(len(maxima), 16)
         self.assertTrue(all(value == value and abs(value) < 1e9 for value in maxima))
 
+    def test_zero_support_bucket_is_reported_ineligible_without_aborting_family(self):
+        rows = []
+        for pool_index, pool in enumerate(("pool1", "pool2")):
+            for index in range(12):
+                rows.append(_row(pool_index * 100 + index, pool))
+        config = next(
+            row for row in atlas._configurations([0, 8, 9, 12, 16, 17], ["middle"])
+            if row["name"] == "singleton_centered_score_d7__ridge_10"
+        )
+        evaluation = atlas._evaluate(rows, config)
+        self.assertEqual(evaluation["fits"]["pool1"]["active_pairs"], 0)
+        self.assertEqual(evaluation["fits"]["pool2"]["rank"], 0)
+        self.assertFalse(evaluation["eligible"])
+        with mock.patch.object(atlas, "SHAM_REPLICATES", 8):
+            self.assertEqual(atlas._sham_maxima([evaluation]), [0.0] * 8)
+
     def test_negative_target_source_is_mandatory(self):
         report = {
             "schema": atlas.TARGET_SOURCE_SCHEMA,
