@@ -106,6 +106,8 @@ def _profile_rows(shards: list[dict[str, Any]], selection: dict[str, Any]) -> di
     rows.sort(key=lambda row: int(row["profile_ordinal"]))
     if [int(row["profile_ordinal"]) for row in rows] != list(range(len(selection["rows"]))):
         raise ValueError("fresh profile shard coverage drift")
+    if availability._forbidden(rows):
+        raise ValueError("fresh target-free profiles contain exact action targets")
     return {int(row["source"]["ordinal"]): row for row in rows}
 
 
@@ -140,15 +142,41 @@ def prepare(
     candidate_states = list(lattice.get("candidate_states", []))
     if len(candidate_states) < 2 * FRESH_PAIRS:
         raise ValueError("fresh lattice has fewer than 600 candidate states")
+    state_pool = {
+        str(row["exact_state_key"]): str(row["source_pool"])
+        for row in candidate_states
+    }
+    edges = list(lattice.get("candidate_edges", []))
+    expected_edges = sorted(
+        edges,
+        key=lambda row: (
+            bytes.fromhex(str(row["candidate_edge_order_sha256"])),
+            str(row["left_exact_state_key"]),
+            str(row["right_exact_state_key"]),
+        ),
+    )
+    if edges != expected_edges:
+        raise ValueError("fresh lattice edge order is not the frozen canonical order")
+    for edge in edges:
+        left, right, pool = (
+            str(edge["left_exact_state_key"]),
+            str(edge["right_exact_state_key"]),
+            str(edge["source_pool"]),
+        )
+        if left == right or state_pool.get(left) != pool or state_pool.get(right) != pool:
+            raise ValueError("fresh lattice edge endpoint/pool drift")
     ordinals = [int(row["ordinal"]) for row in candidate_states]
     if len(ordinals) != len(set(ordinals)) or any(value not in by_ordinal for value in ordinals):
         raise ValueError("fresh lattice candidate/profile coverage drift")
 
     source_rows = {int(row["ordinal"]): row for row in source_selection.get("rows", [])}
+    source_manifests = list(source_selection.get("sources", []))
     source_manifest = {
         learning._source_relative_key(str(row["path"])): row
-        for row in source_selection.get("sources", [])
+        for row in source_manifests
     }
+    if len(source_manifest) != len(source_manifests):
+        raise ValueError("fresh source manifest contains duplicate stable game paths")
     required_sources: dict[str, dict[str, Any]] = {}
     rows = []
     for new_ordinal, old_ordinal in enumerate(ordinals):
@@ -537,6 +565,25 @@ def _load_fresh_rows(
     judged = {int(row["pair_id"]): row for shard in shards for row in shard["rows"]}
     if set(profiles) != set(range(FRESH_PAIRS)) or set(judged) != set(profiles):
         raise ValueError("fresh confirmation pair coverage drift")
+    ordered_profiles = [profiles[index] for index in range(FRESH_PAIRS)]
+    if [int(row["edge_index"]) for row in ordered_profiles] != sorted(
+        int(row["edge_index"]) for row in ordered_profiles
+    ):
+        raise ValueError("fresh confirmation did not preserve frozen edge order")
+    states = [
+        str(row[role]["source"]["exact_state_key"])
+        for row in ordered_profiles
+        for role in ("error", "control")
+    ]
+    if len(states) != len(set(states)):
+        raise ValueError("fresh confirmation reuses a canonical state")
+    game_counts = Counter(
+        str(row[role]["source"]["game_uid"])
+        for row in ordered_profiles
+        for role in ("error", "control")
+    )
+    if max(game_counts.values(), default=0) > 2:
+        raise ValueError("fresh confirmation exceeds two states per source game")
     rows = []
     for pair_id in range(FRESH_PAIRS):
         row = {"pair_id": pair_id, "source_pool": profiles[pair_id]["source_pool"]}
@@ -585,6 +632,7 @@ def confirm(
     preregistration: dict[str, Any], training_report: dict[str, Any], failed_model: dict[str, Any],
     training_pairs: dict[str, Any], training_shards: list[dict[str, Any]],
     fresh_pairs: dict[str, Any], fresh_shards: list[dict[str, Any]],
+    target_cache: dict[str, Any],
 ) -> dict[str, Any]:
     selected = _check_preregistration(preregistration)
     ridge._check_source(training_report, failed_model)
@@ -595,6 +643,15 @@ def confirm(
             raise ValueError(f"immutable 1508 source {key} drift")
     if training_identities != fresh_identities:
         raise ValueError("fresh confirmation engine/model/profile identity differs from 1508")
+    if (
+        target_cache.get("schema") != SCHEMA_CACHE
+        or target_cache.get("identities") != {
+            **fresh_identities,
+            "search_arms": fresh_shards[0].get("search_arms"),
+            "judge_depth": JUDGE_DEPTH,
+        }
+    ):
+        raise ValueError("fresh confirmation target-cache identity drift")
     alpha, cap = float(selected["alpha"]), float(selected["cap_cp"])
     threshold, mode = float(selected["threshold_cp"]), str(selected["mode"])
     real_model = ridge._fit(training_rows, alpha=alpha)
@@ -633,8 +690,20 @@ def confirm(
         "fresh_labels_not_used_for_fit": True,
     }
     passed = all(gates.values())
-    target_states = [row[role] for shard in fresh_shards for row in shard["rows"] for role in ("error", "control")]
-    action_reads = sum(2 * len(row["action_values"]) for row in target_states)
+    confirmation_target_states = [
+        row[role]
+        for shard in fresh_shards
+        for row in shard["rows"]
+        for role in ("error", "control")
+    ]
+    all_target_states = list(target_cache.get("judgments", {}).values())
+    selected_state_keys = {
+        str(row["source"]["exact_state_key"])
+        for row in confirmation_target_states
+    }
+    if not selected_state_keys <= set(target_cache.get("judgments", {})):
+        raise ValueError("fresh confirmation targets are absent from target cache")
+    action_reads = sum(2 * len(row["action_values"]) for row in all_target_states)
     compact_metrics = {key: value for key, value in metrics.items() if key != "paired_values_cp"}
     return {
         "schema": SCHEMA_REPORT,
@@ -658,7 +727,11 @@ def confirm(
         "gates": gates,
         "failed_gates": sorted(key for key, value in gates.items() if not value),
         "identities": fresh_identities,
-        "new_target_states": len(target_states),
+        "new_target_states": len(all_target_states),
+        "fresh_confirmation_target_states": len(confirmation_target_states),
+        "discarded_labelled_states": len(all_target_states) - len(confirmation_target_states),
+        "target_cache_sha256": _digest(target_cache),
+        "exact_target_batches": len(target_cache.get("batch_receipts", [])),
         "exact_action_value_reads": action_reads,
         "residual_fits": 1 + power.SHAM_REPLICATES,
         "diagnostic_fits": power.SHAM_REPLICATES,
@@ -709,7 +782,7 @@ def parser() -> argparse.ArgumentParser:
     final.add_argument("--pairs", type=Path, required=True)
     final.add_argument("--shards-dir", type=Path, required=True)
     check = sub.add_parser("confirm")
-    for name in ("preregistration", "training-report", "failed-model", "training-pairs", "fresh-pairs"):
+    for name in ("preregistration", "training-report", "failed-model", "training-pairs", "fresh-pairs", "target-cache"):
         check.add_argument(f"--{name}", type=Path, required=True)
     check.add_argument("--training-shard", type=Path, action="append", required=True)
     check.add_argument("--fresh-shard", type=Path, action="append", required=True)
@@ -760,7 +833,7 @@ def main() -> int:
         _publish(args.report, confirm(
             load(args.preregistration), load(args.training_report), load(args.failed_model),
             load(args.training_pairs), _load_many(args.training_shard),
-            load(args.fresh_pairs), _load_many(args.fresh_shard),
+            load(args.fresh_pairs), _load_many(args.fresh_shard), load(args.target_cache),
         ))
     return 0
 

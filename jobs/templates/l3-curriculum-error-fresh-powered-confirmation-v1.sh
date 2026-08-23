@@ -184,7 +184,13 @@ for round in $(seq 0 $((MAX_ROUNDS-1))); do
   if [ -n "$CACHE" ]; then args+=(--cache "$CACHE"); else args+=(--cache-output "$R/cache-in.json"); CACHE="$R/cache-in.json"; fi
   python3 -m jobs.tools.l3_curriculum_error_fresh_powered_confirmation plan "${args[@]}" >"$W/plan-$round.log" 2>&1
   status=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["status"])' "$R/plan.json")
-  if [ "$status" = complete ]; then COMPLETE=1; cp "$CACHE" "$W/current-cache.json"; break; fi
+  if [ "$status" = complete ]; then
+    COMPLETE=1
+    cp "$CACHE" "$W/current-cache.json"
+    cp "$CACHE" "$ART/fresh-target-cache.json"
+    cp "$R/plan.json" "$ART/fresh-target-selection-plan.json"
+    break
+  fi
   [ "$status" = needs_targets ] || die "unknown target-plan status $status"
   pids=()
   for shard in $(seq 0 15); do
@@ -205,7 +211,7 @@ done
 stage finalize-repacked-authenticated-fresh-atlas
 python3 -m jobs.tools.l3_curriculum_error_fresh_powered_confirmation finalize \
   --lattice "$IN/fresh-pair-lattice.json" --catalog "$ART/fresh-confirmation-catalog.json" \
-  --cache "$CACHE" --pairs "$ART/fresh-confirmation-pairs.json" --shards-dir "$FINAL_SHARDS" >"$W/finalize-pairs.log" 2>&1
+  --cache "$ART/fresh-target-cache.json" --pairs "$ART/fresh-confirmation-pairs.json" --shards-dir "$FINAL_SHARDS" >"$W/finalize-pairs.log" 2>&1
 [ "$(find "$FINAL_SHARDS" -name 'shard-*.json' | wc -l)" -eq 16 ] || die "fresh final atlas shard count drift"
 
 stage fit-only-immutable-1508-and-powered-fresh-confirmation
@@ -218,7 +224,8 @@ python3 -m jobs.tools.l3_curriculum_error_fresh_powered_confirmation confirm \
   --preregistration "$IN/preregistration.json" --training-report "$IN/training-report.json" \
   --failed-model "$IN/failed-model.json" --training-pairs "$IN/training-pairs.json" \
   "${training_shards[@]}" --fresh-pairs "$ART/fresh-confirmation-pairs.json" \
-  "${fresh_shards[@]}" --report "$ART/fresh-powered-confirmation.json" >"$W/confirm.log" 2>&1
+  "${fresh_shards[@]}" --target-cache "$ART/fresh-target-cache.json" \
+  --report "$ART/fresh-powered-confirmation.json" >"$W/confirm.log" 2>&1
 
 stage authenticate-and-publish-terminal-verdict
 python3 - "$ART" "$EXPECTED_CODE_SHA" "$AVAILABILITY_SOURCE_JOB" "$AVAILABILITY_SOURCE_ATTEMPT" "$AVAILABILITY_SOURCE_CODE" \
