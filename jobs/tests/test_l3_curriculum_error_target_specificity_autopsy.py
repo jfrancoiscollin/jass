@@ -1,12 +1,21 @@
+import inspect
 import unittest
 from unittest import mock
 
 import numpy as np
 
 from jobs.tools import l3_curriculum_error_target_specificity_autopsy as target
+from jobs.tools import l3_curriculum_error_endgame_abstention_preregistration as endgame_prereg
 
 
 class TargetSpecificityAutopsyTests(unittest.TestCase):
+    def test_reproduction_uses_certified_confirmation_bootstrap_seed(self):
+        self.assertEqual(target.SOURCE_BOOTSTRAP_SEED, endgame_prereg.BOOTSTRAP_SEED)
+        self.assertEqual(target.SOURCE_BOOTSTRAP_SEED, 2026082305)
+        source = inspect.getsource(target.autopsy)
+        self.assertIn("seed=SOURCE_BOOTSTRAP_SEED", source)
+        self.assertNotIn("2026082307", source)
+
     def test_fit_uplift_recovers_positive_direction(self):
         rows = []
         for index in range(20):
