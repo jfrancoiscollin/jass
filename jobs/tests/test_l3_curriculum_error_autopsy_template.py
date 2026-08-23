@@ -60,6 +60,17 @@ class CurriculumErrorAutopsyTemplateTests(unittest.TestCase):
         )
         self.assertIn('[ "${#EXCL_NAMES[@]}" -eq 9 ]', TEMPLATE)
 
+    def test_loss_first_source_stops_before_deep_targets(self):
+        for token in (
+            'LOSS_FIRST_SOURCE_ONLY="${LOSS_FIRST_SOURCE_ONLY:-0}"',
+            "JASS_CURRICULUM_ERROR_LOSS_FIRST_SIBLING_RANK_PREREGISTERED",
+            "JASS_CURRICULUM_ERROR_LOSS_FIRST_SOURCE_READY",
+            "DEEP_TARGET_COMPUTATIONS__0",
+            "loss_first_all_legal_sibling_labeling",
+            "'deep_target_computations':0",
+        ):
+            self.assertIn(token, TEMPLATE)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -30,6 +30,7 @@ POOL_SEED_2="${POOL_SEED_2:-2026082214}"
 SPLIT_SEED="${SPLIT_SEED:-2026082215}"
 MATCH_SEED="${MATCH_SEED:-2026082216}"
 ACTION_SOURCE_ONLY="${ACTION_SOURCE_ONLY:-0}"
+LOSS_FIRST_SOURCE_ONLY="${LOSS_FIRST_SOURCE_ONLY:-0}"
 NSH=16
 PAR=16
 MOVETIME=0.1
@@ -78,7 +79,13 @@ trap 'exit 143' TERM
 trap 'exit 130' INT
 
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
-[[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-autopsy-v1$ ]] || die "invalid job nomenclature"
+if [ "$LOSS_FIRST_SOURCE_ONLY" = 1 ]; then
+  [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-loss-first-source-v1$ ]] || die "invalid loss-first job nomenclature"
+  : "${PREREG_SOURCE_JOB:?}"; : "${PREREG_SOURCE_ATTEMPT:?}"; : "${PREREG_SOURCE_CODE:?}"
+  [ "$ACTION_SOURCE_ONLY" = 0 ] || die "loss-first/action-source modes are mutually exclusive"
+else
+  [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-curriculum-error-autopsy-v1$ ]] || die "invalid job nomenclature"
+fi
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] || die "job worktree must be detached"
 [ -z "$(git status --porcelain)" ] || die "job worktree must start clean"
@@ -126,6 +133,31 @@ if actual!=want[3]: raise SystemExit(f'CURRICULUM raw hash drift: {actual}')
  'job_id':want[0],'attempt_id':want[1],'code_sha':want[2],'model_raw_sha256':actual,
  'same_model_both_sides':True,'promotion_authorized':False},indent=2,sort_keys=True)+'\n')
 PY_AUTH
+
+if [ "$LOSS_FIRST_SOURCE_ONLY" = 1 ]; then
+  stage fetch-authenticate-loss-first-preregistration
+  timeout 1800s python3 jobs/tools/fetch_result_files.py \
+    --prefix "r2:jass-data/runs/$PREREG_SOURCE_JOB/$PREREG_SOURCE_ATTEMPT" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=loss-first-prereg.json \
+    --out-dir "$IN" --report "$ART/verified-loss-first-prereg.json" --expected-state completed \
+    >"$W/fetch-loss-first-prereg.log" 2>&1
+  python3 - "$ART/verified-loss-first-prereg.json" "$IN/loss-first-prereg.json" \
+    "$PREREG_SOURCE_JOB" "$PREREG_SOURCE_ATTEMPT" "$PREREG_SOURCE_CODE" \
+    "$POOL_SEED_1" "$POOL_SEED_2" "$SPLIT_SEED" "$MATCH_SEED" >"$W/auth-loss-first-prereg.log" 2>&1 <<'PY_LOSS_FIRST_AUTH'
+import json,sys
+receipt=json.load(open(sys.argv[1])); plan=json.load(open(sys.argv[2])); want=tuple(sys.argv[3:6])
+got=(receipt.get('job_id'),receipt.get('attempt_id'),receipt.get('code_sha'))
+if got!=want or receipt.get('result_state')!='completed' or receipt.get('exit_code')!=0:
+ raise SystemExit(f'loss-first prereg identity/state drift got={got} want={want}')
+if plan.get('verdict')!='JASS_CURRICULUM_ERROR_LOSS_FIRST_SIBLING_RANK_PREREGISTERED' or plan.get('passed') is not True:
+ raise SystemExit('loss-first prereg verdict drift')
+seeds=plan.get('seeds',{}); actual=tuple(map(int,sys.argv[6:10])); expected=tuple(int(seeds[k]) for k in ('pool1','pool2','split','match'))
+if actual!=expected: raise SystemExit(f'loss-first seed drift got={actual} want={expected}')
+campaign=plan.get('source_campaign',{})
+if campaign.get('pools')!=2 or campaign.get('openings_per_pool')!=384 or campaign.get('total_games')!=1536 or campaign.get('source_stage_has_no_deep_targets') is not True:
+ raise SystemExit('loss-first source campaign contract drift')
+PY_LOSS_FIRST_AUTH
+fi
 
 stage build-current-exact-fold-tempo-engine
 EGDIR=""
@@ -201,6 +233,37 @@ python3 jobs/tools/l3_curriculum_error_learning.py prepare --games-dir "$GAMES1"
 python3 jobs/tools/l3_curriculum_error_learning.py transitions --selection "$ART/error-selection.json" \
   --games-dir "$GAMES1" --games-dir "$GAMES2" --out "$ART/error-transitions.json" \
   >"$W/transitions.log" 2>&1
+
+if [ "$LOSS_FIRST_SOURCE_ONLY" = 1 ]; then
+  stage authenticate-and-publish-loss-first-source
+  python3 - "$ART" "$IN/loss-first-prereg.json" "$CURRICULUM_SHA" "$EXPECTED_CODE_SHA" \
+    "$POOL_SEED_1" "$POOL_SEED_2" "$SPLIT_SEED" "$MATCH_SEED" \
+    "$PREREG_SOURCE_JOB" "$PREREG_SOURCE_ATTEMPT" "$PREREG_SOURCE_CODE" <<'PY_LOSS_FIRST_SOURCE'
+import hashlib,json,sys
+from pathlib import Path
+art=Path(sys.argv[1]); prereg_path=Path(sys.argv[2]); model_sha=sys.argv[3]; code=sys.argv[4]
+pool_seeds=[int(sys.argv[5]),int(sys.argv[6])]; split_seed=int(sys.argv[7]); match_seed=int(sys.argv[8]); prereg_identity=tuple(sys.argv[9:12])
+selection=json.load(open(art/'error-selection.json')); transitions=json.load(open(art/'error-transitions.json')); prereg=json.load(open(prereg_path))
+if selection.get('games')!=1536 or selection.get('decisions',0)<50000: raise SystemExit('loss-first source cardinality drift')
+if len(transitions.get('transitions',[]))!=selection['decisions']: raise SystemExit('loss-first transition coverage drift')
+payload={'schema':'jass.curriculum_error_loss_first_source_terminal.v1','verdict':'JASS_CURRICULUM_ERROR_LOSS_FIRST_SOURCE_READY','passed':True,
+ 'source_code_sha':code,'champion_sha256':model_sha,
+ 'preregistration':dict(zip(('job','attempt','code_sha'),prereg_identity)),
+ 'preregistration_sha256':hashlib.sha256(prereg_path.read_bytes()).hexdigest(),
+ 'selection_sha256':hashlib.sha256((art/'error-selection.json').read_bytes()).hexdigest(),
+ 'transitions_sha256':hashlib.sha256((art/'error-transitions.json').read_bytes()).hexdigest(),
+ 'campaign':{'pools':2,'openings_per_pool':384,'games':1536,'native_movetime_seconds':.1,'pool_seeds':pool_seeds,'split_seed':split_seed,'match_seed':match_seed,'same_byte_identical_champion_both_sides':True,'all_trajectories_dumped':True,'disjoint_from_authenticated_historical_pools':True},
+ 'decisions':selection['decisions'],'deep_target_computations':0,'autopsy_shards':0,'pattern_bucket_aggregate_reads':0,'pattern_eval_fits':0,'production_model_fits':0,'new_selfplay_games':1536,'strength_games':0,'frozen_reads':0,'promotion_authorized':False,'automatic_continuation':False,'next_stage':'loss_first_all_legal_sibling_labeling'}
+(art/'JASS_CONTROL_SUMMARY.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+PY_LOSS_FIRST_SOURCE
+  : >"$ART/JASS_CURRICULUM_ERROR_LOSS_FIRST_SOURCE_READY"
+  : >"$ART/DEEP_TARGET_COMPUTATIONS__0"; : >"$ART/AUTOPSY_SHARDS__0"
+  : >"$ART/PATTERN_BUCKET_AGGREGATE_READS__0"; : >"$ART/PATTERNEVAL_FITS__0"
+  : >"$ART/STRENGTH_GAMES__0"; : >"$ART/FROZEN_READS__0"; : >"$ART/PROMOTION_AUTHORIZED__FALSE"
+  stage completed
+  say "JASS_CURRICULUM_ERROR_LOSS_FIRST_SOURCE_READY games=1536 deep_targets=0 fits=0 force=0"
+  exit 0
+fi
 
 stage depth10-depth12-cost-preflight
 mkdir -p "$W/preflight"
