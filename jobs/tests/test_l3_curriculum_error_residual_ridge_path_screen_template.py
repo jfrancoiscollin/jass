@@ -54,6 +54,16 @@ class ResidualRidgePathScreenTemplateTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, TEMPLATE)
 
+    def test_package_importing_tool_is_launched_as_a_module(self) -> None:
+        self.assertIn(
+            "python3 -m jobs.tools.l3_curriculum_error_residual_ridge_path_screen",
+            TEMPLATE,
+        )
+        self.assertNotIn(
+            "python3 jobs/tools/l3_curriculum_error_residual_ridge_path_screen.py",
+            TEMPLATE,
+        )
+
     def test_terminal_report_keeps_all_forbidden_counters_at_zero(self) -> None:
         for marker in (
             "NEW_ACTION_TARGETS__0",
