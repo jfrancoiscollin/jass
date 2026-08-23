@@ -105,6 +105,14 @@ class AnchoredLocalRefitPreregistrationTests(unittest.TestCase):
             report["protocol"]["base_champion"]["pattern_eval_bytes"],
             "must_remain_sha256_identical",
         )
+        self.assertEqual(
+            report["protocol"]["sealed_oos"]["minimum_error_decision_changes"],
+            20,
+        )
+        self.assertEqual(
+            report["protocol"]["sealed_oos"]["minimum_control_decision_changes"],
+            12,
+        )
         self.assertEqual(report["new_targets"], 0)
         self.assertEqual(report["oos_reads"], 0)
         self.assertTrue(report["anchored_local_refit_authorized"])

@@ -28,6 +28,9 @@ OOS_POOL2_SEED = 2026082312
 OOS_SPLIT_SEED = 2026082313
 OOS_BOOTSTRAP_SEED = 2026082314
 OOS_BOOTSTRAP_SAMPLES = 200_000
+MIN_OOS_ERROR_DECISION_CHANGES = 20
+MIN_OOS_CONTROL_DECISION_CHANGES = 12
+MIN_OOS_TOTAL_DECISION_CHANGES = 32
 
 
 def _canonical(value: object) -> bytes:
@@ -208,10 +211,14 @@ def preregister(
             "canonical_state_unique": True,
             "bootstrap_samples": OOS_BOOTSTRAP_SAMPLES,
             "bootstrap_seed": OOS_BOOTSTRAP_SEED,
+            "minimum_error_decision_changes": MIN_OOS_ERROR_DECISION_CHANGES,
+            "minimum_control_decision_changes": MIN_OOS_CONTROL_DECISION_CHANGES,
+            "minimum_total_decision_changes": MIN_OOS_TOTAL_DECISION_CHANGES,
             "no_oos_label_used_for_fit_or_selection": True,
         },
         "oos_gates_all_required": {
             "fresh_pairs_exactly_600": True,
+            "enough_incremental_decision_changes": True,
             "incremental_error_regret_improvement_ci95_lower_gt_0cp": True,
             "incremental_paired_error_minus_control_ci95_lower_gt_0cp": True,
             "incremental_error_and_paired_point_estimates_gt_0cp_in_each_pool": True,

@@ -28,6 +28,8 @@ pools, with opening/game disjointness, target-free ordering, canonical
 uniqueness and maximum two states per source game.  All gates are joint:
 
 - incremental error-regret and paired 95% bootstrap lower bounds above zero;
+- at least 20 changed error decisions, 12 changed control decisions and 32
+  changed decisions in total relative to the confirmed baseline rule;
 - positive incremental error and paired point estimates in both pools;
 - incremental control mean at least -1 cp globally and in each pool;
 - positive-realisation, calibration and symmetry guards;
