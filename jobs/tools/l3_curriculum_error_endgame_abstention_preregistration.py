@@ -60,7 +60,11 @@ def _publish(path: Path, value: object) -> None:
     temporary.replace(path)
 
 
-def preregister(audit: dict[str, Any], identity: tuple[str, str, str]) -> dict[str, Any]:
+def preregister(
+    audit: dict[str, Any],
+    audit_identity: tuple[str, str, str],
+    discovery_identity: tuple[str, str, str],
+) -> dict[str, Any]:
     if (
         audit.get("schema") != AUDIT_SCHEMA
         or audit.get("verdict") != AUDIT_READY
@@ -86,11 +90,11 @@ def preregister(audit: dict[str, Any], identity: tuple[str, str, str]) -> dict[s
             raise ValueError(f"1519a forbidden accounting drift: {key}")
     source = audit.get("source_identity", {})
     if (
-        source.get("job_id") != identity[0]
-        or source.get("attempt_id") != identity[1]
-        or source.get("code_sha") != identity[2]
+        source.get("job_id") != discovery_identity[0]
+        or source.get("attempt_id") != discovery_identity[1]
+        or source.get("code_sha") != discovery_identity[2]
     ):
-        raise ValueError("1519a source identity drift")
+        raise ValueError("1519 discovery source identity drift")
 
     protocol = {
         "status": "new_confirmatory_branch_from_posthoc_phase_discovery",
@@ -157,8 +161,12 @@ def preregister(audit: dict[str, Any], identity: tuple[str, str, str]) -> dict[s
         "verdict": READY,
         "passed": True,
         "discovery_audit_source": {
-            "job": identity[0], "attempt": identity[1], "code_sha": identity[2],
+            "job": audit_identity[0], "attempt": audit_identity[1], "code_sha": audit_identity[2],
             "verdict": audit["verdict"],
+        },
+        "discovery_data_source": {
+            "job": discovery_identity[0], "attempt": discovery_identity[1],
+            "code_sha": discovery_identity[2],
         },
         "discovery_readout": {
             "baseline_global": audit["baseline_global"],
@@ -188,6 +196,9 @@ def parser() -> argparse.ArgumentParser:
     root.add_argument("--audit-job", required=True)
     root.add_argument("--audit-attempt", required=True)
     root.add_argument("--audit-code", required=True)
+    root.add_argument("--discovery-job", required=True)
+    root.add_argument("--discovery-attempt", required=True)
+    root.add_argument("--discovery-code", required=True)
     root.add_argument("--output", type=Path, required=True)
     return root
 
@@ -197,6 +208,7 @@ def main(argv: list[str] | None = None) -> int:
     report = preregister(
         json.loads(args.audit.read_text()),
         (args.audit_job, args.audit_attempt, args.audit_code),
+        (args.discovery_job, args.discovery_attempt, args.discovery_code),
     )
     report["audit_sha256"] = hashlib.sha256(args.audit.read_bytes()).hexdigest()
     _publish(args.output, report)

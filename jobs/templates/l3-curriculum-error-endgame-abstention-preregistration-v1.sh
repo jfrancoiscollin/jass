@@ -4,6 +4,7 @@ set -Eeuo pipefail
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 : "${JASS_JOB_ID:?}"; : "${EXPECTED_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"
 : "${AUDIT_SOURCE_JOB:?}"; : "${AUDIT_SOURCE_ATTEMPT:?}"; : "${AUDIT_SOURCE_CODE:?}"
+: "${DISCOVERY_SOURCE_JOB:?}"; : "${DISCOVERY_SOURCE_ATTEMPT:?}"; : "${DISCOVERY_SOURCE_CODE:?}"
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"; IN="$JASS_RESULT_DIR/inputs"; ART="$JASS_ARTEFACT_DIR"
 mkdir -p "$W" "$IN" "$ART"; RES="$W/RESULTS.txt"; : >"$RES"
@@ -34,6 +35,9 @@ PY_AUTH
 python3 -m jobs.tools.l3_curriculum_error_endgame_abstention_preregistration \
   --audit "$IN/audit.json" --audit-job "$AUDIT_SOURCE_JOB" \
   --audit-attempt "$AUDIT_SOURCE_ATTEMPT" --audit-code "$AUDIT_SOURCE_CODE" \
+  --discovery-job "$DISCOVERY_SOURCE_JOB" \
+  --discovery-attempt "$DISCOVERY_SOURCE_ATTEMPT" \
+  --discovery-code "$DISCOVERY_SOURCE_CODE" \
   --output "$ART/endgame-abstention-preregistration.json" >"$W/prereg.log" 2>&1
 python3 - "$ART" "$EXPECTED_CODE_SHA" "$AUDIT_SOURCE_JOB" "$AUDIT_SOURCE_ATTEMPT" "$AUDIT_SOURCE_CODE" <<'PY_FINAL'
 import json,sys
