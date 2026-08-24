@@ -1,0 +1,85 @@
+{
+  "schema": "jass.l3_curriculum_search_frontier_regret_distillation_prereg.v1",
+  "mechanism": "search_frontier_regret_distillation",
+  "rationale": "1549/1551 closed stable all-sibling ranking because only ~12% of selected states survived joint d10/d12, WDL and exact-image stability. This screen removes that stability filter and asks whether target-blind shallow search-frontier signals predict sealed d12 regret out of pool.",
+  "source": {
+    "job_id": "cpx62-1549-l3-curriculum-error-loss-first-labels-v1",
+    "attempt_id": "20260823T215609Z-f263f4cc",
+    "code_sha": "f263f4cc31a2905134af006fa30053c1ef06340e",
+    "rows": 768,
+    "rows_per_pool": 384,
+    "one_state_per_opening": true
+  },
+  "features": [
+    "d9_historical_gap_sym_cp",
+    "d9_historical_gap_original_cp",
+    "d9_historical_gap_image_cp",
+    "d9_orientation_historical_absdiff_cp",
+    "instability_depth_flips",
+    "instability_orientation_disagreements",
+    "instability_historical_mean_rank_fraction",
+    "instability_score_volatility_cp",
+    "instability_minimum_d9_margin_cp_capped400",
+    "legal_action_count",
+    "piece_count",
+    "king_count",
+    "phase_onehot",
+    "kings_onehot",
+    "tactical_onehot",
+    "branching_bin_onehot"
+  ],
+  "forbidden_predictors": [
+    "accepted",
+    "label",
+    "teacher_action",
+    "d10_values",
+    "d12_values",
+    "d10_wdl",
+    "d12_wdl",
+    "regret_cp_by_depth",
+    "comparisons",
+    "jacobians",
+    "outcome",
+    "terminal_score"
+  ],
+  "target": {
+    "name": "historical_action_d12_regret_cp",
+    "definition": "clip(regret_cp_by_depth['12'], 0, 200)",
+    "high_regret_threshold_cp_diagnostic_only": 50
+  },
+  "model": {
+    "family": "ridge_linear",
+    "lambda": 10.0,
+    "standardization": "train_pool_only",
+    "intercept": "unpenalized",
+    "hyperparameter_tuning": false
+  },
+  "crossfit": [
+    "train_pool1_test_pool2",
+    "train_pool2_test_pool1"
+  ],
+  "statistics": {
+    "bootstrap_samples": 20000,
+    "bootstrap_seed": 2026082451,
+    "label_shams": 1000,
+    "sham_seed": 2026082452,
+    "top_fraction": 0.25
+  },
+  "pass_gate": {
+    "both_direction_spearman_point_gt": 0.0,
+    "both_direction_spearman_bootstrap_ci95_low_gt": 0.0,
+    "both_direction_top_quartile_true_regret_uplift_ci95_low_gt": 0.0,
+    "min_direction_spearman_gt_sham_familywise_p99": true
+  },
+  "authorizations": {
+    "new_exact_targets": false,
+    "pattern_eval_fit": false,
+    "production_model": false,
+    "strength_games": false,
+    "selfplay": false,
+    "frozen_reads": false,
+    "promotion": false,
+    "on_pass": "authorize_fresh_disjoint_search_frontier_confirmation_only",
+    "on_fail": "close_search_frontier_regret_distillation_mechanism"
+  }
+}
