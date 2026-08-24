@@ -5,6 +5,7 @@ import importlib.util
 import json
 import math
 import struct
+import sys
 import tempfile
 from pathlib import Path
 
@@ -12,6 +13,7 @@ MODULE = Path(__file__).resolve().parents[1] / "tools" / "l3_rgsc_trajectory_arc
 spec = importlib.util.spec_from_file_location("rgsc", MODULE)
 rgsc = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
+sys.modules[spec.name] = rgsc
 spec.loader.exec_module(rgsc)
 
 
@@ -25,8 +27,6 @@ def write_pair(root: Path, games: list[dict]) -> tuple[Path, Path]:
         rows = game["rows"]
         game_plies = max(row[0] for row in rows) + 2
         for ply, score, stm, state_seed in rows:
-            # Distinct legal-looking bitboards are enough for the archive tool;
-            # move legality belongs to the generator, not this offline parser.
             wm = 1 << (state_seed % 20)
             wk = 0
             bm = 1 << (20 + state_seed % 20)
@@ -89,8 +89,6 @@ def test_selects_max_suffix_regret_and_zeroes_seed_targets() -> None:
         assert report["schema"] == "jass.l3_rgsc_trajectory_archive.v1"
         assert report["source_games"]["eligible_games"] == 3
         regret_rows = read_seed_records(root / "regret.jnnw")
-        # The deliberately wrong middle state of game 1 must survive into the
-        # top-regret buffer, and every output old target is scrubbed.
         fps = []
         for wm, wk, bm, bk, stm, score, wdl in regret_rows:
             assert score == 0 and wdl == 0
@@ -119,7 +117,6 @@ def test_random_and_regret_share_exact_normal_seed_prefix() -> None:
         root = Path(tmp)
         games = []
         for gid in range(1, 7):
-            # Every game has a distinct ply-0 state and later state.
             games.append({"id": gid, "result": 1 if gid % 2 else -1,
                           "rows": [(0, gid * 30, 0, gid),
                                    (4, (-1 if gid % 2 else 1) * 500, 0, gid + 20)]})
@@ -147,8 +144,10 @@ def test_rejects_jsm1_and_insufficient_unique_games() -> None:
             assert "JSM2" in str(exc)
         else:
             raise AssertionError("JSM1 source was accepted")
+        other = root / "other"
+        other.mkdir()
         try:
-            rgsc.run(args_for(data, meta, root / "other", buffer_size=2))
+            rgsc.run(args_for(data, meta, other, buffer_size=2))
         except ValueError as exc:
             assert "regret candidates" in str(exc)
         else:
