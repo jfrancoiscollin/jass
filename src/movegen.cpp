@@ -27,9 +27,11 @@
 #include "bd_time.hpp"
 #include "bitboard.hpp"
 #include "board.hpp"
+#include "tb_move_order_policy.hpp"
 
 #include <algorithm>
 #include <array>
+#include <vector>
 
 namespace jass {
 
@@ -265,6 +267,29 @@ void generate_quiet_moves(const Position& pos, MoveList& out) {
     }
 }
 
+// Stable descending policy ordering. Strict `>` in the insertion loop keeps
+// generation order for exact policy ties, which preserves deterministic
+// semantics. Search's later TT hoist/order score remains authoritative: all
+// non-TT captures still receive the same legacy search score (0), so this
+// policy order is retained verbatim underneath the TT move.
+void apply_tb_capture_policy(const Position& pos, MoveList& out) {
+    const tb_policy::Policy* policy = tb_policy::active();
+    if (policy == nullptr || out.size() < 2) return;
+
+    std::vector<double> scores(out.size());
+    for (std::size_t i = 0; i < out.size(); ++i) {
+        scores[i] = policy->score(pos, out[i]);
+    }
+    for (std::size_t i = 1; i < out.size(); ++i) {
+        std::size_t j = i;
+        while (j > 0 && scores[j] > scores[j - 1]) {
+            std::swap(scores[j], scores[j - 1]);
+            std::swap(out[j], out[j - 1]);
+            --j;
+        }
+    }
+}
+
 }  // namespace
 
 void generate_legal_moves(const Position& pos, MoveList& out) {
@@ -273,7 +298,10 @@ void generate_legal_moves(const Position& pos, MoveList& out) {
     // generate_captures writes directly into `out`, keeping only max-length
     // chains via emit_chain's max_captures tracking. No second pass needed.
     generate_captures(pos, out);
-    if (!out.empty()) return;
+    if (!out.empty()) {
+        apply_tb_capture_policy(pos, out);
+        return;
+    }
 
     generate_quiet_moves(pos, out);
 }
