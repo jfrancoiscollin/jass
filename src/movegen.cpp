@@ -272,9 +272,14 @@ void generate_quiet_moves(const Position& pos, MoveList& out) {
 // semantics. Search's later TT hoist/order score remains authoritative: all
 // non-TT captures still receive the same legacy search score (0), so this
 // policy order is retained verbatim underneath the TT move.
+//
+// V1 is intentionally support-bounded: D was learned only on exact 8-piece
+// parents whose capture children fall inside the 7-piece EGDB. Outside that
+// demonstrated domain we return before even loading/scoring the policy.
 void apply_tb_capture_policy(const Position& pos, MoveList& out) {
+    if (out.size() < 2 || popcount(pos.occupied()) != 8) return;
     const tb_policy::Policy* policy = tb_policy::active();
-    if (policy == nullptr || out.size() < 2) return;
+    if (policy == nullptr) return;
 
     std::vector<double> scores(out.size());
     for (std::size_t i = 0; i < out.size(); ++i) {
