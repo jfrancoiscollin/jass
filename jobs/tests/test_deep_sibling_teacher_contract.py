@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import os
+import shutil
+import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -41,6 +44,16 @@ class DeepSiblingTeacherContractTests(unittest.TestCase):
     def test_semantic_sibling_order_is_score_blind(self):
         self.assertIn("std::sort(unique_moves.begin(), unique_moves.end(), semantic_less)", self.src)
         self.assertIn("Search order among siblings is canonicalized by semantic move identity", self.doc)
+
+    def test_teacher_translation_unit_is_syntax_valid(self):
+        compiler = os.environ.get("CXX") or shutil.which("c++") or shutil.which("g++")
+        if not compiler:
+            self.skipTest("no C++ compiler available")
+        proc = subprocess.run(
+            [compiler, "-std=c++20", "-fsyntax-only", "-Isrc", "-Ipattern_jass/src", str(SRC)],
+            cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
 
 
 if __name__ == "__main__":
