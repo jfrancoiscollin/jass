@@ -27,6 +27,7 @@
 #include "bd_time.hpp"
 #include "bitboard.hpp"
 #include "board.hpp"
+#include "dssd_move_order_policy.hpp"
 #include "tb_move_order_policy.hpp"
 
 #include <algorithm>
@@ -267,18 +268,36 @@ void generate_quiet_moves(const Position& pos, MoveList& out) {
     }
 }
 
-// Stable descending policy ordering. Strict `>` in the insertion loop keeps
-// generation order for exact policy ties, which preserves deterministic
-// semantics. Search's later TT hoist/order score remains authoritative: all
-// non-TT captures still receive the same legacy search score (0), so this
-// policy order is retained verbatim underneath the TT move.
-//
-// V1 is intentionally support-bounded: D was learned only on exact 8-piece
-// parents whose capture children fall inside the 7-piece EGDB. Outside that
-// demonstrated domain we return before even loading/scoring the policy.
+// Stable descending exact-TB policy ordering. Strict `>` in the insertion loop
+// keeps generation order for exact policy ties. The search's later TT hoist and
+// root iterative-deepening hoist remain authoritative because this only changes
+// the underlying generated order.
 void apply_tb_capture_policy(const Position& pos, MoveList& out) {
     if (out.size() < 2 || popcount(pos.occupied()) != 8) return;
     const tb_policy::Policy* policy = tb_policy::active();
+    if (policy == nullptr) return;
+
+    std::vector<double> scores(out.size());
+    for (std::size_t i = 0; i < out.size(); ++i) {
+        scores[i] = policy->score(pos, out[i]);
+    }
+    for (std::size_t i = 1; i < out.size(); ++i) {
+        std::size_t j = i;
+        while (j > 0 && scores[j] > scores[j - 1]) {
+            std::swap(scores[j], scores[j - 1]);
+            std::swap(out[j], out[j - 1]);
+            --j;
+        }
+    }
+}
+
+// Frozen DSSD ordering. The policy is allowed to touch only already-legal
+// capture siblings after the FMJD majority rule. Its 9..40 support is disjoint
+// from the historical exact-8 TB policy above, so neither can perturb the
+// other's demonstrated domain.
+void apply_dssd_capture_policy(const Position& pos, MoveList& out) {
+    if (out.size() < 2 || !dssd_policy::supports_parent(pos)) return;
+    const dssd_policy::Policy* policy = dssd_policy::active();
     if (policy == nullptr) return;
 
     std::vector<double> scores(out.size());
@@ -305,6 +324,7 @@ void generate_legal_moves(const Position& pos, MoveList& out) {
     generate_captures(pos, out);
     if (!out.empty()) {
         apply_tb_capture_policy(pos, out);
+        apply_dssd_capture_policy(pos, out);
         return;
     }
 
