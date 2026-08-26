@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -26,6 +28,23 @@ class DeepSiblingPhaseBTests(unittest.TestCase):
             source_row_index=i,
             sample_hash=f"{i:064x}",
         )
+
+    def test_fresh_selector_direct_script_bootstraps_repo_imports(self):
+        # Reproduce the runner invocation mode that caused 1576: execute the
+        # selector by filesystem path from outside the repository. Import-time
+        # package resolution must succeed before argparse prints help.
+        script = Path(__file__).resolve().parents[1] / "tools" / "deep_sibling_fresh_select.py"
+        with tempfile.TemporaryDirectory() as td:
+            cp = subprocess.run(
+                [sys.executable, str(script), "--help"],
+                cwd=td,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertEqual(cp.returncode, 0, cp.stderr)
+        self.assertIn("--filtered-parents", cp.stdout)
+        self.assertNotIn("ModuleNotFoundError", cp.stderr)
 
     def test_fresh_selection_keeps_phase_quota_when_reachable_and_fills(self):
         unique = {}

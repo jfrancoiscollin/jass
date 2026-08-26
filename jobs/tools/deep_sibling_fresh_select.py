@@ -14,11 +14,22 @@ import csv
 import hashlib
 import json
 import struct
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from jobs.tools.tb_frontier_catalog_mine import JNNW_RECORD_SIZE
-from jobs.tools.tb_frontier_symmetry_dedup import canonical_fingerprint
+# Phase-B invokes this file by path from the runner work directory. In that
+# direct-script mode Python puts jobs/tools (not the repository root) on
+# sys.path, so package imports below must bootstrap the repository root just as
+# the other standalone jobs/tools entry points do. This is packaging only; it
+# does not alter any DSSD data, seeds, selection rules, targets, or scores.
+if __package__ in (None, ""):
+    ROOT = Path(__file__).resolve().parents[2]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+
+from jobs.tools.tb_frontier_catalog_mine import JNNW_RECORD_SIZE  # noqa: E402
+from jobs.tools.tb_frontier_symmetry_dedup import canonical_fingerprint  # noqa: E402
 
 FILTER_FIELDS = [
     "row_index", "source_row_index", "parent_fingerprint", "parent_stm", "pieces", "legal_moves"
