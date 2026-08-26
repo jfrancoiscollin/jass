@@ -11,7 +11,21 @@ No D policy is used to generate or select the fresh positions.
 
 ## Fresh CURRICULUM-play source
 
-A fresh source stream is generated from CURRICULUM-only play with new deterministic generation seeds disjoint from the historical R2 source. Source score/WDL fields are never consumed for Phase-B parent selection; the production parent filter reads board bitboards + STM only and zeroes target bytes.
+A fresh source stream is generated from CURRICULUM-only play with deterministic seeds disjoint from the historical R2 source. Source score/WDL fields are never consumed for Phase-B parent selection; the production parent filter reads board bitboards + STM only and zeroes target bytes.
+
+Before any fresh source is generated, the technical play-source contract is frozen as:
+
+- 16 independent single-process producers on CPX62;
+- 10,000 requested JNNW records per producer, for 160,000 requested fresh source records before filtering;
+- `--gen-data-wdl` with CURRICULUM passed through `--nnue`;
+- label depth 4, play depth 8, max plies 260;
+- generation seed for shard `s` = `2026083200 + s`, `s=0..15`;
+- `--wdl-zero-score`, so no score-search target is required for this source;
+- `--random-open-plies 8 --explore-eps 8 --explore-decay-plies 60 --pair-openings --drop-plycap`;
+- compiled frozen production search parameters are used for play; no D policy or Phase-A result influences move selection;
+- shard payloads are concatenated in ascending shard index before the board/STM-only parent filter.
+
+These settings are a position-source mechanism only. Generated game WDL/outcome bytes are not read by the selector and cannot affect inclusion.
 
 The fresh selector uses:
 
