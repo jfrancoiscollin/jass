@@ -50,9 +50,9 @@ micro-search 1000n  ~93–94 %
 micro-search 5000n  ~95–96 %
 ```
 
-Le problème prioritaire est donc maintenant :
+Le problème prioritaire est donc maintenant double :
 
-> **combien de ce signal micro-search pouvons-nous compresser dans un PatternEval statique, et comment maximiser ce transfert ?**
+> **combien de ce signal micro-search pouvons-nous compresser dans un PatternEval statique, et quelle fraction supplémentaire devient exploitable si l'on apprend directement un évaluateur conjoint `T+D` au lieu de forcer toute l'information à rentrer dans `T` ?**
 
 ---
 
@@ -75,7 +75,7 @@ DSSD a établi un signal décisionnel fort et reproductible :
 
 Conclusion : `D1` capture de l'information non présente dans le scalar T.
 
-### 3.3 DSSD au runtime — fermé
+### 3.3 DSSD au runtime — fermé pour le move-ordering
 
 `cpx62-1584-l3-dssd-move-ordering-force-pool1-v1` :
 
@@ -83,7 +83,7 @@ Conclusion : `D1` capture de l'information non présente dans le scalar T.
 - environ `-3.88 Elo` ;
 - verdict `DSSD_MOVE_ORDERING_NOT_SUPPORTED`.
 
-Le coût runtime annule le petit gain de qualité d'ordre. **D1 n'est pas un composant runtime.**
+Le coût runtime annule le petit gain de qualité d'ordre. **Le mécanisme D1→move-ordering est fermé.** Cela ne ferme pas une future intégration causale différente où `D` participe à un évaluateur conjoint `T+D` ; cette hypothèse doit être testée séparément et preregistrée.
 
 ### 3.4 Rich-D statique — fermé
 
@@ -267,7 +267,7 @@ Donc :
 - **pas de M6 Elo pour T1** ;
 - **pas de promotion de T1** ;
 - `CURRICULUM` reste champion ;
-- la bonne prochaine question est le **rendement de transfert**, pas un nouveau gate de force immédiat.
+- la bonne prochaine question est le **rendement de transfert**, puis la capacité de `T` seul versus une représentation conjointe `T+D`.
 
 ---
 
@@ -291,7 +291,7 @@ R_D    = (A_T1 - A_T0) / (A_D1   - A_T0)
 R_1000 = (A_T1 - A_T0) / (A_1000 - A_T0)
 ```
 
-`R_1000` devient la métrique principale de compression teacher→student.
+`R_1000` devient la métrique principale de compression teacher→PatternEval.
 
 Ce diagnostic est read-only et **ne change pas rétroactivement le verdict M5**.
 
@@ -305,17 +305,20 @@ La séquence décidée est :
 1. Évaluer précisément le transfert d'information
    T0 / D1 / q1000 / T1
         ↓
-2. Optimiser la recette de transfert
+2. Optimiser la recette de transfert PatternEval
    objectif principal : max R_1000
         ↓
-3. Mesurer la capacité d'absorption des features actuelles
+3. Mesurer la capacité d'absorption des features PatternEval actuelles
         ↓
-4. Ajouter des features seulement si un manque est démontré
+4. Tester un modèle conjoint T+D sur les mêmes labels fresh
+   stack minimal -> joint full-features -> residual D-on-T si justifié
         ↓
-5. Relancer une campagne teacher optimisé → T2
-   sur CURRICULUM ou sur un nouveau champion s'il existe alors
+5. Ajouter des features seulement si les plafonds de T et du joint le justifient
         ↓
-6. Tester from-scratch / multi-entry / multi-seed
+6. Relancer une campagne teacher optimisé -> T2
+   ou student conjoint si celui-ci est scientifiquement supérieur
+        ↓
+7. Tester from-scratch / multi-entry / multi-seed
    pour mesurer la convergence vers un optimum
 ```
 
@@ -328,11 +331,11 @@ Détails, métriques et règles : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEAC
 1. **Technique ≠ science.** Un retry mécanique ne change jamais le protocole.
 2. **Fresh reste fresh.** Aucun tuning sur un cohort servant de confirmation.
 3. **Pairwise pp ≠ Elo.** Ne jamais convertir un gain de ranking en Elo sans force gate.
-4. **Teacher offline uniquement.** Le micro-search sert à créer de l'information, pas à alourdir le runtime du candidat.
-5. **Pas de feature creep.** Ajouter des features seulement après preuve d'un plafond avec les observables actuelles.
+4. **Teacher micro-search offline uniquement.** Le micro-search crée l'information et n'est pas embarqué dans le runtime du student. Un éventuel `D` runtime dans un modèle conjoint est une hypothèse séparée qui exige son propre gate de coût/force.
+5. **Pas de feature creep.** Ajouter des features seulement après preuve d'un plafond avec les observables et représentations actuelles.
 6. **Pas de promotion sur loss/pairwise seul.** Un champion doit gagner le gate de force preregistré.
 7. **Pas de M6 pour T1 après le FAIL M5.** Toute force future doit porter sur un nouveau candidat validé par une nouvelle confirmation fresh.
-8. **Objectif scientifique prioritaire :** construire un opérateur reproductible `teacher court -> T statique` qui améliore la force et dont la convergence peut être étudiée.
+8. **Objectif scientifique prioritaire :** construire un opérateur reproductible `teacher court -> student` qui améliore la force, avec `PatternEval` pur si la compression fonctionne ou un joint compact `T+D` si sa supériorité est démontrée.
 
 ---
 
@@ -360,5 +363,6 @@ MICRO_SEARCH_TO_T_TRANSFER_NOT_ESTABLISHED
 
 ```text
 mesurer R_D et surtout R_1000 sur le cohort M5,
-puis lancer un DOE de transfert avant toute modification de features.
+puis DOE de transfert PatternEval,
+puis probe de capacité et modèle conjoint T+D avant tout ajout majeur de features.
 ```
