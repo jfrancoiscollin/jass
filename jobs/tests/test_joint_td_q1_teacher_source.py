@@ -17,6 +17,10 @@ def test_q1_teacher_render_contract():
     for token in ('q50_parent', 'q200_parent', 'fresh_tt_each_search', 'node_limit_mode'):
         assert token in out
     assert '#define load_pattern_jass_network load_eval_network' in out
+    assert 'SearchObs run_fresh_search(std::size_t tt_mb,' in out
+    assert out.count('Engine engine(tt_mb);') == 1
+    assert out.count('run_fresh_search(tt_mb, child,') == 3
+    assert 'run_fresh_search(engine, child,' not in out
 
 
 def test_q1_teacher_generated_source_is_syntax_valid_when_compiler_available():
