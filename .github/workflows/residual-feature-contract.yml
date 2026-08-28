@@ -1,0 +1,65 @@
+name: residual-feature-contract
+
+on:
+  pull_request:
+    paths:
+      - 'src/residual_features.*'
+      - 'jobs/tools/residual_feature_*'
+      - 'pattern_jass/tests/test_residual_feature_probe.py'
+      - '.github/workflows/residual-feature-contract.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'src/residual_features.*'
+      - 'jobs/tools/residual_feature_*'
+      - 'pattern_jass/tests/test_residual_feature_probe.py'
+      - '.github/workflows/residual-feature-contract.yml'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build full-120 prerequisite library
+        run: |
+          cmake -S . -B build-rf -DCMAKE_BUILD_TYPE=Debug -DJASS_NATIVE=OFF \
+            -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON \
+            -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build build-rf -j --target jass_lib
+      - name: Compile residual extractor and dump tool
+        run: |
+          c++ -std=c++20 -O0 -I src src/residual_features.cpp \
+            jobs/tools/residual_feature_selftest.cpp build-rf/libjass_lib.a -pthread \
+            -o build-rf/residual_feature_selftest
+          c++ -std=c++20 -O0 -I src src/residual_features.cpp \
+            jobs/tools/residual_feature_dump.cpp build-rf/libjass_lib.a -pthread \
+            -o build-rf/residual_feature_dump
+      - name: Run C++ contract tests
+        run: build-rf/residual_feature_selftest
+      - name: Prove JNNW score/WDL bytes cannot affect features
+        run: |
+          python - <<'PY'
+          import struct
+          from pathlib import Path
+          wm = 1 << (28-1)
+          wk = 0
+          bm = 1 << (22-1)
+          bk = 0
+          def rec(score, wdl):
+              return struct.pack('<QQQQBib', wm,wk,bm,bk,0,score,wdl)
+          Path('build-rf/label-guard.jnnw').write_bytes(b'JNNW'+struct.pack('<I',2)+rec(123,1)+rec(-999,-1))
+          PY
+          build-rf/residual_feature_dump build-rf/label-guard.jnnw build-rf/label-guard.rffd
+          python - <<'PY'
+          import numpy as np, struct
+          raw=open('build-rf/label-guard.rffd','rb').read()
+          assert raw[:4] == b'RFFD'
+          n,w=struct.unpack_from('<II',raw,4)
+          assert (n,w)==(2,81)
+          x=np.frombuffer(raw,dtype='<f4',offset=12).reshape(n,w)
+          assert np.array_equal(x[0],x[1]), 'score/WDL leakage into residual features'
+          assert np.isfinite(x).all()
+          PY
