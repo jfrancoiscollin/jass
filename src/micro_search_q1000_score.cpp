@@ -22,7 +22,11 @@
 namespace {
 constexpr std::uint64_t BUDGET = 1000;
 
-struct Counters {
+// deep_sibling_teacher.cpp is included into this translation unit and already
+// owns a private `Counters` type. Keep this scorer's accounting type distinct
+// so the standalone q1000 tool can be compiled without an anonymous-namespace
+// type redefinition.
+struct Q1000Counters {
     std::uint64_t source_rows{0};
     std::uint64_t processed_rows{0};
     std::uint64_t invalid_rows{0};
@@ -32,7 +36,7 @@ struct Counters {
 };
 
 void write_report(const std::string& path, std::uint32_t declared, int shard,
-                  int nshards, int tb_cap, std::size_t tt_mb, const Counters& c) {
+                  int nshards, int tb_cap, std::size_t tt_mb, const Q1000Counters& c) {
     std::ofstream out(path);
     if (!out) throw std::runtime_error("cannot open q1000 report output");
     out << "{\n"
@@ -114,7 +118,7 @@ int main(int argc, char** argv) {
 
     Engine engine(tt_mb);
     engine.use_book(false);
-    Counters c{};
+    Q1000Counters c{};
     DiskRow row{};
     for (std::uint32_t idx = 0; idx < declared; ++idx) {
         if (!read_row(in, row)) return 4;
