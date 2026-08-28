@@ -51,8 +51,9 @@ def test_fixed_d1_residual_optimizer_is_deterministic_and_improves_margin():
     pred = a.predict(x, d1)
     after = np.mean(pred[good] - pred[bad])
     assert after > before
-    # Baseline coefficient stays exactly one: adding C to every D1 score adds C to every prediction.
-    assert np.allclose(a.predict(x, d1 + 7.0) - pred, 7.0, atol=0.0, rtol=0.0)
+    # Baseline coefficient stays exactly one: a uniform D1 shift must propagate
+    # unchanged, up to the single rounding step of IEEE-754 addition/subtraction.
+    assert np.allclose(a.predict(x, d1 + 7.0) - pred, 7.0, atol=2e-15, rtol=0.0)
     assert a.to_json_dict()["d1_coefficient"] == 1.0
     assert a.to_json_dict()["intercept"] == 0.0
 
