@@ -20,6 +20,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 from pathlib import Path
 import struct
 import sys
@@ -28,6 +29,10 @@ import numpy as np
 
 TOOLS = Path(__file__).resolve().parents[2] / "pattern_jass" / "tools"
 sys.path.insert(0, str(TOOLS))
+# Match train.py/train_stream.py's reset-proof geometry contract.  The M3 job
+# emits the exact 8cf patterns.py to an external directory and pins it here.
+if os.environ.get("JASS_PATTERNS_DIR"):
+    sys.path.insert(0, os.environ["JASS_PATTERNS_DIR"])
 import master_loader  # type: ignore  # noqa: E402
 import patterns  # type: ignore  # noqa: E402
 import train  # type: ignore  # noqa: E402
@@ -87,14 +92,7 @@ def load_raw_pjtw(path: Path) -> tuple[int, int, int, np.ndarray]:
 def production_score_check(ds, extras: np.ndarray, groups: dict[str, np.ndarray],
                            raw_cols: np.ndarray, wmg: np.ndarray,
                            scale: int, n_pat: int, n_ext: int, w: np.ndarray) -> dict:
-    """Reconstruct the production linear scalar from exact raw production rows.
-
-    All pattern terms are integer sums. Dense extras are the C++-dumped float32
-    values converted to float64, and tempo_wmg comes from the shared production
-    Python phase helper. The final conversion mirrors ScanEvalNetwork's normal
-    truncating cp path. Every M3 child must reproduce the C++ t0_parent emitted
-    by the scorer; otherwise M4 is forbidden.
-    """
+    """Reconstruct the production linear scalar from exact raw production rows."""
     pat_mg = w[:n_pat]
     pat_eg = w[n_pat:2 * n_pat]
     ext_mg = w[2 * n_pat:2 * n_pat + n_ext]
@@ -105,9 +103,6 @@ def production_score_check(ds, extras: np.ndarray, groups: dict[str, np.ndarray]
     for p in range(npat):
         smg += pat_mg[raw_cols[:, p]]
         seg += pat_eg[raw_cols[:, p]]
-    # Raw extras are the production C++ values. numpy's double dot is only an
-    # implementation detail; all present 120 features are integer/half-integer
-    # valued and the int32 coefficients keep this exactly representable here.
     emg = extras.astype(np.float64, copy=False) @ ext_mg.astype(np.float64)
     eeg = extras.astype(np.float64, copy=False) @ ext_eg.astype(np.float64)
     weg = 1.0 - wmg
@@ -138,9 +133,6 @@ def production_score_check(ds, extras: np.ndarray, groups: dict[str, np.ndarray]
 def make_preferences(parent: np.ndarray, teacher: np.ndarray) -> tuple[dict[str, np.ndarray], dict]:
     if len(parent) == 0:
         raise SystemExit("empty M3 siblings")
-    # Merged M3 rows are required to be grouped by parent and stable semantic
-    # move order. Ties are resolved by the first pre-score semantic row, a purely
-    # mechanical deterministic rule; no margin threshold/filter is introduced.
     boundaries = np.r_[0, np.flatnonzero(parent[1:] != parent[:-1]) + 1, len(parent)]
     good: list[int] = []
     bad: list[int] = []
@@ -206,8 +198,6 @@ def main() -> None:
     if extras.shape != (n, EXPECTED_EXTRAS):
         raise SystemExit(f"production extras drift: {extras.shape}, expected ({n},{EXPECTED_EXTRAS})")
 
-    # Exact production 8cf geometry is injected through JASS_PATTERNS_DIR by the
-    # job, and Folder('exact') is the same exact-fold mapper used by train_stream.
     folder = train_stream.Folder("exact")
     canonical_cols, signs = folder.cols_signs(ds.black_men, ds.white_men)
     if signs is None:
@@ -222,8 +212,6 @@ def main() -> None:
     if n_pat != patterns.TOTAL_BUCKETS or n_ext != EXPECTED_EXTRAS:
         raise SystemExit(f"CURRICULUM geometry drift n_pat={n_pat} n_ext={n_ext}")
 
-    # Prove the folded sparse representation equals the production full-table
-    # pattern row on EVERY M3 sibling and in both phase banks.
     pat_mg, pat_eg = w[:n_pat], w[n_pat:2*n_pat]
     s64 = signs.astype(np.int64)
     folded_mg = s64 * pat_mg[canonical_cols]
@@ -253,8 +241,6 @@ def main() -> None:
     )
     np.savez_compressed(constraints_out, **prefs)
 
-    # Every pairwise row is now exactly the subtraction of two individually
-    # proven production rows by construction. No score-dependent filter exists.
     report = {
         "schema": "jass.micro_search_m3_pattern_design.v1",
         "passed": True,
