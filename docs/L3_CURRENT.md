@@ -3,9 +3,7 @@
 > **Mis à jour : 28 août 2026**
 > **Source de vérité active : ce document.**
 >
-> Ce fichier est volontairement court. L'ancien `L3_CURRENT.md` était devenu un journal de plus de 220 kB et mélangeait état courant et historique. L'historique reste accessible dans Git, dans [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md) et dans les protocoles/verdicts sous `docs/experiments/` et `archives/l3/`.
->
-> **Roadmap scientifique active :** [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md).
+> L'historique détaillé reste dans Git, [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les protocoles sous `docs/experiments/` et les archives L3. La roadmap active est [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md).
 
 ---
 
@@ -13,356 +11,245 @@
 
 ### `CURRICULUM` — champion courant
 
-`CURRICULUM` reste le champion tant qu'un candidat n'a pas passé un gate de force preregistré et une réplication suffisante.
+Aucun candidat post-CURRICULUM n'est promu.
 
 Identité immuable :
 
-- raw/decompressed `.pjtw` SHA256 :
-  `319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1`
-- source R2 :
-  `r2:jass-data/runs/cpx62-1341-jass-megacorpus-arm-d-fit-v1/20260814T191555Z-18c38a33/artefacts/D-c-prior-then-current.pjtw.gz`
+- raw/decompressed `.pjtw` SHA256 : `319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1` ;
+- source R2 : `r2:jass-data/runs/cpx62-1341-jass-megacorpus-arm-d-fit-v1/20260814T191555Z-18c38a33/artefacts/D-c-prior-then-current.pjtw.gz`.
 
-Recette :
-
-- pretrain `MEGA_FULL_4M`, puis recenter `CURRENT_2M` ;
-- `CONTEXT_30`, alpha `0.30` ;
-- `--exact-fold --tempo-stage` ;
-- prior mean C, prior decay 0 ;
-- L2 `1e-5`, `gtol=1e-4`, `maxcor=20`.
-
-Promotion initiale contre L2LOW : environ `+7.7 Elo` Q00 et `+8.7 Elo` native 0.1s sur 24k parties.
-
-**Aucun candidat post-CURRICULUM n'est actuellement promu.**
+`T1` reste un artefact expérimental non promu. Aucun M6/Elo n'a été lancé après le FAIL M5.
 
 ---
 
 ## 2. État scientifique en une phrase
 
-La principale découverte récente est que **l'information décisionnelle manquante n'est pas principalement un problème de capacité du side-head statique : elle est produite par un lookahead très court.**
+Nous savons désormais que le goulot est **multi-factoriel** :
 
-La chaîne observée est approximativement :
+1. la première recette de distillation vers PatternEval était nettement sous-optimale ;
+2. l'architecture linéaire/anchor de PatternEval limite fortement l'absorption du teacher ;
+3. la quantification int32 n'est presque pas le problème ;
+4. `T` et `D` portent une information complémentaire exploitable ;
+5. même le meilleur joint statique reste très loin du teacher q1000, donc des observables statiques importantes manquent encore.
+
+La priorité n'est donc plus « forcer D dans T ». Elle devient :
+
+> **construire un student statique plus expressif, probablement conjoint T+D, tout en découvrant les observables qui expliquent le résidu q1000 encore inaccessible.**
+
+---
+
+## 3. Chaîne de preuves amont
+
+Ordres de grandeur contre deep q200 sur cohorts fresh indépendants :
 
 ```text
-T0 / CURRICULUM     ~60–61 % pairwise vs deep
+T0 / CURRICULUM     ~60–61 %
 D1 statique         ~72–73 %
 Rich-D statique     ~73 %
 micro-search 1000n  ~93–94 %
 micro-search 5000n  ~95–96 %
 ```
 
-Le problème prioritaire est donc maintenant double :
+Résultats structurants :
 
-> **combien de ce signal micro-search pouvons-nous compresser dans un PatternEval statique, et quelle fraction supplémentaire devient exploitable si l'on apprend directement un évaluateur conjoint `T+D` au lieu de forcer toute l'information à rentrer dans `T` ?**
+- M1 `cpx62-1591...` : `B*=1000` ;
+- M2 final `cpx62-1598...` : `MICRO_SEARCH_TEACHER_SIGNAL_ESTABLISHED` ;
+- M3 final `cpx62-1607...` : 100000 parents, 928639 siblings, 828639 contraintes, design PatternEval exact ;
+- M4 `cpx62-1608...` : T1 gelé, SHA256 `25aa82567f38b9e2ad5d792d478c9e98c09d4bff9beabaa367038f55a4a98306` ;
+- M5 `cpx62-1610...` : `MICRO_SEARCH_TO_T_TRANSFER_NOT_ESTABLISHED` ;
+- diagnostic post-M5 `cpx62-1612...` : sur le même cohort deep, T0 `0.6002060`, D1 `0.7323419`, micro1000 `0.9375946`, T1 `0.6025015`, soit `R_1000≈0.0068`.
 
----
-
-## 3. Pistes récemment fermées ou reclassées
-
-### 3.1 Self-play / corpus / compounding
-
-Les nombreuses variantes de corpus, replay, volume, coverage, context, horizontal multi-seed et boucles de self-play n'ont pas établi un opérateur d'amélioration robuste au-dessus de la lignée `CURRICULUM`.
-
-Elles restent utiles comme historique, mais **ne sont plus la priorité compute**.
-
-### 3.2 DSSD statique — information réelle
-
-DSSD a établi un signal décisionnel fort et reproductible :
-
-- Phase A `cpx62-1575-l3-deep-sibling-phase-a-v1` :
-  `D1=0.72047` pairwise vs `T=0.59218`, soit `+12.83 pp` ;
-- Phase B fresh `cpx62-1581-l3-deep-sibling-phase-b-readout-v2` :
-  `D1=0.72604` vs `T=0.61406`, soit `+11.20 pp`, CI largement positive.
-
-Conclusion : `D1` capture de l'information non présente dans le scalar T.
-
-### 3.3 DSSD au runtime — fermé pour le move-ordering
-
-`cpx62-1584-l3-dssd-move-ordering-force-pool1-v1` :
-
-- native score `0.4944167` ;
-- environ `-3.88 Elo` ;
-- verdict `DSSD_MOVE_ORDERING_NOT_SUPPORTED`.
-
-Le coût runtime annule le petit gain de qualité d'ordre. **Le mécanisme D1→move-ordering est fermé.** Cela ne ferme pas une future intégration causale différente où `D` participe à un évaluateur conjoint `T+D` ; cette hypothèse doit être testée séparément et preregistrée.
-
-### 3.4 Rich-D statique — fermé
-
-`cpx62-1590-l3-rich-d-r1-phase-c-readout-v2` :
-
-- T `0.60944` ;
-- D1 `0.72994` ;
-- Rich-D `0.73225` ;
-- q5k `0.95693`.
-
-Rich-D ne gagne que `+0.23 pp` sur D1, avec CI traversant zéro et régressions de phase/couleur.
-
-Verdict : `RICH_D_TEACHER_SIGNAL_NOT_ESTABLISHED`.
-
-**Interprétation : élargir les features statiques de D sans lookahead ne récupère pas le signal q5k.**
+**Conclusion M5/1612 :** l'information existe, mais T1 n'en a absorbé qu'environ 0,7 % de l'incrément q1000 disponible contre deep q200.
 
 ---
 
-## 4. Micro-search teacher — résultat majeur
+## 4. Screen terminal Transfer / Capacity / Joint T+D
 
-Protocole : [`experiments/L3_MICRO_SEARCH_TEACHER_TO_T_V1_20260827.md`](experiments/L3_MICRO_SEARCH_TEACHER_TO_T_V1_20260827.md).
+Preregistration : [`experiments/L3_TRANSFER_CAPACITY_JOINT_V1_20260828.md`](experiments/L3_TRANSFER_CAPACITY_JOINT_V1_20260828.md), merge SHA `78b2da436f990b6db870c7c1f7b3ee7a7d12b130`.
 
-### M1 — courbe de budget
+Implémentation : Jass SHA `d8241edc680eb50f324b2440fbde2bdadad29178`.
 
-`cpx62-1591-l3-micro-search-budget-curve-m1-v1`
+Screen scientifique réussi :
 
-Budget sélectionné :
+- job `cpx62-1614-l3-transfer-capacity-joint-screen-v2` ;
+- attempt `20260828T092856Z-d8241edc` ;
+- verdict `TRANSFER_CAPACITY_JOINT_SCREEN_READY` ;
+- readout compact immuable : `cpx62-1615-l3-transfer-capacity-joint-readout-publish-v1`, attempt `20260828T100556Z-d8241edc` ;
+- verdict `TRANSFER_CAPACITY_JOINT_SCREEN_READOUT_READY`.
+
+Anti-leakage : M3 uniquement pour TRAIN/DEV ; M5/1612 fit reads `0`, model-selection reads `0`, nouveaux q200 labels `0`, selfplay `0`, strength `0`, promotion `false`.
+
+Split parent-cluster seed `2026090401` :
+
+- TRAIN `80161` parents ;
+- DEV `19839` parents ;
+- overlap parent `0` ; overlap canonique `0` ;
+- métriques pairwise calculées sur `19503` parents DEV contribuant `854040` paires.
+
+### Important : cible de ce screen
+
+Ici `micro1000 = 1.0` par construction car **q1000 est la cible TRAIN/DEV**. Ce screen mesure la capacité à **imiter le teacher q1000**, pas une accuracy absolue contre q200. Il ne remplace donc pas une future confirmation deep fresh.
+
+Baselines DEV :
+
+| Modèle | Pairwise vs q1000 | Top-hit |
+|---|---:|---:|
+| T0 | 0.6142493 | 0.2675315 |
+| D1 scellé | 0.6569985 | 0.2362201 |
+| q1000 cible | 1.0000000 | 1.0000000 |
+
+---
+
+## 5. Stage A — le DOE de transfert aide réellement
+
+L'arm gagnant est le même sous les trois anchors :
 
 ```text
-B* = 1000 nœuds
+A6_MARGIN_L2_1E5
 ```
 
-Sur le cohort exploratoire :
+C'est le top-vs-rest pondéré par marge teacher avec L2 `1e-5`.
 
-- pairwise `0.93264` ;
-- top-hit `0.86162` ;
-- headroom récupéré `H=0.8930` ;
-- ~20 % des nœuds du 5k.
+| Guard | Pairwise | Top-hit | Scale | RMS / p99 anchor |
+|---|---:|---:|---:|---:|
+| G0 (12/35) | 0.6197134 | 0.2733767 | 0.39172 | 9.89 / 35 cp |
+| G1 (20/60) | 0.6229890 | 0.2746176 | 0.66589 | 16.82 / 60 cp |
+| G2 (35/100) | 0.6262529 | 0.2764404 | 1.00000 | 25.44 / 91 cp |
 
-### M2 — confirmation fresh
+Référence A0/M4 : G0 `0.6158687`, G1 `0.6168534`, G2 `0.6171719`.
 
-`cpx62-1598-l3-micro-search-m2-teacher-readout-v5`
+Donc le DOE améliore vraiment la recette. Sous le guard production-like G0, A6 gagne environ **+0,3845 pp sur A0** et **+0,5464 pp sur T0**. Sous G2, le gain atteint **+1,2004 pp sur T0**.
 
-Verdict :
-
-```text
-MICRO_SEARCH_TEACHER_SIGNAL_ESTABLISHED
-```
-
-Fresh :
-
-- D1 pairwise `0.72822` ;
-- micro1000 `0.93507` ;
-- q5k `0.95684` ;
-- micro1000 − D1 = `+20.69 pp` ;
-- CI95 `[+19.998 ; +21.373] pp` ;
-- toutes phases et couleurs positives.
-
-**Conclusion : la majorité du signal manquant est créée par ~1000 nœuds de recherche.**
+Mais même G2 ne récupère qu'environ **3,1 %** du gap T0→q1000 de ce DEV. La recette seule ne suffit donc pas.
 
 ---
 
-## 5. M3/M4 — distillation full PatternEval
+## 6. Stage B — architecture oui, quantification non
 
-### M3 — scale teacher/design
+### B0 — plafond linéaire sans anchor
 
-Sélection M3 : `cpx62-1599-l3-micro-search-m3-scale-select-v1`.
+Arm source : A6.
 
-Teacher/design final : `cpx62-1607-l3-micro-search-m3-teacher-design-v6`.
+- float64 : pairwise `0.6264145`, top-hit `0.2765728` ;
+- int32 production : `0.6262529`, top-hit `0.2764404` ;
+- perte de quantification pairwise : seulement `0.0001616` = **0,0162 pp**.
 
-Résultat final :
+Bootstrap B0-float − T0 : mean `+0.0121664`, CI95 `[+0.0113805 ; +0.0129581]`.
 
-- 100 000 parents ;
-- 928 639 siblings ;
-- 828 639 contraintes top-vs-rest ;
-- représentation **full production PatternEval**, pas seulement 120 extras ;
-- preuve d'équivalence exacte entre design rows et scoring production ;
-- zéro mismatch de score sur 928 639 rows.
+**Conclusion : la quantification int32 est négligeable.** Relâcher l'anchor aide un peu, mais le plafond linéaire reste bas.
 
-Les retries 1600–1606 étaient techniques uniquement ; ils n'ont pas changé la science.
+### B1 — probe non linéaire sur les mêmes observables
 
-### M4 — T1 gelé
+Probe offline déterministe, sans D ni aucun score de recherche comme input : embeddings des patterns actifs + 120 extras, MLP 64, 875601 paramètres, seed `2026090402`.
 
-`cpx62-1608-l3-micro-search-m4-pattern-distill-v1`
+Résultat :
 
-Verdict technique/scientifique de construction : PASS, marker `MICRO_SEARCH_M4_T1_FROZEN`.
+- pairwise `0.6532856` ;
+- top-hit `0.2666769` ;
+- delta pairwise vs T0 bootstrap mean `+0.0390372`, CI95 `[+0.0366240 ; +0.0414446]`.
 
-T1 :
+B1 récupère environ **10,1 %** du gap T0→q1000, contre ~3,15 % pour B0.
 
-- raw SHA256 : `25aa82567f38b9e2ad5d792d478c9e98c09d4bff9beabaa367038f55a4a98306` ;
-- vrai `.pjtw` production, pas de side-head ;
-- 828 639 contraintes fit ;
-- 4 251 528 pattern buckets, 114 916 actifs ;
-- 452 coefficients int32 modifiés ;
-- L2 résiduel `1e-5` ;
-- L-BFGS-B convergé (`status=0`) ;
-- residual scale final `0.5222358257` ;
-- anchor 500k : RMS `9.388 cp`, p99 `35 cp` ;
-- serialize/reload PASS ;
-- `D` absent à l'inférence ;
-- micro-search absent à l'inférence.
-
-**T1 n'est pas un champion. Il devait d'abord passer M5 puis M6.**
+**Conclusion : les mêmes observables contiennent beaucoup plus de signal que le PatternEval linéaire actuel ne sait en exploiter. L'architecture/objectif est un vrai goulot.**
 
 ---
 
-## 6. M5 — transfert deep fresh : verdict terminal négatif mais informatif
+## 7. Stage C — T et D sont réellement complémentaires
 
-Sélection :
+Résultats DEV :
 
-`cpx62-1609-l3-micro-search-m5-fresh-select-v1`
+| Joint | Description | Pairwise | Top-hit |
+|---|---|---:|---:|
+| C0 | stack minimal T0 + D1 + phase + couleur | **0.6726851** | **0.3072861** |
+| C1 | residual D-on-T | 0.6185354 | 0.2680100 |
+| C2 | full linear PatternEval + D features | 0.6314341 | 0.2824181 |
 
-- exactement 4000 parents ;
-- 1000 par P0/P1/P2/P3 ;
-- seed `2026090220` ;
-- target-blind ;
-- zéro teacher score/label lu pendant la sélection.
+Le meilleur est **C0**, de loin.
 
-Confirmation :
+Bootstrap C0 − D1 :
 
-`cpx62-1610-l3-micro-search-m5-deep-transfer-v1`
+- pairwise mean `+0.0156777` = **+1,568 pp** ;
+- CI95 `[+0.0140121 ; +0.0172940]` ;
+- `P>0 = 1.0`.
 
-Verdict :
+Bootstrap C0 − T0 : mean `+0.0584368`, CI95 `[+0.0568690 ; +0.0600014]`.
 
-```text
-MICRO_SEARCH_TO_T_TRANSFER_NOT_ESTABLISHED
-```
+C0 dépasse aussi B1 d'environ **+1,94 pp** pairwise.
 
-Support :
+**Conclusion forte : T et D portent une information complémentaire.** Le joint ne doit plus être considéré comme une piste secondaire ; il devient une architecture student de premier rang à confirmer sur deep fresh.
 
-- accepted parents `3423` ;
-- stable pairs `97342` ;
-- black `1673`, white `1750` ;
-- P0 `896`, P1 `945`, P2 `951`, P3 `631`.
-
-Global :
-
-| métrique | T0 | T1 | delta |
-|---|---:|---:|---:|
-| pairwise | 0.6002060 | 0.6025015 | **+0.0022955** |
-| top-hit | 0.5259519 | 0.5261710 | +0.0002191 |
-
-Pairwise T1−T0 bootstrap parent-cluster 100k :
-
-- mean `+0.0022955140` = **+0.2296 pp** ;
-- CI95 `[+0.0011948 ; +0.0033755]` ;
-- `P(delta>0)=0.99998`.
-
-Top-hit :
-
-- CI95 `[-0.0031649 ; +0.0036274]` ;
-- non établi.
-
-Par phase :
-
-- P0 `−0.0017280` ;
-- P1 `+0.0018483` ;
-- P2 `+0.0037324` ;
-- P3 `+0.0065130`.
-
-Par couleur :
-
-- black `+0.0014838` ;
-- white `+0.0030715`.
-
-Gates :
-
-- pairwise CI low > 0 : PASS ;
-- top-hit CI low > 0 : **FAIL** ;
-- deux couleurs positives : PASS ;
-- toutes phases positives : **FAIL** à cause de P0 ;
-- anchor/reload : PASS ;
-- D/micro-search absents : PASS.
-
-### Interprétation
-
-La première distillation **transfère réellement une petite quantité d'information** : le gain global pairwise est très probablement réel. Mais la recette M4 ne transfère pas encore assez de signal pour satisfaire le contrat robuste.
-
-Donc :
-
-- **pas de M6 Elo pour T1** ;
-- **pas de promotion de T1** ;
-- `CURRICULUM` reste champion ;
-- la bonne prochaine question est le **rendement de transfert**, puis la capacité de `T` seul versus une représentation conjointe `T+D`.
+En revanche C0 ne récupère qu'environ **15,1 %** du gap T0→q1000 de ce DEV. Même le joint statique reste donc très loin du teacher.
 
 ---
 
-## 7. Expérience active suivante
+## 8. Classification terminale du bottleneck
 
-### Diagnostic de rendement de transfert
+Les quatre lectures preregistrées se combinent ainsi :
 
-Sur exactement le cohort/labels M5, comparer sur les mêmes paires :
+1. **Transfer recipe : oui.** A6 bat clairement A0 sous tous les guards.
+2. **PatternEval architecture/anchor : oui.** B1 >> B0 ; un modèle non linéaire sur les mêmes observables absorbe beaucoup plus de q1000.
+3. **Quantization int32 : non.** Perte ~0,016 pp seulement.
+4. **Joint complementarity : oui, nettement.** C0 bat D1 de ~+1,57 pp avec CI très positive.
+5. **Missing static observables : encore oui.** B1 et même C0 restent très loin de q1000.
 
-```text
-T0 / CURRICULUM
-D1 sealed
-micro-search 1000n
-T1 frozen
-```
-
-Publier pairwise/top-hit globaux, par phase/couleur, asymétries d'erreur et :
-
-```text
-R_D    = (A_T1 - A_T0) / (A_D1   - A_T0)
-R_1000 = (A_T1 - A_T0) / (A_1000 - A_T0)
-```
-
-`R_1000` devient la métrique principale de compression teacher→PatternEval.
-
-Ce diagnostic est read-only et **ne change pas rétroactivement le verdict M5**.
+Il n'y a donc pas un seul « trou » : **la meilleure voie combine une architecture student plus expressive, l'exploitation conjointe de T+D, et une découverte ciblée de nouvelles observables à partir du résidu q1000.**
 
 ---
 
-## 8. Roadmap active
+## 9. Roadmap active après ce screen
 
-La séquence décidée est :
+Aucun nouveau q200 fresh n'est lancé dans cette étape.
+
+Ordre recommandé :
 
 ```text
-1. Évaluer précisément le transfert d'information
-   T0 / D1 / q1000 / T1
+1. Preregister une confirmation deep fresh séparée
+   - candidat PatternEval pur = A6 sous G0 (guard production-like)
+   - candidat joint = architecture C0 rendue sérialisable/runtime-capable
+   - candidats gelés AVANT lecture q200
         ↓
-2. Optimiser la recette de transfert PatternEval
-   objectif principal : max R_1000
+2. Fresh q200 réservé seed 2026090420
+   - 4000 parents, 1000/phase
+   - q50/q200 stable contract inchangé
+   - micro1000 diagnostic sur les mêmes siblings
         ↓
-3. Mesurer la capacité d'absorption des features PatternEval actuelles
+3. En parallèle, analyser les erreurs q1000 résiduelles
+   après B1/C0 pour proposer de nouvelles observables ciblées
         ↓
-4. Tester un modèle conjoint T+D sur les mêmes labels fresh
-   stack minimal -> joint full-features -> residual D-on-T si justifié
+4. Si un candidat joint confirme sur q200
+   mesurer son coût runtime puis seulement ensuite faire un gate Elo
         ↓
-5. Ajouter des features seulement si les plafonds de T et du joint le justifient
-        ↓
-6. Relancer une campagne teacher optimisé -> T2
-   ou student conjoint si celui-ci est scientifiquement supérieur
-        ↓
-7. Tester from-scratch / multi-entry / multi-seed
-   pour mesurer la convergence vers un optimum
+5. Construire T2/J2 avec le pipeline sélectionné
+   puis tester composition/from-scratch/multi-seed
 ```
 
-Détails, métriques et règles : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md).
+La future confirmation doit faire l'objet d'un **nouveau document de preregistration** avant toute génération/lecture de labels fresh.
 
 ---
 
-## 9. Règles de décision courantes
+## 10. Règles de décision courantes
 
-1. **Technique ≠ science.** Un retry mécanique ne change jamais le protocole.
-2. **Fresh reste fresh.** Aucun tuning sur un cohort servant de confirmation.
-3. **Pairwise pp ≠ Elo.** Ne jamais convertir un gain de ranking en Elo sans force gate.
-4. **Teacher micro-search offline uniquement.** Le micro-search crée l'information et n'est pas embarqué dans le runtime du student. Un éventuel `D` runtime dans un modèle conjoint est une hypothèse séparée qui exige son propre gate de coût/force.
-5. **Pas de feature creep.** Ajouter des features seulement après preuve d'un plafond avec les observables et représentations actuelles.
-6. **Pas de promotion sur loss/pairwise seul.** Un champion doit gagner le gate de force preregistré.
-7. **Pas de M6 pour T1 après le FAIL M5.** Toute force future doit porter sur un nouveau candidat validé par une nouvelle confirmation fresh.
-8. **Objectif scientifique prioritaire :** construire un opérateur reproductible `teacher court -> student` qui améliore la force, avec `PatternEval` pur si la compression fonctionne ou un joint compact `T+D` si sa supériorité est démontrée.
+1. Technique ≠ science.
+2. Fresh reste fresh ; aucun tuning sur le futur cohort q200.
+3. q1000 imitation ≠ deep accuracy ≠ Elo.
+4. Aucun candidat n'est promu sur ce screen offline.
+5. Le micro-search reste teacher offline.
+6. Un éventuel `D` au runtime doit être jugé comme composant d'un évaluateur joint, pas réouvrir le move-ordering DSSD déjà fermé.
+7. Les nouvelles features doivent viser les erreurs résiduelles non capturées par B1/C0, pas être ajoutées par intuition seule.
+8. `CURRICULUM` reste champion tant qu'un nouveau candidat n'a pas passé confirmation fresh puis force robuste.
 
 ---
 
-## 10. Résumé opérationnel
-
-### Champion
+## 11. Résumé opérationnel
 
 ```text
-CURRICULUM
-```
-
-### Candidat expérimental
-
-```text
-T1 — artefact valide, transfert global faible mais positif, NON PROMU
-```
-
-### Dernier verdict
-
-```text
-MICRO_SEARCH_TO_T_TRANSFER_NOT_ESTABLISHED
-```
-
-### Next step
-
-```text
-mesurer R_D et surtout R_1000 sur le cohort M5,
-puis DOE de transfert PatternEval,
-puis probe de capacité et modèle conjoint T+D avant tout ajout majeur de features.
+Champion                = CURRICULUM
+T1                      = non promu, M5 FAIL
+Meilleur pure-T offline = A6_MARGIN_L2_1E5
+Meilleur joint offline  = C0 (T0 + D1 + phase + couleur)
+Quantization bottleneck = NON
+Architecture bottleneck = OUI
+T+D complementarity     = OUI
+Missing observables     = OUI
+Fresh q200 suivant      = NON LANCÉ
 ```

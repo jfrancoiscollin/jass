@@ -1,437 +1,331 @@
 # L3 — Teacher distillation roadmap
 
 > **Mis à jour : 28 août 2026**
-> **Statut : roadmap scientifique active après M5.**
-> Ce document décrit la stratégie de recherche prioritaire pour dépasser `CURRICULUM` en exploitant l'information créée par une recherche courte. Deux voies sont désormais étudiées explicitement : **distiller cette information dans un `PatternEval` statique** et **tester si un évaluateur conjoint `T+D` peut l'exploiter sans imposer cette compression**.
+> **Statut : roadmap active après le screen terminal Transfer / Capacity / Joint T+D.**
 >
-> Le document de situation courante est [`L3_CURRENT.md`](L3_CURRENT.md). Le protocole qui a établi le teacher micro-search et produit `T1` est [`experiments/L3_MICRO_SEARCH_TEACHER_TO_T_V1_20260827.md`](experiments/L3_MICRO_SEARCH_TEACHER_TO_T_V1_20260827.md).
+> Situation courante : [`L3_CURRENT.md`](L3_CURRENT.md). Protocole du screen : [`experiments/L3_TRANSFER_CAPACITY_JOINT_V1_20260828.md`](experiments/L3_TRANSFER_CAPACITY_JOINT_V1_20260828.md).
 
-## 1. Point de départ expérimental
+## 1. Ce que nous savons maintenant
 
-La séquence DSSD / Rich-D / micro-search a permis de localiser le goulot principal.
+Le teacher micro-search est établi et très informatif : sur deep fresh, ~1000 nœuds récupèrent la majorité du signal manquant par rapport à `CURRICULUM`.
 
-Sur des cohorts indépendants, les ordres de grandeur observés sont :
+La première distillation `q1000 -> PatternEval T1` a cependant presque tout perdu : le diagnostic post-M5 donne `R_1000≈0.0068` contre q200. Cela a motivé le screen A/B/C sur M3 uniquement.
 
-- `T0 = CURRICULUM` : ~60–61 % de pairwise accuracy contre la préférence deep 200k ;
-- `D1` statique : ~72–73 % ;
-- `Rich-D` statique : ~73 % ;
-- micro-search 1000 nœuds : ~93–94 % ;
-- micro-search 5000 nœuds : ~95–96 %.
+Le screen terminal `cpx62-1614-l3-transfer-capacity-joint-screen-v2`, attempt `20260828T092856Z-d8241edc`, puis son readout compact `cpx62-1615-l3-transfer-capacity-joint-readout-publish-v1`, attempt `20260828T100556Z-d8241edc`, établissent quatre faits :
 
-Conclusion : augmenter simplement la capacité statique de `D` ne récupère pas le signal manquant. La majorité de l'information utile est **créée par un très court lookahead**.
+1. **la recette de transfert importe** : margin-weighting + L2 adapté bat nettement la recette M4 ;
+2. **PatternEval linéaire/anchor est un vrai plafond** : un probe non linéaire sur les mêmes observables absorbe beaucoup plus de q1000 ;
+3. **la quantification int32 est presque négligeable** ;
+4. **T et D sont complémentaires** : le stack minimal T0+D1 bat significativement D1 seul ;
+5. malgré cela, **les observables statiques restent loin du teacher**.
 
-Le programme micro-search a ensuite montré :
-
-- M1 : `B*=1000` nœuds sélectionné ;
-- M2 fresh : `MICRO_SEARCH_TEACHER_SIGNAL_ESTABLISHED` ;
-- M3 : 100k parents, 928 639 siblings, 828 639 contraintes top-vs-rest, design PatternEval exact ;
-- M4 : un vrai `T1.pjtw` a été produit par distillation full PatternEval ;
-- M5 fresh : le transfert global est positif mais le gate complet échoue (`MICRO_SEARCH_TO_T_TRANSFER_NOT_ESTABLISHED`).
-
-M5 donne :
-
-- `T0` pairwise = `0.60020599797` ;
-- `T1` pairwise = `0.60250151200` ;
-- delta = `+0.00229551403` soit **+0.2296 point de pourcentage** ;
-- bootstrap parent-cluster 100k : CI95 `[+0.0011948 ; +0.0033755]`, `P(delta>0)=0.99998` ;
-- top-hit delta = `+0.0002191`, CI95 `[-0.0031649 ; +0.0036274]` : non établi ;
-- P0 pairwise delta = `-0.0017280` ; P1 `+0.0018483` ; P2 `+0.0037324` ; P3 `+0.0065130` ;
-- les deux couleurs sont positives ;
-- anchor T1 reste valide : RMS `9.388 cp`, p99 `35 cp` ;
-- aucune utilisation de `D` ou du micro-search à l'inférence.
-
-**Lecture scientifique :** le signal est transférable dans `PatternEval`, mais la première recette n'en absorbe qu'une faible fraction et le transfert n'est pas encore robuste sur toutes les familles de positions.
-
----
-
-## 2. Étape A — mesurer exactement le transfert d'information
-
-### Objectif
-
-Quantifier, sur **le même cohort M5 et les mêmes labels deep 200k**, où se situe `T1` entre `T0`, `D1` et le teacher micro-search.
-
-Publier :
-
-- `A_T0` : pairwise accuracy de `CURRICULUM` ;
-- `A_D1` : pairwise accuracy du `D1` scellé ;
-- `A_1000` : pairwise accuracy du micro-search 1000 nœuds ;
-- `A_T1` : pairwise accuracy du `T1` gelé ;
-- top-hit correspondant ;
-- résultats par phase et couleur ;
-- bootstrap parent-cluster des deltas pertinents.
-
-Deux ratios deviennent les métriques centrales :
+La roadmap doit donc poursuivre trois objectifs coordonnés :
 
 ```text
-R_D    = (A_T1 - A_T0) / (A_D1   - A_T0)
-R_1000 = (A_T1 - A_T0) / (A_1000 - A_T0)
-```
-
-`R_D` mesure la fraction du signal statique additionnel de D1 absorbée par T1.
-
-`R_1000` mesure la fraction du signal additionnel réellement disponible chez notre teacher 1000n absorbée par T1. **C'est la métrique principale pour la voie PatternEval.**
-
-Publier également les asymétries d'erreur :
-
-- `T1 correct / D1 faux` ;
-- `D1 correct / T1 faux` ;
-- `T1 correct / micro1000 faux` ;
-- `micro1000 correct / T1 faux`.
-
-Cette étape est diagnostique uniquement : zéro fit, zéro retune, zéro force game.
-
----
-
-## 3. Étape B — optimiser le mécanisme de transfert vers PatternEval
-
-### Hypothèse
-
-Le premier `T1` n'a modifié que 452 coefficients int32 et a dû shrinker le résidu à `s≈0.522` pour respecter l'anchor. Le faible `R_1000` attendu peut donc provenir d'une **recette de distillation sous-optimale**, avant même de conclure à un manque de features.
-
-### DOE de transfert
-
-Créer un DOE séparé de M5, avec train/validation dédiés et confirmation fresh finale. Axes candidats :
-
-1. **L2 résiduel** ;
-2. **shrinkage / contrainte d'anchor** ;
-3. top-vs-rest vs ensemble plus riche de paires ;
-4. pondération par marge du teacher 1000n ;
-5. température / transformation des écarts teacher ;
-6. pondération des erreurs de `T0` corrigées par le teacher ;
-7. balancing P0/P1/P2/P3 ;
-8. balancing couleurs ;
-9. nombre de contraintes / cap de rows ;
-10. curriculum de fit : contraintes faciles → difficiles ou inversement ;
-11. éventuelle séparation de régularisation patterns / extras.
-
-### Fonction objectif
-
-Primaire :
-
-```text
-max R_1000
-```
-
-Sous contraintes :
-
-- pas de régression systématique par phase/couleur ;
-- dérive T vs champion bornée par des guards preregistrés ;
-- artefact exact, chargeable et reproductible ;
-- zéro micro-search à l'inférence.
-
-Secondaire : pairwise absolu de `T_candidate` contre deep 200k.
-
-**Ne pas optimiser directement sur l'Elo à ce stade.** L'Elo servira de validation causale après qu'une recette de transfert soit sélectionnée sur données indépendantes.
-
----
-
-## 4. Étape C — mesurer la capacité d'absorption de la représentation PatternEval
-
-Avant d'ajouter des features, distinguer deux causes :
-
-```text
-mauvais transfert != représentation insuffisante
-```
-
-### Test de capacité
-
-Sur les mêmes entrées `PatternEval` existantes :
-
-- entraîner un ou plusieurs probes beaucoup plus flexibles, offline uniquement ;
-- mesurer leur pairwise fresh contre deep 200k ;
-- comparer leur plafond à `T_candidate` ;
-- analyser le résidu par phase, type de position et motif d'erreur.
-
-Interprétation :
-
-- si un modèle riche sur les **mêmes features** rejoint fortement micro1000, les features contiennent l'information : le problème est optimisation/architecture/quantification `PatternEval` ;
-- si tous les modèles utilisant les mêmes observables plafonnent loin du teacher, l'information nécessaire est absente ou mal représentée.
-
-Le diagnostic doit répondre à :
-
-```text
-Quelle fraction du signal q1000 est représentable par les features de production actuelles ?
+meilleur transfert pur-T
+        +
+student joint T+D plus expressif
+        +
+nouvelles observables ciblées sur le résidu q1000
 ```
 
 ---
 
-## 5. Étape D — probe conjoint T + D
+## 2. Résultats de référence du screen A/B/C
 
-### Motivation
+### Split et anti-leakage
 
-M5 peut indiquer non seulement que la distillation `teacher -> T` est difficile, mais aussi que la contrainte **PatternEval-only** détruit une grande partie de l'information disponible.
+- source : M3 uniquement ;
+- split parent-cluster seed `2026090401` ;
+- TRAIN `80161`, DEV `19839` parents ;
+- overlap parent/canonique `0` ;
+- M5/1612 fit reads `0` ; model-selection reads `0` ;
+- nouveaux q200 labels `0` ;
+- selfplay/strength/promotion `0`.
 
-Il faut donc tester explicitement une seconde hypothèse :
+Sur les parents DEV contribuant aux métriques : `19503` parents, `854040` paires.
 
-```text
-(T, D) -> J
-```
+### Attention à la cible
 
-au lieu d'imposer uniquement :
+Dans ce screen, `micro1000=1.0` parce que q1000 est **la cible d'imitation**. Ces chiffres mesurent la capacité à reproduire q1000 sur M3 DEV ; ils ne sont pas des accuracies deep q200.
 
-```text
-D / q1000 -> T
-```
+Baselines :
 
-`J` est un évaluateur conjoint appris contre les **mêmes labels deep q200**, sans refit opportuniste des cohorts de confirmation.
-
-### D1. Stack minimal — test prioritaire et peu coûteux
-
-Première expérience : un modèle léger prenant au minimum :
-
-```text
-T_score
-D_score
-phase
-parent colour
-piece count
-legal move count
-D margin / confidence si défini sans fuite
-```
-
-Tester d'abord un modèle linéaire/logistique, puis un petit MLP seulement si preregistré.
-
-Question :
-
-```text
-T et D contiennent-ils une information complémentaire exploitable au-delà de D seul ?
-```
-
-Comparer sur fresh :
-
-- `T0` ;
-- `D1` ;
-- `J(T,D)` ;
-- `q1000` ;
-- référence `q200`.
-
-### D2. Joint full-features
-
-Si le stack minimal est positif, tester :
-
-```text
-[PatternEval features, D features, T score, D score] -> J_full
-```
-
-Objectif : estimer la capacité maximale de la **représentation combinée** avant d'inventer de nouvelles features.
-
-### D3. Residual D-on-T
-
-Architecture particulièrement intéressante pour le runtime :
-
-```text
-J(x) = T(x) + Delta_D(x)
-```
-
-avec `Delta_D` appris uniquement pour corriger le résidu du champion vers le teacher/deep target.
-
-Cela évite de demander à `D` de reconstruire toute l'évaluation et mesure directement la complémentarité des deux représentations.
-
-### Métriques
-
-Publier au minimum :
-
-- pairwise/top-hit de `T`, `D`, `J`, `q1000` sur le même cohort ;
-- `J-D` et `J-T` bootstrap CIs ;
-- fraction du headroom q1000 récupérée par `J` ;
-- asymétries d'erreur `T correct/D faux`, `D correct/T faux`, et celles corrigées par `J` ;
-- calibration / stabilité par phase et couleur ;
-- coût runtime projeté puis mesuré seulement si le probe offline est suffisamment positif.
-
-### Interprétation structurante
-
-Cas 1 :
-
-```text
-T ~60%, D ~73%, J >> D, q1000 ~94%
-```
-
-Alors l'information est largement présente dans les signaux `T+D` mais la compression vers PatternEval la détruit. **Le goulot est architectural / distillation, pas principalement la collecte de nouvelles features.**
-
-Cas 2 :
-
-```text
-T ~60%, D ~73%, J ~74-76%, q1000 ~94%
-```
-
-Alors même la combinaison T+D reste loin du teacher. Il manque vraisemblablement des observables représentant le calcul dynamique de la recherche : passer à l'étape E.
-
-### Règle scientifique
-
-Le joint est une **branche expérimentale distincte**, pas un moyen de sauver post hoc T1. Cohorts, architecture, objectifs, seeds et gates doivent être preregistrés avant lecture fresh.
-
-L'ancien échec du `D` utilisé comme **move-ordering** ne ferme pas cette branche : intégrer `D` dans un évaluateur conjoint est un mécanisme causal différent et doit être jugé séparément.
+| Modèle | Pairwise q1000 | Top-hit |
+|---|---:|---:|
+| T0 | 0.6142493 | 0.2675315 |
+| D1 | 0.6569985 | 0.2362201 |
+| q1000 cible | 1.0000000 | 1.0000000 |
 
 ---
 
-## 6. Étape E — ajouter des features seulement si le manque est démontré
+## 3. Voie A — PatternEval pur reste utile, mais secondaire
 
-Les features ne sont pas ajoutées parce qu'elles semblent plausibles ; elles doivent expliquer les erreurs résiduelles du teacher que **ni PatternEval optimisé, ni les probes riches sur ses entrées, ni le modèle conjoint T+D** ne parviennent à capturer.
+Le meilleur arm sous G0/G1/G2 est :
 
-Familles candidates, à confirmer par analyse d'erreur :
+```text
+A6_MARGIN_L2_1E5
+```
 
-- motifs tactiques de captures multiples ;
-- relations spatiales multi-pièces ;
-- menaces / séquences forcées courtes ;
-- mobilité conditionnelle ;
-- promotion et cases de promotion ;
-- tempo / parity / zugzwang-like motifs ;
-- king mobility / king interaction plus structurée ;
-- vulnérabilité après échange ;
-- motifs locaux appris directement des PV 1000n.
+Résultats :
 
-Chaque famille passe par :
+| Guard | Pairwise | Top-hit | Scale |
+|---|---:|---:|---:|
+| G0 12/35 | 0.6197134 | 0.2733767 | 0.39172 |
+| G1 20/60 | 0.6229890 | 0.2746176 | 0.66589 |
+| G2 35/100 | 0.6262529 | 0.2764404 | 1.0 |
 
-1. définition preregistrée ;
-2. ablation offline ;
-3. pairwise fresh ;
-4. test d'invariance/symétrie ;
-5. coût runtime ;
-6. admission dans la représentation uniquement si gain reproductible.
+A0/M4 réplication : G0 `0.6158687`, G1 `0.6168534`, G2 `0.6171719`.
+
+### Lecture
+
+La margin-weighting est une amélioration reproductible de recette. Le candidat pur-T à porter en priorité vers une future confirmation est **A6-G0**, car il respecte le guard production-like original.
+
+Mais A6-G0 ne récupère qu'environ `1.4 %` du gap T0→q1000 de ce DEV ; G2/unanchored ~`3.1 %`. La distillation pure PatternEval ne suffit pas comme axe unique.
+
+### Règle
+
+Ne plus multiplier les petits DOE PatternEval avant confirmation fresh. A6-G0 devient le représentant pur-T de cette famille pour le prochain protocole q200.
 
 ---
 
-## 7. Étape F — campagne teacher optimisée → T2 / meilleur student
+## 4. Voie B — changer l'architecture du student
 
-Une fois le mécanisme de transfert, la capacité et le feature set stabilisés, relancer une campagne complète d'apprentissage depuis un teacher court optimisé.
+### B0 : quantification disculpée
 
-Teacher primaire : **micro-search court optimisé**, actuellement 1000 nœuds sauf nouvelle preuve preregistrée.
+B0 float `0.6264145`, int32 `0.6262529` ; perte pairwise seulement `0.0162 pp`.
 
-Baseline/prior :
-
-- `CURRICULUM` si aucun nouveau champion n'a été validé ;
-- sinon le champion nouvellement promu.
-
-Deux sorties doivent être distinguées :
-
-### Voie F1 — student PatternEval pur
+Donc :
 
 ```text
-champion T_base
-  -> teacher micro-search optimisé
-  -> corpus large et disjoint
-  -> transfert PatternEval optimisé
-  -> représentation validée
-  -> T2
-  -> deep fresh confirmation
-  -> force pools disjoints
+int32 quantization != goulot principal
 ```
 
-### Voie F2 — student conjoint si D a démontré une complémentarité forte
+L'anchor compte davantage que la quantification, mais même sans anchor le plafond linéaire reste faible.
 
-Si l'étape D établit un gain fresh important et un coût runtime acceptable :
+### B1 : mêmes observables, modèle non linéaire
 
-```text
-champion base
-  -> teacher micro-search optimisé
-  -> représentation conjointe T+D validée
-  -> J2 / residual-D-on-T
-  -> deep fresh confirmation
-  -> force pools disjoints
-```
+B1 :
 
-Ne pas forcer artificiellement la voie conjointe à retourner dans `PatternEval` si l'expérience a précisément montré que cette compression détruit l'information.
+- pairwise `0.6532856` ;
+- top-hit `0.2666769` ;
+- delta vs T0 bootstrap `+3.9037 pp`, CI95 `[+3.6624 ; +4.1445] pp`.
 
-La promotion ne se fait que sur force robuste et protocole séparé. `T2` ou `J2` doit être considéré comme le premier candidat produit par un **pipeline teacher -> student réellement optimisé**, pas comme un simple patch de `T1`.
+Il utilise les mêmes observables statiques de production, sans D ni search score comme input.
+
+### Décision
+
+**La prochaine génération de student ne doit pas être contrainte à reproduire exactement la forme linéaire historique de PatternEval.**
+
+Il faut concevoir une architecture compacte et runtime-compatible qui conserve :
+
+- déterminisme ;
+- symétries/invariances ;
+- coût mesurable ;
+- serialization simple ;
+- aucun search score à l'inférence.
+
+B1 est un probe de capacité, pas un candidat de production tel quel.
 
 ---
 
-## 8. Étape G — expérience from-scratch / multi-points d'entrée
+## 5. Voie C — le joint T+D devient prioritaire
 
-### Question finale
-
-Une fois la procédure teacher→student stabilisée, vérifier si elle constitue un véritable opérateur d'amélioration qui converge vers un optimum reproductible.
-
-Créer plusieurs lignées indépendantes avec :
-
-- teacher optimisé dès le départ ;
-- plusieurs seeds ;
-- plusieurs points d'entrée / initialisations ;
-- même représentation student sélectionnée (`T` pur ou joint si validé) ;
-- mêmes règles de transfert et mêmes budgets ;
-- validation mutuellement disjointe.
-
-Schéma :
+Le résultat central est C0 :
 
 ```text
-B1 --teacher--> S1a --teacher--> S2a ...
-B2 --teacher--> S1b --teacher--> S2b ...
+C0 = stack minimal [T0 scalar, D1 scalar, phase, parent colour]
+```
+
+Résultats :
+
+| Modèle | Pairwise | Top-hit |
+|---|---:|---:|
+| D1 | 0.6569985 | 0.2362201 |
+| B1 | 0.6532856 | 0.2666769 |
+| C0 | **0.6726851** | **0.3072861** |
+| C1 residual D-on-T | 0.6185354 | 0.2680100 |
+| C2 full linear joint | 0.6314341 | 0.2824181 |
+
+C0−D1 pairwise bootstrap : mean `+0.0156777`, CI95 `[+0.0140121 ; +0.0172940]`.
+
+### Décision
+
+**La complémentarité T+D est établie sur le target q1000 de M3 DEV.**
+
+Le prochain candidat joint doit partir de la simplicité de C0, pas de C1/C2 qui ont moins bien fonctionné.
+
+Cependant C0 n'est qu'un probe offline. Avant toute confirmation fresh, il faut :
+
+1. définir une représentation de modèle sérialisable et immuable ;
+2. figer les coefficients/normalisations et le contrat de score ;
+3. définir le chemin runtime exact de calcul D1 + T0 + stack ;
+4. mesurer un coût micro-benchmark sans encore faire de force game ;
+5. prouver OFF/ON/fail-closed et les symétries nécessaires.
+
+L'ancien FAIL de DSSD **move-ordering** ne s'applique pas : le joint evaluator est un mécanisme causal distinct.
+
+---
+
+## 6. Voie D — nouvelles observables ciblées deviennent justifiées
+
+Même le meilleur C0 atteint seulement `0.6727` contre une cible q1000 à `1.0` sur ce screen. Il récupère environ `15.1 %` du gap T0→q1000 ; la majorité reste inaccessible aux observables statiques actuelles.
+
+On a maintenant la preuve nécessaire pour ouvrir la feature discovery, mais elle doit être **résiduelle et ciblée**, jamais un feature creep général.
+
+### Corpus d'erreurs à analyser
+
+Priorité aux paires où :
+
+```text
+q1000 correct / C0 wrong
+q1000 correct / B1 wrong
+q1000 correct / D1 wrong
+```
+
+et spécialement aux erreurs communes B1+C0, car elles sont le meilleur indicateur d'information absente plutôt que de simple architecture inadéquate.
+
+### Familles candidates
+
+À sélectionner seulement après autopsie quantitative :
+
+- captures multiples et séquences forcées courtes ;
+- relations multi-pièces / alignements / blocages ;
+- mobilité conditionnelle après coup ;
+- accès promotion / timing de promotion ;
+- parity / tempo / zugzwang-like motifs ;
+- king interaction / king mobility structurée ;
+- échange/vulnérabilité après simplification ;
+- résumés statiques appris des premiers plies de PV q1000, à condition d'être calculables sans search runtime.
+
+Chaque famille doit passer une ablation offline M3-only avant toute admission runtime.
+
+---
+
+## 7. Prochaine expérience — preregistration fresh q200 séparée
+
+**Aucun fresh q200 n'a encore été lancé.**
+
+Le prochain protocole doit être écrit et mergé avant génération/lecture du cohort réservé.
+
+### Candidats minimums
+
+Le protocole doit comparer au moins :
+
+1. `T0 = CURRICULUM` baseline ;
+2. `A6-G0` pure-T, bytes gelés ;
+3. un `J0` joint dérivé de C0, sérialisé et gelé ;
+4. D1 scellé et micro1000 comme diagnostics, pas comme promotion candidates.
+
+Éviter de tester une multiplicité large : les choix A6 et C0 ont déjà été faits sur M3 DEV.
+
+### Cohort réservé
+
+- exactement `4000` nouveaux parents ;
+- `1000` par phase ;
+- selection seed `2026090420` ;
+- disjoint de M1/M2/M3/M5 et force pools ;
+- même contrat stable q50/q200 ;
+- micro1000 exact sur les mêmes siblings ;
+- parent-cluster bootstrap `100000`, seed `2026090421`.
+
+### Gates à preregistrer avant labels
+
+Pour chaque candidat, au minimum :
+
+- pairwise vs q200 et CI vs T0 ;
+- top-hit et CI vs T0 ;
+- phases/couleurs ;
+- ratio de récupération du headroom q1000 ;
+- déterminisme/serialization ;
+- pour J0, D1/T0 artifacts exacts et aucune asymétrie de score.
+
+Le PASS permettant un test Elo doit être fixé dans ce document avant le cohort fresh.
+
+---
+
+## 8. Après confirmation fresh
+
+### Si A6-G0 confirme mais J0 non
+
+Poursuivre la voie student statique pur avec architecture non linéaire inspirée de B1, puis nouvelle confirmation avant Elo.
+
+### Si J0 confirme au-dessus de D1 et T0
+
+Le joint devient la voie student principale. Étapes :
+
+```text
+J0 fresh q200 PASS
+  -> micro-benchmark/runtime integration
+  -> preregister force gate
+  -> native 0.1s paired pools
+  -> promotion seulement si force robuste
+```
+
+### Si ni A6 ni J0 ne récupèrent suffisamment de deep signal
+
+Prioriser immédiatement la feature discovery résiduelle de la section 6. Ne pas relancer une série de petits retunes L2/anchor.
+
+---
+
+## 9. Construction de T2 / J2 et convergence
+
+Une fois la représentation student choisie :
+
+```text
+champion/base
+  -> teacher micro-search court
+  -> corpus large disjoint
+  -> student sélectionné (T pur ou J joint)
+  -> fresh deep confirmation
+  -> force gate
+  -> promotion éventuelle
+```
+
+Puis tester l'opérateur d'amélioration sur plusieurs points d'entrée/seeds :
+
+```text
+B1 -> S1a -> S2a ...
+B2 -> S1b -> S2b ...
 ...
-Bk --teacher--> S1k --teacher--> S2k ...
 ```
 
-Les points d'entrée doivent inclure au minimum :
-
-- from scratch / baseline neutre lorsque techniquement défini ;
-- `CURRICULUM` ;
-- le champion courant si différent ;
-- éventuellement plusieurs seeds d'une même base.
-
-### Trois résultats structurants
-
-1. **Convergence commune autour de CURRICULUM** : indication d'un plafond structurel de la représentation/procédure.
-2. **Convergence vers un optimum commun supérieur au champion** : preuve d'un opérateur d'amélioration reproductible.
-3. **Optima différents selon seed/point d'entrée** : paysage multi-bassins ; alors exploiter diversité, pooling, sélection ou distillation inter-lignées.
-
-Le critère n'est pas une génération isolée positive mais la trajectoire :
-
-```text
-force(S_g+1) - force(S_g)
-```
-
-sur plusieurs générations, plusieurs lignées et pools fresh.
+Question finale : la procédure teacher→student converge-t-elle vers un optimum supérieur et reproductible, ou reste-t-elle dépendante du bassin initial ?
 
 ---
 
-## 9. Ordre d'exécution verrouillé
+## 10. Métriques de pilotage
 
-```text
-A. Évaluer le transfert d'information T0/D1/q1000/T1
-        ↓
-B. Optimiser la recette de transfert PatternEval — max R_1000
-        ↓
-C. Mesurer la capacité d'absorption des features PatternEval actuelles
-        ↓
-D. Tester la représentation conjointe T+D sur les mêmes labels fresh
-        ↓
-E. Ajouter de nouvelles features seulement si les plafonds C et D le justifient
-        ↓
-F. Relancer teacher optimisé → T2 ou student conjoint validé
-        ↓
-G. Tester from scratch / multi-entry / multi-seed et la convergence
-```
-
-Ne pas sauter directement de A à E : un faible transfert peut venir de la recette ou de l'architecture et non des features.
-
-Ne pas interpréter `J(T,D)` sur le cohort de training : toute décision d'architecture doit reposer sur une confirmation fresh preregistrée.
-
-Ne pas sauter directement du meilleur pairwise à l'Elo : d'abord confirmer le mécanisme sur un cohort fresh, puis faire le gate causal de force.
-
----
-
-## 10. Métriques de pilotage principales
-
-| Niveau | Métrique principale | Question |
+| Niveau | Métrique | Question |
 |---|---|---|
-| Teacher | pairwise q1000 vs q200 | Le teacher produit-il l'information ? |
-| Transfert PatternEval | `R_1000` | Quelle fraction de cette information passe dans T ? |
-| Capacité PatternEval | meilleur pairwise possible avec features actuelles | L'information est-elle représentable dans T ? |
-| Joint T+D | pairwise `J` vs q200 et delta `J-D` | Les deux représentations sont-elles complémentaires ? |
-| Features | delta pairwise fresh + coût runtime | Une nouvelle observable paie-t-elle ? |
-| Student | pairwise/top-hit student vs q200 | Le student a-t-il réellement absorbé le teacher ? |
-| Force | native 0.1s paired Elo | Le gain d'éval se convertit-il en parties gagnées ? |
-| Convergence | gain inter-génération multi-seed | Le procédé compose-t-il et vers quel optimum ? |
+| Teacher | q1000 vs q200 fresh | Le lookahead crée-t-il le bon signal ? |
+| Pure transfer | R_1000 / pairwise fresh | Combien passe dans T ? |
+| Architecture | B1-like ceiling | Les observables actuelles sont-elles exploitables avec plus de capacité ? |
+| Joint | J−D / J−T fresh | T et D sont-ils complémentaires contre deep ? |
+| Feature residual | gain sur erreurs B1+C0 | Une nouvelle observable capture-t-elle du signal absent ? |
+| Runtime | coût eval / NPS / depth | Le student est-il économiquement utilisable ? |
+| Force | native paired Elo | Le gain d'eval gagne-t-il des parties ? |
+| Convergence | gain inter-génération multi-seed | L'opérateur compose-t-il ? |
 
 ---
 
-## 11. Principe directeur
+## 11. Règles verrouillées
 
-La question scientifique n'est plus seulement :
+1. `CURRICULUM` reste champion jusqu'à force robuste.
+2. M3 DEV peut sélectionner A6/C0 ; il ne doit jamais être appelé fresh.
+3. Le futur cohort q200 réservé ne doit pas influencer architecture, hyperparamètres ou candidate selection avant prereg.
+4. q1000 imitation, q200 accuracy et Elo sont trois niveaux distincts.
+5. Pas de promotion offline.
+6. Pas de réouverture du DSSD move-ordering.
+7. Quantification int32 n'est plus une priorité de recherche.
+8. Les nouveaux efforts doivent viser architecture joint/non-linéaire et observables résiduelles, pas un retuning infinitésimal de T1.
 
-> « Comment gagner quelques Elo ? »
+---
 
-Elle devient :
+## 12. Principe directeur
 
-> **Peut-on construire un opérateur reproductible qui transforme de la recherche courte mais informative en un évaluateur étudiant de plus en plus fort — PatternEval pur si la compression fonctionne, ou représentation conjointe compacte si elle est réellement supérieure — et vers quel optimum cet opérateur converge-t-il ?**
+La question L3 est maintenant :
 
-C'est désormais l'axe prioritaire de L3.
+> **Quelle représentation statique compacte peut conserver le plus possible de l'information créée par ~1000 nœuds de recherche, tout en restant assez rapide pour convertir ce gain en force réelle ?**
+
+Le screen A/B/C a répondu à la première bifurcation : le futur student ne doit plus être pensé comme un simple `PatternEval` linéaire retuné. Le joint `T+D` et une architecture plus expressive sont désormais des voies de premier rang, avec feature discovery ciblée pour le signal qui reste hors de portée.
