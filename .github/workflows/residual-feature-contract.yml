@@ -54,12 +54,13 @@ jobs:
           PY
           build-rf/residual_feature_dump build-rf/label-guard.jnnw build-rf/label-guard.rffd
           python - <<'PY'
-          import numpy as np, struct
+          import math, struct
           raw=open('build-rf/label-guard.rffd','rb').read()
           assert raw[:4] == b'RFFD'
           n,w=struct.unpack_from('<II',raw,4)
           assert (n,w)==(2,81)
-          x=np.frombuffer(raw,dtype='<f4',offset=12).reshape(n,w)
-          assert np.array_equal(x[0],x[1]), 'score/WDL leakage into residual features'
-          assert np.isfinite(x).all()
+          row_bytes=w*4
+          assert raw[12:12+row_bytes] == raw[12+row_bytes:12+2*row_bytes], 'score/WDL leakage into residual features'
+          vals=struct.unpack_from('<'+('f'*(n*w)), raw, 12)
+          assert all(math.isfinite(v) for v in vals)
           PY
