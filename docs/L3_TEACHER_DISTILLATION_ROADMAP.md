@@ -1,228 +1,246 @@
 # L3 — Teacher distillation roadmap
 
 > **Mis à jour : 28 août 2026**
-> **Statut : roadmap active après verdict terminal Q1 deep fresh.**
+> **Statut : roadmap active après verdict terminal T2 deep fresh.**
 >
-> Situation courante : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg terminale Q1 : [`experiments/L3_JOINT_TD_DEEP_FRESH_CONFIRMATION_V1_20260828.md`](experiments/L3_JOINT_TD_DEEP_FRESH_CONFIRMATION_V1_20260828.md), merge SHA `b280fc1f4878133a41168f4bbc6a537eec526cdc`.
+> Situation courante : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T2 terminale : [`experiments/L3_T2_PHASE_SPECIALIST_DEEP_FRESH_V1_20260828.md`](experiments/L3_T2_PHASE_SPECIALIST_DEEP_FRESH_V1_20260828.md), merge SHA `53f8d84991c8a69b690e7a2534fd290bbaad073f`.
 
 ---
 
 ## 1. Verdict qui change la roadmap
 
-La campagne Q1 est terminée avec :
+La campagne T2 phase-specialist est terminée avec :
 
 ```text
-JOINT_TD_DEEP_FRESH_NOT_CONFIRMED
-A6_G0_DEEP_TRANSFER_CONFIRMED = TRUE
+T2_PHASE_SPECIALIST_DEEP_SIGNAL_NOT_ESTABLISHED
 ```
 
-Le résultat central est une divergence entre le screen q1000 DEV et le deep fresh q200 :
+Le support est pleinement établi, mais T2 échoue contre D1 sur le deep fresh q200 :
 
-- sur M3 DEV ciblé q1000, C0 battait D1 de ~`+1.57 pp` pairwise ;
-- sur Q1 fresh q200, C0 **perd** contre D1 de `-1.57695 pp`, CI95 entièrement négative ;
-- C0 améliore cependant le top-hit contre D1 de `+2.355 pp` avec CI positive ;
-- A6-G0 bat T0 de `+0.8677 pp` pairwise et `+1.0254 pp` top-hit, avec CIs positives et gains dans toutes les phases/couleurs.
+- T2 pairwise `0.7018589740` ;
+- D1 pairwise `0.7338846504` ;
+- T2−D1 mean `-0.0320256764`, CI95 `[-0.0373919611 ; -0.0266215498]` ;
+- T2 top-hit `0.6434769819` vs D1 `0.6492131196` ; CI95 du delta top-hit traverse zéro ;
+- T2−D1 est positif uniquement en P0 et négatif en P1/P2/P3 ;
+- T2−D1 est négatif dans les deux couleurs.
 
-Donc la roadmap n'est plus « intégrer C0 au runtime ». Le stack C0 tel quel est fermé pour cette campagne.
+T2 bat cependant T0 de `+0.0927905664` pairwise avec CI95 `[+0.0863858115 ; +0.0992239313]`.
+
+La conclusion n'est donc pas « T2 n'apprend rien ». Elle est plus précise : **la capacité non linéaire state-only, les 200 bits bruts du plateau et les quatre experts de phase absorbent un signal important, mais pas assez pour dépasser D1 et pas de manière homogène hors P0.**
 
 ---
 
-## 2. Références terminales Q1
+## 2. Références terminales T2
 
 ### Freeze
 
-`cpx62-1616-l3-joint-td-candidate-freeze-v1`, attempt `20260828T104336Z-3348397a`, Jass SHA `3348397a0459b8c3335d46a70af5755d6e9488e0`, verdict `JOINT_TD_CANDIDATE_FREEZE_READY`.
+`cpx62-1627-l3-t2-phase-specialist-train-freeze-v1`, attempt `20260828T165619Z-a3ba045f`, Jass SHA `a3ba045facccd9bcbd01e9c872c045ac7c899f66`.
 
-Candidats gelés avant fresh : T0, D1, A6-G0, B1 et C0. Candidate-freeze SHA256 `7f5d28b8a3ea810bde0969959b2fdd01a2e778b9a63e602125c796432c76bf40`.
+- verdict `T2_PHASE_SPECIALIST_FROZEN` ;
+- T2 SHA256 `80de2d003c139c0fd8371e17175889a31f97792c5fd042a2a7338ca9dbc83c4d` ;
+- 326 inputs state-only ; shared trunk `326->256->128` ; quatre heads `128->64->1` ;
+- `434323` paires d'entraînement ;
+- Q1 label/score reads = `0`.
 
 ### Cohort fresh
 
-`cpx62-1617-l3-joint-td-q1-select-v7`, attempt `20260828T114236Z-2034c5c9`, Jass SHA `2034c5c98f3e3260254dd7449bc5032dd125e581`.
+`cpx62-1628c-l3-t2-phase-specialist-fresh-select-v3`, attempt `20260828T182726Z-a3ba045f`.
 
-- seed `2026090420` ;
-- 4000 parents exactement, 1000 par phase ;
-- target-blind ;
-- overlap canonique M3/M5 = 0 ;
-- aucun score deep lu avant sélection.
+- 8000 parents exactement, 2000 par phase ;
+- seed `2026090610` ; target-blind ;
+- selected SHA256 `d1f9fc41e3cb2f738011f78acc82848d025a608d8656702297b170a4e12daad1` ;
+- exclusions DSSD A/B, Rich-D C, M1/M2/M3/M5, Q1 identities et force pools ;
+- aucun teacher/T2/D1 score lu avant sélection.
 
-### Teacher/readout
+### Teacher
 
-Le q1-report scientifique est produit par `cpx62-1624-l3-joint-td-q1-teacher-readout-v5`, attempt `20260828T143246Z-8df8f407`, Jass SHA `8df8f4073109b2016e5425a5ac18ec3ac9008c85`.
+`cpx62-1629-l3-t2-phase-specialist-teacher-v1`, attempt `20260828T193226Z-a3ba045f`.
 
-Le wrapper 1624 échoue techniquement après génération du rapport. Le rapport est authentifié et republié sans recomputation par `cpx62-1625-l3-joint-td-q1-terminal-recover-v1`, attempt `20260828T154226Z-8df8f407`, exit 0, control merge SHA `569540fb5d7c36af5e25ca39f21dad45064ad98f`.
+- 76165 siblings ;
+- q1000/q50/q200 = `1000/50000/200000` nœuds exacts ;
+- q1000 diagnostic seulement ;
+- book OFF, un thread, Engine/TT/search-state frais par sibling et budget ;
+- aucun post-freeze fit/refit/calibration.
 
-Aucun teacher rerun, rescoring, fit/refit, runtime/Elo, strength ou promotion n'est effectué par le recovery.
+### Readout terminal
+
+`cpx62-1630-l3-t2-phase-specialist-readout-v1`, attempt `20260828T194826Z-a3ba045f`.
+
+- bootstrap parent-cluster `200000`, seed `2026090611` ;
+- exit `0` ;
+- verdict terminal `T2_PHASE_SPECIALIST_DEEP_SIGNAL_NOT_ESTABLISHED` ;
+- runtime/Elo/strength/bake/promotion = `0`.
 
 ---
 
 ## 3. Support et métriques de référence
 
-Support Q1 PASS : 3397 parents acceptés, 96862 paires stables. P0/P1/P2/P3 = `903/929/928/637`; white/black = `1710/1687`.
+Support PASS :
+
+- 8000 sélectionnés ;
+- 6799 parents acceptés ;
+- 195036 paires stables ;
+- P0/P1/P2/P3 = `1795/1885/1857/1262` ;
+- black/white = `3461/3338` ;
+- stable pairs dans les huit cellules phase×couleur ;
+- zero forbidden overlap ;
+- T2 bytes unchanged ;
+- zero post-freeze fit/refit/calibration.
 
 | Modèle | Pairwise q200 | Top-hit |
 |---|---:|---:|
-| T0 | 0.6084468414 | 0.5540673143 |
-| A6-G0 | 0.6171234955 | 0.5643214601 |
-| B1 | 0.7089233688 | 0.6452752429 |
-| C0 | 0.7184044328 | **0.6764792464** |
-| D1 | **0.7341739720** | 0.6529290550 |
-| q1000 | **0.9357350801** | **0.8591894809** |
+| T0 | 0.6090684076 | 0.5461342354 |
+| D1 | **0.7338846504** | 0.6492131196 |
+| Rich-D | 0.7317405703 | **0.6608324754** |
+| T2 | 0.7018589740 | 0.6434769819 |
+| q1000 | **0.9374100334** | **0.8608741482** |
 
-C0−D1 pairwise : mean `-0.0157695392`, CI95 `[-0.0221178885 ; -0.0095172194]`.
+T2−D1 pairwise : mean `-0.0320256764`, CI95 `[-0.0373919611 ; -0.0266215498]`.
 
-C0−D1 top-hit : mean `+0.0235501913`, CI95 `[+0.0088313218 ; +0.0385634383]`.
+T2−D1 top-hit : mean `-0.0057361377`, CI95 `[-0.0173554935 ; +0.0058832181]`.
 
-C0−D1 pairwise par phase : P0 `+0.01147`, P1 `-0.01890`, P2 `-0.03302`, P3 `-0.02470`; par couleur : black `-0.01112`, white `-0.02036`.
+T2−T0 pairwise : mean `+0.0927905664`, CI95 `[+0.0863858115 ; +0.0992239313]`.
 
-A6−T0 pairwise : mean `+0.0086766542`, CI95 `[+0.0071898443 ; +0.0101730833]`.
+T2−Rich-D diagnostic : mean `-0.0298815962`, CI95 `[-0.0351834672 ; -0.0245653270]`.
 
-A6−T0 top-hit : mean `+0.0102541458`, CI95 `[+0.0054950446 ; +0.0151604357]`.
-
-Ratios : `R_C0_from_D=-0.0782370139`, `R_C0_from_T=0.3359656058`.
+q1000−T2 headroom : mean `+0.2355510594`, CI95 `[+0.2304987327 ; +0.2406365748]`.
 
 ---
 
-## 4. Voie A — transfert pur-T : ouverte, mais gain modeste
+## 4. Diagnostic par phase : la spécialisation n'a pas résolu le problème
 
-A6-G0 est le seul candidat de cette campagne qui confirme son gate deep fresh.
+Pairwise T2−D1 :
 
-Ce résultat établit que le DOE de transfert q1000→PatternEval n'était pas seulement un artefact DEV : il apporte environ `+0.87 pp` pairwise contre q200 et `+1.03 pp` top-hit contre T0, de manière homogène sur phases et couleurs.
+- P0 `+0.0186385392` ;
+- P1 `-0.0388096009` ;
+- P2 `-0.0592457989` ;
+- P3 `-0.0539011136`.
 
-### Décision
+Le head P0 fonctionne dans le sens attendu, mais le défaut des phases intermédiaires/tardives persiste et s'amplifie. La simple séparation en quatre heads hard-routed ne constitue donc pas la « formule magique » recherchée.
 
-- conserver A6-G0 comme référence pure-T confirmée ;
-- ne pas retuner sur Q1 ;
-- ne pas lancer de force/Elo automatiquement ;
-- un éventuel test de force A6 nécessite une **preregistration séparée** avec budget, pools et gates fixés à l'avance.
-
-Le gain est réel mais petit : il ne résout pas le gap q1000.
+La lecture couleur est également défavorable : black `-0.0275639495`, white `-0.0366518108` contre D1.
 
 ---
 
-## 5. Voie B — architecture non linéaire : toujours informative, non gagnante contre D1
+## 5. Ce que T2 ferme scientifiquement
 
-B1 monte à `0.7089` pairwise q200, très au-dessus de T0/A6, ce qui confirme que les observables PatternEval contiennent bien plus de signal qu'un score linéaire historique n'en extrait.
+T2 testait explicitement une hypothèse de capacité/representation :
 
-Mais B1 reste sous D1 : B1−D1 pairwise mean `-0.0252506032`.
+> Peut-on dépasser D1 sans nouvelles observables, uniquement avec 120 extras existants + plateau brut + T0 + STM + phase et un réseau plus expressif spécialisé par phase ?
 
-### Décision
+Le deep fresh répond : **pas avec cette architecture preregistrée**.
 
-B1 reste un **probe d'architecture**, pas un candidat de production. Les futures architectures compactes non linéaires doivent être conçues/tunées hors Q1 puis validées sur un autre cohort fresh.
+Ce résultat ferme pour l'instant les variantes post-hoc suivantes sur ce cohort :
 
-Q1 ne doit jamais devenir un set de sélection d'hyperparamètres.
+- agrandir les heads ou le trunk après lecture ;
+- repondérer P1/P2/P3 ;
+- changer les phases ;
+- réentraîner avec le cohort 1628c ;
+- ajouter une calibration apprise sur 1630 ;
+- sélectionner de nouvelles features à partir des labels 1628c/1629.
 
----
-
-## 6. Voie C — joint T+D : C0 fermé, hypothèse générale non fermée
-
-C0 améliore B1 (`C0−B1 ≈ +0.948 pp` pairwise) et améliore fortement T0, mais perd contre D1 sur le critère primaire q200.
-
-La complémentarité observée contre q1000 DEV n'est donc **pas suffisamment robuste dans la forme C0** pour justifier une intégration runtime.
-
-### Lecture importante
-
-Le fait que C0 gagne en top-hit contre D1 tout en perdant en pairwise suggère qu'il y a peut-être un problème de forme/objective/ranking, mais **Q1 ne peut pas servir à ajuster C0 après coup**.
-
-### Décision
-
-- ne pas implémenter C0 au runtime ;
-- ne pas lancer de force/Elo C0 ;
-- ne pas recalibrer les 7 coefficients sur Q1 ;
-- si une nouvelle architecture joint est explorée, elle doit être conçue avec M3/anciens corpus autorisés ou un nouveau TRAIN, puis confirmée sur un nouveau fresh réservé.
-
-L'hypothèse générale « T et D peuvent être complémentaires » reste scientifiquement plausible, mais **elle n'est pas confirmée contre q200 sous C0**.
+Q1 et 1628c sont désormais des cohorts consommés.
 
 ---
 
-## 7. Voie D — le teacher reste la source de headroom dominante
+## 6. Ce qui reste ouvert : observables manquantes
 
-q1000 atteint `0.9357351` pairwise, contre `0.7341740` pour D1 et `0.7184044` pour C0.
+Le point le plus important est le headroom teacher : q1000 atteint `0.93741` pairwise alors que T2 est à `0.70186` et D1 à `0.73388`.
 
-Le gap q1000−C0 est encore `+0.21733` pairwise. Le principal problème L3 reste donc de transformer le signal de recherche court en représentation statique compacte qui généralise.
+Le signal existe donc clairement. La prochaine hypothèse à tester n'est plus prioritairement « plus de capacité sur les mêmes entrées », mais :
 
-### Priorités de recherche hors Q1
+> **des observables statiques importantes pour le ranking des siblings ne sont probablement pas explicitement accessibles ou facilement reconstructibles par le student actuel.**
 
-1. autopsie résiduelle sur données de développement autorisées, pas sur Q1 ;
-2. nouvelles observables calculables sans search runtime ;
-3. objectifs de ranking mieux alignés sur pairwise q200 ;
-4. architecture compacte non linéaire exploitant les observables existantes ;
-5. éventuel nouveau joint T+D avec interaction non linéaire, mais sélection entièrement hors Q1.
+Cela ne prouve pas qu'elles sont absolument absentes du board brut ; cela prouve que le protocole T2 ne les extrait pas de façon suffisamment sample-efficient/généralisable pour battre D1.
 
 ---
 
-## 8. Prochaine bifurcation autorisée
+## 7. Prochaine campagne recommandée — residual feature discovery
 
-La campagne Q1 est terminée et n'autorise aucun runtime/Elo/promotion.
+Aucune continuation automatique n'est autorisée par T2. La prochaine campagne doit faire l'objet d'une preregistration séparée.
 
-Deux nouvelles campagnes séparées sont possibles, chacune avec sa propre preregistration :
+### Objectif
 
-### Option A — pure-T A6 force gate
+Identifier, **hors Q1 et hors 1628c**, quelles familles d'observables expliquent les erreurs q1000/q200 que D1/T2 commettent encore.
 
-Justifiée par le secondary PASS A6. À preregistrer : pools, cadence native, nombre de parties, CI/Elo gate, coût runtime et règles de stop. Aucun lancement automatique.
+### Design recommandé
 
-### Option B — student T2/J2 de nouvelle génération
+1. Constituer un nouveau corpus de développement disjoint ou réutiliser uniquement des corpus TRAIN autorisés antérieurs.
+2. Geler D1, Rich-D et T2 comme baselines diagnostiques sans refit sur les cohorts consommés.
+3. Construire une taxonomie d'erreurs teacher : D1 faux/T2 faux, D1 vrai/T2 faux, T2 vrai/D1 faux, q1000 correct et statiques faux.
+4. Tester des familles d'observables une à une avec contrôle négatif et split parent-cluster.
+5. Ne retenir une famille que si son gain OOS est stable par phase et couleur.
+6. Preregistrer ensuite un T3/student final avec feature set gelé avant un **nouveau** deep-fresh q200 cohort.
 
-Construire hors Q1 une architecture plus expressive ou de nouvelles observables, puis :
+### Familles prioritaires à examiner
 
-```text
-TRAIN/selection hors Q1
-  -> freeze immuable
-  -> nouveau cohort deep fresh disjoint
-  -> q200 confirmation
-  -> seulement si PASS : runtime/force prereg séparée
-```
+Sans les lancer ici, les familles scientifiquement plausibles sont :
 
-C0 n'est pas le point de départ runtime ; il n'est qu'un résultat historique de screen.
+- géométrie de capture multi-coup et contraintes de continuation ;
+- mobilité/forced-move structure plus riche que les 120 extras ;
+- motifs de tempo, opposition et races de promotion ;
+- accessibilité/contrôle des cases et structures de blocage ;
+- distances/chemins vers promotion et interactions de rois ;
+- features de stabilité tactique calculables statiquement ou par calcul borné explicitement preregistré ;
+- représentations locales/convolutionnelles du plateau si l'objectif est de tester l'inductive bias plutôt que seulement la largeur MLP.
 
----
-
-## 9. Données désormais interdites au tuning
-
-Le cohort Q1 seed `2026090420` est consommé.
-
-Il est interdit de l'utiliser pour :
-
-- hyperparameter search ;
-- sélection d'architecture ;
-- calibration C0/B1/A6/D1 ;
-- feature selection ;
-- choix de gates a posteriori.
-
-Il peut uniquement rester dans les archives comme validation terminale de la prereg b280.
+La feature discovery doit être mesurée sur des données autorisées, jamais sur Q1/1628c.
 
 ---
 
-## 10. Métriques de pilotage futures
+## 8. Voies historiques encore utiles comme références
 
-| Niveau | Métrique | Question |
-|---|---|---|
-| Teacher | q1000 vs q200 fresh | Le lookahead garde-t-il un gros headroom ? |
-| Pure transfer | A6-like vs T0 | Le student linéaire absorbe-t-il un gain robuste ? |
-| Architecture | nonlinear vs D1 | La capacité supplémentaire dépasse-t-elle la meilleure statique ? |
-| Joint | J−D sur nouveau fresh | Le joint généralise-t-il réellement contre deep ? |
-| Feature residual | gain hors Q1 | Une nouvelle observable explique-t-elle le résidu teacher ? |
-| Runtime | coût eval / NPS / depth | Seulement après deep PASS et prereg dédiée |
-| Force | paired Elo | Seulement après runtime/prereg dédiés |
+### D1
+
+D1 reste la meilleure référence statique pairwise deep-fresh parmi les modèles évalués ici (`0.73388`). Son utilisation runtime passée n'a pas établi un gain de force ; cela reste distinct de son intérêt diagnostique offline.
+
+### Rich-D
+
+Rich-D reste très proche de D1 globalement (`0.73174`) et meilleur que T2, avec un profil de phase différent. Il reste un diagnostic historique, pas un candidat de promotion.
+
+### A6-G0
+
+Le secondary PASS Q1 de A6-G0 reste une preuve qu'un petit transfert vers PatternEval est possible. Il ne change pas le verdict T2 et n'autorise aucun runtime automatique.
+
+### q1000
+
+q1000 reste le teacher court dominant et la meilleure boussole de headroom, mais imitation q1000 ≠ précision q200 ≠ Elo.
 
 ---
 
-## 11. Règles verrouillées après Q1
+## 9. Gate proposé pour une future feature-discovery campaign
+
+Avant tout nouveau T3, demander au minimum :
+
+- amélioration OOS contre D1 sur un corpus de développement non consommé ;
+- gain pairwise positif dans P0/P1/P2/P3 et les deux couleurs ;
+- ablation prouvant que la nouvelle famille de features apporte le gain ;
+- absence de q50/q200/WDL/Q1/1628c leakage dans les inputs ;
+- feature set et architecture gelés avant le prochain deep fresh ;
+- nouveau cohort deep-fresh entièrement disjoint ;
+- même séparation stricte entre deep accuracy et future force/Elo.
+
+Les seuils numériques exacts devront être preregistrés avant lecture du nouveau holdout.
+
+---
+
+## 10. Règles verrouillées après T2
 
 1. `CURRICULUM` reste champion.
-2. Q1 est consommé et ne peut jamais devenir un dataset de tuning.
-3. `JOINT_TD_DEEP_FRESH_NOT_CONFIRMED` ferme C0 pour runtime/Elo dans cette campagne.
-4. `A6_G0_DEEP_TRANSFER_CONFIRMED` n'autorise qu'une future prereg séparée, pas une promotion.
-5. q1000 imitation, q200 accuracy et Elo restent trois niveaux distincts.
-6. Aucun post-freeze refit rétroactif.
-7. Aucun D1/move-local input runtime sans protocole causal et prereg distincts.
-8. Toute nouvelle architecture/feature doit être sélectionnée sans regarder Q1.
+2. Q1 et T2-1628c sont consommés et interdits au tuning/feature selection/calibration.
+3. `T2_PHASE_SPECIALIST_DEEP_SIGNAL_NOT_ESTABLISHED` ferme T2-PMoE exact pour runtime/Elo dans cette campagne.
+4. Aucun retune post-hoc de l'architecture, des phases, des poids de cellules ou des seeds.
+5. Aucun runtime, Elo, strength, bake ou promotion n'est autorisé par T2.
+6. q1000 imitation, q200 accuracy et Elo restent trois niveaux distincts.
+7. Toute nouvelle feature/architecture doit être conçue et sélectionnée hors cohorts consommés.
+8. Toute future force test nécessite d'abord un deep-fresh PASS puis une prereg runtime/strength distincte.
 
 ---
 
-## 12. Principe directeur
+## 11. Principe directeur
 
-La question L3 après Q1 devient :
+La question L3 devient maintenant :
 
-> **Comment conserver le headroom massif de q1000 dans un student statique qui dépasse réellement D1 en pairwise deep fresh, sans sélectionner ni tuner sur le cohort de validation ?**
+> **Quelles observables ou quels inductive biases permettent de capturer le ~23.6 pp de headroom q1000 restant et de dépasser D1 sur un nouveau q200 fresh, sans fuite depuis les cohorts de validation consommés ?**
 
-Le résultat Q1 évite une mauvaise bifurcation : C0 semblait excellent sur q1000 DEV, mais ne généralise pas suffisamment. La prochaine génération doit donc améliorer la capacité/les observables et revenir avec une nouvelle validation fresh réellement indépendante.
+T2 a rempli son rôle : il a testé proprement l'hypothèse « plus de capacité + plateau brut + phase experts ». Le résultat négatif évite de poursuivre aveuglément cette branche et déplace la priorité vers l'autopsie résiduelle et la recherche contrôlée de features manquantes.
