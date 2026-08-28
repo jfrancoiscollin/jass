@@ -19,6 +19,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fetch_t1bis_inputs as base  # noqa: E402
 
 
+def safe_local_path(value: str) -> Path:
+    """Return a safe relative output path, allowing nested subdirectories."""
+    path = Path(value)
+    if not value or path.is_absolute() or ".." in path.parts:
+        raise RuntimeError(f"unsafe local output path: {value!r}")
+    return path
+
+
 def fetch_files(
     *,
     rclone: str,
@@ -63,15 +71,16 @@ def fetch_files(
     report_files = []
     for remote_path, local_name in selections:
         path = Path(remote_path)
-        if (not remote_path or path.is_absolute() or ".." in path.parts
-                or local_name != Path(local_name).name):
+        if not remote_path or path.is_absolute() or ".." in path.parts:
             raise RuntimeError(f"unsafe selection: {remote_path!r}:{local_name!r}")
+        local_path = safe_local_path(local_name)
         item = files.get(remote_path)
         if item is None or item["size_bytes"] <= 0:
             raise RuntimeError(f"missing/empty result file: {remote_path}")
         if checksums.get(remote_path) != item["sha256"]:
             raise RuntimeError(f"checksum metadata mismatch: {remote_path}")
-        target = out_dir / local_name
+        target = out_dir / local_path
+        target.parent.mkdir(parents=True, exist_ok=True)
         base.download_verified(
             rclone,
             prefix + "/" + remote_path,
