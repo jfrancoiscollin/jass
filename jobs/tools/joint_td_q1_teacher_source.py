@@ -47,24 +47,24 @@ def replace_exact(text: str, old: str, new: str, count: int) -> str:
 def render(source: str) -> str:
     out = replace_exact(source, BUDGET_OLD, BUDGET_NEW, 1)
     out = replace_exact(out, SEARCH_SIG_OLD, SEARCH_SIG_NEW, 1)
-    out = replace_exact(out, SEARCH_BODY_OLD, SEARCH_BODY_NEW, 1)
+    # Remove the single long-lived Engine from main BEFORE adding the new Engine
+    # inside run_fresh_search, otherwise cardinality would intentionally become 2.
     out = replace_exact(out, ENGINE_DECL, "", 1)
+    out = replace_exact(out, SEARCH_BODY_OLD, SEARCH_BODY_NEW, 1)
     # Audited teacher performs exactly three searches per sibling: diagnostic,
-    # stability screen and final target. Q1 keeps those three budgets unchanged
-    # except diagnostic 5k->1k, but requires fresh Engine state for each one.
+    # stability screen and final target. Q1 keeps those three searches, changes
+    # only diagnostic 5k->1k, and makes each call construct a fresh Engine.
     out = replace_exact(out, CALL_OLD, CALL_NEW, 3)
     for old, new in RENAMES.items():
         n = out.count(old)
         if n < 1:
             raise ValueError(f"missing audited output token {old!r}")
         out = out.replace(old, new)
-    if BUDGET_OLD in out or "q5k_parent" in out or CALL_OLD in out or ENGINE_DECL in out:
+    if BUDGET_OLD in out or "q5k_parent" in out or CALL_OLD in out:
         raise ValueError("old Q5k/reused-Engine contract survived Q1 rendering")
     if BUDGET_NEW not in out or "q1000_parent" not in out:
         raise ValueError("Q1 q1000 contract was not rendered")
     if out.count("Engine engine(tt_mb);") != 1:
-        # It must appear only inside run_fresh_search, which is invoked anew for
-        # each of the three budgets on every sibling.
         raise ValueError("Q1 generated teacher does not isolate Engine lifecycle")
     return PREFIX + out + SUFFIX
 
