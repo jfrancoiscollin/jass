@@ -3,9 +3,16 @@
 // Loads the frozen T0/T1 PJTW evaluators and scores already deep-labelled
 // sibling states. No D, no micro-search, no fitting, no game play.
 
-#define main micro_search_m4_anchor_drift_main_disabled
-#include "micro_search_m4_anchor_drift.cpp"
+#include "pattern_jass_bridge.hpp"
+#include "scan_eval.hpp"
+
+// Reuse only the audited JNNW/Position helpers from the deep-teacher TU while
+// redirecting its PJTW call sites to the unified v3 loader. Its main is disabled.
+#define load_pattern_jass_network load_eval_network
+#define main deep_sibling_teacher_main_disabled
+#include "deep_sibling_teacher.cpp"
 #undef main
+#undef load_pattern_jass_network
 
 #include <array>
 #include <cstdint>
