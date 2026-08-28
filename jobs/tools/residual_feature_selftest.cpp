@@ -38,14 +38,13 @@ int main() {
         };
         require(CENTRAL_16 == expected_center, "central-16 contract drift");
 
-        // Parent-POV antisymmetry on identical board with only STM toggled.
-        Position a = parse("W:W28,31,K40:B14,22,K3");
-        Position b = a;
-        b.set_side_to_move(Color::Black);
+        // Exact rot180+colour-swap image must preserve every parent-POV feature.
+        const Position a = parse("W:W28,31,K40:B14,22,K3");
+        const Position image = parse("B:W29,37,K48:B20,23,K11");
         const auto fa = extract(a).all_new();
-        const auto fb = extract(b).all_new();
+        const auto fb = extract(image).all_new();
         for (std::size_t i = 0; i < fa.size(); ++i)
-            require(close(fa[i], -fb[i]), "parent-POV antisymmetry drift");
+            require(close(fa[i], fb[i]), "parent-POV colour/image symmetry drift");
 
         // Full FMJD majority capture is one semantic move, not partial pseudo-moves.
         const Position cap = parse("W:W28:B22,23,14");
