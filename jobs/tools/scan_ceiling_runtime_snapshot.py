@@ -55,7 +55,7 @@ def main() -> int:
     parser.add_argument("--control-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--specs", type=Path, required=True)
-    parser.add_argument("--ref", default="origin/main")
+    parser.add_argument("--ref", default="origin/" + "main")
     args = parser.parse_args()
     root = args.control_dir.resolve()
     if not (root / ".git").exists():

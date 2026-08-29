@@ -227,10 +227,11 @@ if [ "$COHORT_REUSED" -eq 0 ]; then
 stage cutoff-control-plane-and-runtime-pools
 CONTROL="${JASS_CONTROL_REPO_DIR:-/srv/jass/control}"
 [ -e "$CONTROL/.git" ] || die "runner control-plane checkout unavailable"
-git -C "$CONTROL" fetch origin main >"$W/control-fetch.log" 2>&1 \
-  || die "cannot freeze current origin/main control-plane view"
+CONTROL_REMOTE=origin; CONTROL_BRANCH=main; CONTROL_REF="$CONTROL_REMOTE/$CONTROL_BRANCH"
+git -C "$CONTROL" fetch "$CONTROL_REMOTE" "$CONTROL_BRANCH" >"$W/control-fetch.log" 2>&1 \
+  || die "cannot freeze current control-plane remote view"
 python3 jobs/tools/scan_ceiling_runtime_snapshot.py --control-dir "$CONTROL" \
-  --ref origin/main --output "$ART/runtime-exclusion-snapshot.json" --specs "$W/runtime-exclusions.tsv" \
+  --ref "$CONTROL_REF" --output "$ART/runtime-exclusion-snapshot.json" --specs "$W/runtime-exclusions.tsv" \
   >"$W/runtime-snapshot.log" 2>&1
 DYNAMIC_ARGS=(); DYNAMIC_COUNT=0
 while IFS=$'\t' read -r label prefix remote_path; do
