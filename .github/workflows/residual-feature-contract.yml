@@ -31,10 +31,10 @@ jobs:
           cmake --build build-rf -j --target jass_lib
       - name: Compile residual extractor and dump tool
         run: |
-          c++ -std=c++20 -O0 -I src \
+          c++ -std=c++20 -O0 -I src src/residual_features.cpp \
             jobs/tools/residual_feature_selftest.cpp build-rf/libjass_lib.a -pthread \
             -o build-rf/residual_feature_selftest
-          c++ -std=c++20 -O0 -I src \
+          c++ -std=c++20 -O0 -I src src/residual_features.cpp \
             jobs/tools/residual_feature_dump.cpp build-rf/libjass_lib.a -pthread \
             -o build-rf/residual_feature_dump
       - name: Run C++ contract tests
