@@ -200,14 +200,19 @@ int main(int argc, char** argv) {
             std::cout << "T3/F6 v2 transposition witness PASS depth=" << a.path.size() << '\n';
             return 0;
         }
-        if (argc != 6) {
+        const bool v3_relative_only = argc == 7
+            && std::string_view(argv[6]) == "--v3-relative-only";
+        if (argc != 6 && !v3_relative_only) {
             std::cerr << "usage: t3_f6_relative_probe <corpus.fen> <curriculum.pjtw> "
-                         "<t3.json> <report.json> <permutation-seed>\n";
+                         "<t3.json> <report.json> <permutation-seed> "
+                         "[--v3-relative-only]\n";
             return 2;
         }
         const std::uint64_t seed = std::stoull(argv[5]);
-        if (seed != 2026091703ULL)
-            throw std::runtime_error("R0-v2 permutation seed drift");
+        if ((!v3_relative_only && seed != 2026091703ULL)
+            || (v3_relative_only && seed != 2026092103ULL))
+            throw std::runtime_error(v3_relative_only
+                ? "R0-v3 permutation seed drift" : "R0-v2 permutation seed drift");
         const auto positions = read_positions(argv[1]);
         std::map<std::string, std::size_t> phase_counts;
         for (const auto& p : positions) ++phase_counts[phase(p)];
@@ -332,7 +337,7 @@ int main(int argc, char** argv) {
         bool tablebase_precedence = false;
         bool egdb_available = false;
         int negamax_depth1_score = 0;
-        if (gate1 && gate2 && gate3) {
+        if (!v3_relative_only && gate1 && gate2 && gate3) {
             const jass::Position root = jass::Position::start_position();
             jass::MoveList moves;
             jass::generate_legal_moves(root, moves);
@@ -388,20 +393,28 @@ int main(int argc, char** argv) {
                 && tb_off.score == tb_on.score
                 && tb_off.eval_calls == 0 && tb_on.eval_calls == 0;
         }
-        const bool gate4 = negamax_ok && terminal_precedence && tablebase_precedence;
-        const bool passed = gate1 && gate2 && gate3 && gate4;
-        const char* verdict = passed ? "R0_V2_RELATIVE_PROBE_PASS"
-            : !gate1 ? "R0_V2_POSITION_TRANSPOSITION_CONTRACT_FAILED"
-            : !gate2 ? "R0_V2_F6_RESIDUAL_INVARIANCE_FAILED"
-            : !gate3 ? "R0_V2_ADDITIONAL_SYMMETRY_DRIFT_DETECTED"
-            : "R0_V2_NEGAMAX_OR_TERMINAL_PRECEDENCE_FAILED";
+        const bool gate4 = !v3_relative_only
+            && negamax_ok && terminal_precedence && tablebase_precedence;
+        const bool passed = gate1 && gate2 && gate3
+            && (v3_relative_only || gate4);
+        const char* verdict = v3_relative_only
+            ? (passed ? "R0_V3_RELATIVE_PROBE_PASS"
+                : !gate1 ? "R0_V3_POSITION_CONTRACT_FAILED"
+                : !gate2 ? "R0_V3_F6_RESIDUAL_INVARIANCE_FAILED"
+                : "R0_V3_RELATIVE_DRIFT_FAILED")
+            : (passed ? "R0_V2_RELATIVE_PROBE_PASS"
+                : !gate1 ? "R0_V2_POSITION_TRANSPOSITION_CONTRACT_FAILED"
+                : !gate2 ? "R0_V2_F6_RESIDUAL_INVARIANCE_FAILED"
+                : !gate3 ? "R0_V2_ADDITIONAL_SYMMETRY_DRIFT_DETECTED"
+                : "R0_V2_NEGAMAX_OR_TERMINAL_PRECEDENCE_FAILED");
 
         const DriftStats t0_stats = summarize(d0_values);
         const DriftStats t3_stats = summarize(d3_values);
         std::ofstream out(argv[4]);
-        if (!out) throw std::runtime_error("cannot create R0-v2 relative report");
+        if (!out) throw std::runtime_error("cannot create relative report");
         out << std::setprecision(17)
-            << "{\n  \"schema\": \"jass.t3_f6_relative_contract.v2\",\n"
+            << "{\n  \"schema\": \"jass.t3_f6_relative_contract."
+            << (v3_relative_only ? "v3" : "v2") << "\",\n"
             << "  \"passed\": " << (passed ? "true" : "false") << ",\n"
             << "  \"verdict\": \"" << verdict << "\",\n"
             << "  \"positions\": " << positions.size() << ",\n"
@@ -428,6 +441,8 @@ int main(int argc, char** argv) {
         out << ",\n  \"t3_abs_drift_cp\": ";
         write_stats(out, t3_stats);
         out << ",\n  \"saturations\": " << saturations << ",\n"
+            << "  \"legacy_gate4_executed\": "
+            << (!v3_relative_only ? "true" : "false") << ",\n"
             << "  \"gate4_negamax_terminal_tb\": " << (gate4 ? "true" : "false") << ",\n"
             << "  \"negamax_single_inversion\": " << (negamax_ok ? "true" : "false") << ",\n"
             << "  \"negamax_depth1_score\": " << negamax_depth1_score << ",\n"
