@@ -348,6 +348,11 @@ if(NOT EMSCRIPTEN)
         src/scan_ceiling_jass_ladder.cpp
         $<TARGET_OBJECTS:jass_t3_f6_runtime>)
     target_link_libraries(jass_scan_ceiling_jass_ladder PRIVATE jass_lib jass_warnings)
+
+    add_executable(jass_search_semantics_attribution
+        src/search_semantics_attribution.cpp
+        $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(jass_search_semantics_attribution PRIVATE jass_lib jass_warnings)
 endif()
 
 # -----------------------------------------------------------------------------
