@@ -16,7 +16,7 @@ if __package__ in (None, ""):
 from jobs.tools.scan_ceiling_select import load_exclusions, sha256  # noqa: E402
 
 REQUIRED_STATIC = {"train-a", "train-b", "train-c", "m2", "m3", "m5", "q1", "t2", "rf1", "t3"}
-REQUIRED_COVERAGE = {"M1", "M2", "M3", "M5", "RICH_D_FRESH", "DSSD_CONFIRMATION", "SCAN_CEILING_1651_1660"}
+REQUIRED_COVERAGE = {"M1", "M2", "M3", "M4", "M5", "RICH_D_FRESH", "DSSD_CONFIRMATION", "SCAN_CEILING_1651_1660"}
 
 
 def main() -> int:
