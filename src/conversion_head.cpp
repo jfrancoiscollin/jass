@@ -6,9 +6,11 @@
 #include "bitboard.hpp"
 #include "board.hpp"
 #include "scan_eval.hpp"
+#include "t3_f6.hpp"
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <limits>
@@ -306,6 +308,10 @@ std::unique_ptr<INetwork> load_eval_network(const std::string& path,
                                             std::string* err) {
     auto base = load_eval_network_base(path, err);
     if (!base) return nullptr;
+    // Explicit frozen T3/F6 takes the pristine CURRICULUM base. With the env
+    // absent, the legacy OFF loader and optional conversion sidecar are exact.
+    if (std::getenv("JASS_T3_F6_MODEL") != nullptr)
+        return t3_f6::maybe_wrap_from_env(std::move(base), path, err);
     return conversion_head::maybe_wrap(std::move(base), path, err);
 }
 

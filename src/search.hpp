@@ -113,6 +113,7 @@ struct SearchResult {
     std::uint64_t     first_move_cutoffs{0}; // DIAG #1
     std::uint64_t     pvs_researches{0};     // DIAG #1
     std::uint64_t     moves_searched{0};     // DIAG #1
+    std::uint64_t     eval_calls{0};
     std::uint64_t     scan_verify_probes{0};
     std::uint64_t     scan_verify_cutoffs{0};
     std::uint64_t     scan_threat_reentries{0};

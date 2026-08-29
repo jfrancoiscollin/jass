@@ -14,6 +14,7 @@
 #include "nnue_accumulator.hpp"
 #include "scan_eval.hpp"
 #include "scan_sacs.hpp"
+#include "t3_f6.hpp"
 #include "tt.hpp"
 #include "zobrist.hpp"
 
@@ -240,6 +241,7 @@ struct Searcher {
     std::uint64_t       first_move_cutoffs{0}; // DIAG #1 : cutoffs ou le 1er coup coupe (qualite ordering)
     std::uint64_t       pvs_researches{0};     // DIAG #1 : re-recherches full-window PVS (instabilite valeurs)
     std::uint64_t       moves_searched{0};     // DIAG #1 : coups reellement cherches (coups/noeud)
+    mutable std::uint64_t eval_calls{0};
     std::uint64_t       scan_verify_probes{0};
     std::uint64_t       scan_verify_cutoffs{0};
     std::uint64_t       scan_threat_reentries{0};
@@ -315,6 +317,9 @@ struct Searcher {
     // Optional NNUE-style replacement for the handcrafted leaf evaluation.
     // Null means "use the static `evaluate()` function in eval.cpp".
     const INetwork*                       nnue{nullptr};
+    // Optional frozen residual wrapper. Accumulators below are bound to its
+    // base evaluator, while eval_leaf applies the residual exactly once.
+    const t3_f6::Network*                 t3_f6_nnue{nullptr};
 
     // Fast-path accumulator support. When `nnue` is an `MLPNetworkQ`,
     // we cache the concrete pointer here and maintain a per-ply
@@ -359,6 +364,7 @@ struct Searcher {
     // handcrafted eval if none).
     int eval_leaf(const Position& pos, int ply) const noexcept {
         BD_TIME(eval);
+        ++eval_calls;
         int s;
         if (mlpq_nnue) {
             const auto& acc = (pos.side_to_move() == Color::White)
@@ -368,11 +374,14 @@ struct Searcher {
         } else if (scan_nnue) {
             s = scan_nnue->evaluate_with_idx(
                 pos, scan_accs[static_cast<std::size_t>(ply)].idx.data());
+        } else if (t3_f6_nnue) {
+            s = t3_f6_nnue->base_network()->evaluate(pos);
         } else if (nnue) {
             s = nnue->evaluate(pos);
         } else {
             return evaluate(pos);  // handcrafted: drawish already applied inside evaluate()
         }
+        if (t3_f6_nnue) s = t3_f6_nnue->evaluate_from_base(pos, s);
         // Scan's drawish-material scaling on the NETWORK leaf (the pattern eval can't
         // learn this localized non-linearity). Runtime-gated (params.drawish_scaling,
         // default 0) so it can be A/B'd sensitively via --benchmark-search-params.
@@ -1490,11 +1499,14 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     s.hash_path.push_back(root_hash);  // root is an ancestor for its children
     s.stop_flag = limits.stop_flag;
     s.nnue      = limits.nnue;
+    s.t3_f6_nnue = dynamic_cast<const t3_f6::Network*>(limits.nnue);
+    const INetwork* accumulator_base = s.t3_f6_nnue
+        ? s.t3_f6_nnue->base_network() : limits.nnue;
     // Activate the accumulator fast path when the supplied INetwork is
     // the quantised MLP. Other concrete types (LinearNetwork, the
     // float MLPNetwork) fall through to the generic
     // `nnue->evaluate(pos)` slow path.
-    s.mlpq_nnue = dynamic_cast<const MLPNetworkQ*>(limits.nnue);
+    s.mlpq_nnue = dynamic_cast<const MLPNetworkQ*>(accumulator_base);
     if (s.mlpq_nnue) {
         s.accumulators[0].refresh_from(pos, *s.mlpq_nnue);
     }
@@ -1503,7 +1515,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     static const bool scan_acc_off = std::getenv("JASS_NO_SCAN_ACC") != nullptr;
     s.scan_nnue = scan_acc_off
         ? nullptr
-        : dynamic_cast<const scan_eval::ScanEvalNetwork*>(limits.nnue);
+        : dynamic_cast<const scan_eval::ScanEvalNetwork*>(accumulator_base);
     if (s.scan_nnue) {
         s.scan_accs[0].refresh_from(pos);
     }
@@ -1763,6 +1775,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     res.first_move_cutoffs = s.first_move_cutoffs;
     res.pvs_researches     = s.pvs_researches;
     res.moves_searched     = s.moves_searched;
+    res.eval_calls         = s.eval_calls;
     res.scan_verify_probes = s.scan_verify_probes;
     res.scan_verify_cutoffs = s.scan_verify_cutoffs;
     res.scan_threat_reentries = s.scan_threat_reentries;

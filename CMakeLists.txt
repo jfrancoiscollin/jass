@@ -282,6 +282,17 @@ set_source_files_properties(src/scan_eval.cpp PROPERTIES
 target_include_directories(jass_lib PUBLIC src)
 target_link_libraries(jass_lib PRIVATE jass_warnings jass_simd)
 
+# Frozen T3/F6 runtime objects stay outside jass_lib.  The historical
+# residual-feature contract deliberately compiles residual_features.cpp next
+# to jass_lib; keeping these objects on the executable side preserves that
+# independent reference build while making the production engine whole.
+add_library(jass_t3_f6_runtime OBJECT
+    src/residual_features.cpp
+    src/t3_f6.cpp
+)
+target_include_directories(jass_t3_f6_runtime PUBLIC src)
+target_link_libraries(jass_t3_f6_runtime PRIVATE jass_warnings)
+
 # When the external endgame DB is enabled, wire its headers + library into the
 # engine library that owns src/egdb_bridge.cpp.
 if(JASS_EGDB)
@@ -308,9 +319,9 @@ endif()
 # Emscripten build: an ES-module exposing the engine to JavaScript via Embind
 # (src/wasm_api.cpp). The two entry points are mutually exclusive.
 if(EMSCRIPTEN)
-    add_executable(jass src/wasm_api.cpp)
+    add_executable(jass src/wasm_api.cpp $<TARGET_OBJECTS:jass_t3_f6_runtime>)
 else()
-    add_executable(jass src/main.cpp)
+    add_executable(jass src/main.cpp $<TARGET_OBJECTS:jass_t3_f6_runtime>)
 endif()
 target_link_libraries(jass PRIVATE jass_lib jass_warnings)
 
@@ -319,6 +330,7 @@ target_link_libraries(jass PRIVATE jass_lib jass_warnings)
 # -----------------------------------------------------------------------------
 enable_testing()
 add_executable(jass_tests
+    $<TARGET_OBJECTS:jass_t3_f6_runtime>
     tests/test_main.cpp
     tests/test_position.cpp
     tests/test_movegen.cpp
@@ -334,6 +346,7 @@ add_executable(jass_tests
     tests/test_hub.cpp
     tests/test_scan_eval.cpp
     tests/test_conversion_head.cpp
+    tests/test_t3_f6.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
 target_include_directories(jass_tests PRIVATE tests)
@@ -345,6 +358,17 @@ add_test(
         -DSMOKE_DIR=${CMAKE_CURRENT_BINARY_DIR}/node-budget-smoke
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/node_budget_selfplay_smoke.cmake
 )
+
+if(NOT EMSCRIPTEN)
+    add_executable(t3_f6_runtime_probe jobs/tools/t3_f6_runtime_probe.cpp
+                   $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(t3_f6_runtime_probe PRIVATE jass_lib jass_warnings)
+    add_executable(t3_f6_invariance_probe jobs/tools/t3_f6_invariance_probe.cpp
+                   $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(t3_f6_invariance_probe PRIVATE jass_lib jass_warnings)
+    add_test(NAME t3_f6_transposition_selftest
+             COMMAND t3_f6_invariance_probe --transposition-selftest)
+endif()
 
 # -----------------------------------------------------------------------------
 # Emscripten / WASM specifics

@@ -49,6 +49,14 @@ def main(argv):
                    help="HUB --search-params override for side A (e.g. no_reduce_forcing=1)")
     p.add_argument("--search-params-b", default=None,
                    help="HUB --search-params override for side B")
+    p.add_argument("--t3-f6-model-a", default=None,
+                   help="set JASS_T3_F6_MODEL only for player A")
+    p.add_argument("--t3-f6-model-b", default=None,
+                   help="set JASS_T3_F6_MODEL only for player B")
+    p.add_argument("--fail-on-game-error", action="store_true",
+                   help="abort the shard on any technical game/search error")
+    p.add_argument("--enforce-no-book", action="store_true",
+                   help="pass --no-book to both player processes")
     p.add_argument("--progress-file", default=None,
                    help="write the running 'RESULT a d b' tally to this path after EVERY "
                         "game (overwrite+flush). Survives the runner's non-flush on jobs whose "
@@ -67,9 +75,13 @@ def main(argv):
     args = p.parse_args(argv)
 
     a = JassEngine(args.jass_a, label="A", pattern_path=args.pattern_a,
-                   search_params=args.search_params_a)
+                   search_params=args.search_params_a,
+                   env_overrides={"JASS_T3_F6_MODEL": args.t3_f6_model_a},
+                   enforce_no_book=args.enforce_no_book)
     b = JassEngine(args.jass_b, label="B", pattern_path=args.pattern_b,
-                   search_params=args.search_params_b)
+                   search_params=args.search_params_b,
+                   env_overrides={"JASS_T3_F6_MODEL": args.t3_f6_model_b},
+                   enforce_no_book=args.enforce_no_book)
     referee = Referee(args.jass_a)   # play_game needs a Referee (apply_move/legality), NOT a JassEngine
     if args.openings_file:
         openings = [o for o in (ln.split("#", 1)[0].strip() for ln in open(args.openings_file)) if o]  # filtre les vides (lignes # / vides) -> sinon set_position_fen("") hang
@@ -97,13 +109,18 @@ def main(argv):
         dump_dir.mkdir(parents=True, exist_ok=True)
     for game_index, opening_index, pair_index, opening, a_is_white in specs:
         white, black = (a, b) if a_is_white else (b, a)
+        telemetry_before_a = a.telemetry_snapshot()
+        telemetry_before_b = b.telemetry_snapshot()
         error = None
+        error_side = None
         try:
             r = play_game(white, black, referee, opening,
                           depth=(None if args.movetime else args.depth),
                           movetime=args.movetime, max_plies=args.max_plies,
                           game_timeout_s=args.game_timeout)
         except Exception as exc:  # noqa: BLE001
+            if args.fail_on_game_error:
+                raise
             # ROBUSTESSE : un coup qui timeout (overshoot movetime-endgame) ou un moteur qui
             # deraille NE DOIT PAS crasher le shard (= perte de toutes les games restantes).
             # Compter nulle + continuer. (Sinon un seul mauvais game fait chuter n / peut hang.)
@@ -112,6 +129,8 @@ def main(argv):
             outcome = "D"
             score_a = 0.5
             error = str(exc)
+            error_side = "a" if error.startswith("A:") else (
+                "b" if error.startswith("B:") else "unknown")
         else:
             outcome = r.outcome
             if outcome == "D":
@@ -146,6 +165,21 @@ def main(argv):
                     json.dump(payload, handle, indent=2, sort_keys=True)
                     handle.write("\n")
         if results_handle:
+            telemetry_after_a = a.telemetry_snapshot()
+            telemetry_after_b = b.telemetry_snapshot()
+            def delta(after, before):
+                out = {}
+                for key, value in after.items():
+                    if isinstance(value, dict):
+                        prior = before.get(key, {})
+                        out[key] = {
+                            item: count - prior.get(item, 0)
+                            for item, count in value.items()
+                            if count - prior.get(item, 0)
+                        }
+                    else:
+                        out[key] = value - before[key]
+                return out
             results_handle.write(json.dumps({
                 "game_index": game_index,
                 "opening_index": opening_index,
@@ -155,6 +189,9 @@ def main(argv):
                 "outcome_white": outcome,
                 "score_a": score_a,
                 "error": error,
+                "error_side": error_side,
+                "telemetry_a": delta(telemetry_after_a, telemetry_before_a),
+                "telemetry_b": delta(telemetry_after_b, telemetry_before_b),
             }, sort_keys=True) + "\n")
             results_handle.flush()
         # Incremental tally so the running result survives the runner's non-flush

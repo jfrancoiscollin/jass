@@ -218,6 +218,7 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
          << " cut1="    << r.first_move_cutoffs
          << " research=" << r.pvs_researches
          << " movessearched=" << r.moves_searched
+         << " evalcalls=" << r.eval_calls
          << " scanverify=" << r.scan_verify_probes
          << " scanverifycuts=" << r.scan_verify_cutoffs
          << " scanthreat=" << r.scan_threat_reentries
