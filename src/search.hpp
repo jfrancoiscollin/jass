@@ -45,6 +45,54 @@ enum class NodeLimitMode : std::uint8_t {
     Exact,
 };
 
+// Passive depth-1 diagnostics.  These records are populated only when a
+// caller supplies SearchLimits::depth_one_trace; the production/default path
+// keeps the pointer null and performs no diagnostic work.  Scores follow the
+// engine's normal side-to-move convention: child_return is the value returned
+// by negamax(child, 0), while root_negated_return is its single negation at
+// the root.
+struct DepthOneMoveTrace {
+    Move          move{};
+    int           alpha_before{0};
+    int           beta{0};
+    int           child_depth{0};
+    int           child_return{0};
+    int           root_negated_return{0};
+    std::uint64_t nodes_before{0};
+    std::uint64_t nodes_after{0};
+    std::uint64_t eval_calls_before{0};
+    std::uint64_t eval_calls_after{0};
+
+    bool          entered_quiescence{false};
+    int           qsearch_alpha{0};
+    int           qsearch_beta{0};
+    std::size_t   qsearch_legal_moves{0};
+    bool          qsearch_forced_capture{false};
+    bool          qsearch_opponent_threat{false};
+    bool          qsearch_stand_pat_valid{false};
+    int           qsearch_stand_pat{0};
+    std::size_t   qsearch_selective_sacs{0};
+    std::size_t   qsearch_moves_searched{0};
+    int           qsearch_return{0};
+
+    bool          path_draw{false};
+    bool          fifty_move_draw{false};
+    bool          tablebase_hit{false};
+    bool          tt_cutoff{false};
+    bool          terminal_hit{false};
+    std::string   first_resolution_stage;
+};
+
+struct DepthOneSearchTrace {
+    std::vector<DepthOneMoveTrace> moves;
+    std::uint64_t qnodes{0};
+    std::uint64_t tablebase_probes{0};
+    std::uint64_t tablebase_hits{0};
+    std::uint64_t tt_probes{0};
+    std::uint64_t tt_hits{0};
+    std::uint64_t terminal_hits{0};
+};
+
 struct SearchLimits {
     int         max_depth   = 6;
     std::size_t tt_mb       = 1;     // transposition table size in megabytes
@@ -74,6 +122,9 @@ struct SearchLimits {
     // Tunable search parameters (pruning/reduction/extension constants +
     // PVS toggle). Default = behaviour-neutral baseline.
     SearchParams params{};
+    // Optional passive instrumentation for a completed depth-1 root
+    // iteration. Null is the byte/behaviour-identical production default.
+    DepthOneSearchTrace* depth_one_trace = nullptr;
     // Diagnostic-only root ordering schedule. Format:
     // "1:31-26,31-27;2:31-27,31-26". Every depth must list every
     // legal root move exactly once. Empty preserves production ordering.

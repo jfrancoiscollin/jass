@@ -394,10 +394,15 @@ if(NOT EMSCRIPTEN)
     add_executable(t3_f6_relative_probe jobs/tools/t3_f6_relative_probe.cpp
                    $<TARGET_OBJECTS:jass_t3_f6_runtime>)
     target_link_libraries(t3_f6_relative_probe PRIVATE jass_lib jass_warnings)
+    add_executable(t3_f6_negamax_autopsy jobs/tools/t3_f6_negamax_autopsy.cpp
+                   $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(t3_f6_negamax_autopsy PRIVATE jass_lib jass_warnings)
     add_test(NAME t3_f6_transposition_selftest
              COMMAND t3_f6_invariance_probe --transposition-selftest)
     add_test(NAME t3_f6_relative_transposition_selftest
              COMMAND t3_f6_relative_probe --transposition-selftest)
+    add_test(NAME t3_f6_negamax_autopsy_selftest
+             COMMAND t3_f6_negamax_autopsy --selftest)
 endif()
 
 # -----------------------------------------------------------------------------
