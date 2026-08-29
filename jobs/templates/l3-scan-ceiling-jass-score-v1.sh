@@ -25,8 +25,6 @@ RES="$W/RESULTS.txt"; PROG="$W/PROGRESS.txt"; STAGE="$W/.stage"
 say(){ echo "$*" | tee -a "$RES"; }; die(){ say "ABORT: $*"; exit 1; }
 stage(){ echo "$1" >"$STAGE"; say "phase=$1"; }
 
-find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + \
-  2>/dev/null || true
 DFA=$(df -Pm /root | awk 'NR==2{print $4}')
 [ "${DFA:-0}" -gt 3000 ] || { say "ABORT disque HOME <3Go"; exit 3; }
 say "disk_free_mb=$DFA"
