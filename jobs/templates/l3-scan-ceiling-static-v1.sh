@@ -4,7 +4,8 @@ set -Eeuo pipefail
 
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 : "${JASS_JOB_ID:?}"; : "${EXPECTED_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"
-: "${EXPECTED_HOST:?}"; : "${SELECTION_PREFIX:?}"; : "${PREFLIGHT_PREFIX:?}"
+: "${EXPECTED_HOST:?}"; : "${FROZEN_COHORT_CODE_SHA:?}"
+: "${SELECTION_PREFIX:?}"; : "${PREFLIGHT_PREFIX:?}"
 : "${FULL_RUN_APPROVED:?}"; : "${SCIENTIFIC_GO:?}"
 export SCAN_BENCHMARK_ONLY=true
 
@@ -74,7 +75,7 @@ python3 jobs/tools/fetch_result_files.py --prefix "$SELECTION_PREFIX" \
   --out-dir "$IN" --report "$ART/verified-selection.json" >"$W/fetch-selection.log" 2>&1 \
   || die "selection fetch failed"
 gunzip -t "$IN/children.jnnw.gz"; gunzip -c "$IN/children.jnnw.gz" >"$W/children.jnnw"
-python3 - "$IN" "$W/children.jnnw" "$ART/verified-selection.json" "$EXPECTED_CODE_SHA" <<'PY_SELECTION'
+python3 - "$IN" "$W/children.jnnw" "$ART/verified-selection.json" "$FROZEN_COHORT_CODE_SHA" <<'PY_SELECTION'
 import hashlib,json,sys
 from pathlib import Path
 root,children=map(Path,sys.argv[1:3]); r=json.load(open(sys.argv[3])); code=sys.argv[4]; sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
@@ -97,13 +98,17 @@ python3 jobs/tools/fetch_result_files.py --prefix "$RF1_PREFIX" --file artefacts
   --out-dir "$IN" --report "$ART/verified-rf1.json" >"$W/fetch-rf1.log" 2>&1 || die "RF1 fetch failed"
 python3 jobs/tools/fetch_result_files.py --prefix "$T3_PREFIX" --file artefacts/t3-a-f6-only.json=t3-a.json \
   --out-dir "$IN" --report "$ART/verified-t3-a.json" >"$W/fetch-t3.log" 2>&1 || die "T3-A fetch failed"
-python3 - "$IN" "$T0_SHA" "$D1_SHA" "$RF1_SHA" "$T3_SHA" <<'PY_ARTIFACTS'
-import hashlib,sys
+python3 - "$IN" "$T0_SHA" "$D1_SHA" "$RF1_SHA" "$T3_SHA" \
+  "$ART/verified-curriculum.json" "$FROZEN_COHORT_CODE_SHA" <<'PY_ARTIFACTS'
+import hashlib,json,sys
 from pathlib import Path
 root=Path(sys.argv[1]); expected=dict(zip(['curriculum.pjtw','d1.json','rf1.json','t3-a.json'],sys.argv[2:]))
 for name,want in expected.items():
  got=hashlib.sha256((root/name).read_bytes()).hexdigest()
  if got!=want: raise SystemExit(f'{name} SHA drift: {got}')
+receipt=json.load(open(sys.argv[6])); frozen_code=sys.argv[7]
+if receipt.get('code_sha')!=frozen_code or receipt.get('result_state')!='completed' or receipt.get('exit_code')!=0:
+ raise SystemExit('preflight result/code drift')
 PY_ARTIFACTS
 
 stage build-byte-frozen-rf1-extractor
@@ -134,14 +139,16 @@ stage deterministic-static-inference-no-fit
   --report "$ART/static-score-report.json" >"$W/static-score.log" 2>&1
 gzip -n -c "$W/children.feat" >"$ART/children.feat.gz"
 gzip -n -c "$W/children.rffd" >"$ART/children.rffd.gz"
-python3 - "$ART/JASS_CONTROL_SUMMARY.json" "$ART/static-score-report.json" "$IN/selection-report.json" "$EXPECTED_CODE_SHA" "$RF1_EXTRACTOR_CODE" <<'PY_SUMMARY'
+python3 - "$ART/JASS_CONTROL_SUMMARY.json" "$ART/static-score-report.json" "$IN/selection-report.json" \
+  "$EXPECTED_CODE_SHA" "$RF1_EXTRACTOR_CODE" "$FROZEN_COHORT_CODE_SHA" <<'PY_SUMMARY'
 import hashlib,json,sys
 from pathlib import Path
-out,report,selection=map(Path,sys.argv[1:4]); code,extractor=sys.argv[4:]
+out,report,selection=map(Path,sys.argv[1:4]); code,extractor,frozen_code=sys.argv[4:]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest(); r=json.loads(report.read_text()); s=json.loads(selection.read_text())
 assert r['rows']>0 and r['deterministic_replay_exact'] and r['fits']==0
 payload={'schema':'jass.scan_ceiling_static_summary.v1','verdict':'SCAN_STATIC_SIGNALS_FROZEN',
- 'passed':True,'benchmark_only':True,'code_sha':code,'rf1_extractor_code':extractor,
+ 'passed':True,'benchmark_only':True,'code_sha':code,'frozen_cohort_code_sha':frozen_code,
+ 'rf1_extractor_code':extractor,
  'cohort_identity_sha256':s['cohort_identity_sha256'],'rows':r['rows'],
  'static_scores_sha256':r['output_sha256'],'report_sha256':sha(report),'artifacts':r['artifacts'],
  'cohort_and_scores_consumed':True,'training_allowed':False,'tuning_allowed':False,

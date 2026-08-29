@@ -4,7 +4,8 @@ set -Eeuo pipefail
 
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 : "${JASS_JOB_ID:?}"; : "${EXPECTED_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"
-: "${EXPECTED_HOST:?}"; : "${SELECTION_PREFIX:?}"; : "${PREFLIGHT_PREFIX:?}"
+: "${EXPECTED_HOST:?}"; : "${FROZEN_COHORT_CODE_SHA:?}"
+: "${SELECTION_PREFIX:?}"; : "${PREFLIGHT_PREFIX:?}"
 : "${SCORE_SCOPE:?base, deep or ultra}"; : "${FULL_RUN_APPROVED:?}"; : "${SCIENTIFIC_GO:?}"
 export SCAN_BENCHMARK_ONLY=true
 SCAN_COMMIT="7aae17e7b7bfc47744601afb1ee7655e18983ce5"
@@ -71,7 +72,7 @@ python3 jobs/tools/fetch_result_files.py --prefix "$PREFLIGHT_PREFIX" \
 gunzip -t "$IN/children.jnnw.gz"; gunzip -c "$IN/children.jnnw.gz" >"$W/children.jnnw"
 gunzip -t "$IN/scan-home-compiled.gz"; gunzip -c "$IN/scan-home-compiled.gz" >"$W/scan-runtime/scan_home"
 chmod 0555 "$W/scan-runtime/scan_home"; cp "$IN/scan-data-eval" "$W/scan-runtime/data/eval"; cp "$IN/scan.ini" "$W/scan-runtime/scan.ini"
-python3 - "$IN" "$W/children.jnnw" "$W/scan-runtime/scan_home" "$ART/verified-selection.json" "$ART/verified-preflight.json" "$EXPECTED_CODE_SHA" "$SCAN_COMMIT" <<'PY_AUTH'
+python3 - "$IN" "$W/children.jnnw" "$W/scan-runtime/scan_home" "$ART/verified-selection.json" "$ART/verified-preflight.json" "$FROZEN_COHORT_CODE_SHA" "$SCAN_COMMIT" <<'PY_AUTH'
 import hashlib,json,sys
 from pathlib import Path
 root,children,scan=map(Path,sys.argv[1:4]); sr,pr=map(lambda p:json.load(open(p)),sys.argv[4:6]); code,commit=sys.argv[6:]
@@ -221,16 +222,17 @@ done
 [ "$(find "$SCORES" -name "$LABEL-shard-*-manifest.json" -type f | wc -l)" -eq 16 ] || die "score shard manifest count drift"
 
 stage immutable-stage-manifest-and-summary
-python3 - "$SCORES" "$ART/$LABEL-stage-manifest.json" "$LABEL" "$BUDGETS" "$IN/selection-report.json" "$W/scan-runtime/scan_home" "$PLAN_JSON" <<'PY_STAGE'
+python3 - "$SCORES" "$ART/$LABEL-stage-manifest.json" "$LABEL" "$BUDGETS" "$IN/selection-report.json" "$W/scan-runtime/scan_home" "$PLAN_JSON" "$EXPECTED_CODE_SHA" "$FROZEN_COHORT_CODE_SHA" <<'PY_STAGE'
 import hashlib,json,sys
 from pathlib import Path
-root,out=map(Path,sys.argv[1:3]); label,budgets=sys.argv[3:5]; selection,scan,plan=map(Path,sys.argv[5:8]); sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest(); files=sorted(root.glob(f'{label}-shard-*-manifest.json')); s=json.loads(selection.read_text()); plan_payload=json.loads(plan.read_text()); want=[int(x) for x in budgets.split(',')]
+root,out=map(Path,sys.argv[1:3]); label,budgets=sys.argv[3:5]; selection,scan,plan=map(Path,sys.argv[5:8]); code,frozen_code=sys.argv[8:]; sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest(); files=sorted(root.glob(f'{label}-shard-*-manifest.json')); s=json.loads(selection.read_text()); plan_payload=json.loads(plan.read_text()); want=[int(x) for x in budgets.split(',')]
 if len(files)!=16: raise SystemExit('Scan stage shard count drift')
 for index,path in enumerate(files):
  item=json.loads(path.read_text())
  if item.get('scope')!=label or item.get('shard')!=index or item.get('nshards')!=16 or item.get('budgets_nodes')!=want or item.get('cohort_identity_sha256')!=s['cohort_identity_sha256'] or item.get('scan_binary_sha256')!=sha(scan) or item.get('groups_sha256')!=plan_payload['groups_sha256'] or item.get('row_ids_sha256')!=plan_payload['row_ids_sha256'] or item.get('timeout_plan_sha256')!=sha(plan):
   raise SystemExit(f'Scan stage shard semantic drift: {path.name}')
 payload={'schema':'jass.scan_ceiling_scan_score_stage.v1','immutable':True,'benchmark_only':True,
+ 'code_sha':code,'frozen_cohort_code_sha':frozen_code,
  'training_allowed':False,'tuning_allowed':False,'calibration_allowed':False,
  'model_selection_allowed':False,'runtime_scale_selection_allowed':False,
  'scope':label,'budgets_nodes':want,'shards':16,
@@ -240,12 +242,14 @@ payload={'schema':'jass.scan_ceiling_scan_score_stage.v1','immutable':True,'benc
  'guards':{'fits':0,'calibrations':0,'strength_games':0,'promotions':0,'promotion_authorized':False}}
 out.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
 PY_STAGE
-python3 - "$ART/JASS_CONTROL_SUMMARY.json" "$ART/$LABEL-stage-manifest.json" "$EXPECTED_CODE_SHA" <<'PY_SUMMARY'
+python3 - "$ART/JASS_CONTROL_SUMMARY.json" "$ART/$LABEL-stage-manifest.json" "$EXPECTED_CODE_SHA" "$FROZEN_COHORT_CODE_SHA" <<'PY_SUMMARY'
 import hashlib,json,sys
 from pathlib import Path
-out,stage=map(Path,sys.argv[1:3]); code=sys.argv[3]; p=json.loads(stage.read_text()); sha=lambda x:hashlib.sha256(x.read_bytes()).hexdigest()
+out,stage=map(Path,sys.argv[1:3]); code,frozen_code=sys.argv[3:]; p=json.loads(stage.read_text()); sha=lambda x:hashlib.sha256(x.read_bytes()).hexdigest()
+if p.get('code_sha')!=code or p.get('frozen_cohort_code_sha')!=frozen_code: raise SystemExit('Scan stage code provenance drift')
 summary={'schema':'jass.scan_ceiling_scan_stage_summary.v1','verdict':'SCAN_'+p['scope'].upper().replace('-','_')+'_COMPLETE',
- 'passed':True,'benchmark_only':True,'code_sha':code,'scope':p['scope'],'budgets_nodes':p['budgets_nodes'],
+ 'passed':True,'benchmark_only':True,'code_sha':code,'frozen_cohort_code_sha':frozen_code,
+ 'scope':p['scope'],'budgets_nodes':p['budgets_nodes'],
  'cohort_identity_sha256':p['cohort_identity_sha256'],'scan_binary_sha256':p['scan_binary_sha256'],
  'stage_manifest_sha256':sha(stage),'guards':p['guards']}
 summary.update({'cohort_and_scores_consumed':True,'training_allowed':False,'tuning_allowed':False,

@@ -24,6 +24,7 @@ T0_SHA = "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
 D1_SHA = "e91a55500713154f50be74db5d699b64d7684e1c078725d09e1d15e713549b49"
 RF1_SHA = "0d26ba50b668160b3da3e247cd4e1bd709c2cb7989b3b5877b9ea7deb34db58b"
 T3_A_SHA = "16e5db8fd78849bba12b158eee5c1da4ab170129d8aeac1b91ab7a40ad9d0bb2"
+RF1_EXTRACTOR_CODE = "e5c4a0d6e88e99c06819100c4b5dbc697bbe3a53"
 MOVE_FEATURE_NAMES = [
     "num_captures", "captured_kings", "promotes", "moving_king",
     "from_norm", "to_norm",
@@ -118,6 +119,58 @@ def d1_scores(features: np.ndarray, groups: dict[str, np.ndarray], weights: tupl
     return out
 
 
+def rf1_artifact_from_frozen_payload(payload: dict[str, object]) -> rf.ProbeArtifact:
+    """Decode the byte-pinned RF1 freeze wrapper without fitting anything."""
+    zero_read_fields = (
+        "q1_label_reads", "q1_score_reads",
+        "t2_fresh_label_reads", "t2_fresh_score_reads",
+    )
+    if (payload.get("schema") != "jass.l3_residual_feature_rf1.v1"
+            or payload.get("family") != "F6_ALL_NEW"
+            or payload.get("feature_width") != 66
+            or float(payload.get("d1_coefficient", 0.0)) != 1.0
+            or float(payload.get("intercept", 1.0)) != 0.0
+            or payload.get("d1_sha256") != D1_SHA
+            or payload.get("extractor_code_sha") != RF1_EXTRACTOR_CODE
+            or payload.get("replay_exact") is not True
+            or any(int(payload.get(name, -1)) != 0 for name in zero_read_fields)):
+        raise ValueError("frozen RF1 wrapper contract drift")
+    feature_names = payload.get("feature_names")
+    normalization = payload.get("normalization")
+    optimizer = payload.get("optimizer")
+    probe_sha = str(payload.get("probe_artifact_sha256", ""))
+    if (not isinstance(feature_names, list) or len(feature_names) != 66
+            or not isinstance(normalization, dict) or not isinstance(optimizer, dict)
+            or optimizer.get("success") is not True
+            or len(probe_sha) != 64):
+        raise ValueError("frozen RF1 wrapper receipt drift")
+    try:
+        int(probe_sha, 16)
+    except ValueError as exc:
+        raise ValueError("frozen RF1 probe SHA drift") from exc
+    rf.validate_feature_names([str(name) for name in feature_names])
+    mean = np.asarray(normalization.get("mean"), dtype=np.float64)
+    std = np.asarray(normalization.get("std"), dtype=np.float64)
+    weights = np.asarray(payload.get("residual_coefficients"), dtype=np.float64)
+    if (mean.shape != (66,) or std.shape != (66,) or weights.shape != (66,)
+            or np.any(std <= 0)
+            or not np.all(np.isfinite(mean)) or not np.all(np.isfinite(std))
+            or not np.all(np.isfinite(weights))):
+        raise ValueError("frozen RF1 wrapper geometry drift")
+    return rf.ProbeArtifact(
+        family="F6_ALL_NEW", mean=mean, std=std, weights=weights,
+        d1_sha256=D1_SHA, optimizer=dict(optimizer),
+    )
+
+
+def load_rf1(path: Path) -> tuple[rf.ProbeArtifact, dict[str, object]]:
+    authenticate(path, RF1_SHA, "RF1")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("frozen RF1 wrapper is not an object")
+    return rf1_artifact_from_frozen_payload(payload), payload
+
+
 def load_t3(path: Path) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray, dict[str, object]]:
     authenticate(path, T3_A_SHA, "T3-A")
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -156,8 +209,7 @@ def compute(
         raise ValueError("static feature/group geometry drift")
     d1w, d1b, _ = load_d1(d1_path)
     d1 = d1_scores(features, groups, (d1w, d1b))
-    authenticate(rf1_path, RF1_SHA, "RF1")
-    rf1_artifact = rf.load_artifact(rf1_path)
+    rf1_artifact, _ = load_rf1(rf1_path)
     if rf1_artifact.family != "F6_ALL_NEW" or rf1_artifact.d1_sha256 != D1_SHA:
         raise ValueError("RF1 family/upstream drift")
     f6 = rf.family_matrix(rffd, "F6_ALL_NEW")

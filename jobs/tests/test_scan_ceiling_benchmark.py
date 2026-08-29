@@ -310,6 +310,61 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Scan child-to-parent"):
             symmetry_replay(records, groups, jass, bad_scan)
 
+    def test_frozen_rf1_wrapper_is_decoded_without_refit(self):
+        try:
+            from jobs.tools.scan_ceiling_static_score import rf1_artifact_from_frozen_payload
+        except ModuleNotFoundError as exc:
+            if exc.name == "scipy":
+                self.skipTest("SciPy numeric runtime unavailable")
+            raise
+        payload = {
+            "schema": "jass.l3_residual_feature_rf1.v1",
+            "family": "F6_ALL_NEW",
+            "feature_width": 66,
+            "feature_names": [f"frozen_feature_{index:02d}" for index in range(66)],
+            "d1_coefficient": 1.0,
+            "intercept": 0.0,
+            "d1_sha256": "e91a55500713154f50be74db5d699b64d7684e1c078725d09e1d15e713549b49",
+            "extractor_code_sha": "e5c4a0d6e88e99c06819100c4b5dbc697bbe3a53",
+            "replay_exact": True,
+            "q1_label_reads": 0,
+            "q1_score_reads": 0,
+            "t2_fresh_label_reads": 0,
+            "t2_fresh_score_reads": 0,
+            "probe_artifact_sha256": "0" * 64,
+            "normalization": {"mean": [0.0] * 66, "std": [1.0] * 66},
+            "residual_coefficients": [0.0] * 66,
+            "optimizer": {"success": True},
+        }
+        artifact = rf1_artifact_from_frozen_payload(payload)
+        prediction = artifact.predict(np.ones((1, 66)), np.asarray([7.0]))
+        self.assertEqual(prediction.tolist(), [7.0])
+        bad = dict(payload)
+        bad["q1_score_reads"] = 1
+        with self.assertRaisesRegex(ValueError, "wrapper contract"):
+            rf1_artifact_from_frozen_payload(bad)
+
+    def test_frozen_cohort_and_stage_code_provenance_are_explicit(self):
+        stage_templates = (
+            "l3-scan-ceiling-static-v1.sh",
+            "l3-scan-ceiling-jass-score-v1.sh",
+            "l3-scan-ceiling-scan-score-v1.sh",
+        )
+        for template in stage_templates:
+            text = (ROOT / "jobs/templates" / template).read_text(encoding="utf-8")
+            self.assertIn('${FROZEN_COHORT_CODE_SHA:?}', text)
+            self.assertIn("'frozen_cohort_code_sha'", text)
+        readout = (ROOT / "jobs/templates/l3-scan-ceiling-readout-v1.sh").read_text(
+            encoding="utf-8",
+        )
+        for variable in (
+            "FROZEN_COHORT_CODE_SHA", "STATIC_CODE_SHA", "JASS_BASE_CODE_SHA",
+            "JASS_DEEP_CODE_SHA", "SCAN_BASE_CODE_SHA", "SCAN_DEEP_CODE_SHA",
+            "SCAN_ULTRA_CODE_SHA",
+        ):
+            self.assertIn('${' + variable + ':?}', readout)
+        self.assertIn("jass.scan_ceiling_code_provenance.v1", readout)
+
     def test_shard_timeouts_are_rate_derived_and_exact_rows_are_excluded(self):
         preflight = {
             "throughput_and_eta": {
