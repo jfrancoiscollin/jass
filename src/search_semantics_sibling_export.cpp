@@ -3,9 +3,20 @@
 // This freezes legal child identities and exact terminal/TB metadata only. It
 // deliberately does not load CURRICULUM and does not evaluate or search a child.
 
+#include "pattern_jass_bridge.hpp"
+#include "scan_eval.hpp"
+
+// deep_sibling_teacher.cpp contains shared JNNW/position/terminal helpers but
+// also a disabled teacher main() that references the historical Pattern-Jass
+// loader. Bind that dead-code reference to the already linked generic eval
+// loader exactly as the proven Scan-ceiling sibling exporter does. The renamed
+// main is never executed here, so this does not load CURRICULUM or generate a
+// score; it only makes the score-free helper translation unit link-complete.
+#define load_pattern_jass_network load_eval_network
 #define main deep_sibling_teacher_main_disabled
 #include "deep_sibling_teacher.cpp"
 #undef main
+#undef load_pattern_jass_network
 
 #include <algorithm>
 #include <array>
