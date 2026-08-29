@@ -14,11 +14,19 @@ import gzip
 import hashlib
 import json
 import math
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
 import numpy as np
+
+if __package__ in (None, ""):
+    ROOT = Path(__file__).resolve().parents[2]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+
+from jobs.tools.scan_ceiling_scan_score import score_token_to_centi  # noqa: E402
 
 
 BOOTSTRAP_SAMPLES = 200_000
@@ -211,13 +219,13 @@ def load_long_scores(
             required.add(score_field)
             if kind == "jass":
                 required.update({
-                    "nodes", "terminal_exact", "tb_exact", "budget_status",
+                    "child_score", "nodes", "terminal_exact", "tb_exact", "budget_status",
                     "stop_reason", "completed_depth", "effective_depth",
                     "aborted_iteration",
                 })
             else:
                 required.update({
-                    "requested_nodes", "last_info_nodes", "terminal_exact",
+                    "child_score_token", "requested_nodes", "last_info_nodes", "terminal_exact",
                     "snapshot_upper_bound", "snapshot_above_requested",
                 })
             if reader.fieldnames is None or not required.issubset(reader.fieldnames):
@@ -232,6 +240,8 @@ def load_long_scores(
                     raise ValueError("nonfinite search score")
                 if kind == "jass":
                     nodes = int(row["nodes"])
+                    if int(row["parent_score"]) != -int(row["child_score"]):
+                        raise ValueError("Jass child-to-parent POV sign drift")
                     terminal = int(row.get("terminal_exact", "0"))
                     tb_exact = int(row.get("tb_exact", "0"))
                     if terminal not in (0, 1) or tb_exact not in (0, 1) \
@@ -261,6 +271,10 @@ def load_long_scores(
                     requested = int(row["requested_nodes"])
                     nodes = int(row["last_info_nodes"])
                     terminal = int(row["terminal_exact"])
+                    if int(row["parent_score_centi"]) != -score_token_to_centi(
+                        row["child_score_token"]
+                    ):
+                        raise ValueError("Scan child-to-parent POV sign drift")
                     snapshot_upper = scan_snapshot_upper_bound(budget)
                     snapshot_above = int(nodes > budget)
                     if requested != budget or (terminal and nodes != 0) \

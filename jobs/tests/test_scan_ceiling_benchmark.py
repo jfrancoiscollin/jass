@@ -10,6 +10,7 @@ import numpy as np
 
 from jobs.tools.scan_ceiling_fen_to_jnnw import fen_record
 from jobs.tools.scan_ceiling_merge import Parent, sibling_identity
+from jobs.tools.scan_ceiling_preflight import symmetry_replay
 from jobs.tools.scan_ceiling_scan_score import (
     EngineFailure,
     NodeScanEngine,
@@ -242,21 +243,21 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
             root = Path(directory)
             jass = root / "jass.tsv"
             jass.write_text(
-                "row_index\tbudget_nodes\tparent_score\tnodes\tcompleted_depth\t"
+                "row_index\tbudget_nodes\tparent_score\tchild_score\tnodes\tcompleted_depth\t"
                 "effective_depth\taborted_iteration\tstop_reason\telapsed_us\t"
                 "budget_status\tterminal_exact\ttb_exact\n"
-                "0\t1000\t12\t1000\t5\t6\t1\tnodes\t10000\trequested_nodes_reached\t0\t0\n"
-                "1\t1000\t30000\t0\t0\t0\t0\tterminal_exact\t0\tterminal_exact\t1\t0\n"
-                "2\t1000\t29900\t64\t64\t64\t0\tnone\t1000\tmax_depth_exhausted\t0\t0\n",
+                "0\t1000\t12\t-12\t1000\t5\t6\t1\tnodes\t10000\trequested_nodes_reached\t0\t0\n"
+                "1\t1000\t30000\t-30000\t0\t0\t0\t0\tterminal_exact\t0\tterminal_exact\t1\t0\n"
+                "2\t1000\t29900\t-29900\t64\t64\t64\t0\tnone\t1000\tmax_depth_exhausted\t0\t0\n",
                 encoding="utf-8",
             )
             scores, receipt = load_long_scores([jass], 3, {0, 1, 2}, (1000,), "jass")
             scan = root / "scan.tsv"
             scan.write_text(
-                "row_index\tbudget_nodes\tparent_score_centi\trequested_nodes\t"
+                "row_index\tbudget_nodes\tparent_score_centi\tchild_score_token\trequested_nodes\t"
                 "last_info_nodes\tterminal_exact\tsnapshot_upper_bound\t"
                 "snapshot_above_requested\n"
-                "0\t1000\t17\t1000\t1004\t0\t1008\t1\n",
+                "0\t1000\t17\t-0.17\t1000\t1004\t0\t1008\t1\n",
                 encoding="utf-8",
             )
             _, scan_receipt = load_long_scores([scan], 1, {0}, (1000,), "scan")
@@ -274,6 +275,40 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
         self.assertEqual(planning["worker_cap"], 15)
         self.assertEqual(planning["logical_cpu_margin"], 1)
         self.assertIn("Scan_ULTRA256", planning["stage_eta_ranges"])
+
+    def test_pov_guard_uses_static_symmetry_not_finite_node_score_equality(self):
+        records = [
+            fen_record("B:W26,32-50:B1-20"),
+            fen_record("W:W31-50:B1-19,25"),
+        ]
+        groups = [
+            {"parent_id": "0", "t0_parent": "-7"},
+            {"parent_id": "1", "t0_parent": "-7"},
+        ]
+        jass = [
+            {"parent_score": "-1", "child_score": "1"},
+            {"parent_score": "0", "child_score": "0"},
+        ]
+        scan = [
+            {"parent_score_centi": "-3", "child_score_token": "0.03"},
+            {"parent_score_centi": "1", "child_score_token": "-0.01"},
+        ]
+        receipt = symmetry_replay(records, groups, jass, scan)
+        self.assertEqual(receipt["colour_swap_child_pairs"], 1)
+        self.assertTrue(receipt["static_t0_parent_scores_equal"])
+        self.assertFalse(receipt["finite_node_cross_symmetry_score_equality_required"])
+        bad_groups = [dict(row) for row in groups]
+        bad_groups[1]["t0_parent"] = "-8"
+        with self.assertRaisesRegex(ValueError, "static T0"):
+            symmetry_replay(records, bad_groups, jass, scan)
+        bad_jass = [dict(row) for row in jass]
+        bad_jass[1]["child_score"] = "1"
+        with self.assertRaisesRegex(ValueError, "Jass child-to-parent"):
+            symmetry_replay(records, groups, bad_jass, scan)
+        bad_scan = [dict(row) for row in scan]
+        bad_scan[1]["child_score_token"] = "0.01"
+        with self.assertRaisesRegex(ValueError, "Scan child-to-parent"):
+            symmetry_replay(records, groups, jass, bad_scan)
 
     def test_shard_timeouts_are_rate_derived_and_exact_rows_are_excluded(self):
         preflight = {

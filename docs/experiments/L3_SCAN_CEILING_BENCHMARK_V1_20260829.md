@@ -47,7 +47,7 @@ le timeout dur est dépassé peut uniquement être archivée par une mutation Gi
 auditée ; elle ne peut être réutilisée comme attempt. Aucun doublon de job ou
 de cohort n'est permis.
 
-### 0.1 Amendment technique pré-score — contrat de nœuds observables
+### 0.1 Amendement technique pré-score — contrat de nœuds observables
 
 Cet amendement est figé après le smoke sentinelle `home-1648` et avant toute
 sélection du cohort ou génération d'un score scientifique. Au moment de cette
@@ -60,11 +60,41 @@ affirmations techniquement impossibles avec les moteurs inchangés :
    final consommé n'est pas exposé et son dernier snapshot progressif peut
    franchir `N` avant le prochain poll interne de 16 nœuds ;
 2. Jass en `NodeLimitMode::Exact` s'arrête exactement à `N` lorsqu'il rencontre
-   la cap, mais une ligne forcée peut finir les `MAX_PLY=64` complets avant `N`.
+   le plafond, mais une ligne forcée peut finir les `MAX_PLY=64` complets avant `N`.
 
 Les règles source-derived et fail-closed correspondantes sont détaillées aux
 §1, §2 et §6. Aucun algorithme Scan ou Jass n'est modifié pour fabriquer un
 compteur égal à `N`.
+
+### 0.2 Amendement technique pré-score — preuve de POV sous symétrie
+
+Cet amendement est figé après le smoke sentinelle `home-1649` et avant toute
+sélection du cohort ou génération d'un score scientifique. À cette découverte :
+`parents_scientifiques=0`, `scores_scientifiques=0`, `fits=0`. Il ne change
+aucun budget, seed, artifact, cohort, subset, score scientifique, métrique,
+bootstrap ou seuil de verdict.
+
+Le smoke initial exigeait à tort l'égalité numérique entre deux recherches à
+budget fini sur des boards liés par rotation 180° et échange des couleurs.
+Cette égalité n'est pas une propriété de Scan ou Jass inchangés : leur ordre de
+génération/recherche n'est pas invariant sous cette transformation, donc deux
+recherches déterministes demandées à `N` peuvent couper des branches différentes.
+Ce phénomène ne constitue ni une ambiguïté de board/STM, ni une erreur de POV.
+
+La preuve fail-closed est remplacée par les invariants techniquement valides :
+
+1. identité exacte de chaque enfant transformé entre les générateurs Jass et
+   Scan officiels ;
+2. égalité exacte du score statique T0 en POV parent sur toutes les paires
+   sentinelles rotation/couleur-swap ;
+3. publication par chaque ligne Jass et Scan des scores enfant et parent, avec
+   assertion exacte `parent_score == -child_score` ;
+4. utilité exacte parent sur les terminaux/tablebases et replay déterministe de
+   chaque board+STM avec état frais.
+
+L'égalité cross-symmetry des scores de recherche à budget fini n'est donc pas
+requise et aucune tolérance de score n'est introduite. Aucun algorithme moteur
+n'est modifié ; Jass ajoute seulement un champ de reçu diagnostique.
 
 ## 1. Provenance Scan immuable
 
@@ -325,7 +355,8 @@ Avant sélection/scoring complet, quelques positions sentinelles fixes et
 2. identité de tous les coups légaux, captures multiples, promotion et enfant
    obtenu ;
 3. correspondance un-à-un entre sibling Jass et child Scan ;
-4. signe enfant/parent et score POV sur positions à avantage connu par symétrie ;
+4. signe enfant/parent explicite sur chaque ligne, égalité T0 parent-POV sur les
+   paires couleur-swap et utilités terminales/tablebases exactes ;
 5. `level nodes=N`, `go analyze`, preuve du stop interne source à N avec poll
    16 nœuds, snapshots `info` sous la borne source-derived fixée au §1 ;
 6. replay déterministe après `new-game`, incluant score/PV/nœuds ;

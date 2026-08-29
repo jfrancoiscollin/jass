@@ -40,7 +40,9 @@ from jobs.tools.scan_ceiling_scan_score import (  # noqa: E402
     scan_snapshot_upper_bound,
     score_token_to_centi,
 )
-from jobs.tools.tb_frontier_symmetry_dedup import canonical_fingerprint  # noqa: E402
+from jobs.tools.tb_frontier_symmetry_dedup import (  # noqa: E402
+    symmetric_fingerprint,
+)
 
 
 SCAN_SOURCE_URL = "https://github.com/rhalbersma/scan"
@@ -248,13 +250,18 @@ def validate_ladder_rows(
     for index, (row, group) in enumerate(zip(rows_a, groups)):
         if int(row["row_index"]) != index or int(row["budget_nodes"]) != 1000:
             raise ValueError("Jass ladder row alignment/budget drift")
+        if int(row["parent_score"]) != -int(row["child_score"]):
+            raise ValueError("Jass child-to-parent POV sign drift")
         is_terminal = int(group["child_rule_terminal"]) == 1
         is_tb = int(group["child_tb_exact"]) == 1
         nodes = int(row["nodes"])
         if is_terminal or is_tb:
+            utility = int(group["exact_parent_utility"])
+            expected_parent_score = utility * (30_000 if is_terminal else 30_000 - 64 - 1)
             if nodes != 0 or int(row["terminal_exact"]) != int(is_terminal) \
                     or int(row["tb_exact"]) != int(is_tb) \
-                    or row["budget_status"] != ("terminal_exact" if is_terminal else "tb_exact"):
+                    or row["budget_status"] != ("terminal_exact" if is_terminal else "tb_exact") \
+                    or int(row["parent_score"]) != expected_parent_score:
                 raise ValueError("Jass terminal/TB exact handling drift")
             terminal += int(is_terminal)
             tb += int(is_tb)
@@ -307,7 +314,8 @@ def validate_scan_rows(
         is_terminal = int(group["child_rule_terminal"]) == 1
         if is_terminal:
             if int(row["terminal_exact"]) != 1 or int(row["last_info_nodes"]) != 0 \
-                    or row["done_move"]:
+                    or row["done_move"] or int(row["parent_score_centi"]) != 10_000 \
+                    or child_score != -10_000:
                 raise ValueError("Scan terminal child was searched")
             terminal += 1
             continue
@@ -406,36 +414,36 @@ def symmetry_replay(
     parents: dict[int, list[int]] = defaultdict(list)
     for index, row in enumerate(groups):
         parents[int(row["parent_id"])].append(index)
-    shared: tuple[int, int] | None = None
+    shared: list[tuple[int, int]] = []
     for left in sorted(parents):
-        left_children = {
-            canonical_fingerprint(record_fingerprint(records[index])): index
-            for index in parents[left]
-        }
+        left_children = {record_fingerprint(records[index]): index for index in parents[left]}
         for right in sorted(parents):
             if right <= left:
                 continue
-            right_children = {
-                canonical_fingerprint(record_fingerprint(records[index])): index
-                for index in parents[right]
-            }
-            overlap = sorted(set(left_children) & set(right_children))
-            if overlap:
-                shared = left_children[overlap[0]], right_children[overlap[0]]
-                break
-        if shared is not None:
-            break
-    if shared is None:
+            right_children = {record_fingerprint(records[index]): index for index in parents[right]}
+            for fingerprint, index in left_children.items():
+                peer = right_children.get(symmetric_fingerprint(fingerprint))
+                if peer is not None:
+                    shared.append((index, peer))
+    if not shared:
         raise ValueError("technical fixture lacks a colour-swap symmetry child pair")
-    a, b = shared
-    if jass_rows[a]["parent_score"] != jass_rows[b]["parent_score"]:
-        raise ValueError("Jass parent-POV colour-swap replay drift")
-    if scan_rows[a]["parent_score_centi"] != scan_rows[b]["parent_score_centi"]:
-        raise ValueError("Scan parent-POV colour-swap replay drift")
+    for a, b in shared:
+        if groups[a]["t0_parent"] != groups[b]["t0_parent"]:
+            raise ValueError("static T0 parent-POV colour-swap replay drift")
+    if any(int(row["parent_score"]) != -int(row["child_score"]) for row in jass_rows):
+        raise ValueError("Jass child-to-parent POV sign drift")
+    if any(
+        int(row["parent_score_centi"]) != -score_token_to_centi(row["child_score_token"])
+        for row in scan_rows
+    ):
+        raise ValueError("Scan child-to-parent POV sign drift")
     return {
         "colour_swap_child_pair_found": True,
-        "jass_parent_scores_equal": True,
-        "scan_parent_scores_equal": True,
+        "colour_swap_child_pairs": len(shared),
+        "static_t0_parent_scores_equal": True,
+        "jass_child_to_parent_sign_validated": True,
+        "scan_child_to_parent_sign_validated": True,
+        "finite_node_cross_symmetry_score_equality_required": False,
     }
 
 
@@ -528,7 +536,9 @@ def execute(args: argparse.Namespace, transcript: list[str]) -> dict[str, object
                     or report.get("requested_node_caps_exactly_configured") is not True \
                     or report.get("node_stopped_rows_equal_requested") is not True \
                     or report.get("max_depth_exhaustion_allowed") is not True \
-                    or report.get("max_ply") != 64:
+                    or report.get("max_ply") != 64 \
+                    or report.get("score_pov") != "parent" \
+                    or report.get("child_to_parent_sign_validated") is not True:
                 raise ValueError("Jass technical runtime contract drift")
 
         scan_paths = [work / f"scan-{suffix}" for suffix in ("a.tsv", "a.json", "b.tsv", "b.json")]
