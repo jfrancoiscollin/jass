@@ -1,8 +1,8 @@
-# L3 — synthèse scientifique après RF1, T3 et runtime R0
+# L3 — synthèse scientifique après RF1, T3 et runtime R0-v3
 
 > **Date : 29 août 2026**  
 > **Statut : synthèse de décision — aucun nouveau résultat scientifique dans ce document.**  
-> Sources de vérité détaillées : [`L3_CURRENT.md`](L3_CURRENT.md), [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md), prereg T3 [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md), résultat runtime R0 [`experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md`](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md), benchmark Scan [`experiments/L3_SCAN_CEILING_BENCHMARK_V1_20260829.md`](experiments/L3_SCAN_CEILING_BENCHMARK_V1_20260829.md).
+> Sources de vérité détaillées : [`L3_CURRENT.md`](L3_CURRENT.md), [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md), prereg T3 [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md), [résultat runtime v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), benchmark Scan [`experiments/L3_SCAN_CEILING_BENCHMARK_V1_20260829.md`](experiments/L3_SCAN_CEILING_BENCHMARK_V1_20260829.md).
 
 ---
 
@@ -18,7 +18,9 @@ La découverte de `F6_ALL_NEW`, concaténation fixe de 66 observables mécanique
 2. l'effet se reproduit presque exactement sur un fresh indépendant ;
 3. F6 se transfère ensuite dans un student T3 résiduel qui bat largement T0 sur un nouveau fresh q200 ;
 4. ajouter D1 au-dessus de F6 n'apporte pas de signal additif reproductible ;
-5. le premier gate runtime n'a pas invalidé F6 : il a découvert une asymétrie déjà présente dans CURRICULUM/T0 et s'est fermé avant toute partie de force.
+5. v1 n'a pas invalidé F6 : il a découvert une asymétrie déjà présente dans CURRICULUM/T0 ;
+6. v2 a établi le drift relatif exact, puis l'autopsie a montré que son témoin depth-1 simplifiait indûment la quiescence ;
+7. v3 s'est fermée avant ses gates d'évaluation faute de support mécanique (`5/32` témoins isolés P0), toujours sans partie de force.
 
 Conclusion actuelle : **la distillation reste la piste principale et est plus crédible qu'avant**, mais la bonne formulation est désormais « découvrir les observables manquantes puis distiller », et non simplement « donner un teacher plus profond au même T ».
 
@@ -72,7 +74,7 @@ Le delta pairwise B−A est négatif dans les quatre phases et dans les deux cou
 
 Décision : **D1 est fermé comme input additionnel de cette lignée exacte**. Ce résultat ne prouve pas que toute information historiquement captée par D1 est inutile ; il montre qu'une fois F6 disponible, le scalaire D1 scellé ne fournit pas d'information additive reproductible au student joint preregistré.
 
-### 2.4 F6/T3-A est positionnel et transposition-safe jusqu'au gate couleur
+### 2.4 Les résultats runtime positifs et leur frontière
 
 Le runtime R0 v1 a établi avant son premier assert négatif :
 
@@ -85,7 +87,19 @@ Le runtime R0 v1 a établi avant son premier assert négatif :
 - égalité exacte des 66 F6 sous rotate180+colour-swap ;
 - égalité bit-à-bit du résiduel F6 sous cette image.
 
-Le premier échec n'est donc pas dans F6.
+Le premier échec n'est donc pas dans F6. V2 a ensuite établi, sur `4096`
+positions nouvelles, que T3 ne crée aucun drift supplémentaire : mismatch
+extra engine `0`, max extra engine `0 cp`, max extra float
+`1.1368683772161603e-13 cp`. Son unique FAIL depth-1 a été classé par
+l'autopsie `QUIESCENCE_OR_DEPTH_SEMANTICS_EXPLAINS_MISMATCH` : T0 échoue aussi,
+et la première divergence est `qsearch_selective_sac`, sans défaut POV/formule
+T3 observé.
+
+V3 a preregistré le témoin corrigé, mais le support mécanique a échoué avant
+toute lecture de score : `120000` candidates, `119699` uniques admissibles,
+`26004` P0 uniques et seulement `5` leaf roots isolées pour `32` requises. Son
+verdict est `R0_V3_RUNTIME_SUPPORT_INCONCLUSIVE`. Ce résultat ne répond ni
+positivement ni négativement au contrat leaf complet.
 
 ---
 
@@ -124,13 +138,17 @@ Aucune partie de force n'a été jouée. Le résultat ne conclut donc ni gain ni
 
 ### 4.1 Le gain q200 devient-il de l'Elo ?
 
-Toujours inconnu. `strength_games = 0` dans le terminal R0 v1.
-
-La prochaine campagne runtime doit poser une question comparative cohérente avec le baseline réel : T3-A ne doit **pas introduire d'asymétrie supplémentaire** par rapport à CURRICULUM, plutôt que d'exiger que CURRICULUM lui-même ait un drift nul. Cette question nécessite une nouvelle preregistration ; le terminal v1 reste immuable.
+Toujours inconnu. Les terminaux v1, v2 et v3 totalisent `strength_games = 0`
+et `q00_games = 0`. V2 a déjà répondu positivement à la question d'asymétrie
+relative ; v3 n'a pas atteint son contrat leaf corrigé parce que son générateur
+n'a pas fourni assez de témoins isolés P0. Aucun résultat Elo n'existe donc à
+interpréter.
 
 ### 4.2 Quel est le coût runtime réel de F6 ?
 
-Inconnu à ce stade terminal. F2 `RESPONSE_FRONTIER` implique notamment une énumération bornée de réponses légales. Un scénario plausible est :
+Inconnu à ce stade terminal : le profil v3 était postérieur au support
+mécanique et n'a pas été exécuté. F2 `RESPONSE_FRONTIER` implique notamment une
+énumération bornée de réponses légales. Un scénario plausible est :
 
 - gain net à profondeur fixe ;
 - mais coût trop élevé sous wall-clock.
@@ -147,22 +165,14 @@ C'est précisément l'objet du benchmark Scan sur Home.
 
 ## 5. Pistes actives à creuser
 
-### 5.1 Priorité 1 — runtime T3-A v2, sans retune
+### 5.1 Frontière runtime — nouveau support seulement sous nouvelle prereg
 
-But : obtenir enfin un contraste causal `T3_A_F6 vs CURRICULUM`.
-
-Contraintes :
-
-- mêmes bytes T3-A ;
-- mêmes 66 F6 ;
-- aucun D1 ;
-- aucun refit/calibration ;
-- nouveau R0 target-blind ;
-- contrat de drift **relatif au baseline** preregistré avant mesure ;
-- negamax sign check, Python/native parity et coût runtime avant strength ;
-- Pool1/Pool2 uniquement si les gates R0 v2 passent.
-
-Cette branche est scientifiquement justifiée par le résultat v1, mais elle doit être une nouvelle preregistration ; elle ne modifie pas rétroactivement le terminal R0 v1.
+La campagne v3 est terminale. Une suite ne peut ni augmenter post-hoc ses
+`120000` candidates, ni assouplir son prédicat, ni remplacer ses quotas. Si une
+nouvelle campagne cherche à obtenir davantage de témoins leaf réellement
+isolés, elle doit preregistrer séparément sa géométrie de génération et ses
+seeds avant tout résultat, tout en conservant les bytes T3-A/CURRICULUM/F6 et
+les anciens terminaux. Aucun tel programme n'est ouvert ici.
 
 ### 5.2 Priorité parallèle — benchmark Scan ceiling sur Home
 
@@ -227,10 +237,10 @@ Ce schéma est mieux soutenu par les données que les approches « plus gros ré
 | F6 contient-il un signal statique réel ? | **ÉTABLI** | conserver F6 exact |
 | F6 transfère-t-il vers T ? | **ÉTABLI** | T3-A devient candidat scientifique principal |
 | D1 est-il additif au-dessus de F6 ? | **NON ÉTABLI / négatif** | fermer D1 comme input additionnel de cette lignée |
-| T3-A est-il transposition-safe ? | **ÉTABLI jusqu'au gate couleur** | poursuivre le contrat runtime comparatif |
-| Le runtime R0 v1 autorise-t-il l'Elo ? | **NON** | terminal v1 immuable, nouvelle prereg nécessaire |
-| T3-A gagne-t-il de l'Elo ? | **INCONNU** | runtime v2 à tester |
-| F6 est-il trop cher en wall-clock ? | **INCONNU** | profiler puis Q00/native |
+| T3-A est-il positionnel/transposition-safe et sans extra drift ? | **ÉTABLI par v1/v2** | conserver ces preuves sans réécrire leurs terminaux |
+| Le contrat leaf complet v3 est-il établi ? | **INCONCLUSIF — support `5/32` P0** | aucun relâchement post-hoc |
+| T3-A gagne-t-il de l'Elo ? | **INCONNU, 0 game** | aucun verdict de force |
+| F6 est-il trop cher en wall-clock ? | **INCONNU** | profil v3 non atteint |
 | q200 est-il proche d'un plafond pratique externe ? | **INCONNU** | benchmark Scan/Home en cours |
 | Faut-il encore poursuivre la distillation ? | **OUI, priorité haute** | représentation-guided distillation |
 
@@ -238,7 +248,10 @@ Ce schéma est mieux soutenu par les données que les approches « plus gros ré
 
 ## 8. Garde scientifique
 
-Les cohorts Q1, T2 fresh, RF1 fresh, T3 fresh et R0-v1 sont consommés selon leurs contrats. Ils ne doivent pas être utilisés pour retune, calibration, feature selection ou model selection futurs ; leurs identités peuvent servir aux exclusions.
+Les cohorts Q1, T2 fresh, RF1 fresh, T3 fresh, R0-v1, R0-v2 et les positions
+générées/classifiées par R0-v3 sont consommées selon leurs contrats. Elles ne
+doivent pas être utilisées pour retune, calibration, feature selection ou
+model selection futurs ; leurs identités peuvent servir aux exclusions.
 
 Le benchmark Scan est benchmark-only et ne doit pas devenir une source de tuning de T3-A actuel.
 
