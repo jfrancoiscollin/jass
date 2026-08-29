@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         const int passes = std::stoi(argv[6]);
         const std::uint64_t order_seed = std::stoull(argv[7]);
         if (passes < 1) throw std::runtime_error("passes must be positive");
-        if (order_seed != 2026090904ULL)
+        if (order_seed != 2026090904ULL && order_seed != 2026091704ULL)
             throw std::runtime_error("R0 benchmark order seed drift");
         const auto positions = read_positions(argv[1]);
         std::string err;
@@ -88,6 +88,8 @@ int main(int argc, char** argv) {
         rows << "row\tfen\tt0_int\tresidual_parent\tt3_float\tt3_int";
         for (std::size_t i=0;i<jass::t3_f6::INPUT_WIDTH;++i)
             rows << "\tf" << std::setw(2) << std::setfill('0') << i << "_bits";
+        for (std::size_t i=0;i<jass::t3_f6::INPUT_WIDTH;++i)
+            rows << "\tz" << std::setw(2) << std::setfill('0') << i << "_bits";
         rows << '\n' << std::setprecision(17);
         std::uint64_t saturations = 0;
         std::vector<std::array<float,jass::t3_f6::INPUT_WIDTH>> features;
@@ -104,6 +106,11 @@ int main(int argc, char** argv) {
                  << '\t' << residual << '\t' << raw << '\t' << final_score;
             rows << std::hex << std::setfill('0');
             for (float v:f) rows << '\t' << std::setw(8) << std::bit_cast<std::uint32_t>(v);
+            for (std::size_t i=0;i<jass::t3_f6::INPUT_WIDTH;++i) {
+                const double z=(static_cast<double>(f[i])-t3.model().mean[i])
+                              /t3.model().stddev[i];
+                rows << '\t' << std::setw(16) << std::bit_cast<std::uint64_t>(z);
+            }
             rows << std::dec << std::setfill(' ') << '\n';
         }
 

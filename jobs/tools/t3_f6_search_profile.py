@@ -115,7 +115,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     try:
         for fen in corpus:
             static_mismatches += neteval(current, fen) != neteval(prereg, fen)
-        q00_roots = stratified(corpus, 16, 2026090904)
+        q00_roots = stratified(corpus, 16, args.order_seed)
         for index, fen in enumerate(q00_roots):
             new = bestmove_record(current, fen, depth=9)
             old = bestmove_record(prereg, fen, depth=9)
@@ -137,7 +137,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                     enforce_no_book=True)
     try:
         # Fixed target-blind order; alternate which arm searches first.
-        ordered = stratified(corpus, 32, 2026090904)
+        ordered = stratified(corpus, 32, args.order_seed)
         for index, fen in enumerate(ordered):
             arms = (off, on) if index % 2 == 0 else (on, off)
             for engine in arms:
@@ -147,9 +147,12 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     finally:
         off.close()
         on.close()
+    passed = static_mismatches == 0 and len(q00_mismatches) == 0
     return {
         "schema": "jass.t3_f6_search_profile.v1",
-        "passed": True,
+        "passed": passed,
+        "verdict": ("R0_OFF_REGRESSION_AND_SEARCH_PROFILE_PASS" if passed else
+                    "R0_V2_DORMANT_OR_OFF_REGRESSION_FAILED"),
         "off_regression": {
             "static_positions": 4096,
             "static_mismatches": static_mismatches,
@@ -160,7 +163,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "profile_roots": 128,
         "profile_roots_by_phase": {name: 32 for name in ("P0", "P1", "P2", "P3")},
         "movetime_seconds": 0.1,
-        "order_seed": 2026090904,
+        "order_seed": args.order_seed,
         "same_executable_on_off": True,
         "deep_label_reads": 0,
     }
@@ -174,8 +177,11 @@ def main() -> int:
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--corpus", type=Path, required=True)
     parser.add_argument("--search-params", default="qs_forcing_depth=6,qs_promo_depth=6")
+    parser.add_argument("--order-seed", type=int, default=2026090904)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
+    if args.order_seed not in (2026090904, 2026091704):
+        parser.error("R0 benchmark order seed drift")
     report = run(args)
     args.out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(report, sort_keys=True))
