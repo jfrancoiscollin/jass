@@ -182,12 +182,12 @@ from pathlib import Path
 root=Path(sys.argv[1]); label,tag,budgets=sys.argv[2:5]; report,plan_path,selection,curriculum=map(Path,sys.argv[5:9]); r=json.loads(report.read_text()); plan=json.loads(plan_path.read_text()); planned=plan['shards'][int(tag)]; cohort=json.loads(selection.read_text())['cohort_identity_sha256']
 want=[int(x) for x in budgets.split(',')];
 if r.get('schema')!='jass.scan_ceiling_jass_ladder.v1' or r.get('budgets_nodes')!=want: raise SystemExit('Jass report ladder drift')
-if r.get('node_limit_mode')!='exact' or r.get('reported_nodes_equal_requested_for_all_searches') is not True: raise SystemExit('Jass exact-node drift')
+if r.get('node_limit_mode')!='exact' or r.get('requested_node_caps_exactly_configured') is not True or r.get('node_stopped_rows_equal_requested') is not True or r.get('max_depth_exhaustion_allowed') is not True or r.get('max_ply')!=64: raise SystemExit('Jass node-cap contract drift')
 if r.get('book_enabled') is not False or r.get('threads_per_search')!=1 or r.get('fresh_engine_tt_search_state_each_sibling_budget') is not True or r.get('tt_mb')!=16: raise SystemExit('Jass runtime drift')
 if r.get('shard')!=int(tag) or r.get('nshards')!=16 or r.get('processed_rows')!=planned['selected_rows'] or r.get('invalid_rows')!=0: raise SystemExit('Jass shard coverage drift')
 for budget in want:
  item=r['by_budget'][str(budget)]
- if item['searches']!=planned['searched_rows'] or item['searches']+item['terminal_exact_rows']+item['tb_exact_rows']!=planned['selected_rows'] or item['nodes']!=item['searches']*budget or item['exact_budget_rows']!=item['searches']:
+ if item['searches']!=planned['searched_rows'] or item['searches']+item['terminal_exact_rows']+item['tb_exact_rows']!=planned['selected_rows'] or item['exact_budget_rows']+item['max_depth_exhausted_rows']!=item['searches'] or item['nodes']>item['searches']*budget or (item['searches'] and item['nodes']<=0):
   raise SystemExit(f'Jass budget receipt drift: {budget}')
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest(); names=[f'{label}-shard-{tag}-scores.tsv.gz',f'{label}-shard-{tag}-report.json']
 payload={'schema':'jass.scan_ceiling_jass_score_shard.v1','immutable':True,'benchmark_only':True,

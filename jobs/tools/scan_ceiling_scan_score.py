@@ -29,6 +29,22 @@ from jobs.tools.tb_frontier_symmetry_dedup import format_fingerprint  # noqa: E4
 RECORD_SIZE = 38
 SCAN_COMMIT = "7aae17e7b7bfc47744601afb1ee7655e18983ce5"
 ALLOWED_BUDGETS = (1_000, 5_000, 50_000, 200_000, 1_000_000, 2_000_000, 5_000_000)
+SCAN_NODE_POLL_QUANTUM = 16
+
+
+def scan_snapshot_upper_bound(budget: int) -> int:
+    """Source-derived upper bound for Scan's last progressive node snapshot.
+
+    Official Scan 3.1 raises its root stop flag as soon as the local node
+    counter reaches the requested value, but the single search thread observes
+    that flag only on the next 16-node poll.  The stock protocol does not emit
+    the final consumed counter, so this bounds the last complete ``info``
+    snapshot without pretending that it is the final consumption.
+    """
+    if budget <= 0:
+        raise ValueError("Scan budget must be positive")
+    return ((budget + SCAN_NODE_POLL_QUANTUM - 1) // SCAN_NODE_POLL_QUANTUM) \
+        * SCAN_NODE_POLL_QUANTUM
 
 
 def sha256(path: Path) -> str:
@@ -160,8 +176,12 @@ class NodeScanEngine(ScanEngine):
             raise EngineFailure(f"{self.label}: no complete score/nodes info line")
         info_line, info = complete[-1]
         nodes = int(info["nodes"])
-        if nodes <= 0 or nodes > budget:
-            raise EngineFailure(f"{self.label}: invalid progressive node snapshot {nodes}/{budget}")
+        snapshot_upper_bound = scan_snapshot_upper_bound(budget)
+        if nodes <= 0 or nodes > snapshot_upper_bound:
+            raise EngineFailure(
+                f"{self.label}: invalid progressive node snapshot "
+                f"nodes={nodes} requested={budget} upper={snapshot_upper_bound}"
+            )
         child_score = score_token_to_centi(info["score"])
         done_match = DONE_RE.search(lines[-1])
         if not done_match:
@@ -172,6 +192,8 @@ class NodeScanEngine(ScanEngine):
             "child_score_centi": child_score,
             "parent_score_centi": -child_score,
             "last_info_nodes": nodes,
+            "snapshot_upper_bound": snapshot_upper_bound,
+            "snapshot_above_requested": nodes > budget,
             "depth": int(info.get("depth", "0")),
             "mean_depth": info.get("mean-depth", ""),
             "pv": info.get("pv", ""),
@@ -186,6 +208,7 @@ def terminal_observation() -> dict[str, object]:
     return {
         "child_score_token": "-100.00", "child_score_centi": -10_000,
         "parent_score_centi": 10_000, "last_info_nodes": 0,
+        "snapshot_upper_bound": 0, "snapshot_above_requested": False,
         "depth": 0, "mean_depth": "", "pv": "", "done_move": "",
         "elapsed_seconds": 0.0,
     }
@@ -218,6 +241,7 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     rows_written = terminal_rows = searches = 0
     node_snapshots = {str(budget): 0 for budget in budgets}
+    snapshot_above_requested = {str(budget): 0 for budget in budgets}
     elapsed = {str(budget): 0.0 for budget in budgets}
     engine = NodeScanEngine(str(args.scan), label=f"Scan-shard-{args.shard}")
     try:
@@ -225,7 +249,8 @@ def main() -> int:
             fields = [
                 "row_index", "sibling_identity", "budget_nodes", "parent_score_centi",
                 "child_score_token", "requested_nodes", "last_info_nodes", "depth",
-                "mean_depth", "pv", "done_move", "terminal_exact", "elapsed_seconds",
+                "snapshot_upper_bound", "snapshot_above_requested", "mean_depth", "pv",
+                "done_move", "terminal_exact", "elapsed_seconds",
             ]
             writer = csv.DictWriter(stream, fieldnames=fields, delimiter="\t", lineterminator="\n")
             writer.writeheader()
@@ -247,6 +272,9 @@ def main() -> int:
                     terminal_rows += int(terminal)
                     searches += int(not terminal)
                     node_snapshots[str(budget)] += int(observation["last_info_nodes"])
+                    snapshot_above_requested[str(budget)] += int(
+                        bool(observation["snapshot_above_requested"])
+                    )
                     elapsed[str(budget)] += float(observation["elapsed_seconds"])
                     writer.writerow({
                         "row_index": index,
@@ -257,6 +285,10 @@ def main() -> int:
                         "requested_nodes": budget,
                         "last_info_nodes": observation["last_info_nodes"],
                         "depth": observation["depth"],
+                        "snapshot_upper_bound": observation["snapshot_upper_bound"],
+                        "snapshot_above_requested": int(
+                            bool(observation["snapshot_above_requested"])
+                        ),
                         "mean_depth": observation["mean_depth"],
                         "pv": observation["pv"],
                         "done_move": observation["done_move"],
@@ -281,12 +313,22 @@ def main() -> int:
         "runtime_params": dict(ScanEngine.RUNTIME_PARAMS),
         "mode": "go analyze",
         "fresh_state": "new-game before every sibling/budget",
-        "node_contract": "level nodes=N; stock final counter is not emitted",
+        "node_contract": (
+            "level nodes=N exactly; stock final counter is not emitted; "
+            "last info is a progressive snapshot bounded by the next 16-node poll"
+        ),
+        "requested_nodes_exactly_configured": True,
+        "scan_source_algorithms_modified": False,
+        "node_poll_quantum": SCAN_NODE_POLL_QUANTUM,
+        "last_info_snapshot_upper_bound_by_budget": {
+            str(budget): scan_snapshot_upper_bound(budget) for budget in budgets
+        },
         "input_children": len(children), "selected_rows": selected_rows,
         "shard": args.shard, "nshards": args.nshards, "processed_rows": shard_rows,
         "budgets_nodes": budgets, "output_rows": rows_written,
         "searches": searches, "terminal_exact_output_rows": terminal_rows,
         "last_info_nodes_sum_by_budget": node_snapshots,
+        "last_info_above_requested_rows_by_budget": snapshot_above_requested,
         "elapsed_seconds_by_budget": elapsed,
         "children_sha256": sha256(args.children), "groups_sha256": sha256(args.groups),
         "output_sha256": sha256(args.output),

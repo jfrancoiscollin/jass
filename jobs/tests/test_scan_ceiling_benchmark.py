@@ -11,10 +11,12 @@ import numpy as np
 from jobs.tools.scan_ceiling_fen_to_jnnw import fen_record
 from jobs.tools.scan_ceiling_merge import Parent, sibling_identity
 from jobs.tools.scan_ceiling_scan_score import (
+    EngineFailure,
     NodeScanEngine,
     parse_info_fields,
     record_fingerprint,
     record_to_scan_pos,
+    scan_snapshot_upper_bound,
     score_token_to_centi,
     terminal_observation,
 )
@@ -82,7 +84,7 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
         engine._send = commands.append
         lines = [
             'info depth=1 mean-depth=1.0 score=0.25 nodes=41 pv="32-28"',
-            'info depth=3 mean-depth=2.4 score=-0.17 nodes=999 pv="32-28 17-22"',
+            'info depth=3 mean-depth=2.4 score=-0.17 nodes=1004 pv="32-28 17-22"',
             "done move=32-28",
         ]
         engine._read_until = lambda predicate, timeout_s: lines
@@ -93,10 +95,20 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
         ])
         self.assertEqual(observation["child_score_centi"], -17)
         self.assertEqual(observation["parent_score_centi"], 17)
-        self.assertEqual(observation["last_info_nodes"], 999)
+        self.assertEqual(observation["last_info_nodes"], 1004)
+        self.assertEqual(observation["snapshot_upper_bound"], 1008)
+        self.assertTrue(observation["snapshot_above_requested"])
+        self.assertEqual(scan_snapshot_upper_bound(5_000), 5_008)
+        self.assertEqual(scan_snapshot_upper_bound(50_000), 50_000)
         self.assertEqual(observation["done_move"], "32-28")
         self.assertEqual(parse_info_fields(lines[1])["pv"], "32-28 17-22")
         self.assertEqual(terminal_observation()["parent_score_centi"], 10_000)
+        engine._read_until = lambda predicate, timeout_s: [
+            'info depth=3 score=-0.17 nodes=1009 pv="32-28"',
+            "done move=32-28",
+        ]
+        with self.assertRaisesRegex(EngineFailure, "invalid progressive node snapshot"):
+            engine.search_nodes("W" + "e" * 50, 1000, 5.0)
 
     def test_collect_reports_exact_and_symmetry_duplicates_separately(self):
         raw = format_fingerprint(
@@ -230,15 +242,31 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
             root = Path(directory)
             jass = root / "jass.tsv"
             jass.write_text(
-                "row_index\tbudget_nodes\tparent_score\tnodes\telapsed_us\tterminal_exact\ttb_exact\n"
-                "0\t1000\t12\t1000\t10000\t0\t0\n"
-                "1\t1000\t30000\t0\t0\t1\t0\n",
+                "row_index\tbudget_nodes\tparent_score\tnodes\tcompleted_depth\t"
+                "effective_depth\taborted_iteration\tstop_reason\telapsed_us\t"
+                "budget_status\tterminal_exact\ttb_exact\n"
+                "0\t1000\t12\t1000\t5\t6\t1\tnodes\t10000\trequested_nodes_reached\t0\t0\n"
+                "1\t1000\t30000\t0\t0\t0\t0\tterminal_exact\t0\tterminal_exact\t1\t0\n"
+                "2\t1000\t29900\t64\t64\t64\t0\tnone\t1000\tmax_depth_exhausted\t0\t0\n",
                 encoding="utf-8",
             )
-            scores, receipt = load_long_scores([jass], 2, {0, 1}, (1000,), "jass")
-        self.assertEqual(scores[1000].tolist(), [12.0, 30000.0])
-        self.assertEqual(receipt["by_budget"]["1000"]["searched_rows"], 1)
-        self.assertEqual(receipt["by_budget"]["1000"]["reported_or_snapshot_nodes_sum"], 1000)
+            scores, receipt = load_long_scores([jass], 3, {0, 1, 2}, (1000,), "jass")
+            scan = root / "scan.tsv"
+            scan.write_text(
+                "row_index\tbudget_nodes\tparent_score_centi\trequested_nodes\t"
+                "last_info_nodes\tterminal_exact\tsnapshot_upper_bound\t"
+                "snapshot_above_requested\n"
+                "0\t1000\t17\t1000\t1004\t0\t1008\t1\n",
+                encoding="utf-8",
+            )
+            _, scan_receipt = load_long_scores([scan], 1, {0}, (1000,), "scan")
+        self.assertEqual(scores[1000].tolist(), [12.0, 30000.0, 29900.0])
+        self.assertEqual(receipt["by_budget"]["1000"]["searched_rows"], 2)
+        self.assertEqual(receipt["by_budget"]["1000"]["requested_nodes_reached_rows"], 1)
+        self.assertEqual(receipt["by_budget"]["1000"]["max_depth_exhausted_rows"], 1)
+        self.assertEqual(receipt["by_budget"]["1000"]["reported_or_snapshot_nodes_sum"], 1064)
+        self.assertEqual(scan_receipt["by_budget"]["1000"]["snapshot_above_requested_rows"], 1)
+        self.assertEqual(scan_receipt["by_budget"]["1000"]["scan_snapshot_upper_bound"], 1008)
         planning = technical_planning_estimates(
             [{"nodes": "1000", "elapsed_us": "10000", "budget_nodes": "1000"}],
             [{"terminal_exact": "0", "elapsed_seconds": "0.02", "requested_nodes": "1000"}],
@@ -290,9 +318,12 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
             self.assertIn(token, prereg)
         self.assertIn("jass::Engine engine(tt_mb)", ladder)
         self.assertIn("exact Jass node budget mismatch", ladder)
+        self.assertIn("max_depth_exhausted", ladder)
         self.assertNotIn("short_rows", ladder)
         self.assertIn('self._send("new-game")', scan)
         self.assertIn('self._send("go analyze")', scan)
+        self.assertIn("SCAN_NODE_POLL_QUANTUM = 16", scan)
+        self.assertIn("scan_node_poll_quantum = 16", prereg)
         self.assertIn('("book", "false")', (ROOT / "jobs/tools/calibrate_vs_scan.py").read_text(encoding="utf-8"))
         for target in (
             "jass_scan_ceiling_parent_filter", "jass_scan_ceiling_source_generator",
