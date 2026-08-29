@@ -39,8 +39,8 @@ class SearchSemanticsAttributionTests(unittest.TestCase):
         self.assertEqual(manifest["strength_games"], 0)
         self.assertFalse(manifest["bake"])
         self.assertFalse(manifest["promotion"])
+        self.assertFalse(manifest["promotion_authorized"])
 
 
 if __name__ == "__main__":
     unittest.main()
-
