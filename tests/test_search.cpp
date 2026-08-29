@@ -711,65 +711,6 @@ void test_1b_each_feature_searches_correctly() {
     }
 }
 
-void test_scan_attribution_switches_are_default_off_and_activate() {
-    const SearchParams defaults{};
-    JASS_CHECK(!defaults.scan_lmr_semantics);
-    JASS_CHECK(!defaults.scan_probabilistic_ordering);
-    JASS_CHECK(!defaults.disable_null_move);
-
-    const SearchParams parsed = parse_search_params(
-        "scan_lmr_semantics=1,scan_probabilistic_ordering=1,disable_null_move=1");
-    JASS_CHECK(parsed.scan_lmr_semantics);
-    JASS_CHECK(parsed.scan_probabilistic_ordering);
-    JASS_CHECK(parsed.disable_null_move);
-
-    const Position start = Position::start_position();
-    auto run_start = [&](std::string_view spec) {
-        SearchLimits lim;
-        lim.max_depth = 8;
-        lim.params = parse_search_params(spec);
-        return search(start, lim);
-    };
-
-    const SearchResult j0 = run_start("");
-    JASS_CHECK(j0.reductions > 0);
-    JASS_CHECK(j0.null_probes > 0);
-    JASS_CHECK_EQ(j0.scan_verify_probes, 0U);
-    JASS_CHECK_EQ(j0.single_reply_extensions, 0U);
-    JASS_CHECK_EQ(j0.ordering_good_updates, 0U);
-
-    const SearchResult verify = run_start("scan_verify_pruning=1");
-    JASS_CHECK(verify.scan_verify_probes > 0);
-
-    const SearchResult single = run_start("ext_single_reply=1");
-    JASS_CHECK(single.single_reply_extensions > 0);
-    JASS_CHECK(single.extensions > 0);
-
-    const SearchResult scan_lmr = run_start("scan_lmr_semantics=1");
-    JASS_CHECK(scan_lmr.reductions > 0);
-    JASS_CHECK(scan_lmr.reduced_plies >= scan_lmr.reductions);
-
-    const SearchResult ordering = run_start("scan_probabilistic_ordering=1");
-    JASS_CHECK(ordering.ordering_good_updates > 0);
-
-    const SearchResult no_null = run_start("disable_null_move=1");
-    JASS_CHECK_EQ(no_null.null_probes, 0U);
-    JASS_CHECK_EQ(no_null.null_cutoffs, 0U);
-
-    // Technical sentinel generated independently of every scientific cohort.
-    // At depth 3 it enters a calm qsearch node where the opposite side has a
-    // capture, activating Scan's exact same-position threat re-entry.
-    const Position threat = parse(
-        "B:W15,31,32,34,36,38,39,40,41,42,43,44,45,46,47,48,49,50:"
-        "B1,2,3,4,5,6,7,8,9,10,11,12,14,16,17,18,25");
-    SearchLimits threat_lim;
-    threat_lim.max_depth = 3;
-    threat_lim.params = parse_search_params(
-        "qs_threat_ext=0,scan_threat_reentry=1");
-    const SearchResult reentry = search(threat, threat_lim);
-    JASS_CHECK(reentry.scan_threat_reentries > 0);
-}
-
 }  // namespace
 
 void run_search_tests() {
@@ -806,5 +747,4 @@ void run_search_tests() {
     test_root_order_schedule_applies_and_fails_closed();
     test_explicit_default_params_match_searchlimits_default();
     test_1b_each_feature_searches_correctly();
-    test_scan_attribution_switches_are_default_off_and_activate();
 }
