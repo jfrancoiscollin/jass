@@ -3,7 +3,7 @@
 > **Mis à jour : 29 août 2026**
 > **Statut : campagne runtime T3-A terminale en R0. Aucun gate de force autorisé.**
 >
-> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). [Protocole runtime](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_20260829.md) et [résultat terminal R0](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [protocole v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_20260829.md), [résultat terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) ; [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -143,24 +143,24 @@ Q1, T2 fresh, RF1 fresh et T3 fresh restent des cohorts consommés selon leurs c
 
 ## 8. Frontière runtime atteinte
 
-La campagne runtime séparée a implémenté T3-A comme leaf evaluator natif dormant,
-fail-closed et activable uniquement par artefact explicite. R0 a passé les
-contrôles parent/chemin/siblings, transposition explicite, TT/search state,
-q-score/WDL et l'égalité couleur de F6/résiduel. Il s'est arrêté au premier
-assert négatif : `colour-image T0 drift`.
+V1 a terminalement montré que CURRICULUM ne satisfait pas une symétrie couleur
+absolue. V2, preregistrée séparément, a posé le contraste relatif correct. Sur
+`4096` positions nouvelles, T3-A conserve exactement le drift T0 : mismatch
+extra engine `0`, max extra engine `0 cp`, max extra float
+`1.1368683772161603e-13 cp`, très sous la tolérance `1e-10`.
 
-Verdict terminal :
+Position/transposition, invariance F6/résiduel, priorités terminales et EGDB
+passent. Le gate depth-1 exact échoue (`negamax_single_inversion=false`, score
+search `-51`). Verdict terminal v2 :
 
 ```text
-R0_PRODUCTION_LEAF_CONTRACT_NOT_ESTABLISHED
-FROZEN_CURRICULUM_FAILS_PREREGISTERED_COLOUR_IMAGE_EXACTNESS
+R0_V2_NEGAMAX_OR_TERMINAL_PRECEDENCE_FAILED
 ```
 
-Comme `T3 = T0 - residual_F6` et que le résiduel est exact sous l'image, T3-A
-hérite du drift de CURRICULUM. Le protocole interdit donc Pool1/Pool2 ; il ne
-prouve ni ne réfute un gain Elo. Une règle de symétrie relative au baseline, de
-nouveaux bytes CURRICULUM ou un autre contrat exigeraient une nouvelle
-preregistration. Aucun de ces changements n'est autorisé après le résultat R0.
+Le contrat relatif est donc établi, mais le contrat complet de leaf evaluator
+ne l'est pas. Pool1/Pool2 restent interdits et le gain Elo demeure indéterminé.
+Modifier le témoin ou adapter la sémantique de valeur demanderait une nouvelle
+preregistration.
 
 ---
 
@@ -170,7 +170,7 @@ preregistration. Aucun de ces changements n'est autorisé après le résultat R0
 2. `F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE` est le verdict scientifique terminal T3.
 3. Aucune métrique secondaire ne transforme B−A en PASS.
 4. Aucun retune ni nouveau fresh T3 n'est autorisé.
-5. Le runtime n'a été exercé qu'en contrat R0 target-blind ; aucune partie Elo, strength ou Q00, aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
+5. Le runtime n'a été exercé qu'en contrats R0 target-blind v1/v2 ; aucune partie Elo, strength ou Q00, aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
 6. `next_stage = null` pour cette campagne.
 
 La roadmap T3 runtime s'arrête au verdict R0.

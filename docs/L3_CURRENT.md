@@ -3,7 +3,7 @@
 > **Mis à jour : 29 août 2026**
 > **Source de vérité active : ce document.**
 >
-> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Protocole runtime : [`experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_20260829.md`](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_20260829.md) ; [readout terminal R0](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [prereg v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_20260829.md), [readout terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) ; [terminal v1 antérieur](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -21,28 +21,33 @@ Aucun candidat T3 n'est promu. L'implémentation runtime T3-A reste dormante par
 
 T3-A et T3-B sont des artefacts scientifiques frozen, pas des réseaux de production.
 
-### Gate runtime T3-A — terminal R0
+### Gate runtime T3-A — terminal R0-v2
 
-Le readout exact est :
+Le terminal v1 reste immuable. La nouvelle campagne v2 a établi que T3-A
+n'ajoute aucun drift de couleur au baseline, puis s'est arrêtée au gate
+negamax depth-1. Son readout exact est :
 
 ```text
-R0_PRODUCTION_LEAF_CONTRACT_NOT_ESTABLISHED
-FROZEN_CURRICULUM_FAILS_PREREGISTERED_COLOUR_IMAGE_EXACTNESS
+R0_V2_NEGAMAX_OR_TERMINAL_PRECEDENCE_FAILED
 ```
 
-Le probe séquentiel a passé l'indépendance parent/chemin/siblings, une
-transposition légale explicite, l'indépendance TT/search/q-score/WDL et
-l'égalité couleur des 66 features F6 ainsi que du résiduel. Le premier assert
-négatif est `colour-image T0 drift` : CURRICULUM gelé viole l'égalité exacte
-rotate180+colour-swap preregistrée et T3-A, défini par `T0 - residual_F6`,
-hérite de ce drift.
+Sur `4096` positions target-blind, position/transposition, F6/résiduel et drift
+relatif passent. T0 et T3 ont exactement la même distribution de drift :
+moyenne `5.02734375 cp`, p50/p95/p99 `5/11/19.05`, max `40`, `3871`
+positions non nulles. Extra drift engine : mismatch `0`, max `0 cp`; extra
+float max `1.1368683772161603e-13 cp` pour une tolérance gelée `1e-10`.
+
+Les priorités terminale et EGDB passent. Le seul FAIL est
+`negamax_single_inversion=false` au témoin depth-1, score search `-51`. Le
+contrat de production leaf v2 n'est donc pas entièrement établi.
 
 Conséquence fail-closed : Pool1 et Pool2 ne sont pas autorisés, aucune partie
 native ou Q00 n'a été jouée, et la question du transfert en Elo reste
 indéterminée. Aucun refit, retune, calibration, bake ou promotion n'a eu lieu.
-Chaîne terminale : `cpx62-1644` → diagnostics `1645/1646` → readout
-`cpx62-1647`, attempt `20260829T120556Z-362d1a09`, code
-`362d1a09bdb0633ef783f4e4048721d8ae6ee980`.
+Chaîne v2 : R0 `cpx62-1648` / `20260829T132226Z-f559baed`, puis readout
+terminal `cpx62-1649` / `20260829T133232Z-f559baed`, code
+`f559baede4047f47abe13724b16d1ad669c5f36f`. La chaîne v1 `1644→1647`
+reste un résultat terminal antérieur distinct.
 
 ---
 
@@ -284,7 +289,7 @@ Conséquences :
 1. RF1 puis T3 établissent une chaîne reproductible découverte → confirmation fresh → transfert des 66 observables F6.
 2. Le bras joint exact n'autorise aucun retune ni troisième bras sur ce fresh consommé.
 3. La cohorte 1638/1639/1640 est consommée et interdite à tout fit, tuning, calibration, feature selection ou model selection.
-4. Aucun runtime, Elo, strength, selfplay, bake ou promotion n'a été exécuté ou autorisé.
-5. Toute éventuelle suite nécessiterait une nouvelle preregistration et de nouvelles données ; elle est hors de cette mission.
+4. Les probes runtime R0-v2 ont été exécutés ; aucune partie Elo/strength/Q00, aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
+5. Le contrat relatif de drift est établi, mais le gate negamax depth-1 est négatif. Toute éventuelle suite nécessiterait une nouvelle preregistration ; elle est hors de cette mission.
 
 La campagne T3 s'arrête ici.
