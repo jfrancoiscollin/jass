@@ -3,7 +3,7 @@
 > **Mis à jour : 29 août 2026**
 > **Source de vérité active : ce document.**
 >
-> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [prereg v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_20260829.md), [readout terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) ; [terminal v1 antérieur](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [autopsie negamax terminale](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [prereg v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_20260829.md), [readout terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) ; [terminal v1 antérieur](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -21,7 +21,7 @@ Aucun candidat T3 n'est promu. L'implémentation runtime T3-A reste dormante par
 
 T3-A et T3-B sont des artefacts scientifiques frozen, pas des réseaux de production.
 
-### Gate runtime T3-A — terminal R0-v2
+### Gate runtime T3-A — R0-v2 terminal et cause autopsiée
 
 Le terminal v1 reste immuable. La nouvelle campagne v2 a établi que T3-A
 n'ajoute aucun drift de couleur au baseline, puis s'est arrêtée au gate
@@ -39,7 +39,22 @@ float max `1.1368683772161603e-13 cp` pour une tolérance gelée `1e-10`.
 
 Les priorités terminale et EGDB passent. Le seul FAIL est
 `negamax_single_inversion=false` au témoin depth-1, score search `-51`. Le
-contrat de production leaf v2 n'est donc pas entièrement établi.
+contrat de production leaf v2 n'est donc pas entièrement établi. L'autopsie
+post-terminale a maintenant localisé exactement ce FAIL :
+
+```text
+QUIESCENCE_OR_DEPTH_SEMANTICS_EXPLAINS_MISMATCH
+```
+
+T0 échoue lui aussi au témoin direct (`max(-T0_child)=0`, search d1 `-1`) ; T3
+donne `+85` direct contre `-51` search. Les `9` children sont sans capture,
+menace, terminal ou TB, mais génèrent chacun `1–2` sacrifices sélectifs de
+quiescence. La première divergence des deux bras se situe à
+`qsearch_selective_sac`. T0 diverge sur `1/9` child et T3 sur `9/9`. La formule
+native/POV T3 est exacte sur `9/9` (`0` mismatch) et deux contrôles leaf
+réellement isolés passent exactement avec T0 et T3. Le FAIL n'est donc pas un
+défaut d'intégration T3 ; `search(depth=1)` ne correspond pas à
+`max(-eval(child))` sous les paramètres de production.
 
 Conséquence fail-closed : Pool1 et Pool2 ne sont pas autorisés, aucune partie
 native ou Q00 n'a été jouée, et la question du transfert en Elo reste
@@ -47,7 +62,13 @@ indéterminée. Aucun refit, retune, calibration, bake ou promotion n'a eu lieu.
 Chaîne v2 : R0 `cpx62-1648` / `20260829T132226Z-f559baed`, puis readout
 terminal `cpx62-1649` / `20260829T133232Z-f559baed`, code
 `f559baede4047f47abe13724b16d1ad669c5f36f`. La chaîne v1 `1644→1647`
-reste un résultat terminal antérieur distinct.
+reste un résultat terminal antérieur distinct. Autopsie : Jass PR `#707`, code
+`2a4d151956eab0c74674b812ca75bb2d6386d875`, job `cpx62-1650` attempt
+`20260829T141312Z-2a4d1519`, readout `cpx62-1651` attempt
+`20260829T142315Z-2a4d1519`, tous deux exit `0`.
+
+Une éventuelle v3 exige une prereg séparée avec un témoin leaf réellement isolé
+ou une référence reproduisant la quiescence exacte. Elle n'est pas ouverte ici.
 
 ---
 
