@@ -3,6 +3,7 @@
 // It enumerates target-blind parent moves and emits child states plus the
 // frozen CURRICULUM scalar. It performs no search, fit, selection, or game.
 
+#include "pattern_jass_bridge.hpp"
 #include "scan_eval.hpp"
 
 #define load_pattern_jass_network load_eval_network
