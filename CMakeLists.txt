@@ -348,6 +348,15 @@ if(NOT EMSCRIPTEN)
         src/scan_ceiling_jass_ladder.cpp
         $<TARGET_OBJECTS:jass_t3_f6_runtime>)
     target_link_libraries(jass_scan_ceiling_jass_ladder PRIVATE jass_lib jass_warnings)
+
+    # HOME-only Attribution V1 scorer. It links the frozen attribution search
+    # under isolated symbols while production jass_lib continues to own the
+    # current develop/V4 search unchanged.
+    add_executable(jass_search_semantics_attribution
+        src/search_semantics_attribution_entry.cpp
+        src/search_semantics_alt.cpp
+        $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(jass_search_semantics_attribution PRIVATE jass_lib jass_warnings)
 endif()
 
 # -----------------------------------------------------------------------------

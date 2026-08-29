@@ -297,6 +297,13 @@ struct SearchParams {
     // qs_threat_ext path emulates the line inside quiescence; this switch
     // tests Scan's exact node/window/TT semantics.
     bool scan_threat_reentry = false;
+
+    // Frozen Scan 3.1 causal-attribution switches.  These are deliberately
+    // boolean and default-off: each names one source-derived semantic arm and
+    // introduces no tunable margin, threshold or sweep surface.
+    bool scan_lmr_semantics = false;
+    bool scan_probabilistic_ordering = false;
+    bool disable_null_move = false;
 };
 
 // Apply a single "key=value" assignment to `p`. Unknown keys are ignored
@@ -373,6 +380,10 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "eg_no_lmr")            p.eg_no_lmr            = (v != 0);
     else if (key == "scan_verify_pruning")   p.scan_verify_pruning   = (v != 0);
     else if (key == "scan_threat_reentry")   p.scan_threat_reentry   = (v != 0);
+    else if (key == "scan_lmr_semantics")    p.scan_lmr_semantics    = (v != 0);
+    else if (key == "scan_probabilistic_ordering")
+                                                p.scan_probabilistic_ordering = (v != 0);
+    else if (key == "disable_null_move")     p.disable_null_move     = (v != 0);
     // unknown key → silently ignored
     return true;
 }

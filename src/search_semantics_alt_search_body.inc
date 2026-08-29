@@ -1,0 +1,2059 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (c) 2026 Jean-François Collin
+
+#include "search.hpp"
+
+#include <cstdlib>
+
+#include "bd_time.hpp"
+#include "board.hpp"
+#include "egdb_bridge.hpp"
+#include "endgame.hpp"
+#include "eval.hpp"
+#include "nnue.hpp"
+#include "nnue_accumulator.hpp"
+#include "scan_eval.hpp"
+#include "scan_sacs.hpp"
+#include "t3_f6.hpp"
+#include "tt.hpp"
+#include "zobrist.hpp"
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <chrono>
+#include <cmath>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <tuple>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+namespace jass {
+
+namespace {
+
+bool root_trace_enabled() noexcept {
+    static const bool enabled = [] {
+        const char* value = std::getenv("JASS_TRACE_ROOT");
+        return value != nullptr && std::string(value) != "0";
+    }();
+    return enabled;
+}
+
+std::string root_trace_move(const Move& move) {
+    std::ostringstream out;
+    out << static_cast<int>(move.from)
+        << (move.is_capture() ? 'x' : '-')
+        << static_cast<int>(move.to);
+    for (Bitboard captured = move.captured; captured;) {
+        out << 'x' << static_cast<int>(pop_lsb(captured));
+    }
+    return out.str();
+}
+
+void emit_root_trace(const std::string& line) {
+    std::cout << "info roottrace " << line << '\n';
+    std::cout.flush();
+}
+
+enum class RootOrderStatus {
+    None,
+    Applied,
+    Invalid,
+};
+
+RootOrderStatus apply_root_order(
+    MoveList& moves, std::string_view schedule, int depth
+) {
+    if (schedule.empty()) return RootOrderStatus::None;
+
+    std::string_view selected;
+    while (!schedule.empty()) {
+        const auto semi = schedule.find(';');
+        const auto part = schedule.substr(0, semi);
+        const auto colon = part.find(':');
+        if (colon == std::string_view::npos) return RootOrderStatus::Invalid;
+        int parsed_depth = 0;
+        for (const char ch : part.substr(0, colon)) {
+            if (ch < '0' || ch > '9') return RootOrderStatus::Invalid;
+            parsed_depth = parsed_depth * 10 + (ch - '0');
+        }
+        if (parsed_depth == depth) selected = part.substr(colon + 1);
+        if (semi == std::string_view::npos) break;
+        schedule.remove_prefix(semi + 1);
+    }
+    if (selected.empty()) return RootOrderStatus::Invalid;
+
+    std::vector<std::string_view> keys;
+    while (!selected.empty()) {
+        const auto comma = selected.find(',');
+        const auto key = selected.substr(0, comma);
+        if (key.empty()
+            || std::find(keys.begin(), keys.end(), key) != keys.end()) {
+            return RootOrderStatus::Invalid;
+        }
+        keys.push_back(key);
+        if (comma == std::string_view::npos) break;
+        selected.remove_prefix(comma + 1);
+    }
+
+    // Different capture paths can encode the same legal move
+    // (same from/to/captured set). Scan exposes one semantic move while the
+    // current Jass generator may retain several equivalent Move entries.
+    // The oracle therefore orders semantic classes; duplicates remain in
+    // Jass and stay stable and adjacent inside their scheduled class.
+    std::vector<std::string> legal_keys;
+    legal_keys.reserve(moves.size());
+    for (const auto& move : moves) {
+        const std::string key = root_trace_move(move);
+        if (std::find(legal_keys.begin(), legal_keys.end(), key)
+            == legal_keys.end()) {
+            legal_keys.push_back(key);
+        }
+    }
+    if (keys.size() != legal_keys.size()) return RootOrderStatus::Invalid;
+
+    MoveList reordered;
+    for (const auto key : keys) {
+        if (std::find(legal_keys.begin(), legal_keys.end(), key)
+            == legal_keys.end()) {
+            return RootOrderStatus::Invalid;
+        }
+        for (std::size_t i = 0; i < moves.size(); ++i) {
+            if (root_trace_move(moves[i]) == key) {
+                reordered.push(moves[i]);
+            }
+        }
+    }
+    if (reordered.size() != moves.size()) return RootOrderStatus::Invalid;
+    moves = std::move(reordered);
+    return RootOrderStatus::Applied;
+}
+
+}  // namespace
+
+void breakdown_reset() noexcept {
+#ifdef JASS_TIME_BREAKDOWN
+    bd::g_eval_ns.store(0,             std::memory_order_relaxed);
+    bd::g_movegen_ns.store(0,          std::memory_order_relaxed);
+    bd::g_apply_ns.store(0,            std::memory_order_relaxed);
+    bd::g_accumulator_ns.store(0,      std::memory_order_relaxed);
+    bd::g_tt_ns.store(0,               std::memory_order_relaxed);
+    bd::g_zobrist_ns.store(0,          std::memory_order_relaxed);
+    bd::g_movegen_capture_ns.store(0,  std::memory_order_relaxed);
+    bd::g_movegen_quiet_ns.store(0,    std::memory_order_relaxed);
+    bd::g_move_ordering_ns.store(0,    std::memory_order_relaxed);
+    bd::g_path_check_ns.store(0,       std::memory_order_relaxed);
+    bd::g_total_ns.store(0,            std::memory_order_relaxed);
+    bd::g_total_started.store(bd::now_ns(), std::memory_order_relaxed);
+#endif
+}
+
+BreakdownStats breakdown_snapshot() noexcept {
+    BreakdownStats s;
+#ifdef JASS_TIME_BREAKDOWN
+    s.eval_ns             = bd::g_eval_ns.load(std::memory_order_relaxed);
+    s.movegen_ns          = bd::g_movegen_ns.load(std::memory_order_relaxed);
+    s.apply_ns            = bd::g_apply_ns.load(std::memory_order_relaxed);
+    s.accumulator_ns      = bd::g_accumulator_ns.load(std::memory_order_relaxed);
+    s.tt_ns               = bd::g_tt_ns.load(std::memory_order_relaxed);
+    s.zobrist_ns          = bd::g_zobrist_ns.load(std::memory_order_relaxed);
+    s.movegen_capture_ns  = bd::g_movegen_capture_ns.load(std::memory_order_relaxed);
+    s.movegen_quiet_ns    = bd::g_movegen_quiet_ns.load(std::memory_order_relaxed);
+    s.move_ordering_ns    = bd::g_move_ordering_ns.load(std::memory_order_relaxed);
+    s.path_check_ns       = bd::g_path_check_ns.load(std::memory_order_relaxed);
+    const auto t0 = bd::g_total_started.load(std::memory_order_relaxed);
+    s.total_ns       = (t0 == 0) ? 0 : (bd::now_ns() - t0);
+#endif
+    return s;
+}
+
+namespace {
+
+// Movegen wrapper, used in search call sites so the breakdown
+// instrumentation captures movegen time. The handful of out-of-search
+// movegen consumers (root setup, etc.) call `generate_legal_moves`
+// directly so the timer doesn't account for non-search overhead.
+inline void gen_moves(const Position& pos, MoveList& moves) noexcept {
+    BD_TIME(movegen);
+    generate_legal_moves(pos, moves);
+}
+
+// `pos.after(m)` is where pieces get moved/captured/promoted. It dominates
+// the "apply move" bucket together with the accumulator push, which is
+// timed at its own call sites below.
+inline Position after_timed(const Position& pos, const Move& m) noexcept {
+    BD_TIME(apply);
+    return pos.after(m);
+}
+
+// Mate-score handling for the transposition table.
+//
+// Inside the search a "mate-loss for STM at distance d" is encoded as
+// `-MATE_SCORE + ply + d` and "mate-win in d plies" as
+// `MATE_SCORE - (ply + d)`. The `ply` term is search-tree relative and would
+// poison cross-iteration reuse, so before storing we strip it and add it
+// back on probe.
+inline constexpr int MATE_BOUND = MATE_SCORE - MAX_PLY;
+
+inline int score_to_tt(int score, int ply) noexcept {
+    if (score >  MATE_BOUND) return score + ply;
+    if (score < -MATE_BOUND) return score - ply;
+    return score;
+}
+
+inline int score_from_tt(int score, int ply) noexcept {
+    if (score >  MATE_BOUND) return score - ply;
+    if (score < -MATE_BOUND) return score + ply;
+    return score;
+}
+
+// Hoist `priority` to the front of `moves` if present, so it is searched
+// first. Used both at the root (previous-iteration best) and inside the
+// recursion (TT-suggested move).
+inline void hoist_move(MoveList& moves, const Move& priority) {
+    for (std::size_t i = 0; i < moves.size(); ++i) {
+        if (moves[i] == priority) {
+            if (i != 0) std::swap(moves[0], moves[i]);
+            return;
+        }
+    }
+}
+
+// Move-ordering aids reset between top-level searches.
+//
+// Killer moves: at each ply we remember up to two *quiet* moves that
+// recently caused a beta cutoff. They are tried right after the TT-suggested
+// move because they tend to refute many sibling positions too.
+//
+// History heuristic: a flat from/to table accumulates a depth^2 bonus every
+// time a quiet move causes a beta cutoff. Quiet moves with the highest
+// history are tried first among the rest.
+struct Searcher {
+    TranspositionTable* tt{nullptr};
+    std::uint64_t       nodes{0};
+    std::uint64_t       cutoffs{0};            // DIAG #1 : beta cutoffs totaux
+    std::uint64_t       first_move_cutoffs{0}; // DIAG #1 : cutoffs ou le 1er coup coupe (qualite ordering)
+    std::uint64_t       pvs_researches{0};     // DIAG #1 : re-recherches full-window PVS (instabilite valeurs)
+    std::uint64_t       moves_searched{0};     // DIAG #1 : coups reellement cherches (coups/noeud)
+    mutable std::uint64_t eval_calls{0};
+    std::uint64_t       qsearch_calls{0};
+    std::uint64_t       qnodes{0};
+    std::uint64_t       tt_probes{0};
+    std::uint64_t       tt_hits{0};
+    std::uint64_t       reductions{0};
+    std::uint64_t       reduced_plies{0};
+    std::uint64_t       lmr_researches{0};
+    std::uint64_t       extensions{0};
+    std::uint64_t       singular_extensions{0};
+    std::uint64_t       promotion_extensions{0};
+    std::uint64_t       forcing_extensions{0};
+    std::uint64_t       single_reply_extensions{0};
+    std::uint64_t       null_probes{0};
+    std::uint64_t       null_cutoffs{0};
+    std::uint64_t       ordering_good_updates{0};
+    std::uint64_t       ordering_bad_updates{0};
+    std::uint64_t       scan_verify_probes{0};
+    std::uint64_t       scan_verify_cutoffs{0};
+    std::uint64_t       scan_threat_reentries{0};
+    // Root depth of the current iterative-deepening iteration. Set by
+    // run_root_window before recursing. Used to bound forcing extensions:
+    // total extensions accumulated on a path = (depth + ply) - root_depth_.
+    int                 root_depth_{0};
+
+    // Tunable search constants + PVS toggle. Copied from SearchLimits at
+    // the start of each top-level search (and into helper searchers).
+    SearchParams        params{};
+
+    std::array<std::array<Move, 2>, MAX_PLY + 1>                       killers{};
+    std::array<std::array<int,  NUM_SQUARES + 1>, NUM_SQUARES + 1>     history{};
+    // Countermove heuristic : best response to opponent's last move,
+    // indexed by [opp_from][opp_to]. Reset between top-level searches
+    // like killers/history. ~+20-40 ELO in typical alpha-beta engines.
+    std::array<std::array<Move, NUM_SQUARES + 1>, NUM_SQUARES + 1>     countermove{};
+    // Move stack : move_played[ply] is the move that brought us into
+    // this ply (i.e., the parent's move when entering negamax at ply).
+    // Used by countermove + LMP heuristics. Initialised to default
+    // (invalid) Move at root.
+    std::array<Move, MAX_PLY + 2>                                      move_played{};
+
+    // Continuation history (1b, gated by params.use_conthist). Keyed by
+    // [opp_prev_to][m.from][m.to] — "after the opponent moved to square X,
+    // this quiet reply was good". Accumulated like `history` on beta
+    // cutoffs, added to the quiet-move ordering score. Heap-allocated
+    // (51³ ints ≈ 0.5 MB) so the per-thread Searcher stays off the stack.
+    static constexpr std::size_t CH_DIM  = NUM_SQUARES + 1;
+    static constexpr std::size_t CH_SIZE = CH_DIM * CH_DIM * CH_DIM;
+    std::vector<std::int32_t> cont_hist = std::vector<std::int32_t>(CH_SIZE, 0);
+
+    std::int32_t& ch(int prev_to, int from, int to) noexcept {
+        return cont_hist[(static_cast<std::size_t>(prev_to) * CH_DIM
+                          + static_cast<std::size_t>(from)) * CH_DIM
+                         + static_cast<std::size_t>(to)];
+    }
+    std::int32_t ch(int prev_to, int from, int to) const noexcept {
+        return cont_hist[(static_cast<std::size_t>(prev_to) * CH_DIM
+                          + static_cast<std::size_t>(from)) * CH_DIM
+                         + static_cast<std::size_t>(to)];
+    }
+
+    // Per-ply static eval, for the "improving" heuristic (1b). EVAL_NONE at
+    // tactical nodes (forced capture) where a static eval is meaningless.
+    static constexpr int EVAL_NONE = INF_SCORE;
+    std::array<int, MAX_PLY + 2> static_eval_stack{};
+
+    // Stack of Zobrist hashes representing the current path: the game
+    // history prefix is loaded by `search()`, then negamax pushes/pops the
+    // hash of each node as it descends and ascends.
+    std::vector<ZobristHash> hash_path;
+
+    // Time / external-stop control. `deadline` is meaningful only when
+    // `has_deadline` is true; `stop_flag` may be null. Once `stopped` is
+    // set, every subsequent search node short-circuits with a sentinel
+    // value so the call stack unwinds quickly.
+    std::chrono::steady_clock::time_point deadline{};
+    bool                                  has_deadline{false};
+    const std::atomic<bool>*              stop_flag{nullptr};
+    bool                                  stopped{false};
+    SearchStopReason                      stop_reason{SearchStopReason::None};
+    // Deterministic hard node cap (0 = unlimited), copied from SearchLimits.
+    std::uint64_t                         max_nodes{0};
+    NodeLimitMode                         node_limit_mode{NodeLimitMode::Periodic};
+
+    // Wall time at which the current root iteration started, used by the
+    // iterative-deepening loop to decide whether to skip the next iteration
+    // when it would obviously not finish before the deadline.
+    std::chrono::steady_clock::time_point iter_started_at{};
+
+    // Optional NNUE-style replacement for the handcrafted leaf evaluation.
+    // Null means "use the static `evaluate()` function in eval.cpp".
+    const INetwork*                       nnue{nullptr};
+    // Optional frozen residual wrapper. Accumulators below are bound to its
+    // base evaluator, while eval_leaf applies the residual exactly once.
+    const t3_f6::Network*                 t3_f6_nnue{nullptr};
+
+    // Passive autopsy instrumentation. Both pointers are null in production.
+    DepthOneSearchTrace*                  depth_one_trace{nullptr};
+    DepthOneMoveTrace*                    active_depth_one_move{nullptr};
+
+    // Fast-path accumulator support. When `nnue` is an `MLPNetworkQ`,
+    // we cache the concrete pointer here and maintain a per-ply
+    // `AccumulatorPair` so each leaf eval skips the Layer-1 rebuild.
+    // Otherwise `mlpq_nnue` is null and `eval_leaf` falls back to the
+    // generic `nnue->evaluate(pos)` path, which any concrete INetwork
+    // supports.
+    //
+    // The +1 covers the case ply == MAX_PLY (the hard cap branch in
+    // negamax still calls eval_leaf at that level).
+    const MLPNetworkQ*                    mlpq_nnue{nullptr};
+    std::array<AccumulatorPair, MAX_PLY + 2> accumulators{};
+
+    // Same idea for the Scan/pattern eval (v3/v4) : when `nnue` is a
+    // ScanEvalNetwork, maintain the 32 base-3 pattern indices per ply so each
+    // leaf skips the full extract_all rebuild. One accumulator per ply (the
+    // index is side-to-move-independent).
+    const scan_eval::ScanEvalNetwork*     scan_nnue{nullptr};
+    std::array<scan_eval::ScanAccumulator, MAX_PLY + 2> scan_accs{};
+
+    // Set to true while a Null-Move Pruning probe is in progress, so
+    // the recursive negamax doesn't try another null move on top
+    // (which would converge to nonsense at deep enough chains).
+    bool                                  was_null{false};
+    // Scan's verification probe recursively searches the same position.
+    // This guard is the exact equivalent of Scan's `prune=false` argument:
+    // it prevents nested verification without disabling the rest of the
+    // frozen Scan search shape.
+    bool                                  suppress_scan_verify{false};
+
+    int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
+    int quiescence (const Position& pos,            int ply, int alpha, int beta,
+                    int forcing_left = 0, int promo_left = 0, int threat_left = 0,
+                    int sac_left = 0);
+
+    // Wrap the leaf eval so the rest of the code doesn't have to branch.
+    // When `mlpq_nnue` is set, the per-ply accumulator is up-to-date
+    // for `pos` (the caller maintains the invariant via
+    // `push_accumulator` at every recursion) and we can skip the
+    // Layer-1 rebuild via `evaluate_with_accumulator`. Otherwise we
+    // dispatch to whatever INetwork was provided (or to the static
+    // handcrafted eval if none).
+    int eval_leaf(const Position& pos, int ply) const noexcept {
+        BD_TIME(eval);
+        ++eval_calls;
+        int s;
+        if (mlpq_nnue) {
+            const auto& acc = (pos.side_to_move() == Color::White)
+                ? accumulators[ply].white
+                : accumulators[ply].black;
+            s = mlpq_nnue->evaluate_with_accumulator(pos, acc.data.data());
+        } else if (scan_nnue) {
+            s = scan_nnue->evaluate_with_idx(
+                pos, scan_accs[static_cast<std::size_t>(ply)].idx.data());
+        } else if (t3_f6_nnue) {
+            s = t3_f6_nnue->base_network()->evaluate(pos);
+        } else if (nnue) {
+            s = nnue->evaluate(pos);
+        } else {
+            s = evaluate(pos);  // handcrafted: drawish already applied inside evaluate()
+            if (depth_one_trace) {
+                auto& leaves = depth_one_trace->leaf_evals;
+                if (leaves.size() < DepthOneSearchTrace::MAX_LEAF_EVALS) {
+                    leaves.push_back(LeafEvalTrace{
+                        pos,
+                        active_depth_one_move ? active_depth_one_move->move : Move{},
+                        ply,
+                        s,
+                    });
+                } else {
+                    depth_one_trace->leaf_eval_overflow = true;
+                }
+            }
+            return s;
+        }
+        if (t3_f6_nnue) s = t3_f6_nnue->evaluate_from_base(pos, s);
+        // Scan's drawish-material scaling on the NETWORK leaf (the pattern eval can't
+        // learn this localized non-linearity). Runtime-gated (params.drawish_scaling,
+        // default 0) so it can be A/B'd sensitively via --benchmark-search-params.
+        // Winner ≤3 pieces → ÷8 ; equal kings & |Δmen|≤1 → ÷2.
+        if (params.drawish_scaling) {
+            const int nwm = popcount(pos.white_men()), nwk = popcount(pos.white_kings());
+            const int nbm = popcount(pos.black_men()), nbk = popcount(pos.black_kings());
+            const bool near_equal = (nwk == nbk) && ((nwm > nbm ? nwm - nbm : nbm - nwm) <= 1);
+            const int sb = (pos.side_to_move() == Color::Black) ? s : -s;  // black-POV
+            if (sb > 0 && nwk != 0) { if (nbm + nbk <= 3) s /= 8; else if (near_equal) s /= 2; }
+            else if (sb < 0 && nbk != 0) { if (nwm + nwk <= 3) s /= 8; else if (near_equal) s /= 2; }
+        }
+        if (depth_one_trace) {
+            auto& leaves = depth_one_trace->leaf_evals;
+            if (leaves.size() < DepthOneSearchTrace::MAX_LEAF_EVALS) {
+                leaves.push_back(LeafEvalTrace{
+                    pos,
+                    active_depth_one_move ? active_depth_one_move->move : Move{},
+                    ply,
+                    s,
+                });
+            } else {
+                depth_one_trace->leaf_eval_overflow = true;
+            }
+        }
+        return s;
+    }
+
+    // Populate `accumulators[ply+1]` to reflect `pos_after` given that
+    // `accumulators[ply]` already reflects `pos_before` and `m` was
+    // played from pos_before. Fast path: copy + `apply_move`. Slow
+    // fallback: full `refresh_from`. No-op when the accumulator path
+    // is inactive (mlpq_nnue == nullptr).
+    void push_accumulator(int ply,
+                          const Position& pos_before,
+                          const Move& m,
+                          const Position& pos_after) noexcept {
+        if (!mlpq_nnue && !scan_nnue) return;
+        BD_TIME(accumulator);
+        const std::size_t pi  = static_cast<std::size_t>(ply);
+        const std::size_t pi1 = pi + 1;
+        if (pi1 >= accumulators.size()) return;  // ply cap, no descent
+        if (mlpq_nnue) {
+            accumulators[pi1] = accumulators[pi];
+            if (!accumulators[pi1].apply_move(pos_before, m, pos_after, *mlpq_nnue)) {
+                accumulators[pi1].refresh_from(pos_after, *mlpq_nnue);
+            }
+        }
+        if (scan_nnue) {
+            scan_accs[pi1] = scan_accs[pi];
+            scan_accs[pi1].apply_move(pos_before, pos_after);
+        }
+    }
+
+    // Null move: piece positions unchanged → both accumulators are
+    // bit-identical to the previous ply's. Just copy.
+    void push_accumulator_null(int ply) noexcept {
+        if (!mlpq_nnue && !scan_nnue) return;
+        BD_TIME(accumulator);
+        const std::size_t pi  = static_cast<std::size_t>(ply);
+        const std::size_t pi1 = pi + 1;
+        if (pi1 >= accumulators.size()) return;
+        if (mlpq_nnue) accumulators[pi1] = accumulators[pi];
+        if (scan_nnue) scan_accs[pi1]    = scan_accs[pi];
+    }
+
+    // Returns true if `h` repeats an ancestor on the current search path. A
+    // repetition requires the SAME side to move (even plies back) and can only
+    // involve positions since the last irreversible move (a man move/capture
+    // changes material or structure irreversibly) — i.e. the trailing
+    // `halfmove` entries. So scan back by 2, capped at `halfmove`, instead of
+    // the whole path : O(reversible run) per node, not O(depth).
+    bool path_contains(ZobristHash h, int halfmove) const noexcept {
+        BD_TIME(path_check);
+        const std::size_t n = hash_path.size();
+        const std::size_t cap = static_cast<std::size_t>(halfmove);
+        for (std::size_t back = 2; back <= n && back <= cap; back += 2) {
+            if (hash_path[n - back] == h) return true;
+        }
+        return false;
+    }
+
+    // Polled at the start of every node; `stopped` becomes sticky.
+    bool check_stop() noexcept {
+        if (stopped) return true;
+        if (stop_flag && stop_flag->load(std::memory_order_relaxed)) {
+            stopped = true;
+            stop_reason = SearchStopReason::External;
+            return true;
+        }
+        if (has_deadline && std::chrono::steady_clock::now() >= deadline) {
+            stopped = true;
+            stop_reason = SearchStopReason::Time;
+            return true;
+        }
+        if (max_nodes && nodes >= max_nodes) {
+            stopped = true;
+            stop_reason = SearchStopReason::Nodes;
+            return true;
+        }
+        return false;
+    }
+
+    // Exact node budgets are deterministic and local to this Searcher, so
+    // checking the plain integer at every node adds no synchronisation. Legacy
+    // max_nodes callers keep the periodic check_stop() cadence above.
+    bool check_exact_node_budget() noexcept {
+        if (node_limit_mode == NodeLimitMode::Exact
+            && max_nodes && nodes >= max_nodes) {
+            stopped = true;
+            stop_reason = SearchStopReason::Nodes;
+            return true;
+        }
+        return false;
+    }
+};
+
+// Score used to sort the move list. Larger = tried first.
+inline int order_score(const Searcher& s, const Move& m, int ply,
+                       const Move& tt_move, bool tt_hit,
+                       const Move& prev_move) noexcept {
+    if (s.params.scan_probabilistic_ordering) {
+        // Frozen Scan 3.1 sort.cpp: TT=PROB_ONE-1; every other move,
+        // captures included, uses the reset-per-search from/to probability.
+        if (tt_hit && m == tt_move) return 4095;
+        return s.history[m.from][m.to];
+    }
+    if (tt_hit && m == tt_move) return 1'000'000;
+    if (m.is_capture())          return 0;            // captures: keep generation order
+    if (m == s.killers[static_cast<std::size_t>(ply)][0])  return   800'000;
+    if (m == s.killers[static_cast<std::size_t>(ply)][1])  return   700'000;
+    // Countermove heuristic : if this move was the best response to the
+    // opponent's last move on a prior beta cutoff, try it early.
+    if (prev_move.from != 0) {
+        const Move& cm = s.countermove
+            [static_cast<std::size_t>(prev_move.from)]
+            [static_cast<std::size_t>(prev_move.to)];
+        if (cm.from != 0 && m == cm) return 650'000;
+    }
+    // History tail, optionally boosted by continuation history (1b).
+    int hist = s.history[m.from][m.to];
+    if (s.params.use_conthist && prev_move.from != 0) {
+        hist += s.ch(prev_move.to, m.from, m.to);
+    }
+    return hist;
+}
+
+// Sort moves in place, descending by `order_score`. Selection sort: the move
+// list is small (~30 in the worst case) and an in-place ordering keeps the
+// hot loop cache-friendly.
+inline void order_moves(MoveList& moves, const Searcher& s, int ply,
+                        const Move& tt_move, bool tt_hit,
+                        const Move& prev_move) {
+    BD_TIME(move_ordering);
+    const std::size_t n = moves.size();
+    // Keep the allocation-free hot path for normal branching, but never index
+    // past the fixed stack buffer when a pathological capture fan exceeds 256.
+    std::array<int, 256> stack_scores{};
+    std::vector<int> overflow_scores;
+    int* scores = stack_scores.data();
+    if (n > stack_scores.size()) {
+        overflow_scores.resize(n);
+        scores = overflow_scores.data();
+    }
+    for (std::size_t i = 0; i < n; ++i) {
+        scores[i] = order_score(s, moves[i], ply, tt_move, tt_hit, prev_move);
+    }
+    for (std::size_t i = 0; i < n; ++i) {
+        std::size_t best = i;
+        for (std::size_t j = i + 1; j < n; ++j) {
+            if (scores[j] > scores[best]) best = j;
+        }
+        if (best != i) {
+            std::swap(moves[i],  moves[best]);
+            std::swap(scores[i], scores[best]);
+        }
+    }
+}
+
+// Quiescence: at the search horizon, only mandatory capture chains are
+// played out. International draughts forbids "stand pat with a capture
+// available" by rule, so the implementation is unusually direct: if there
+// are captures we must play one; otherwise the position is calm and we
+// return the static eval.
+// A position where the side to move has ONLY captures — i.e. the previous move
+// forced the reply (FMJD majority-capture rule). Used by forcing quiescence to
+// recognise a sacrifice / combination starter (mirror of negamax's lambda).
+static bool qs_leaves_forced_capture(const Position& child) {
+    return has_any_capture(child);   // capture-existence, no full movegen
+}
+
+// A quiet MAN move that makes progress toward promotion — it crowns now, or the
+// man lands within `rows` rows of its promotion row (white row 0, black row 9).
+// Men only ever move forward, so every quiet man move advances ; we follow only
+// those near the crown (bounded) so a sac-for-promotion realises the king inside
+// the qsearch line. Captures and king moves never qualify.
+static bool qs_promo_progress(const Position& pos, const Move& m, int rows) {
+    if (m.is_capture()) return false;
+    if (m.promotes)     return true;
+    const Color us = pos.side_to_move();
+    const Bitboard men = (us == Color::White) ? pos.white_men() : pos.black_men();
+    if (!((men >> (static_cast<int>(m.from) - 1)) & 1ULL)) return false;  // king / not a man
+    const int r = row_of(m.to);
+    const int dist = (us == Color::White) ? r : (9 - r);
+    return dist <= rows;
+}
+
+// True when the OPPONENT (side not to move) has a capture in `pos` — i.e. the side
+// to move is under THREAT of being captured (Scan's is_threat). Flip the side to
+// move and generate captures.
+static bool opponent_can_capture(const Position& pos) {
+    // The opponent's captures in `pos` — no position copy / stm flip / movegen.
+    return has_any_capture(pos, opposite(pos.side_to_move()));
+}
+
+int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
+                         int forcing_left, int promo_left, int threat_left, int sac_left) {
+    if (stopped) return 0;
+    ++qsearch_calls;
+    ++qnodes;
+    if (depth_one_trace) ++depth_one_trace->qnodes;
+    DepthOneMoveTrace* const trace =
+        (ply == 1) ? active_depth_one_move : nullptr;
+    if (trace) {
+        trace->entered_quiescence = true;
+        trace->qsearch_alpha = alpha;
+        trace->qsearch_beta = beta;
+    }
+    auto finish = [trace](int score, const char* stage) noexcept {
+        if (trace) {
+            trace->qsearch_return = score;
+            if (trace->first_resolution_stage.empty())
+                trace->first_resolution_stage = stage;
+        }
+        return score;
+    };
+    ++nodes;
+    if (check_exact_node_budget()) return finish(0, "qsearch_node_limit");
+    if ((nodes & 0x3FF) == 0 && check_stop()) return finish(0, "qsearch_stop");
+
+    MoveList moves;
+    gen_moves(pos, moves);
+    if (trace) trace->qsearch_legal_moves = moves.size();
+    if (moves.empty()) {
+        if (depth_one_trace) ++depth_one_trace->terminal_hits;
+        if (trace) trace->terminal_hit = true;
+        return finish(-MATE_SCORE + ply, "qsearch_terminal");
+    }
+
+    // generate_legal_moves either returns *all* maximum-length captures or
+    // *all* quiet moves — never a mix. So a single check on the first move
+    // tells us whether the position is calm.
+    if (!moves[0].is_capture()) {
+        if (trace)
+            trace->qsearch_opponent_threat =
+                has_any_capture(pos, opposite(pos.side_to_move()));
+        // Exact frozen Scan 3.1 threat semantics. Scan does not enumerate
+        // the quiet replies inside qsearch: it re-enters the main search on
+        // this same position at depth 1 and a phantom ply+1, with verification
+        // pruning disabled. Copy the accumulator because the board is
+        // unchanged. This branch is diagnostic and default-off.
+        if (params.scan_threat_reentry
+            && threat_left > 0
+            && ply < MAX_PLY - 4
+            && opponent_can_capture(pos)) {
+            ++scan_threat_reentries;
+            push_accumulator_null(ply);
+            const bool previous = suppress_scan_verify;
+            suppress_scan_verify = true;
+            const int score = negamax(pos, 1, ply + 1, alpha, beta);
+            suppress_scan_verify = previous;
+            return finish(score, "qsearch_scan_threat_reentry");
+        }
+        // Threat extension (Scan) : at the first qs ply, if we are calm but the
+        // opponent has a capture ready (we are under threat), the static eval is
+        // unreliable — resolve it with a 1-ply look instead of standing pat. We do
+        // it WITHIN quiescence (searching each of our moves, whose child lets the
+        // opponent play its forced captures) rather than re-entering negamax — the
+        // main search has per-ply invariants that a mid-quiescence re-entry breaks.
+        // Gated by threat_left (only the entry ply carries a budget → byte-identical
+        // when off) and a ply cap (quiescence has no MAX_PLY guard of its own).
+        if (threat_left > 0 && ply < MAX_PLY - 4 && opponent_can_capture(pos)) {
+            int best = -INF_SCORE;
+            for (const auto& m : moves) {                // our quiet moves
+                if (trace) ++trace->qsearch_moves_searched;
+                const Position child = after_timed(pos, m);
+                push_accumulator(ply, pos, m, child);
+                const int score = -quiescence(child, ply + 1, -beta, -alpha, 0, 0, 0, 0);
+                if (score > best) best = score;
+                if (best > alpha) alpha = best;
+                if (alpha >= beta) break;
+            }
+            return finish(best, "qsearch_threat_extension");
+        }
+        const int stand = eval_leaf(pos, ply);
+        if (trace) {
+            trace->qsearch_stand_pat_valid = true;
+            trace->qsearch_stand_pat = stand;
+        }
+        // Selective SAC quiescence (Scan add_sacs, src/scan_sacs.cpp) : gated EXACTLY
+        // like Scan — a men-only board (no king anywhere) and NOT under threat (the
+        // threat case is handled by the extension above). add_sacs' selectivity is the
+        // point : a naive "all forcing sacs" quiescence explodes the tree.
+        const bool sacs_on = sac_left > 0
+                          && (pos.white_kings() | pos.black_kings()) == 0
+                          && !opponent_can_capture(pos);
+        // Forcing + promotion quiescence : a CALM leaf may still hide a quiet
+        // SACRIFICE (forced reply) or a near PROMOTION. Stand-pat-search those
+        // (bounded by forcing_left / promo_left / sac_left). All budgets 0 → return
+        // the static eval exactly as before (byte-identical when all qs_* are off).
+        if ((forcing_left <= 0 && promo_left <= 0 && !sacs_on) || stand >= beta)
+            return finish(stand, stand >= beta
+                ? "qsearch_stand_pat_beta_cutoff" : "qsearch_stand_pat");
+        int best = stand;
+        if (best > alpha) alpha = best;
+        for (const auto& m : moves) {                    // forcing/promo : all quiet
+            const Position child   = after_timed(pos, m);
+            const bool     is_sac  = forcing_left > 0 && qs_leaves_forced_capture(child);
+            const bool     is_promo= promo_left   > 0 && qs_promo_progress(pos, m, promo_left);
+            if (!is_sac && !is_promo) continue;
+            if (trace) ++trace->qsearch_moves_searched;
+            push_accumulator(ply, pos, m, child);
+            const int score = -quiescence(child, ply + 1, -beta, -alpha,
+                                          is_sac   ? forcing_left - 1 : forcing_left,
+                                          is_promo ? promo_left  - 1 : promo_left, 0, 0);
+            if (score > best) best = score;
+            if (best > alpha) alpha = best;
+            if (alpha >= beta) break;                    // beta cut-off
+        }
+        // Scan's SELECTIVE sacrifices (a handful of positional man sacs).
+        if (sacs_on && alpha < beta) {
+            MoveList sacs;
+            scan_add_sacs(pos, sacs);
+            if (trace) trace->qsearch_selective_sacs = sacs.size();
+            for (std::size_t i = 0; i < sacs.size(); ++i) {
+                if (trace) ++trace->qsearch_moves_searched;
+                const Position child = after_timed(pos, sacs[i]);
+                push_accumulator(ply, pos, sacs[i], child);
+                const int score = -quiescence(child, ply + 1, -beta, -alpha,
+                                              forcing_left, promo_left, 0, sac_left - 1);
+                if (score > best) best = score;
+                if (best > alpha) alpha = best;
+                if (alpha >= beta) break;                // beta cut-off
+            }
+        }
+        if (trace && trace->qsearch_selective_sacs > 0)
+            return finish(best, "qsearch_selective_sac");
+        if (forcing_left > 0 || promo_left > 0)
+            return finish(best, "qsearch_forcing_or_promotion");
+        return finish(best, "qsearch_stand_pat_after_empty_sac_generation");
+    }
+
+    if (trace) trace->qsearch_forced_capture = true;
+    int best = -INF_SCORE;
+    for (const auto& m : moves) {
+        if (trace) ++trace->qsearch_moves_searched;
+        const Position next  = after_timed(pos, m);
+        push_accumulator(ply, pos, m, next);
+        // Captures are forced (cheap) — they do NOT consume either budget.
+        const int      score = -quiescence(next, ply + 1, -beta, -alpha,
+                                           forcing_left, promo_left, 0, sac_left);
+        if (score > best) best = score;
+        if (best > alpha) alpha = best;
+        if (alpha >= beta) break;  // beta cut-off
+    }
+    return finish(best, "qsearch_forced_capture");
+}
+
+int Searcher::negamax(const Position& pos, int depth, int ply,
+                      int alpha, int beta) {
+    if (stopped) return 0;
+    DepthOneMoveTrace* const trace =
+        (ply == 1) ? active_depth_one_move : nullptr;
+    // Hard ply cap so single-move extensions can't run off the end of the
+    // killers / hash_path arrays.
+    if (ply >= MAX_PLY) return eval_leaf(pos, ply);
+    ++nodes;
+    if (check_exact_node_budget()) return 0;
+    // Polling time / external-stop is not free; throttle to once every
+    // 1024 nodes. The first probe of every iteration also runs through
+    // here because `nodes` was just bumped from 0 → 1 the very first time.
+    if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
+
+    ZobristHash hash;
+    { BD_TIME(zobrist); hash = zobrist_hash(pos); }
+
+    // Kick off the TT cluster fetch now so its cache line is in flight while
+    // the node does the repetition / 50-move checks below (hides the random-
+    // access memory latency that dominates the probe at step 1).
+    if (tt) tt->prefetch(hash);
+
+    // 0. Path-dependent draw detection. Path-dependent because it depends
+    //    on which prior positions the search has visited, so we must not
+    //    consult the TT for these answers.
+    if (path_contains(hash, pos.halfmove_clock())) {
+        if (trace) {
+            trace->path_draw = true;
+            trace->first_resolution_stage = "path_draw";
+        }
+        return 0;
+    }
+    if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES) {
+        if (trace) {
+            trace->fifty_move_draw = true;
+            trace->first_resolution_stage = "fifty_move_draw";
+        }
+        return 0;
+    }
+
+    // 0bis. Endgame tablebase: positions with a known theoretical result
+    //       skip the rest of the work. Like the path-dependent draws this
+    //       answer is independent of the alpha-beta window.
+    {
+        if (depth_one_trace) ++depth_one_trace->tablebase_probes;
+        const EndgameResult eg = probe_endgame(pos);
+        if (eg == EndgameResult::Draw) {
+            if (depth_one_trace) ++depth_one_trace->tablebase_hits;
+            if (trace) {
+                trace->tablebase_hit = true;
+                trace->first_resolution_stage = "tablebase_draw";
+            }
+            return 0;
+        }
+        if (eg == EndgameResult::WhiteWin || eg == EndgameResult::BlackWin) {
+            if (depth_one_trace) ++depth_one_trace->tablebase_hits;
+            if (trace) {
+                trace->tablebase_hit = true;
+                trace->first_resolution_stage = "tablebase_win_loss";
+            }
+            // Distance-aware TB terminal. A flat win score gave the search no
+            // reason to PROGRESS in a won endgame: every winning move tied, so
+            // it could shuffle until the FMJD draw rule and throw the win (and,
+            // in self-play, mislabel the won line as a draw). Subtracting `ply`
+            // makes a SHORTER win score higher and a LONGER loss score higher
+            // (less negative) → the search prefers to convert sooner / resist
+            // longer, shedding pieces toward a simpler win. Stays one ply-band
+            // below MATE_BOUND so it outranks any eval but is never mistaken for
+            // a real forced mate. (TB nodes are re-probed here BEFORE the TT, so
+            // the ply-relative value is never served from a stale TT entry; a
+            // proper MTC database would make the within-TB distance exact.)
+            const bool stm_wins = (eg == EndgameResult::WhiteWin)
+                ? (pos.side_to_move() == Color::White)
+                : (pos.side_to_move() == Color::Black);
+            // Distance = search plies to reach here (`ply`) PLUS the exact
+            // moves-to-conversion from the MTC database when loaded (Kingsrow
+            // has it, Scan does not — this plays the FASTEST conversion, not
+            // just *a* conversion). probe_mtc returns 1 in the flat <10-ply zone
+            // and the true value >=10 (the band where dawdling is a real risk),
+            // or <=0 when the position is outside the MTC db; gate on a
+            // confirmed WLD win (we are in the win branch). Capped so the TB-win
+            // band stays well above any eval and below MATE_BOUND.
+            int dist = ply;
+            if (egdb::available_mtc()) {
+                const int m = egdb::probe_mtc(pos);
+                if (m > 0) dist += (m < 500 ? m : 500);
+            }
+            const int v = (MATE_SCORE - MAX_PLY - 1) - dist;
+            return stm_wins ? v : -v;
+        }
+    }
+
+    // 1. Probe TT.  A hit lets us cut the subtree if its stored bound is
+    //    compatible with the current alpha-beta window; otherwise we still
+    //    keep the suggested move for ordering.
+    TTEntry tt_entry;
+    bool    tt_hit;
+    ++tt_probes;
+    if (depth_one_trace) ++depth_one_trace->tt_probes;
+    { BD_TIME(tt); tt_hit = tt->probe(hash, tt_entry); }
+    if (tt_hit) ++tt_hits;
+    if (depth_one_trace && tt_hit) ++depth_one_trace->tt_hits;
+    if (tt_hit && tt_entry.depth >= depth) {
+        const int s = score_from_tt(tt_entry.score, ply);
+        if (tt_entry.bound() == Bound::Exact) {
+            if (trace) { trace->tt_cutoff = true; trace->first_resolution_stage = "tt_exact"; }
+            return s;
+        }
+        if (tt_entry.bound() == Bound::Lower && s >= beta) {
+            if (trace) { trace->tt_cutoff = true; trace->first_resolution_stage = "tt_lower_cutoff"; }
+            return s;
+        }
+        if (tt_entry.bound() == Bound::Upper && s <= alpha) {
+            if (trace) { trace->tt_cutoff = true; trace->first_resolution_stage = "tt_upper_cutoff"; }
+            return s;
+        }
+    }
+
+    // 2. Mate / leaf detection. At the horizon we hand off to quiescence
+    //    so a forced capture pending at the leaf is not silently misvalued.
+    MoveList moves;
+    gen_moves(pos, moves);
+    if (moves.empty()) {
+        if (depth_one_trace) ++depth_one_trace->terminal_hits;
+        if (trace) {
+            trace->terminal_hit = true;
+            trace->first_resolution_stage = "negamax_terminal";
+        }
+        return -MATE_SCORE + ply;
+    }
+    if (depth <= 0)    return quiescence(pos, ply, alpha, beta, params.qs_forcing_depth, params.qs_promo_depth, (params.qs_threat_ext || params.scan_threat_reentry) ? 1 : 0, params.qs_sacs ? (params.qs_sacs_depth0_only ? 1 : 8) : 0);
+
+    // Shared, lazily-computed static eval for this node. RFP / NMP / razoring
+    // all want it; compute at most once. A "tactical" node (a forced capture
+    // is pending) has no meaningful static eval. NB: lazy → when every 1b
+    // flag is off the call pattern matches the pre-1b behaviour exactly.
+    const bool tactical = moves[0].is_capture();
+    bool have_eval = false;
+    int  node_eval = 0;
+    auto static_eval = [&]() noexcept -> int {
+        if (!have_eval) { node_eval = eval_leaf(pos, ply); have_eval = true; }
+        return node_eval;
+    };
+
+    // Improving heuristic (1b, gated). Record this node's static eval and
+    // compare to the same side's eval 2 plies up.
+    static_eval_stack[static_cast<std::size_t>(ply)] = EVAL_NONE;
+    bool improving = false;
+    if (params.use_improving && !tactical) {
+        const int se = static_eval();
+        static_eval_stack[static_cast<std::size_t>(ply)] = se;
+        if (ply >= 2
+            && static_eval_stack[static_cast<std::size_t>(ply - 2)] != EVAL_NONE) {
+            improving = se > static_eval_stack[static_cast<std::size_t>(ply - 2)];
+        }
+    }
+
+    // Endgame search regime (gated; eg_pieces=0 disables → ZERO cost on the
+    // default path: the && short-circuits before the popcount). When few pieces
+    // remain the node is SEARCH-BOUND (job 0252: deep search rescues a weak
+    // endgame eval) yet tactically sharp with low branching, so aggressive
+    // reductions/pruning risk discarding the single precise winning line for
+    // little node saving. The gated flags let an A/B disable NMP (zugzwang),
+    // LMP and/or LMR below `eg_pieces` pieces (same popcount phase axis as
+    // pattern_jass --phase-weight). Cf docs/archives/ROADMAP.md (VERDICT FINALES).
+    const bool eg = params.eg_pieces > 0
+                 && popcount(pos.occupied()) <= params.eg_pieces;
+
+    // Frozen Scan 3.1 verification pruning. Unlike null move, Scan searches
+    // the same board/side with a narrow raised-beta window at 40% depth and
+    // a phantom ply+1. The probe is allowed only at non-PV eval nodes and
+    // cannot recurse into another verification probe (`prune=false` in Scan).
+    if (params.scan_verify_pruning
+        && !suppress_scan_verify
+        && (beta - alpha) == 1
+        && depth >= 3
+        // Scan 3.1 score::Eval_Inf is exactly 8000.
+        && std::abs(beta) <= 8000) {
+        const int margin = depth * 10;
+        const int new_beta = beta + margin;
+        const int new_depth = depth * 40 / 100;
+        if (new_depth > 0 && new_beta < INF_SCORE) {
+            ++scan_verify_probes;
+            push_accumulator_null(ply);
+            suppress_scan_verify = true;
+            const int score = negamax(
+                pos, new_depth, ply + 1, new_beta - 1, new_beta);
+            suppress_scan_verify = false;
+            if (stopped) return 0;
+            if (score >= new_beta) {
+                ++scan_verify_cutoffs;
+                return score - margin;
+            }
+        }
+    }
+
+    // 2bis. Reverse Futility Pruning (a.k.a. static null move). When the
+    //   position is quiet (no forced captures — recall draughts mandates
+    //   the longest capture chain, so `moves[0].is_capture()` is reliable
+    //   as a "tactical position" signal), shallow, not in the mate band,
+    //   and the static eval beats beta by a margin that scales with the
+    //   remaining depth, the subtree almost certainly fails high.
+    //
+    //   Cheaper than the recursive NMP probe below and covers the depth
+    //   1-5 range where NMP doesn't fire (NMP_MIN_DEPTH=4) or its overhead
+    //   isn't amortised by the saving.
+    //
+    //   Margin = 100 cp * depth is conservative; over-aggressive RFP
+    //   loses ELO by pruning critical lines whose static eval looks safe
+    //   but where the opponent has a deep tactical resource.
+    {
+        const int RFP_MAX_DEPTH = params.rfp_max_depth;
+        const int RFP_MARGIN    = params.rfp_margin;  // cp per remaining ply
+        if (depth <= RFP_MAX_DEPTH
+            && !was_null
+            && !is_mate_score(beta)
+            && !tactical) {
+            const int eval   = static_eval();
+            const int margin = RFP_MARGIN * depth;
+            if (eval - margin >= beta) return eval - margin;
+        }
+    }
+
+    // 2bis-b. Razoring (gated; default off via razor_max_depth=0).
+    //   Symmetric to RFP on the alpha side: at a shallow non-PV quiet
+    //   node whose static eval is far below alpha, verify with quiescence
+    //   and prune if qsearch confirms the node can't raise alpha. Placed
+    //   before the hash_path push so the early return needs no pop.
+    if (params.razor_max_depth > 0
+        && depth <= params.razor_max_depth
+        && (beta - alpha) == 1
+        && !was_null
+        && !is_mate_score(alpha)
+        && !tactical) {
+        const int eval   = static_eval();
+        const int margin = params.razor_margin * depth;
+        if (eval + margin <= alpha) {
+            const int q = quiescence(pos, ply, alpha, beta, params.qs_forcing_depth, params.qs_promo_depth, params.qs_threat_ext ? 1 : 0, params.qs_sacs ? (params.qs_sacs_depth0_only ? 1 : 8) : 0);
+            if (q <= alpha) return q;
+        }
+    }
+
+    // 2ter. Null-Move Pruning. If we can give the opponent a free
+    //     move (no rule actually permits passing in draughts — this
+    //     is purely a search technique) and the resulting reduced-
+    //     depth search still beats beta, the current position is
+    //     strong enough that we can cut without playing out its own
+    //     subtree. Skipped in conditions where the technique is
+    //     unsound or wasteful:
+    //       - depth < 4: the saving is too small
+    //       - already inside a null-move probe (no infinite chains)
+    //       - beta is in the mate band (mate scores are absolute,
+    //         not relative to the position's strength)
+    //       - low material (<6 pieces): real zugzwang-like positions
+    //         appear in king-and-pawn endgames where giving up a
+    //         tempo legitimately loses
+    //       - static eval already below beta: NMP can't possibly help
+    {
+        const int NMP_MIN_DEPTH  = params.nmp_min_depth;
+        const int NMP_MIN_PIECES = params.nmp_min_pieces;
+        if (!params.disable_null_move
+            && depth >= NMP_MIN_DEPTH
+            && !was_null
+            && !is_mate_score(beta)
+            && !(eg && params.eg_no_nmp)) {     // endgame regime: NMP off (zugzwang)
+            const Bitboard all = pos.white_men() | pos.white_kings()
+                               | pos.black_men() | pos.black_kings();
+            if (popcount(all) >= NMP_MIN_PIECES) {
+                const int eval = static_eval();
+                if (eval >= beta) {
+                    ++null_probes;
+                    const int R          = params.nmp_r_base + depth / params.nmp_r_div;
+                    const int reduced    = depth - 1 - R;
+                    const int safe_depth = reduced < 1 ? 1 : reduced;
+                    const Position null_pos = pos.after_null();
+                    push_accumulator_null(ply);
+                    was_null = true;
+                    const int null_score = -negamax(null_pos, safe_depth, ply + 1,
+                                                    -beta, -beta + 1);
+                    was_null = false;
+                    if (!stopped && null_score >= beta) {
+                        ++null_cutoffs;
+                        return beta;
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Move ordering: TT-suggested move first, then killers, then a
+    //    history-driven order on the remaining quiet moves. The TT only
+    //    stores a `PackedMove`, so we resolve it against the actual
+    //    legal-move list to recover the full move with its capture path.
+    Move tt_move{};
+    bool tt_move_valid = false;
+    if (tt_hit) {
+        for (const auto& m : moves) {
+            if (same_packed_move(m, tt_entry.best_move)) {
+                tt_move       = m;
+                tt_move_valid = true;
+                break;
+            }
+        }
+    }
+
+    // 2quater. Internal Iterative Deepening (1b, gated). With no usable TT
+    //   move at a deep quiet node, a reduced-depth search of THIS position
+    //   first fills the TT with a best move, so the full search isn't run on
+    //   a blind move order. Runs before hash_path push (pos is not yet its
+    //   own ancestor) and re-probes the TT for the move it produced.
+    if (params.iid_min_depth > 0
+        && !tt_move_valid
+        && depth >= params.iid_min_depth
+        && !tactical) {
+        const int iid_depth = depth - params.iid_reduction;
+        if (iid_depth >= 1) {
+            (void)negamax(pos, iid_depth, ply, alpha, beta);
+            if (!stopped) {
+                TTEntry e2;
+                bool h2;
+                { BD_TIME(tt); h2 = tt->probe(hash, e2); }
+                if (h2) {
+                    for (const auto& m : moves) {
+                        if (same_packed_move(m, e2.best_move)) {
+                            tt_entry      = e2;
+                            tt_move       = m;
+                            tt_move_valid = true;
+                            tt_hit        = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (stopped) return 0;
+        }
+    }
+
+    const Move prev_move = move_played[static_cast<std::size_t>(ply)];
+    order_moves(moves, *this, ply, tt_move, tt_move_valid, prev_move);
+
+    // 4. Search.
+    const int alpha_orig = alpha;
+    int       best       = -INF_SCORE;
+    Move      best_move  = moves[0];
+
+    { BD_TIME(path_check); hash_path.push_back(hash); }
+
+    // 4bis. Singular extension. If the TT entry says one move scores at
+    //     least `tt_entry.score`, a quick verification search at half
+    //     depth confirms whether the other moves can match it. When
+    //     they all fall short by a margin, the TT move is "singular" —
+    //     we extend its depth by one ply so the main loop spends more
+    //     effort on what is likely the only good continuation.
+    //
+    // Constants chosen conservatively for draughts (tuned for chess
+    // first, retuned by ear here):
+    //   - Min depth 8 — extending shallow searches just bloats nodes
+    //     without finding new tactics.
+    //   - TT entry must be at least `depth - 3` so its score is
+    //     trustworthy.
+    //   - Margin scales with depth so cuts near mate scores still
+    //     make sense.
+    //   - Reduced depth = (depth - 1) / 2.
+    const int SINGULAR_MIN_DEPTH = params.singular_min_depth;
+    const int SINGULAR_MARGIN    = params.singular_margin;  // cp per ply of depth
+    int  singular_ext = 0;
+    if (tt_hit && tt_move_valid
+        && depth >= SINGULAR_MIN_DEPTH
+        && tt_entry.depth >= depth - 3
+        && tt_entry.bound() != Bound::Upper
+        && !is_mate_score(score_from_tt(tt_entry.score, ply))) {
+        const int singular_beta  = score_from_tt(tt_entry.score, ply)
+                                 - SINGULAR_MARGIN * depth;
+        const int singular_depth = (depth - 1) / 2;
+
+        int verify_best  = -INF_SCORE;
+        int verify_alpha = singular_beta - 1;
+        for (const auto& m : moves) {
+            if (same_packed_move(m, tt_entry.best_move)) continue;  // exclude TT move
+            const Position next = after_timed(pos, m);
+            push_accumulator(ply, pos, m, next);
+            const int      s    = -negamax(next, singular_depth - 1, ply + 1,
+                                           -singular_beta, -verify_alpha);
+            if (s > verify_best) verify_best = s;
+            if (verify_best >= singular_beta) break;
+            if (verify_best > verify_alpha)   verify_alpha = verify_best;
+            if (stopped) break;
+        }
+        if (!stopped && verify_best < singular_beta) {
+            singular_ext = 1;
+        }
+    }
+
+    // 4ter. ProbCut (gated; default off via probcut_min_depth=0). At a
+    //   high-depth non-PV node, if a forced capture leads to a
+    //   reduced-depth score >= beta + probcut_margin, the node almost
+    //   certainly fails high — cut. Mirrors the singular verification's
+    //   move application; the early return must pop the hash_path pushed
+    //   above. NB: draughts captures are forced, so this only fires at
+    //   tactical nodes (value uncertain — measured via A/B before ship).
+    if (params.probcut_min_depth > 0
+        && depth >= params.probcut_min_depth
+        && (beta - alpha) == 1
+        && !was_null
+        && !is_mate_score(beta)) {
+        const int rbeta  = beta + params.probcut_margin;
+        const int rdepth = depth - params.probcut_reduction;
+        if (rdepth >= 1 && !is_mate_score(rbeta)) {
+            for (const auto& m : moves) {
+                if (!m.is_capture()) continue;
+                const Position next = after_timed(pos, m);
+                push_accumulator(ply, pos, m, next);
+                const int sc = -negamax(next, rdepth - 1, ply + 1,
+                                        -rbeta, -rbeta + 1);
+                if (stopped) break;
+                if (sc >= rbeta) {
+                    { BD_TIME(path_check); hash_path.pop_back(); }
+                    return sc;
+                }
+            }
+        }
+    }
+
+    // 4quater. Multi-cut pruning (1b, gated). At a deep non-PV quiet node,
+    //   scout the first `multicut_moves` ordered moves at reduced depth; if
+    //   at least `multicut_cuts` of them fail high, the node almost certainly
+    //   fails high — cut. Speculative; the early return pops the hash_path
+    //   pushed above (mirror of ProbCut).
+    if (params.multicut_min_depth > 0
+        && depth >= params.multicut_min_depth
+        && (beta - alpha) == 1
+        && !was_null
+        && !is_mate_score(beta)
+        && !tactical) {
+        const int rdepth = depth - params.multicut_reduction;
+        if (rdepth >= 1) {
+            int cuts = 0, tried = 0;
+            for (const auto& m : moves) {
+                if (tried >= params.multicut_moves) break;
+                ++tried;
+                const Position next = after_timed(pos, m);
+                push_accumulator(ply, pos, m, next);
+                if (ply + 1 < static_cast<int>(move_played.size())) {
+                    move_played[static_cast<std::size_t>(ply + 1)] = m;
+                }
+                const int sc = -negamax(next, rdepth - 1, ply + 1,
+                                        -beta, -beta + 1);
+                if (stopped) break;
+                if (sc >= beta && ++cuts >= params.multicut_cuts) {
+                    { BD_TIME(path_check); hash_path.pop_back(); }
+                    return beta;
+                }
+            }
+        }
+    }
+
+    // 4bis. Late Move Reductions. After the first few moves (TT-move,
+    //     killers, and the head of the history-sorted tail), search the
+    //     remaining quiet moves at a reduced depth first. If the reduced
+    //     search unexpectedly returns above alpha, re-search at full
+    //     depth — same tree as without LMR but the reduction pre-empts
+    //     unnecessary deep searches on uninteresting moves.
+    //
+    //     Skipped for:
+    //       - the TT-move (always full depth — it's the best guess)
+    //       - captures (in FMJD draughts the majority-capture rule
+    //         already forces them when present; they are tactically
+    //         decisive)
+    //       - shallow nodes (depth < 3 — LMR overhead exceeds saving)
+    //       - the first few moves of the ordering (i < 4)
+    const int LMR_MIN_DEPTH = params.scan_lmr_semantics
+                            ? 2 : params.lmr_min_depth;
+    auto lmr_reduction = [&params = params, LMR_MIN_DEPTH,
+                          improving]
+                         (int d, int move_idx, int hist, bool is_pv) noexcept -> int {
+        // Simple monotone formula: ~1 ply at low depth/index, ~3 plies
+        // at depth ≥ 12 with index ≥ 16. Capped so the reduced depth
+        // stays ≥ 1. When the improving heuristic is on and we are not
+        // improving, reduce one extra ply.
+        const int first_reduced = params.scan_lmr_semantics
+                                ? (is_pv ? 3 : 1)
+                                : (is_pv ? params.lmr_first_full_pv
+                                         : params.lmr_first_full_nonpv);
+        if (d < LMR_MIN_DEPTH || move_idx < first_reduced) return 0;
+        int r;
+        if (params.scan_lmr_semantics || params.lmr_formula == 3) {
+            // Frozen Scan 3.1 shape (diagnostic): one ply for every
+            // eligible late quiet, two plies for non-PV moves from index 4.
+            // The eligibility thresholds are supplied separately through
+            // lmr_min_depth / lmr_first_full_{pv,nonpv}.  This branch is
+            // opt-in and leaves the production formula byte-identical.
+            r = (!is_pv && move_idx >= 4) ? 2 : 1;
+        } else if (params.lmr_formula == 1) {
+            // Logarithmic LMR shape (opt-in ; formula 0 = linear below = legacy,
+            // byte-identical). Softer early, more aggressive for late moves at
+            // high depth → lowers the effective branching factor. EBF chantier.
+            const double rr = std::log(static_cast<double>(d))
+                            * std::log(static_cast<double>(move_idx))
+                            * static_cast<double>(params.lmr_log_mul) / 100.0;
+            r = params.lmr_log_base + static_cast<int>(rr);
+        } else if (params.lmr_formula == 2) {
+            // Box-Cox LMR shape : R = lmr_log_base + BC_ld(d)*BC_lidx(idx)*lmr_log_mul/100,
+            // BC_λ(x)=(x^λ−1)/λ (λ≠0) else log(x). Famille continue, exposants depth/index
+            // SÉPARÉS (lmr_bc_ld, lmr_bc_lidx, ×100) → réduction sélective. Chantier EBF :
+            // chercher la FORME optimale de réduction, pas une formule fixe.
+            const double _ld  = static_cast<double>(params.lmr_bc_ld)   / 100.0;
+            const double _lid = static_cast<double>(params.lmr_bc_lidx) / 100.0;
+            const double _bd  = (_ld  == 0.0) ? std::log(static_cast<double>(d))
+                                              : (std::pow(static_cast<double>(d), _ld) - 1.0) / _ld;
+            const double _bi  = (_lid == 0.0) ? std::log(static_cast<double>(move_idx))
+                                              : (std::pow(static_cast<double>(move_idx), _lid) - 1.0) / _lid;
+            const double rr = _bd * _bi * static_cast<double>(params.lmr_log_mul) / 100.0;
+            r = params.lmr_log_base + static_cast<int>(rr);
+        } else {
+            r = params.lmr_base + d / params.lmr_depth_div
+              + move_idx / params.lmr_idx_div;
+        }
+        if (params.scan_lmr_semantics) return r;
+        if (!params.scan_lmr_semantics && params.use_improving && !improving) r += 1;
+        r = r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
+        // History-based softening (opt-in ; lmr_hist_div=0 = unchanged): reduce
+        // high-history quiet moves less. Applied AFTER the base clamp so the
+        // default path is byte-identical.
+        if (!params.scan_lmr_semantics && params.lmr_hist_div > 0) {
+            r -= hist / params.lmr_hist_div;
+            if (r < 0) r = 0;
+        }
+        return r;
+    };
+    // Butterfly+conthist history of a quiet move, for history-based LMR.
+    auto move_history = [this, prev_move](const Move& m) noexcept -> int {
+        int h = history[m.from][m.to];
+        if (params.use_conthist && prev_move.from != 0)
+            h += ch(prev_move.to, m.from, m.to);
+        return h;
+    };
+
+    // Late Move Pruning : at shallow depth on non-PV nodes, skip late
+    // quiet moves entirely. They're statistically unlikely to raise
+    // alpha given move ordering has already sorted them. Captures are
+    // never pruned (FMJD majority rule forces them anyway). ~+10-20 ELO.
+    // LMP applies for depth <= lmp_max_depth (param ; default 3 = legacy).
+    // first-move-index to skip at depth d : tuned d1/d2/d3 for the shallow
+    // nodes, then a quadratic move-count tail (2 + d + d*d) that continues the
+    // d1/d2/d3 trend exactly (4,8,14,22,32,44…) for the deepened range.
+    const int LMP_MAX_DEPTH = params.lmp_max_depth;
+    auto lmp_threshold_for = [&params = params](int d) noexcept -> int {
+        switch (d) {
+            case 1:  return params.lmp_d1;
+            case 2:  return params.lmp_d2;
+            case 3:  return params.lmp_d3;
+            default: return 2 + d + d * d;   // depths >= 4 (only when lmp_max_depth>3)
+        }
+    };
+    const bool is_pv_node = (beta - alpha) > 1;
+
+    // Forcing-move exemption (params.no_reduce_forcing) : a quiet move that
+    // leaves the opponent with ONLY captures is a sacrifice / combination
+    // starter — the reply is forced (FMJD majority-capture rule), so the line
+    // is deterministic and must not be reduced/pruned away. Ablation 0446
+    // isolated LMR+LMP as the mechanisms hiding such lines at fixed depth.
+    auto leaves_forced_capture = [&](const Position& child) -> bool {
+        return has_any_capture(child);   // capture-existence, no full movegen
+    };
+
+    int move_idx = 0;
+    // Quiet moves actually searched (for the history malus on a beta cutoff).
+    std::array<Move, 64> quiets_searched;
+    int n_quiets_searched = 0;
+    std::vector<Move> scan_moves_searched;
+    if (params.scan_probabilistic_ordering) scan_moves_searched.reserve(moves.size());
+    int scan_lmr_searched_index = 0;
+    for (const auto& m : moves) {
+        // LMP : skip late quiet moves at shallow non-PV nodes. When the
+        // improving heuristic is on and we are NOT improving, prune one step
+        // earlier (the position is already trending the wrong way).
+        int lmp_threshold = (depth >= 1 && depth <= LMP_MAX_DEPTH)
+                          ? lmp_threshold_for(depth) : 0;
+        if (params.use_improving && !improving && lmp_threshold > 0) {
+            lmp_threshold = (lmp_threshold + 1) / 2;
+        }
+        if (!is_pv_node
+            && depth >= 1 && depth <= LMP_MAX_DEPTH
+            && move_idx >= lmp_threshold
+            && !m.is_capture()
+            && !(eg && params.eg_no_lmp)   // endgame regime: don't prune late quiets
+            && best > -INF_SCORE / 2  // already have a real score → safe to skip
+            // forcing-move exemption: never LMP-prune a quiet sacrifice that
+            // forces the opponent to capture (combination starter). Also
+            // exempt under ext_forcing, else the extension is defeated by LMP
+            // pruning the move before it is searched.
+            && !((params.no_reduce_forcing || params.ext_forcing) && leaves_forced_capture(after_timed(pos, m)))) {
+            ++move_idx;
+            continue;
+        }
+        const Position next      = after_timed(pos, m);
+        push_accumulator(ply, pos, m, next);
+        // Record the move being played so the child node (ply+1) can
+        // consult it as `prev_move` for countermove ordering.
+        if (ply + 1 < static_cast<int>(move_played.size())) {
+            move_played[static_cast<std::size_t>(ply + 1)] = m;
+        }
+        const bool     is_tt     = tt_move_valid
+                                 && same_packed_move(m, tt_entry.best_move);
+        const int      promo_ext = (params.ext_promotion && m.promotes) ? 1 : 0;
+        // Forcing extension (gated): a quiet move that leaves the opponent only
+        // captures (sacrifice / combination starter) is searched one ply deeper
+        // so the forced sac->capture->regain line resolves to full effective
+        // depth regardless of the nominal horizon. `next` is the post-move
+        // position. Captures don't qualify (full depth already + qsearch
+        // resolves chains at the leaf). Default-off: the `params.ext_forcing &&`
+        // short-circuit keeps the default path byte-identical (no extra movegen).
+        // Cap: skip the extension once the path has accumulated forcing_ext_cap
+        // total extensions ((depth+ply)-root_depth_), bounding ultra-forcing blowups.
+        const bool     ext_cap_ok = params.forcing_ext_cap <= 0
+                                 || (depth + ply - root_depth_) < params.forcing_ext_cap;
+        const int      forcing_ext = (params.ext_forcing && ext_cap_ok && !m.is_capture()
+                                      && leaves_forced_capture(next)) ? 1 : 0;
+        // Single-reply extension (Scan, gated) : a node with exactly one legal move is
+        // searched +1 ply — branching factor 1 => zero width cost. Narrow, FREE version of
+        // ext_forcing. Cap the node's TOTAL extension at +1 (Scan) when this is on.
+        const int      single_reply_ext = (params.ext_single_reply && moves.size() == 1) ? 1 : 0;
+        int            node_ext = (singular_ext && is_tt ? 1 : 0)
+                                 + promo_ext + forcing_ext + single_reply_ext;
+        if (params.ext_single_reply && node_ext > 1) node_ext = 1;
+        if (node_ext > 0) {
+            ++extensions;
+            if (singular_ext && is_tt) ++singular_extensions;
+            if (promo_ext) ++promotion_extensions;
+            if (forcing_ext) ++forcing_extensions;
+            if (single_reply_ext) ++single_reply_extensions;
+        }
+        const int      new_depth = depth - 1 + node_ext;
+
+        int score;
+        const int semantic_move_idx = params.scan_lmr_semantics
+                                    ? scan_lmr_searched_index : move_idx;
+        const int lmr_first_reduced = params.scan_lmr_semantics
+                                    ? (is_pv_node ? 3 : 1)
+                                    : (is_pv_node ? params.lmr_first_full_pv
+                                                  : params.lmr_first_full_nonpv);
+        bool do_lmr = semantic_move_idx >= lmr_first_reduced
+                          && depth >= LMR_MIN_DEPTH
+                          && !is_tt
+                          && !m.is_capture()
+                          && (!params.scan_lmr_semantics || !m.promotes)
+                          && !(eg && params.eg_no_lmr)  // endgame regime: full-depth, no reductions
+                          && !singular_ext   // don't reduce when we just extended a singular line
+                          && !forcing_ext    // nor an extended forcing sacrifice (full extended depth)
+                          && single_reply_ext == 0
+                          && (!params.scan_lmr_semantics || node_ext == 0);
+        // Forcing-move exemption: don't reduce a quiet sacrifice that forces
+        // the opponent to capture (`next` is already the post-move position).
+        if (do_lmr && params.no_reduce_forcing && leaves_forced_capture(next))
+            do_lmr = false;
+        ++moves_searched;                       // DIAG #1 (passif : n'affecte pas la recherche)
+        if (params.scan_lmr_semantics) {
+            const int r = do_lmr
+                        ? lmr_reduction(depth, semantic_move_idx, move_history(m), is_pv_node)
+                        : 0;
+            if (r > 0) {
+                ++reductions;
+                reduced_plies += static_cast<std::uint64_t>(r);
+            }
+            // Frozen Scan 3.1 search_move(): scout non-first PV moves and all
+            // reduced moves; any fail-high gets one full-depth full-window
+            // re-search (there is no intermediate full-depth scout).
+            if ((is_pv_node && semantic_move_idx > 0) || r > 0) {
+                score = -negamax(next, new_depth - r, ply + 1, -alpha - 1, -alpha);
+                if (score > alpha) {
+                    if (r > 0) ++lmr_researches;
+                    score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+                }
+            } else {
+                score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+            }
+        } else if (params.use_pvs && move_idx > 0) {
+            // Principal Variation Search: once a PV move has raised alpha,
+            // scout the remaining moves with a zero-width window (optionally
+            // LMR-reduced). Only moves that beat alpha pay for an exact
+            // full-window re-search.
+            const int r = do_lmr ? lmr_reduction(depth, move_idx, move_history(m), is_pv_node) : 0;
+            if (r > 0) {
+                ++reductions;
+                reduced_plies += static_cast<std::uint64_t>(r);
+            }
+            score = -negamax(next, new_depth - r, ply + 1, -alpha - 1, -alpha);
+            if (score > alpha && r > 0) {
+                // The reduction alone may have caused the fail-high; verify
+                // at full depth with the same zero window before paying for
+                // a full-window search.
+                ++lmr_researches;
+                score = -negamax(next, new_depth, ply + 1, -alpha - 1, -alpha);
+            }
+            if (score > alpha && score < beta) {
+                // Genuine PV candidate — establish its exact score.
+                ++pvs_researches;               // DIAG #1
+                score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+            }
+        } else if (do_lmr) {
+            const int r = lmr_reduction(depth, move_idx, move_history(m), is_pv_node);
+            if (r > 0) {
+                ++reductions;
+                reduced_plies += static_cast<std::uint64_t>(r);
+            }
+            const int reduced = new_depth - r;
+            score = -negamax(next, reduced, ply + 1, -beta, -alpha);
+            if (score > alpha && score < beta) {
+                // Tail move surprised — re-search at full depth so its
+                // exact score is established before we accept it.
+                ++lmr_researches;
+                score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+            }
+        } else {
+            score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+        }
+
+        if (params.scan_probabilistic_ordering) scan_moves_searched.push_back(m);
+        if (params.scan_lmr_semantics) ++scan_lmr_searched_index;
+
+        // Record searched quiet moves so a later cutoff can malus the ones that
+        // were tried and failed (history malus). Captures are never tracked.
+        if (!m.is_capture() && n_quiets_searched < static_cast<int>(quiets_searched.size()))
+            quiets_searched[static_cast<std::size_t>(n_quiets_searched++)] = m;
+
+        if (score > best) {
+            best      = score;
+            best_move = m;
+        }
+        if (best > alpha) alpha = best;
+        if (alpha >= beta) {
+            ++cutoffs; if (move_idx == 0) ++first_move_cutoffs;   // DIAG #1
+            // Beta cutoff: reward the move that produced it. Captures aren't
+            // tracked because the legal-move generator already orders them
+            // implicitly (every legal move at a capture node has the same
+            // length under the FMJD majority rule).
+            if (!params.scan_probabilistic_ordering
+                && !m.is_capture() && ply <= MAX_PLY) {
+                if (!(m == killers[static_cast<std::size_t>(ply)][0])) {
+                    killers[static_cast<std::size_t>(ply)][1] = killers[static_cast<std::size_t>(ply)][0];
+                    killers[static_cast<std::size_t>(ply)][0] = m;
+                }
+                const int hbonus = depth * depth;
+                // History aging (gated) : gravity rule caps the table at
+                // ~history_max and decays large OLD cutoffs toward it, so stale
+                // history stops dominating the ordering. history_max=0 = legacy
+                // unbounded += bonus (byte-identical default).
+                {
+                    int& h = history[m.from][m.to];
+                    h += (params.history_max > 0)
+                       ? hbonus - h * hbonus / params.history_max
+                       : hbonus;
+                }
+                // History malus (opt-in) : penalise the quiet moves that were
+                // tried before this cutoff and failed, so they sink in the
+                // ordering. Same gravity rule, with a negative delta.
+                if (params.hist_malus > 0) {
+                    const int hmal = hbonus * params.hist_malus / 100;
+                    for (int qi = 0; qi < n_quiets_searched; ++qi) {
+                        const Move& qm = quiets_searched[static_cast<std::size_t>(qi)];
+                        if (qm == m) continue;  // the cutoff move got the bonus
+                        int& h = history[qm.from][qm.to];
+                        h += (params.history_max > 0)
+                           ? -hmal - h * hmal / params.history_max
+                           : -hmal;
+                    }
+                }
+                // Countermove : record `m` as the best response to the
+                // opponent's previous move (if any). Stored regardless
+                // of ply so siblings further up the tree also benefit.
+                if (prev_move.from != 0) {
+                    countermove
+                        [static_cast<std::size_t>(prev_move.from)]
+                        [static_cast<std::size_t>(prev_move.to)] = m;
+                    // Continuation history (1b) : same cutoff signal, keyed
+                    // by the opponent's landing square × this reply.
+                    if (params.use_conthist) {
+                        int& c = ch(prev_move.to, m.from, m.to);
+                        c += (params.history_max > 0)
+                           ? hbonus - c * hbonus / params.history_max
+                           : hbonus;
+                    }
+                }
+            }
+            break;
+        }
+        ++move_idx;
+    }
+
+    if (params.scan_probabilistic_ordering
+        && best > alpha_orig && moves.size() > 1 && !scan_moves_searched.empty()) {
+        int best_index = -1;
+        for (int i = 0; i < static_cast<int>(scan_moves_searched.size()); ++i) {
+            if (scan_moves_searched[static_cast<std::size_t>(i)] == best_move) {
+                best_index = i;
+                break;
+            }
+        }
+        if (best_index >= 0) {
+            constexpr int PROB_ONE = 4096;
+            constexpr int PROB_SHIFT = 5;
+            int& good = history[best_move.from][best_move.to];
+            good += (PROB_ONE - good) >> PROB_SHIFT;
+            ++ordering_good_updates;
+            for (int i = 0; i < best_index; ++i) {
+                const Move& failed = scan_moves_searched[static_cast<std::size_t>(i)];
+                int& bad = history[failed.from][failed.to];
+                bad -= bad >> PROB_SHIFT;
+                ++ordering_bad_updates;
+            }
+        }
+    }
+
+    { BD_TIME(path_check); hash_path.pop_back(); }
+
+    // 5. Store back into the TT — but only if the result is real. An
+    //    aborted search produced a placeholder score that would poison
+    //    the table.
+    if (!stopped) {
+        Bound bound;
+        if      (best >= beta)      bound = Bound::Lower;
+        else if (best > alpha_orig) bound = Bound::Exact;
+        else                        bound = Bound::Upper;
+
+        { BD_TIME(tt); tt->store(hash, pack_move(best_move),
+                                 score_to_tt(best, ply), depth, bound); }
+    }
+    return best;
+}
+
+}  // namespace
+
+std::vector<Move> extract_pv(const Position& start,
+                             const TranspositionTable& tt,
+                             int max_len) {
+    std::vector<Move> pv;
+    pv.reserve(static_cast<std::size_t>(max_len));
+
+    Position pos = start;
+    std::unordered_set<ZobristHash> seen;
+    seen.reserve(static_cast<std::size_t>(max_len));
+
+    while (static_cast<int>(pv.size()) < max_len) {
+        const ZobristHash h = zobrist_hash(pos);
+        if (!seen.insert(h).second) break;  // cycle
+
+        TTEntry e;
+        if (!tt.probe(h, e))            break;
+        if (e.bound() != Bound::Exact)  break;
+
+        // Defensive: confirm the stored move is still legal in the current
+        // position (a hash collision on a stale entry could otherwise have
+        // us emit nonsense). The TT only carries a `PackedMove`, so we
+        // also recover the full Move with its capture path here.
+        MoveList legal;
+        generate_legal_moves(pos, legal);
+        const Move* found = nullptr;
+        for (const auto& m : legal) {
+            if (same_packed_move(m, e.best_move)) { found = &m; break; }
+        }
+        if (!found) break;
+
+        pv.push_back(*found);
+        pos = pos.after(*found);
+    }
+    return pv;
+}
+
+SearchResult search(const Position& pos, const SearchLimits& limits) {
+    TranspositionTable tt;
+    tt.resize_mb(limits.tt_mb);
+    return search(pos, limits, tt, {});
+}
+
+SearchResult search(const Position& pos, const SearchLimits& limits,
+                    TranspositionTable& tt) {
+    return search(pos, limits, tt, {});
+}
+
+namespace {
+
+// Aspiration windows: from depth 3 onward we frame the next search with a
+// narrow window centred on the previous iteration's score, then widen
+// progressively on every fail-high or fail-low until the search returns a
+// score inside the window. Saves nodes when iteration-to-iteration scores
+// barely move, which is the common case in quiet positions. The initial
+// half-width is tunable via SearchParams::aspiration_initial.
+
+}  // namespace
+
+SearchResult search(const Position& pos, const SearchLimits& limits,
+                    TranspositionTable& tt,
+                    const std::vector<ZobristHash>& game_history) {
+    SearchResult res;
+    breakdown_reset();
+    if (limits.depth_one_trace) {
+        *limits.depth_one_trace = DepthOneSearchTrace{};
+        limits.depth_one_trace->leaf_evals.reserve(
+            DepthOneSearchTrace::MAX_LEAF_EVALS);
+    }
+
+    // One-time bootstrap of the external endgame DB (Kingsrow egdb_intl) from
+    // JASS_EGDB_PATH. No-op (and free thereafter) in the default build; here
+    // rather than per-node so probe_endgame's gate stays a single atomic load.
+    egdb::ensure_initialised();
+
+    // Bump the TT generation so entries written during this search are
+    // protected from being clobbered by stale data left over from
+    // previous moves of the same game (the engine keeps the TT alive
+    // across `apply_move`). Old-generation entries become preferred
+    // replacement targets without losing their probe usefulness.
+    tt.new_search();
+
+    // A drawn root scores 0, but it is NOT terminal and must still yield a
+    // move: 2-fold is only the engine's internal simplification (the game
+    // needs 3-fold), and even at the 50-ply threshold the caller adjudicates,
+    // not us. These two checks used to `return res` before a move was ever
+    // picked, so the HUB emitted `bestmove 0-0` — which every HUB client reads
+    // as "no legal move", i.e. a resignation. Against an opponent that does no
+    // such thing it lost the game outright: it is what collapsed every
+    // Jass-vs-Scan cell of home-0997/0998/0999, on both colours and on every
+    // model. The tablebase branch was fixed in 5f5a7e7b; these are the same
+    // bug and fire far more often. The score is therefore forced to 0 AFTER
+    // the search rather than instead of it.
+    const ZobristHash root_hash = zobrist_hash(pos);
+    bool root_is_drawn = pos.halfmove_clock() >= FIFTY_MOVE_PLIES;
+    for (auto h : game_history) {
+        if (h == root_hash) { root_is_drawn = true; break; }
+    }
+
+    MoveList root_moves;
+    gen_moves(pos, root_moves);
+    if (root_moves.empty()) {
+        res.score = -MATE_SCORE;
+        return res;
+    }
+
+    Searcher s;
+    s.tt        = &tt;
+    s.params    = limits.params;
+    if (s.params.scan_probabilistic_ordering) {
+        for (auto& from : s.history) from.fill(2048);
+    }
+    s.hash_path = game_history;
+    s.hash_path.push_back(root_hash);  // root is an ancestor for its children
+    s.stop_flag = limits.stop_flag;
+    s.nnue      = limits.nnue;
+    s.t3_f6_nnue = dynamic_cast<const t3_f6::Network*>(limits.nnue);
+    s.depth_one_trace = limits.depth_one_trace;
+    const INetwork* accumulator_base = s.t3_f6_nnue
+        ? s.t3_f6_nnue->base_network() : limits.nnue;
+    // Activate the accumulator fast path when the supplied INetwork is
+    // the quantised MLP. Other concrete types (LinearNetwork, the
+    // float MLPNetwork) fall through to the generic
+    // `nnue->evaluate(pos)` slow path.
+    s.mlpq_nnue = dynamic_cast<const MLPNetworkQ*>(accumulator_base);
+    if (s.mlpq_nnue) {
+        s.accumulators[0].refresh_from(pos, *s.mlpq_nnue);
+    }
+    // Same fast path for the Scan/pattern eval (v3/v4). `JASS_NO_SCAN_ACC`
+    // forces the recompute path (extract_all every leaf) for A/B benchmarking.
+    static const bool scan_acc_off = std::getenv("JASS_NO_SCAN_ACC") != nullptr;
+    s.scan_nnue = scan_acc_off
+        ? nullptr
+        : dynamic_cast<const scan_eval::ScanEvalNetwork*>(accumulator_base);
+    if (s.scan_nnue) {
+        s.scan_accs[0].refresh_from(pos);
+    }
+    if (limits.movetime_ms > 0) {
+        s.has_deadline = true;
+        s.deadline = std::chrono::steady_clock::now()
+                   + std::chrono::milliseconds(limits.movetime_ms);
+    }
+    s.max_nodes = limits.max_nodes;
+    s.node_limit_mode = limits.node_limit_mode;
+
+    // ---------------------------------------------------------------------
+    // Lazy SMP fan-out
+    // ---------------------------------------------------------------------
+    // Helper threads run an independent single-threaded `search` against
+    // the same shared `tt`. They never report a result; their job is to
+    // keep transposition entries flowing in for the main search. The TT
+    // is accessed without locks: races may yield the occasional stale
+    // entry but the search is self-correcting (move-legality is verified
+    // on use, scores are merely hints).
+    std::atomic<bool>          helper_stop{false};
+    std::vector<std::thread>   helpers;
+    if (limits.threads > 1) {
+        helpers.reserve(static_cast<std::size_t>(limits.threads - 1));
+        const INetwork* nnue_for_helpers = limits.nnue;
+        const SearchParams params_for_helpers = limits.params;
+        for (int i = 1; i < limits.threads; ++i) {
+            helpers.emplace_back([&pos, &game_history, &tt, &helper_stop,
+                                  max_depth = limits.max_depth,
+                                  max_nodes = limits.max_nodes,
+                                  node_limit_mode = limits.node_limit_mode,
+                                  nnue_for_helpers, params_for_helpers]() {
+                SearchLimits hlim;
+                hlim.max_depth = max_depth;
+                hlim.max_nodes = max_nodes;  // helpers respect the same node cap
+                hlim.node_limit_mode = node_limit_mode;
+                hlim.stop_flag = &helper_stop;
+                hlim.threads   = 1;  // critical: helpers must not fork further
+                hlim.nnue      = nnue_for_helpers;
+                hlim.params    = params_for_helpers;
+                (void)::jass::search(pos, hlim, tt, game_history);
+            });
+        }
+    }
+    auto stop_helpers = [&]() {
+        helper_stop.store(true, std::memory_order_relaxed);
+        for (auto& t : helpers) if (t.joinable()) t.join();
+    };
+
+    Move best_overall = root_moves[0];
+    int  best_score   = -INF_SCORE;
+
+    // Recent score history (max 4 last iterations), used for *adaptive*
+    // aspiration: the next iteration's initial window width adapts to
+    // the volatility of the last few iteration scores.
+    std::vector<int> score_history;
+    int root_trace_attempt = 0;
+    std::uint64_t root_order_applications = 0;
+    std::uint64_t root_order_failures = 0;
+
+    // One iteration of the root loop, run inside the aspiration retry loop
+    // below. Returns (best move, best score) found within [alpha, beta].
+    auto run_root_window = [&](int depth, int alpha, int beta)
+        -> std::pair<Move, int> {
+        const RootOrderStatus order_status = apply_root_order(
+            root_moves, limits.root_order_schedule, depth
+        );
+        if (order_status == RootOrderStatus::Applied) {
+            ++root_order_applications;
+        } else if (order_status == RootOrderStatus::Invalid) {
+            ++root_order_failures;
+        }
+        Move iter_best  = root_moves[0];
+        int  iter_score = -INF_SCORE;
+        int  cur_alpha  = alpha;
+        const int trace_attempt = ++root_trace_attempt;
+        int trace_index = 0;
+        s.root_depth_   = depth;   // baseline for the forcing-extension accumulation cap
+        if (root_trace_enabled()) {
+            std::ostringstream line;
+            line << "event=begin depth=" << depth
+                 << " attempt=" << trace_attempt
+                 << " alpha=" << alpha
+                 << " beta=" << beta
+                 << " moves=" << root_moves.size();
+            emit_root_trace(line.str());
+        }
+
+        for (const auto& m : root_moves) {
+            if (s.stopped) break;
+            ++trace_index;
+            const int alpha_before = cur_alpha;
+            DepthOneMoveTrace* move_trace = nullptr;
+            if (s.depth_one_trace && depth == 1) {
+                s.depth_one_trace->moves.emplace_back();
+                move_trace = &s.depth_one_trace->moves.back();
+                move_trace->move = m;
+                move_trace->alpha_before = alpha_before;
+                move_trace->beta = beta;
+                move_trace->child_depth = depth - 1;
+                move_trace->nodes_before = s.nodes;
+                move_trace->eval_calls_before = s.eval_calls;
+                s.active_depth_one_move = move_trace;
+            }
+            const Position next  = after_timed(pos, m);
+            s.push_accumulator(0, pos, m, next);
+            const int      score = -s.negamax(next, depth - 1, 1,
+                                              -beta, -cur_alpha);
+            if (move_trace) {
+                move_trace->child_return = -score;
+                move_trace->root_negated_return = score;
+                move_trace->nodes_after = s.nodes;
+                move_trace->eval_calls_after = s.eval_calls;
+                if (move_trace->first_resolution_stage.empty())
+                    move_trace->first_resolution_stage = "negamax_return_unclassified";
+                s.active_depth_one_move = nullptr;
+            }
+            if (score > iter_score) {
+                iter_score = score;
+                iter_best  = m;
+            }
+            if (iter_score > cur_alpha) cur_alpha = iter_score;
+            if (root_trace_enabled()) {
+                std::ostringstream line;
+                line << "event=move depth=" << depth
+                     << " attempt=" << trace_attempt
+                     << " index=" << trace_index
+                     << " move=" << root_trace_move(m)
+                     << " alpha_before=" << alpha_before
+                     << " beta=" << beta
+                     << " score=" << score
+                     << " best=" << iter_score
+                     << " cutoff=" << (cur_alpha >= beta ? 1 : 0);
+                emit_root_trace(line.str());
+            }
+            if (cur_alpha >= beta) break;  // beta cut-off (narrow window)
+        }
+        if (root_trace_enabled()) {
+            std::ostringstream line;
+            line << "event=end depth=" << depth
+                 << " attempt=" << trace_attempt
+                 << " searched=" << trace_index
+                 << " bestmove=" << root_trace_move(iter_best)
+                 << " score=" << iter_score
+                 << " nodes=" << s.nodes
+                 << " alpha=" << alpha
+                 << " beta=" << beta
+                 << " complete=" << (!s.stopped && cur_alpha < beta ? 1 : 0);
+            emit_root_trace(line.str());
+        }
+        return {iter_best, iter_score};
+    };
+
+    for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        root_trace_attempt = 0;
+        // Honour an early stop request before spending any work on this
+        // iteration. The previous iteration's `best_overall` is returned.
+        if (depth > 1 && s.check_stop()) break;
+
+        // Time-management iteration skip: when running under a deadline,
+        // estimate whether the next iteration has any chance of finishing
+        // before we'd be stopped mid-search. Iteration times in iterative
+        // deepening with TT typically grow ~1.5-3x per ply for draughts;
+        // we use 2x as a conservative midpoint. If the previous iteration
+        // already consumed more than half the remaining budget, skip the
+        // next one and keep the deeper-than-required result we have.
+        //
+        // Threshold tuned to fire only at depth >= 4 because shallow
+        // iterations are too noisy to extrapolate from (single-ply timing
+        // is dominated by overhead, not real work).
+        if (s.has_deadline && depth >= s.params.tm_min_depth) {
+            const auto now      = std::chrono::steady_clock::now();
+            if (now >= s.deadline) break;
+            const auto remaining = std::chrono::duration_cast<
+                std::chrono::milliseconds>(s.deadline - now).count();
+            const auto last_iter = std::chrono::duration_cast<
+                std::chrono::milliseconds>(now - s.iter_started_at).count();
+            // Projected next-iteration cost = last_iter × tm_next_iter_pct/100.
+            // If even half of that exceeds the remaining time, the next
+            // iteration would be aborted mid-flight (wasted work). The factor
+            // is tunable because a fast eval's high-depth branching factor
+            // differs from the NNUE regime these were set for.
+            const auto projected = last_iter * s.params.tm_next_iter_pct / 100;
+            if (last_iter > 0 && projected > remaining) break;
+        }
+        s.iter_started_at = std::chrono::steady_clock::now();
+        res.effective_depth = depth;
+
+        if (depth > 1) hoist_move(root_moves, best_overall);
+
+        // Pick the initial [alpha, beta] window. Shallow depths and any
+        // iteration following a mate score fall back to the full window
+        // because narrow aspiration is unhelpful there.  When we do use a
+        // narrow window, its half-width adapts to the largest absolute
+        // score swing across the recent iterations: if scores have been
+        // stable, we open a tight window; if they've been jumpy, we
+        // pre-emptively widen it.
+        int alpha, beta, delta;
+        if (depth < 3 || is_mate_score(best_score)) {
+            alpha = -INF_SCORE;
+            beta  =  INF_SCORE;
+            delta =  INF_SCORE;
+        } else {
+            int volatility = 0;
+            for (std::size_t i = 1; i < score_history.size(); ++i) {
+                const int diff = std::abs(score_history[i] - score_history[i - 1]);
+                if (diff > volatility) volatility = diff;
+            }
+            delta = std::max(s.params.aspiration_initial, 2 * volatility);
+            alpha = best_score - delta;
+            beta  = best_score + delta;
+        }
+
+        Move iter_best;
+        int  iter_score = 0;
+        while (true) {
+            std::tie(iter_best, iter_score) = run_root_window(depth, alpha, beta);
+            if (s.stopped) break;  // discard incomplete window
+
+            if (iter_score <= alpha && alpha > -INF_SCORE) {
+                alpha = std::max(alpha - delta, -INF_SCORE);
+                if (delta < INF_SCORE / 2) delta *= 2;
+                continue;
+            }
+            if (iter_score >= beta && beta < INF_SCORE) {
+                beta = std::min(beta + delta, INF_SCORE);
+                if (delta < INF_SCORE / 2) delta *= 2;
+                continue;
+            }
+            break;
+        }
+
+        // Discard any iteration that didn't finish; the previous
+        // `best_overall` / `best_score` / `res.depth` remain in effect.
+        const bool discard_exact_node_iteration =
+            s.stop_reason == SearchStopReason::Nodes
+            && s.node_limit_mode == NodeLimitMode::Exact;
+        if (s.stopped && (discard_exact_node_iteration || depth > 1)) {
+            break;
+        }
+
+        best_overall = iter_best;
+        best_score   = iter_score;
+        res.depth    = depth;
+        res.completed_depth = depth;
+
+        tt.store(root_hash, pack_move(iter_best),
+                 score_to_tt(iter_score, /*ply=*/0),
+                 depth, Bound::Exact);
+
+        // Track recent scores for the adaptive-aspiration heuristic above.
+        score_history.push_back(iter_score);
+        constexpr std::size_t HISTORY_LEN = 4;
+        if (score_history.size() > HISTORY_LEN) {
+            score_history.erase(score_history.begin());
+        }
+    }
+
+    stop_helpers();
+
+    res.best_move = best_overall;
+    // A tiny node budget can interrupt depth 1 before any complete result is
+    // available. Return the legal root fallback with a neutral score instead
+    // of leaking a partial iteration. Time/external limits retain their
+    // historical first-iteration convention for backward compatibility.
+    if (res.completed_depth == 0
+        && s.stop_reason == SearchStopReason::Nodes
+        && s.node_limit_mode == NodeLimitMode::Exact) {
+        best_score = 0;
+    }
+    // The move comes from the search; the score comes from the rules.
+    res.score     = root_is_drawn ? 0 : best_score;
+    res.nodes     = s.nodes;
+    res.aborted_iteration = s.stopped
+                         && res.effective_depth > res.completed_depth;
+    res.stop_reason = s.stop_reason;
+    res.cutoffs            = s.cutoffs;
+    res.first_move_cutoffs = s.first_move_cutoffs;
+    res.pvs_researches     = s.pvs_researches;
+    res.moves_searched     = s.moves_searched;
+    res.eval_calls         = s.eval_calls;
+    res.qsearch_calls      = s.qsearch_calls;
+    res.qnodes             = s.qnodes;
+    res.tt_probes          = s.tt_probes;
+    res.tt_hits            = s.tt_hits;
+    res.reductions         = s.reductions;
+    res.reduced_plies      = s.reduced_plies;
+    res.lmr_researches     = s.lmr_researches;
+    res.extensions         = s.extensions;
+    res.singular_extensions = s.singular_extensions;
+    res.promotion_extensions = s.promotion_extensions;
+    res.forcing_extensions = s.forcing_extensions;
+    res.single_reply_extensions = s.single_reply_extensions;
+    res.null_probes        = s.null_probes;
+    res.null_cutoffs       = s.null_cutoffs;
+    res.ordering_good_updates = s.ordering_good_updates;
+    res.ordering_bad_updates = s.ordering_bad_updates;
+    res.scan_verify_probes = s.scan_verify_probes;
+    res.scan_verify_cutoffs = s.scan_verify_cutoffs;
+    res.scan_threat_reentries = s.scan_threat_reentries;
+    res.root_order_applications = root_order_applications;
+    res.root_order_failures = root_order_failures;
+    res.pv        = extract_pv(pos, tt, std::max(res.depth, 1));
+    return res;
+}
+
+}  // namespace jass
