@@ -97,6 +97,7 @@ def build_manifest(code_sha: str, evaluator_sha: str) -> dict[str, object]:
         "strength_games": 0,
         "bake": False,
         "promotion": False,
+        "promotion_authorized": False,
     }
 
 
@@ -117,4 +118,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
