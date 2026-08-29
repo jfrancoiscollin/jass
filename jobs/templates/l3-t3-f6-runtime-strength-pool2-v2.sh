@@ -10,6 +10,7 @@ CAMPAIGN="${T3_F6_RUNTIME_CAMPAIGN:-v2}"
 case "$CAMPAIGN" in
   v2) source jobs/templates/t3-f6-runtime-exclusions-v2.sh ;;
   v3) source jobs/templates/t3-f6-runtime-exclusions-v3.sh ;;
+  v4) source jobs/templates/t3-f6-runtime-exclusions-v4.sh ;;
   *) echo "unsupported runtime campaign: $CAMPAIGN" >&2; exit 2 ;;
 esac
 
@@ -51,8 +52,10 @@ trap 'exit 143' TERM; trap 'exit 130' INT
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
 if [ "$CAMPAIGN" = v2 ]; then
   [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-t3-f6-runtime-strength-pool2-v2$ ]] || die "job nomenclature drift"
-else
+elif [ "$CAMPAIGN" = v3 ]; then
   [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-t3-f6-runtime-strength-pool2-v3$ ]] || die "v3 job nomenclature drift"
+else
+  [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-t3-f6-runtime-strength-pool2-v4$ ]] || die "v4 job nomenclature drift"
 fi
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ] || die "dirty/non-detached job worktree"
@@ -69,12 +72,17 @@ python3 -m py_compile jobs/tools/t3_f6_force_pool_select.py jobs/tools/t3_f6_str
 "$PY" -m unittest jobs.tests.test_t3_f6_runtime_protocol \
   jobs.tests.test_t3_f6_runtime_v2_protocol >"$W/python-tests.log" 2>&1
 [ "$CAMPAIGN" = v2 ] || "$PY" -m unittest jobs.tests.test_t3_f6_runtime_v3_protocol >>"$W/python-tests.log" 2>&1
+[ "$CAMPAIGN" != v4 ] || "$PY" -m unittest jobs.tests.test_t3_f6_runtime_v4_protocol >>"$W/python-tests.log" 2>&1
 
 stage fetch-authenticate-positive-pool1
 EXTRA_P1_FILES=()
 [ "$CAMPAIGN" = v2 ] || EXTRA_P1_FILES+=(
   --file artefacts/r0-v2-corpus.fen=r0-v2-corpus.fen
   --file artefacts/autopsy-exclusions.fen=autopsy-exclusions.fen)
+[ "$CAMPAIGN" != v4 ] || EXTRA_P1_FILES+=(
+  --file artefacts/r0-v3-mechanics.tsv=r0-v3-mechanics.tsv
+  --file artefacts/scan-parents.tsv=scan-parents.tsv
+  --file artefacts/scan-siblings.tsv=scan-siblings.tsv)
 python3 jobs/tools/fetch_result_files.py --prefix "$POOL1_RESULT_PREFIX" \
   --file artefacts/JASS_CONTROL_SUMMARY.json=pool1-summary.json \
   --file artefacts/jass-t3-f6-force.gz=jass-t3-f6-force.gz \
@@ -113,6 +121,7 @@ EGDIR=""; for dir in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted
 export JASS_EGDB_PATH="$EGDIR" JASS_EGDB_CACHE_MB="$CACHE_MB"
 IDENTITY_ARGS=(); FORCE_ARGS=(--exclude-fen "$IN/r0-corpus.fen" --exclude-fen "$IN/r0-v1-corpus.fen" --exclude-fen "$IN/pool1-openings.fen"); IDENTITY_COUNT=0; FORCE_COUNT=0
 [ "$CAMPAIGN" = v2 ] || FORCE_ARGS+=(--exclude-fen "$IN/r0-v2-corpus.fen" --exclude-fen "$IN/autopsy-exclusions.fen")
+[ "$CAMPAIGN" != v4 ] || IDENTITY_ARGS+=(--exclude-tsv "$IN/r0-v3-mechanics.tsv" --exclude-tsv "$IN/scan-parents.tsv" --exclude-tsv "$IN/scan-siblings.tsv")
 while IFS='|' read -r label prefix remote_path; do [ -n "${label:-}" ] || continue
   python3 jobs/tools/fetch_result_files.py --prefix "$prefix" --file "$remote_path=$label.tsv.gz" --out-dir "$IN" --report "$ART/verified-identity-$label.json" >"$W/fetch-identity-$label.log" 2>&1 || die "identity exclusion fetch failed: $label"
   IDENTITY_ARGS+=(--exclude-tsv "$IN/$label.tsv.gz"); IDENTITY_COUNT=$((IDENTITY_COUNT+1)); done <<<"$T3_F6_IDENTITY_EXCLUDE_SPECS"
@@ -163,6 +172,7 @@ cp "$IN/jass-t3-f6-force.gz" "$ART/jass-t3-f6-force.gz"; cp "$IN/t3-a-f6-only.js
 cp "$IN/curriculum.pjtw" "$ART/curriculum.pjtw"; cp "$IN/r0-summary.json" "$ART/r0-summary.json"
 cp "$IN/r0-corpus.fen" "$ART/r0-corpus.fen"; cp "$IN/r0-v1-corpus.fen" "$ART/r0-v1-corpus.fen"
 [ "$CAMPAIGN" = v2 ] || { cp "$IN/r0-v2-corpus.fen" "$ART/r0-v2-corpus.fen"; cp "$IN/autopsy-exclusions.fen" "$ART/autopsy-exclusions.fen"; }
+[ "$CAMPAIGN" != v4 ] || { cp "$IN/r0-v3-mechanics.tsv" "$ART/r0-v3-mechanics.tsv"; cp "$IN/scan-parents.tsv" "$ART/scan-parents.tsv"; cp "$IN/scan-siblings.tsv" "$ART/scan-siblings.tsv"; }
 cp "$IN/pool1-openings.fen" "$ART/pool1-openings.fen"; cp "$IN/pool1-provenance.json" "$ART/pool1-provenance.json"
 cp "$IN/pool1-native.json" "$FORCE/pool1-native.json"
 : >"$ART/VERDICT__$VERDICT"; : >"$ART/GAMES_TOTAL__12000"; : >"$ART/Q00_GAMES__0"

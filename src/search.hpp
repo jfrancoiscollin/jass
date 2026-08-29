@@ -181,6 +181,17 @@ struct SearchResult {
     std::uint64_t     scan_verify_probes{0};
     std::uint64_t     scan_verify_cutoffs{0};
     std::uint64_t     scan_threat_reentries{0};
+    // Passive deterministic V4 plumbing counters. They are maintained for
+    // every search arm and never participate in a search decision.
+    std::uint64_t     qnodes{0};
+    std::uint64_t     qsearch_calls{0};
+    std::uint64_t     tablebase_probes{0};
+    std::uint64_t     tablebase_hits{0};
+    std::uint64_t     tt_probes{0};
+    std::uint64_t     tt_hits{0};
+    std::uint64_t     terminal_hits{0};
+    std::uint64_t     reductions{0};
+    std::uint64_t     extensions{0};
     std::uint64_t     root_order_applications{0};
     std::uint64_t     root_order_failures{0};
     // Principal variation: the line of play the engine expects from this

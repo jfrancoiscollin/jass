@@ -202,17 +202,22 @@ int main(int argc, char** argv) {
         }
         const bool v3_relative_only = argc == 7
             && std::string_view(argv[6]) == "--v3-relative-only";
-        if (argc != 6 && !v3_relative_only) {
+        const bool v4_relative_only = argc == 7
+            && std::string_view(argv[6]) == "--v4-relative-only";
+        const bool relative_only = v3_relative_only || v4_relative_only;
+        if (argc != 6 && !relative_only) {
             std::cerr << "usage: t3_f6_relative_probe <corpus.fen> <curriculum.pjtw> "
                          "<t3.json> <report.json> <permutation-seed> "
-                         "[--v3-relative-only]\n";
+                         "[--v3-relative-only|--v4-relative-only]\n";
             return 2;
         }
         const std::uint64_t seed = std::stoull(argv[5]);
-        if ((!v3_relative_only && seed != 2026091703ULL)
-            || (v3_relative_only && seed != 2026092103ULL))
-            throw std::runtime_error(v3_relative_only
-                ? "R0-v3 permutation seed drift" : "R0-v2 permutation seed drift");
+        if ((!relative_only && seed != 2026091703ULL)
+            || (v3_relative_only && seed != 2026092103ULL)
+            || (v4_relative_only && seed != 2026092503ULL))
+            throw std::runtime_error(v4_relative_only ? "R0-v4 permutation seed drift"
+                : v3_relative_only ? "R0-v3 permutation seed drift"
+                                   : "R0-v2 permutation seed drift");
         const auto positions = read_positions(argv[1]);
         std::map<std::string, std::size_t> phase_counts;
         for (const auto& p : positions) ++phase_counts[phase(p)];
@@ -337,7 +342,7 @@ int main(int argc, char** argv) {
         bool tablebase_precedence = false;
         bool egdb_available = false;
         int negamax_depth1_score = 0;
-        if (!v3_relative_only && gate1 && gate2 && gate3) {
+        if (!relative_only && gate1 && gate2 && gate3) {
             const jass::Position root = jass::Position::start_position();
             jass::MoveList moves;
             jass::generate_legal_moves(root, moves);
@@ -393,12 +398,16 @@ int main(int argc, char** argv) {
                 && tb_off.score == tb_on.score
                 && tb_off.eval_calls == 0 && tb_on.eval_calls == 0;
         }
-        const bool gate4 = !v3_relative_only
+        const bool gate4 = !relative_only
             && negamax_ok && terminal_precedence && tablebase_precedence;
         const bool passed = gate1 && gate2 && gate3
-            && (v3_relative_only || gate4);
-        const char* verdict = v3_relative_only
-            ? (passed ? "R0_V3_RELATIVE_PROBE_PASS"
+            && (relative_only || gate4);
+        const char* verdict = relative_only
+            ? (passed ? (v4_relative_only ? "R0_V4_RELATIVE_PROBE_PASS"
+                                          : "R0_V3_RELATIVE_PROBE_PASS")
+                : v4_relative_only && !gate1 ? "R0_V4_POSITION_CONTRACT_FAILED"
+                : v4_relative_only && !gate2 ? "R0_V4_F6_RESIDUAL_INVARIANCE_FAILED"
+                : v4_relative_only ? "R0_V4_RELATIVE_DRIFT_FAILED"
                 : !gate1 ? "R0_V3_POSITION_CONTRACT_FAILED"
                 : !gate2 ? "R0_V3_F6_RESIDUAL_INVARIANCE_FAILED"
                 : "R0_V3_RELATIVE_DRIFT_FAILED")
@@ -414,7 +423,7 @@ int main(int argc, char** argv) {
         if (!out) throw std::runtime_error("cannot create relative report");
         out << std::setprecision(17)
             << "{\n  \"schema\": \"jass.t3_f6_relative_contract."
-            << (v3_relative_only ? "v3" : "v2") << "\",\n"
+            << (v4_relative_only ? "v4" : v3_relative_only ? "v3" : "v2") << "\",\n"
             << "  \"passed\": " << (passed ? "true" : "false") << ",\n"
             << "  \"verdict\": \"" << verdict << "\",\n"
             << "  \"positions\": " << positions.size() << ",\n"
@@ -442,7 +451,7 @@ int main(int argc, char** argv) {
         write_stats(out, t3_stats);
         out << ",\n  \"saturations\": " << saturations << ",\n"
             << "  \"legacy_gate4_executed\": "
-            << (!v3_relative_only ? "true" : "false") << ",\n"
+            << (!relative_only ? "true" : "false") << ",\n"
             << "  \"gate4_negamax_terminal_tb\": " << (gate4 ? "true" : "false") << ",\n"
             << "  \"negamax_single_inversion\": " << (negamax_ok ? "true" : "false") << ",\n"
             << "  \"negamax_depth1_score\": " << negamax_depth1_score << ",\n"

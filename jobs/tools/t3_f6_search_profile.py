@@ -180,7 +180,7 @@ def main() -> int:
     parser.add_argument("--order-seed", type=int, default=2026090904)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    if args.order_seed not in (2026090904, 2026091704, 2026092104):
+    if args.order_seed not in (2026090904, 2026091704, 2026092104, 2026092505):
         parser.error("R0 benchmark order seed drift")
     report = run(args)
     args.out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
