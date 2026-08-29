@@ -1,9 +1,9 @@
 # L3 — Teacher distillation roadmap
 
 > **Mis à jour : 29 août 2026**
-> **Statut : campagne T3 deep-fresh terminée. Aucun next stage autorisé.**
+> **Statut : campagne runtime T3-A terminale en R0. Aucun gate de force autorisé.**
 >
-> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md), merge `17a80ac8ca83cc1fc098a95ef6c0d5613ca9f5cb`.
+> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). [Protocole runtime](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_20260829.md) et [résultat terminal R0](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -141,16 +141,26 @@ Q1, T2 fresh, RF1 fresh et T3 fresh restent des cohorts consommés selon leurs c
 
 ---
 
-## 8. Frontière de la roadmap
+## 8. Frontière runtime atteinte
 
-T3 établit un résultat offline de ranking sibling. Il ne prouve pas qu'un artefact est un leaf evaluator transposition-invariant, qu'il accélère la recherche ou qu'il gagne des Elo.
+La campagne runtime séparée a implémenté T3-A comme leaf evaluator natif dormant,
+fail-closed et activable uniquement par artefact explicite. R0 a passé les
+contrôles parent/chemin/siblings, transposition explicite, TT/search state,
+q-score/WDL et l'égalité couleur de F6/résiduel. Il s'est arrêté au premier
+assert négatif : `colour-image T0 drift`.
 
-Une éventuelle suite future devrait être une campagne séparée avec nouvelle preregistration et nouvelles données. Deux questions resteraient alors ouvertes, sans être autorisées par ce document :
+Verdict terminal :
 
-1. comment transformer le signal F6 transféré en composant de production transposition-invariant ;
-2. pourquoi le scalaire D1 dégrade le pairwise du bras joint alors que D1 seul porte un signal fort.
+```text
+R0_PRODUCTION_LEAF_CONTRACT_NOT_ESTABLISHED
+FROZEN_CURRICULUM_FAILS_PREREGISTERED_COLOUR_IMAGE_EXACTNESS
+```
 
-Ces questions ne déclenchent aucun job dans la campagne présente.
+Comme `T3 = T0 - residual_F6` et que le résiduel est exact sous l'image, T3-A
+hérite du drift de CURRICULUM. Le protocole interdit donc Pool1/Pool2 ; il ne
+prouve ni ne réfute un gain Elo. Une règle de symétrie relative au baseline, de
+nouveaux bytes CURRICULUM ou un autre contrat exigeraient une nouvelle
+preregistration. Aucun de ces changements n'est autorisé après le résultat R0.
 
 ---
 
@@ -160,7 +170,7 @@ Ces questions ne déclenchent aucun job dans la campagne présente.
 2. `F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE` est le verdict scientifique terminal T3.
 3. Aucune métrique secondaire ne transforme B−A en PASS.
 4. Aucun retune ni nouveau fresh T3 n'est autorisé.
-5. Aucun runtime, Elo, strength, selfplay, bake ou promotion n'a été exécuté ou autorisé.
+5. Le runtime n'a été exercé qu'en contrat R0 target-blind ; aucune partie Elo, strength ou Q00, aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
 6. `next_stage = null` pour cette campagne.
 
-La roadmap T3 s'arrête au verdict deep-fresh.
+La roadmap T3 runtime s'arrête au verdict R0.
