@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import re
 import struct
 import tempfile
 import unittest
@@ -354,6 +355,14 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
             text = (ROOT / "jobs/templates" / template).read_text(encoding="utf-8")
             self.assertIn('${FROZEN_COHORT_CODE_SHA:?}', text)
             self.assertIn("'frozen_cohort_code_sha'", text)
+        for template in (
+            "l3-scan-ceiling-jass-score-v1.sh",
+            "l3-scan-ceiling-scan-score-v1.sh",
+        ):
+            text = (ROOT / "jobs/templates" / template).read_text(encoding="utf-8")
+            self.assertIn('${SCORE_RESUME_CODE_SHA:?required with SCORE_RESUME_PREFIX}', text)
+            self.assertIn('${SCORE_RUNTIME_TIMEOUT_MULTIPLIER:-3}', text)
+            self.assertIn("jass.scan_ceiling_runtime_timeout_policy.v1", text)
         readout = (ROOT / "jobs/templates/l3-scan-ceiling-readout-v1.sh").read_text(
             encoding="utf-8",
         )
@@ -364,6 +373,17 @@ class ScanCeilingBenchmarkTest(unittest.TestCase):
         ):
             self.assertIn('${' + variable + ':?}', readout)
         self.assertIn("jass.scan_ceiling_code_provenance.v1", readout)
+
+    def test_scan_ceiling_template_python_heredocs_compile(self):
+        for template in (
+            "l3-scan-ceiling-static-v1.sh", "l3-scan-ceiling-jass-score-v1.sh",
+            "l3-scan-ceiling-scan-score-v1.sh", "l3-scan-ceiling-readout-v1.sh",
+        ):
+            text = (ROOT / "jobs/templates" / template).read_text(encoding="utf-8")
+            blocks = re.findall(r"<<'(?P<tag>PY[A-Z0-9_]*)'\n(?P<body>.*?)\n(?P=tag)", text, re.S)
+            self.assertTrue(blocks, template)
+            for tag, body in blocks:
+                compile(body, f"{template}:{tag}", "exec")
 
     def test_shard_timeouts_are_rate_derived_and_exact_rows_are_excluded(self):
         preflight = {
