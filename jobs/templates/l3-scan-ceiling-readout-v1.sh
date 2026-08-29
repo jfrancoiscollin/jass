@@ -4,6 +4,9 @@ set -Eeuo pipefail
 
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 : "${JASS_JOB_ID:?}"; : "${EXPECTED_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"; : "${EXPECTED_HOST:?}"
+: "${FROZEN_COHORT_CODE_SHA:?}"; : "${STATIC_CODE_SHA:?}"
+: "${JASS_BASE_CODE_SHA:?}"; : "${JASS_DEEP_CODE_SHA:?}"
+: "${SCAN_BASE_CODE_SHA:?}"; : "${SCAN_DEEP_CODE_SHA:?}"; : "${SCAN_ULTRA_CODE_SHA:?}"
 : "${SELECTION_PREFIX:?}"; : "${PREFLIGHT_PREFIX:?}"; : "${STATIC_PREFIX:?}"
 : "${JASS_BASE_PREFIX:?}"; : "${JASS_DEEP_PREFIX:?}"
 : "${SCAN_BASE_PREFIX:?}"; : "${SCAN_DEEP_PREFIX:?}"; : "${SCAN_ULTRA_PREFIX:?}"
@@ -89,10 +92,16 @@ fetch_stage "$SCAN_DEEP_PREFIX" scan-deep scan-deep-stage-manifest.json fetch-sc
 fetch_stage "$SCAN_ULTRA_PREFIX" scan-ultra scan-ultra-stage-manifest.json fetch-scan-ultra.log
 
 stage validate-shard-hashes-cardinalities-and-guards
-"$PY" - "$IN" "$ART" "$EXPECTED_CODE_SHA" <<'PY_AUTH'
+"$PY" - "$IN" "$ART" "$EXPECTED_CODE_SHA" "$FROZEN_COHORT_CODE_SHA" "$STATIC_CODE_SHA" \
+  "$JASS_BASE_CODE_SHA" "$JASS_DEEP_CODE_SHA" "$SCAN_BASE_CODE_SHA" \
+  "$SCAN_DEEP_CODE_SHA" "$SCAN_ULTRA_CODE_SHA" <<'PY_AUTH'
 import hashlib,json,sys
 from pathlib import Path
-root,art=map(Path,sys.argv[1:3]); code=sys.argv[3]; sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+root,art=map(Path,sys.argv[1:3]); readout_code,frozen_code,static_code,jass_base_code,jass_deep_code,scan_base_code,scan_deep_code,scan_ultra_code=sys.argv[3:]
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+all_codes=(readout_code,frozen_code,static_code,jass_base_code,jass_deep_code,scan_base_code,scan_deep_code,scan_ultra_code)
+if any(len(code)!=40 or any(c not in '0123456789abcdef' for c in code) for code in all_codes): raise SystemExit('invalid code provenance SHA')
+stage_codes={'jass-base':jass_base_code,'jass-deep':jass_deep_code,'scan-base':scan_base_code,'scan-deep':scan_deep_code,'scan-ultra':scan_ultra_code}
 policy=('training_allowed','tuning_allowed','calibration_allowed','model_selection_allowed','runtime_scale_selection_allowed')
 def policy_ok(payload): return all(payload.get(name) is False for name in policy)
 sel=json.loads((root/'selection-summary.json').read_text()); cohort=sel['cohort_identity_sha256']
@@ -116,6 +125,7 @@ if selection_plan_payload.get('preflight_report_sha256')!=sha(root/'scan-technic
 if pre.get('verdict')!='SCAN_MAPPING_TECHNICAL_PASS' or not pre.get('passed') or pre.get('source_commit')!='7aae17e7b7bfc47744601afb1ee7655e18983ce5' or len(str(pre.get('scan_binary_sha256','')))!=64: raise SystemExit('preflight not passed/provenance drift')
 static=json.loads((root/'static-summary.json').read_text()); static_report=json.loads((root/'static-score-report.json').read_text())
 if static.get('verdict')!='SCAN_STATIC_SIGNALS_FROZEN' or not static.get('passed') or static.get('cohort_identity_sha256')!=cohort or static.get('cohort_and_scores_consumed') is not True or not policy_ok(static): raise SystemExit('static stage drift')
+if static.get('code_sha')!=static_code or static.get('frozen_cohort_code_sha')!=frozen_code: raise SystemExit('static code provenance drift')
 expected_artifacts={'curriculum':'319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1','d1':'e91a55500713154f50be74db5d699b64d7684e1c078725d09e1d15e713549b49','rf1':'0d26ba50b668160b3da3e247cd4e1bd709c2cb7989b3b5877b9ea7deb34db58b','t3_a':'16e5db8fd78849bba12b158eee5c1da4ab170129d8aeac1b91ab7a40ad9d0bb2'}
 if static.get('report_sha256')!=sha(root/'static-score-report.json') or sha(root/'static-scores.tsv')!=static_report['output_sha256'] or static_report.get('groups_sha256')!=sha(root/'siblings.tsv') or static_report.get('artifacts')!=expected_artifacts or static_report.get('fits')!=0 or not policy_ok(static_report): raise SystemExit('static score hash/artifact/guard drift')
 expected={
@@ -127,7 +137,8 @@ expected={
 }
 for label,(engine,budgets,row_ids_sha) in expected.items():
  receipt=json.loads((art/f'verified-{label}.json').read_text()); summary=json.loads((root/f'{label}-summary.json').read_text()); stage=json.loads((root/f'{label}-stage-manifest.json').read_text())
- if receipt.get('code_sha')!=code or receipt.get('result_state')!='completed' or receipt.get('exit_code')!=0: raise SystemExit(f'{label} result/code drift')
+ if receipt.get('code_sha')!=stage_codes[label] or receipt.get('result_state')!='completed' or receipt.get('exit_code')!=0: raise SystemExit(f'{label} result/code drift')
+ if summary.get('code_sha')!=stage_codes[label] or stage.get('code_sha')!=stage_codes[label] or summary.get('frozen_cohort_code_sha')!=frozen_code or stage.get('frozen_cohort_code_sha')!=frozen_code: raise SystemExit(f'{label} code provenance drift')
  if not summary.get('passed') or summary.get('cohort_identity_sha256')!=cohort or stage.get('cohort_identity_sha256')!=cohort or summary.get('stage_manifest_sha256')!=sha(root/f'{label}-stage-manifest.json') or summary.get('cohort_and_scores_consumed') is not True or not policy_ok(summary) or not policy_ok(stage): raise SystemExit(f'{label} cohort/manifest/quarantine drift')
  plan_path=root/f'{label}-shard-timeout-plan.json'; plan=json.loads(plan_path.read_text())
  if stage.get('scope')!=label or stage.get('budgets_nodes')!=budgets or plan.get('engine')!=engine or plan.get('budgets_nodes')!=budgets or plan.get('groups_sha256')!=sha(root/'siblings.tsv') or plan.get('row_ids_sha256')!=row_ids_sha: raise SystemExit(f'{label} scope/budget/input drift')
@@ -143,9 +154,14 @@ for label,(engine,budgets,row_ids_sha) in expected.items():
   if engine=='Scan' and payload.get('scan_binary_sha256')!=pre['scan_binary_sha256']: raise SystemExit(f'{label} shard {tag} Scan binary drift')
  guards=stage.get('guards',{})
  if any(guards.get(k)!=0 for k in ('fits','calibrations','strength_games','promotions')) or guards.get('promotion_authorized') is not False: raise SystemExit(f'{label} guard drift')
-for name in ('verified-selection.json','verified-preflight.json','verified-static.json'):
+core_codes={'verified-selection.json':frozen_code,'verified-preflight.json':frozen_code,'verified-static.json':static_code}
+for name,expected_code in core_codes.items():
  r=json.loads((art/name).read_text())
- if r.get('code_sha')!=code or r.get('result_state')!='completed' or r.get('exit_code')!=0: raise SystemExit(f'{name} upstream state/code drift')
+ if r.get('code_sha')!=expected_code or r.get('result_state')!='completed' or r.get('exit_code')!=0: raise SystemExit(f'{name} upstream state/code drift')
+if sel.get('code_sha')!=frozen_code: raise SystemExit('selection summary code provenance drift')
+provenance={'schema':'jass.scan_ceiling_code_provenance.v1','readout_code_sha':readout_code,
+ 'frozen_cohort_code_sha':frozen_code,'static_code_sha':static_code,'stage_code_shas':stage_codes}
+(art/'code-provenance-chain.json').write_text(json.dumps(provenance,indent=2,sort_keys=True)+'\n')
 PY_AUTH
 
 stage decompress-score-shards
