@@ -162,6 +162,17 @@ def train_pairs(c:Cohort):
 
 def row_fps(c:Cohort): return [c.parents[m.parent_id].canonical for m in c.meta]
 
+def pooled_cell_pairwise(cohorts, score_map, predicate):
+    deltas=[]
+    for c in cohorts:
+        ids,a,_=parent_arrays(c,score_map[c.name]); _,ba,_=parent_arrays(c,c.d1)
+        mask=np.asarray([predicate(c.parents[p]) for p in ids],dtype=bool)
+        if np.any(mask):
+            deltas.append((a-ba)[mask])
+    if not deltas:
+        return math.nan
+    return float(np.mean(np.concatenate(deltas)))
+
 def run_family(family,A,B,C,artifact_dir,shams=32):
     xa=rf.family_matrix(A.features,family); xb=rf.family_matrix(B.features,family); xc=rf.family_matrix(C.features,family)
     g,b,_=train_pairs(A)
@@ -170,12 +181,8 @@ def run_family(family,A,B,C,artifact_dir,shams=32):
     sa=art.predict(xa,A.d1); sb=art.predict(xb,B.d1); sc=art.predict(xc,C.d1)
     replay_ok=np.array_equal(sb,replay.predict(xb,B.d1)) and np.array_equal(sc,replay.predict(xc,C.d1))
     score_map={B.name:sb,C.name:sc}; pd,td=pooled_parent_deltas((B,C),score_map); boot=bootstrap(pd,td)
-    phase={ph:{"pairwise":float(np.mean(np.concatenate([
-        (parent_arrays(c,score_map[c.name])[1]-parent_arrays(c,c.d1)[1])[[c.parents[p].phase==ph for p in parent_arrays(c,score_map[c.name])[0]]]
-        for c in (B,C)]))} for ph in PHASES}
-    color={nm:{"pairwise":float(np.mean(np.concatenate([
-        (parent_arrays(c,score_map[c.name])[1]-parent_arrays(c,c.d1)[1])[[c.parents[p].stm==st for p in parent_arrays(c,score_map[c.name])[0]]]
-        for c in (B,C)]))} for nm,st in (("white",0),("black",1))}
+    phase={ph:{"pairwise":pooled_cell_pairwise((B,C),score_map,lambda p,ph=ph:p.phase==ph)} for ph in PHASES}
+    color={nm:{"pairwise":pooled_cell_pairwise((B,C),score_map,lambda p,st=st:p.stm==st)} for nm,st in (("white",0),("black",1))}
     sham_deltas=[]; sham_opt=[]
     afp=row_fps(A); bfp=row_fps(B); cfp=row_fps(C)
     for s in range(shams):
