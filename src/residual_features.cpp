@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <chrono>
 #include <limits>
 #include <numeric>
 #include <queue>
@@ -60,11 +61,14 @@ struct LegalSummary {
     float landing_dispersion = 0.0F;
 };
 
-LegalSummary legal_summary(const Position& p, Color side) {
+LegalSummary legal_summary(const Position& p, Color side, MoveList* keep,
+                           Profile* profile) {
     Position q = p;
     q.set_side_to_move(side);
     MoveList legal;
     generate_legal_moves(q, legal);
+    if (profile) ++profile->movegen_calls;
+    if (keep) *keep = legal;
     LegalSummary s;
     s.moves = static_cast<float>(legal.size());
     s.forced = legal.size() == 1U ? 1.0F : 0.0F;
@@ -111,9 +115,13 @@ LegalSummary legal_summary(const Position& p, Color side) {
     return s;
 }
 
-std::array<float, F1_WIDTH> capture_geometry(const Position& p, Color parent) {
-    const LegalSummary w = legal_summary(p, Color::White);
-    const LegalSummary b = legal_summary(p, Color::Black);
+std::array<float, F1_WIDTH> capture_geometry(const Position& p, Color parent,
+                                             MoveList* child_replies,
+                                             Profile* profile) {
+    MoveList* keep_w = p.side_to_move() == Color::White ? child_replies : nullptr;
+    MoveList* keep_b = p.side_to_move() == Color::Black ? child_replies : nullptr;
+    const LegalSummary w = legal_summary(p, Color::White, keep_w, profile);
+    const LegalSummary b = legal_summary(p, Color::Black, keep_b, profile);
     const std::array<float, F1_WIDTH> wa = {
         w.moves, w.captures, w.max_captured, w.mean_captured,
         w.max_captured_kings, w.mean_captured_kings, w.unique_landings,
@@ -131,9 +139,16 @@ std::array<float, F1_WIDTH> capture_geometry(const Position& p, Color parent) {
     return out;
 }
 
-std::array<float, F2_WIDTH> response_frontier(const Position& child, Color parent) {
+std::array<float, F2_WIDTH> response_frontier(const Position& child, Color parent,
+                                              const MoveList* precomputed,
+                                              Profile* profile) {
     MoveList replies;
-    generate_legal_moves(child, replies);  // child STM == opponent of parent
+    if (precomputed) replies = *precomputed;
+    else {
+        generate_legal_moves(child, replies);  // child STM == opponent of parent
+        if (profile) ++profile->movegen_calls;
+    }
+    if (profile) profile->response_enumerations += replies.size();
     std::array<float, F2_WIDTH> out{};
     if (replies.empty()) return out;
 
@@ -155,6 +170,7 @@ std::array<float, F2_WIDTH> response_frontier(const Position& child, Color paren
         material.push_back(material_balance(after, parent) - baseline_material);
         MoveList next;
         generate_legal_moves(after, next);
+        if (profile) ++profile->movegen_calls;
         next_moves.push_back(static_cast<float>(next.size()));
         float mc = 0.0F;
         if (!next.empty() && next[0].is_capture()) {
@@ -521,11 +537,40 @@ FeatureVector extract(const Position& child) {
     FeatureVector out;
     const Color parent = opposite(child.side_to_move());
     out.ctx2_ref = ctx2_ref(child, parent, out.ctx2_available);
-    out.capture_geometry = capture_geometry(child, parent);
-    out.response_frontier = response_frontier(child, parent);
+    MoveList replies;
+    out.capture_geometry = capture_geometry(child, parent, &replies, nullptr);
+    out.response_frontier = response_frontier(child, parent, &replies, nullptr);
     out.promotion_race = promotion_race(child, parent);
     out.structure_graph = structure_graph(child, parent);
     out.king_geometry_plus = king_geometry_plus(child, parent);
+    return out;
+}
+
+FeatureVector extract_f6(const Position& child, Profile* profile) {
+    FeatureVector out;
+    const Color parent = opposite(child.side_to_move());
+    using Clock = std::chrono::steady_clock;
+    MoveList replies;
+    auto start = Clock::now();
+    out.capture_geometry = capture_geometry(child, parent, &replies, profile);
+    if (profile) profile->family_ns[0] += static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count());
+    start = Clock::now();
+    out.response_frontier = response_frontier(child, parent, &replies, profile);
+    if (profile) profile->family_ns[1] += static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count());
+    start = Clock::now();
+    out.promotion_race = promotion_race(child, parent);
+    if (profile) profile->family_ns[2] += static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count());
+    start = Clock::now();
+    out.structure_graph = structure_graph(child, parent);
+    if (profile) profile->family_ns[3] += static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count());
+    start = Clock::now();
+    out.king_geometry_plus = king_geometry_plus(child, parent);
+    if (profile) profile->family_ns[4] += static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count());
     return out;
 }
 

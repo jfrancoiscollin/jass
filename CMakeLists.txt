@@ -258,6 +258,8 @@ add_library(jass_lib STATIC
     src/pattern_jass_bridge.cpp
     src/scan_eval.cpp
     src/conversion_head.cpp
+    src/residual_features.cpp
+    src/t3_f6.cpp
     src/scan_sacs.cpp
     pattern_jass/src/pattern.cpp
     pattern_jass/src/weights.cpp
@@ -334,6 +336,7 @@ add_executable(jass_tests
     tests/test_hub.cpp
     tests/test_scan_eval.cpp
     tests/test_conversion_head.cpp
+    tests/test_t3_f6.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
 target_include_directories(jass_tests PRIVATE tests)
@@ -345,6 +348,15 @@ add_test(
         -DSMOKE_DIR=${CMAKE_CURRENT_BINARY_DIR}/node-budget-smoke
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/node_budget_selfplay_smoke.cmake
 )
+
+if(NOT EMSCRIPTEN)
+    add_executable(t3_f6_runtime_probe jobs/tools/t3_f6_runtime_probe.cpp)
+    target_link_libraries(t3_f6_runtime_probe PRIVATE jass_lib jass_warnings)
+    add_executable(t3_f6_invariance_probe jobs/tools/t3_f6_invariance_probe.cpp)
+    target_link_libraries(t3_f6_invariance_probe PRIVATE jass_lib jass_warnings)
+    add_test(NAME t3_f6_transposition_selftest
+             COMMAND t3_f6_invariance_probe --transposition-selftest)
+endif()
 
 # -----------------------------------------------------------------------------
 # Emscripten / WASM specifics

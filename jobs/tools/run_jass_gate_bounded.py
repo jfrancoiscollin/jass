@@ -8,6 +8,7 @@ limited so the same experiment can run safely on a lower-memory host.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import subprocess
@@ -17,6 +18,14 @@ from pathlib import Path
 
 
 LEGACY_SEARCH_PARAMS = "qs_forcing_depth=6,qs_promo_depth=6"
+
+
+def sha256_file(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def parse_result_files(paths: list[Path], expected_shards: int) -> dict:
@@ -94,6 +103,14 @@ def command_for(args: argparse.Namespace, shard: int) -> list[str]:
         ])
     if getattr(args, "dump_games_dir", None):
         command.extend(["--dump-games-dir", str(Path(args.dump_games_dir))])
+    if getattr(args, "t3_f6_model_a", None):
+        command.extend(["--t3-f6-model-a", args.t3_f6_model_a])
+    if getattr(args, "t3_f6_model_b", None):
+        command.extend(["--t3-f6-model-b", args.t3_f6_model_b])
+    if getattr(args, "fail_on_game_error", False):
+        command.append("--fail-on-game-error")
+    if getattr(args, "enforce_no_book", False):
+        command.append("--enforce-no-book")
     if args.movetime is not None:
         command.extend(["--movetime", str(args.movetime)])
     else:
@@ -140,6 +157,15 @@ def paired_opening_report(
         raise ValueError("paired results do not cover every opening")
     per_opening = np.empty(expected_openings, dtype=np.float64)
     errors = 0
+    errors_by_arm = {"a": 0, "b": 0, "unknown": 0}
+    errors_by_candidate_colour = {"white": 0, "black": 0}
+    colour_scores = {"white": [], "black": []}
+    telemetry = {
+        arm: {"searches": 0, "depth_sum": 0, "nodes": 0,
+              "eval_calls": 0, "wall_seconds": 0.0,
+              "depth_histogram": {}}
+        for arm in ("a", "b")
+    }
     for opening, opening_rows in by_opening.items():
         if len(opening_rows) != pairs * 2:
             raise ValueError(f"opening {opening} has {len(opening_rows)} games")
@@ -148,6 +174,24 @@ def paired_opening_report(
             raise ValueError(f"opening {opening} colour pairing drift")
         per_opening[opening] = np.mean([float(row["score_a"]) for row in opening_rows])
         errors += sum(row.get("error") is not None for row in opening_rows)
+        for row in opening_rows:
+            colour = "white" if bool(row["a_is_white"]) else "black"
+            colour_scores[colour].append(float(row["score_a"]))
+            if row.get("error") is not None:
+                side = row.get("error_side")
+                errors_by_arm[side if side in errors_by_arm else "unknown"] += 1
+                errors_by_candidate_colour[colour] += 1
+        for row in opening_rows:
+            for arm in ("a", "b"):
+                source = row.get(f"telemetry_{arm}", {})
+                for key in telemetry[arm]:
+                    if key == "depth_histogram":
+                        for depth, count in source.get(key, {}).items():
+                            telemetry[arm][key][depth] = (
+                                telemetry[arm][key].get(depth, 0) + count
+                            )
+                    else:
+                        telemetry[arm][key] += source.get(key, 0)
     rng = np.random.default_rng(seed)
     draws = np.empty(bootstrap_samples, dtype=np.float64)
     batch = 4096
@@ -156,6 +200,30 @@ def paired_opening_report(
         sampled = rng.integers(0, expected_openings, size=(stop - start, expected_openings))
         draws[start:stop] = per_opening[sampled].mean(axis=1)
     ci_low, ci_high = np.quantile(draws, [0.025, 0.975])
+    telemetry_report = {}
+    for arm, values in telemetry.items():
+        searches = values["searches"]
+        wall = values["wall_seconds"]
+        histogram = values["depth_histogram"]
+        if sum(histogram.values()) != searches:
+            raise ValueError(f"telemetry depth/search count drift for arm {arm}")
+        depth_values = np.fromiter(
+            (int(depth) for depth, count in histogram.items() for _ in range(count)),
+            dtype=np.int64,
+        )
+        telemetry_report[arm] = {
+            **values,
+            "depth_histogram": dict(sorted(histogram.items(), key=lambda item: int(item[0]))),
+            "mean_depth": values["depth_sum"] / searches if searches else 0.0,
+            "depth_quantiles": {
+                "p05": float(np.quantile(depth_values, 0.05)) if searches else 0.0,
+                "p50": float(np.quantile(depth_values, 0.50)) if searches else 0.0,
+                "p95": float(np.quantile(depth_values, 0.95)) if searches else 0.0,
+            },
+            "nps": values["nodes"] / wall if wall > 0 else 0.0,
+            "nodes_per_search": values["nodes"] / searches if searches else 0.0,
+            "eval_calls_per_search": values["eval_calls"] / searches if searches else 0.0,
+        }
     return {
         "method": "paired_colour_opening_cluster_bootstrap",
         "n_openings": expected_openings,
@@ -163,12 +231,28 @@ def paired_opening_report(
         "bootstrap_samples": bootstrap_samples,
         "seed": seed,
         "rate": float(per_opening.mean()),
+        "wins_a": sum(float(row["score_a"]) == 1.0 for row in rows),
+        "draws": sum(float(row["score_a"]) == 0.5 for row in rows),
+        "wins_b": sum(float(row["score_a"]) == 0.0 for row in rows),
         "ci_low": float(ci_low),
         "ci_high": float(ci_high),
         "probability_rate_gt_half": float(np.mean(draws > 0.5)),
         "positive_opening_fraction": float(np.mean(per_opening > 0.5)),
         "per_opening_scores": per_opening.tolist(),
         "error_draws": errors,
+        "errors_by_arm": errors_by_arm,
+        "errors_by_candidate_colour": errors_by_candidate_colour,
+        "score_by_candidate_colour": {
+            colour: {
+                "games": len(scores),
+                "wins": sum(score == 1.0 for score in scores),
+                "draws": sum(score == 0.5 for score in scores),
+                "losses": sum(score == 0.0 for score in scores),
+                "score_rate": float(np.mean(scores)) if scores else 0.0,
+            }
+            for colour, scores in colour_scores.items()
+        },
+        "telemetry": telemetry_report,
     }
 
 
@@ -254,7 +338,7 @@ def run_gate(args: argparse.Namespace) -> dict:
                 if line.split("#", 1)[0].strip()
             ]
         paired_paths = [out_dir / f"games.{shard}.jsonl" for shard in range(args.nshards)]
-        result["paired_opening"] = paired_opening_report(
+        paired = paired_opening_report(
             paired_paths,
             expected_shards=args.nshards,
             expected_openings=len(openings),
@@ -262,11 +346,29 @@ def run_gate(args: argparse.Namespace) -> dict:
             bootstrap_samples=args.paired_bootstrap_samples,
             seed=args.paired_bootstrap_seed,
         )
+        if ((paired["wins_a"], paired["draws"], paired["wins_b"])
+                != (result["wins_a"], result["draws"], result["wins_b"])):
+            raise ValueError("paired raw rows disagree with RESULT W/D/L")
+        result["paired_opening"] = paired
     result.update({
         "jass_a": args.jass_a,
         "jass_b": args.jass_b,
         "pattern_a": args.pattern_a,
         "pattern_b": args.pattern_b,
+        "jass_a_sha256": sha256_file(args.jass_a),
+        "jass_b_sha256": sha256_file(args.jass_b),
+        "pattern_a_sha256": sha256_file(args.pattern_a),
+        "pattern_b_sha256": sha256_file(args.pattern_b),
+        "t3_f6_model_a": args.t3_f6_model_a,
+        "t3_f6_model_b": args.t3_f6_model_b,
+        "t3_f6_model_a_sha256": (
+            sha256_file(args.t3_f6_model_a) if args.t3_f6_model_a else None
+        ),
+        "t3_f6_model_b_sha256": (
+            sha256_file(args.t3_f6_model_b) if args.t3_f6_model_b else None
+        ),
+        "fail_on_game_error": args.fail_on_game_error,
+        "book_disabled": args.enforce_no_book,
         "search_params_a": args.search_params_a,
         "search_params_b": args.search_params_b,
         "depth": None if args.movetime is not None else args.depth,
@@ -274,7 +376,10 @@ def run_gate(args: argparse.Namespace) -> dict:
         "pairs": args.pairs,
         "nshards": args.nshards,
         "max_parallel": max_parallel,
+        "max_plies": args.max_plies,
+        "game_timeout": args.game_timeout,
         "openings_file": args.openings_file,
+        "openings_file_sha256": sha256_file(args.openings_file),
     })
     return result
 
@@ -289,6 +394,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--jass-b", help="side B binary for cross-architecture matches")
     parser.add_argument("--pattern-a", required=True)
     parser.add_argument("--pattern-b", required=True)
+    parser.add_argument("--t3-f6-model-a",
+                        help="candidate-only frozen T3/F6 JSON")
+    parser.add_argument("--t3-f6-model-b",
+                        help="optional B-arm T3/F6 JSON")
+    parser.add_argument("--fail-on-game-error", action="store_true",
+                        help="abort on any technical game/search error")
+    parser.add_argument("--enforce-no-book", action="store_true",
+                        help="pass --no-book to both player processes")
     parser.add_argument("--openings-file", required=True)
     parser.add_argument("--harness", default="jobs/tools/jass_vs_jass_arch.py")
     parser.add_argument(

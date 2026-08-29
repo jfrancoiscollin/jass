@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 
 namespace jass::residual_features {
 
@@ -36,6 +37,16 @@ struct FeatureVector {
 };
 
 FeatureVector extract(const Position& child);
+
+// F6-only production path. It deliberately does not compute the unrelated
+// CTX2 reference family. Feature values and F1..F5 order are identical to
+// extract(child).all_new().
+struct Profile {
+    std::array<std::uint64_t, 5> family_ns{};
+    std::uint64_t movegen_calls{0};
+    std::uint64_t response_enumerations{0};
+};
+FeatureVector extract_f6(const Position& child, Profile* profile = nullptr);
 
 const std::array<const char*, CTX2_WIDTH>& ctx2_names() noexcept;
 const std::array<const char*, F1_WIDTH>& f1_names() noexcept;

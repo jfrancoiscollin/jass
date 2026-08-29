@@ -51,7 +51,9 @@ Usage
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import math
+import os
 import queue
 import re
 import subprocess
@@ -239,11 +241,18 @@ class EngineProc:
     out of the OS pipe immediately, so draining the queue discards all
     pending output and re-aligns read<->command. (Diagnosed on the
     fixed-depth calibrate match vs Scan, job 0137.)"""
-    def __init__(self, argv: list[str], label: str, cwd: str | None = None):
+    def __init__(self, argv: list[str], label: str, cwd: str | None = None,
+                 env_overrides: dict[str, str | None] | None = None):
+        child_env = os.environ.copy()
+        for key, value in (env_overrides or {}).items():
+            if value is None:
+                child_env.pop(key, None)
+            else:
+                child_env[key] = value
         self.proc = subprocess.Popen(
             argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL, text=True, bufsize=1,
-            cwd=cwd)
+            cwd=cwd, env=child_env)
         self.label = label
         self._q: queue.Queue = queue.Queue()
         self._reader = threading.Thread(target=self._read_loop, daemon=True)
@@ -341,12 +350,18 @@ class JassEngine(EngineProc):
                  book_path: str | None = None,
                  search_params: str | None = None,
                  threads: int = 1,
-                 enforce_no_book: bool = False):
+                 enforce_no_book: bool = False,
+                 env_overrides: dict[str, str | None] | None = None):
         argv = jass_argv(path, no_book=no_book, no_nnue=no_nnue,
                          nnue_path=nnue_path, pattern_path=pattern_path,
                          book_path=book_path, search_params=search_params,
                          enforce_no_book=enforce_no_book)
-        super().__init__(argv, label)
+        super().__init__(argv, label, env_overrides=env_overrides)
+        self.search_telemetry = {
+            "searches": 0, "depth_sum": 0, "nodes": 0,
+            "eval_calls": 0, "wall_seconds": 0.0,
+        }
+        self.search_depths: Counter[int] = Counter()
         # Handshake
         self._send("hello")
         self._read_until(lambda l: l.startswith("ready"))
@@ -393,6 +408,7 @@ class JassEngine(EngineProc):
         `go_from_verbose` côté Scan : exposer les lignes ici plutôt que
         redupliquer le protocole HUB dans un second outil qui dériverait."""
         self._drain()  # re-align: discard any stale buffered output first
+        started = time.monotonic()
         if movetime is not None:
             self._send(f"go movetime {int(round(movetime * 1000))}")
             # x5 (au lieu de x3) : tolère le bug overshoot movetime-endgame (2-3.5x) aux longs
@@ -407,7 +423,24 @@ class JassEngine(EngineProc):
         last = lines[-1]
         if last.startswith("error"):
             raise EngineFailure(f"{self.label}: {last}")
+        elapsed = time.monotonic() - started
+        fields = {key: int(value) for key, value in
+                  re.findall(r"\b([A-Za-z][A-Za-z0-9_]*)=(-?\d+)\b", last)}
+        self.search_telemetry["searches"] += 1
+        self.search_telemetry["depth_sum"] += fields.get("depth", 0)
+        self.search_depths[fields.get("depth", 0)] += 1
+        self.search_telemetry["nodes"] += fields.get("nodes", 0)
+        self.search_telemetry["eval_calls"] += fields.get("evalcalls", 0)
+        self.search_telemetry["wall_seconds"] += elapsed
         return parse_jass_bestmove(last), lines
+
+    def telemetry_snapshot(self) -> dict[str, object]:
+        return {
+            **self.search_telemetry,
+            "depth_histogram": {
+                str(depth): count for depth, count in sorted(self.search_depths.items())
+            },
+        }
 
 
 class ScanEngine(EngineProc):
@@ -566,7 +599,11 @@ class ScanEngine(EngineProc):
 # ---------------------------------------------------------------------------
 class Referee:
     def __init__(self, jass_path: str):
-        self.j = JassEngine(jass_path, label="Referee", no_book=True)
+        # Refereeing is evaluator-independent and must never inherit a player
+        # arm from the orchestrator's environment.
+        self.j = JassEngine(
+            jass_path, label="Referee", no_book=True,
+            env_overrides={"JASS_T3_F6_MODEL": None})
         self._jass_path = jass_path
         self._scan_history: list[str] = []
         self._start_scan_pos: str = ""
