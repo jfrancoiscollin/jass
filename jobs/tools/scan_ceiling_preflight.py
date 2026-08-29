@@ -33,9 +33,11 @@ from jobs.tools.calibrate_vs_scan import (  # noqa: E402
 from jobs.tools.scan_ceiling_fen_to_jnnw import fen_record, load_fens  # noqa: E402
 from jobs.tools.scan_ceiling_scan_score import (  # noqa: E402
     SCAN_COMMIT,
+    SCAN_NODE_POLL_QUANTUM,
     read_children,
     record_fingerprint,
     record_to_scan_pos,
+    scan_snapshot_upper_bound,
     score_token_to_centi,
 )
 from jobs.tools.tb_frontier_symmetry_dedup import canonical_fingerprint  # noqa: E402
@@ -242,7 +244,7 @@ def validate_ladder_rows(
         raise ValueError("Jass exact-node deterministic replay drift")
     if len(rows_a) != len(groups):
         raise ValueError("Jass technical ladder cardinality drift")
-    searched = terminal = tb = 0
+    searched = terminal = tb = max_depth_exhausted = 0
     for index, (row, group) in enumerate(zip(rows_a, groups)):
         if int(row["row_index"]) != index or int(row["budget_nodes"]) != 1000:
             raise ValueError("Jass ladder row alignment/budget drift")
@@ -251,17 +253,38 @@ def validate_ladder_rows(
         nodes = int(row["nodes"])
         if is_terminal or is_tb:
             if nodes != 0 or int(row["terminal_exact"]) != int(is_terminal) \
-                    or int(row["tb_exact"]) != int(is_tb):
+                    or int(row["tb_exact"]) != int(is_tb) \
+                    or row["budget_status"] != ("terminal_exact" if is_terminal else "tb_exact"):
                 raise ValueError("Jass terminal/TB exact handling drift")
             terminal += int(is_terminal)
             tb += int(is_tb)
         else:
-            if nodes != 1000 or row["stop_reason"] == "":
+            status = row["budget_status"]
+            requested_reached = (
+                nodes == 1000 and status == "requested_nodes_reached"
+                and row["stop_reason"] == "nodes"
+                and int(row["aborted_iteration"]) == 1
+            )
+            max_depth = (
+                0 < nodes < 1000 and status == "max_depth_exhausted"
+                and row["stop_reason"] == "none"
+                and int(row["completed_depth"]) == 64
+                and int(row["effective_depth"]) == 64
+                and int(row["aborted_iteration"]) == 0
+            )
+            if not requested_reached and not max_depth:
                 raise ValueError("Jass exact node-budget contract drift")
             searched += 1
-    if searched == 0 or terminal == 0 or tb == 0:
+            max_depth_exhausted += int(max_depth)
+    if searched == 0 or terminal == 0 or tb == 0 or max_depth_exhausted == 0:
         raise ValueError("technical fixture lacks Jass searched/terminal/TB coverage")
-    return {"searched_rows": searched, "terminal_exact_rows": terminal, "tb_exact_rows": tb}
+    return {
+        "searched_rows": searched,
+        "requested_nodes_reached_rows": searched - max_depth_exhausted,
+        "max_depth_exhausted_rows": max_depth_exhausted,
+        "terminal_exact_rows": terminal,
+        "tb_exact_rows": tb,
+    }
 
 
 def validate_scan_rows(
@@ -272,7 +295,7 @@ def validate_scan_rows(
         raise ValueError("Scan deterministic fresh-state replay drift")
     if len(rows_a) != len(groups):
         raise ValueError("Scan technical ladder cardinality drift")
-    searched = terminal = forced_nonterminal = 0
+    searched = terminal = forced_nonterminal = snapshot_above_requested = 0
     legal_cache: dict[str, set[tuple[int, int, tuple[int, ...]]]] = {}
     for index, (row, group, record) in enumerate(zip(rows_a, groups, records)):
         if int(row["row_index"]) != index or int(row["budget_nodes"]) != 1000 \
@@ -289,7 +312,11 @@ def validate_scan_rows(
             terminal += 1
             continue
         nodes = int(row["last_info_nodes"])
-        if not 0 < nodes <= 1000 or int(row["terminal_exact"]) != 0:
+        snapshot_upper = scan_snapshot_upper_bound(1000)
+        above_requested = int(nodes > 1000)
+        if not 0 < nodes <= snapshot_upper or int(row["terminal_exact"]) != 0 \
+                or int(row["snapshot_upper_bound"]) != snapshot_upper \
+                or int(row["snapshot_above_requested"]) != above_requested:
             raise ValueError("Scan progressive node snapshot contract drift")
         pos = record_to_scan_pos(record)
         if pos not in legal_cache:
@@ -297,6 +324,7 @@ def validate_scan_rows(
         if scan_move_key(row["done_move"]) not in legal_cache[pos]:
             raise ValueError("Scan search returned a move outside its pinned legal generator")
         searched += 1
+        snapshot_above_requested += above_requested
         if int(group["child_forced_capture"]) == 1:
             forced_nonterminal += 1
     if searched == 0 or terminal == 0 or forced_nonterminal == 0:
@@ -304,6 +332,9 @@ def validate_scan_rows(
     return {
         "searched_rows": searched, "terminal_exact_rows": terminal,
         "forced_nonterminal_search_rows": forced_nonterminal,
+        "snapshot_above_requested_rows": snapshot_above_requested,
+        "node_poll_quantum": SCAN_NODE_POLL_QUANTUM,
+        "snapshot_upper_bound": scan_snapshot_upper_bound(1000),
     }
 
 
@@ -493,7 +524,11 @@ def execute(args: argparse.Namespace, transcript: list[str]) -> dict[str, object
         for report_path in (jass_paths[1], jass_paths[3]):
             report = load_json(report_path)
             if report.get("threads_per_search") != 1 or report.get("book_enabled") is not False \
-                    or report.get("node_limit_mode") != "exact":
+                    or report.get("node_limit_mode") != "exact" \
+                    or report.get("requested_node_caps_exactly_configured") is not True \
+                    or report.get("node_stopped_rows_equal_requested") is not True \
+                    or report.get("max_depth_exhaustion_allowed") is not True \
+                    or report.get("max_ply") != 64:
                 raise ValueError("Jass technical runtime contract drift")
 
         scan_paths = [work / f"scan-{suffix}" for suffix in ("a.tsv", "a.json", "b.tsv", "b.json")]
@@ -515,7 +550,10 @@ def execute(args: argparse.Namespace, transcript: list[str]) -> dict[str, object
             report = load_json(report_path)
             params = report.get("runtime_params")
             if report.get("threads_per_search") != 1 or report.get("book_enabled") is not False \
-                    or report.get("bb_size") != 0 or not isinstance(params, dict):
+                    or report.get("bb_size") != 0 or not isinstance(params, dict) \
+                    or report.get("requested_nodes_exactly_configured") is not True \
+                    or report.get("scan_source_algorithms_modified") is not False \
+                    or report.get("node_poll_quantum") != SCAN_NODE_POLL_QUANTUM:
                 raise ValueError("Scan technical runtime report drift")
             if params.get("threads") != "1" or params.get("book") != "false" \
                     or params.get("bb-size") != "0":
@@ -539,10 +577,16 @@ def execute(args: argparse.Namespace, transcript: list[str]) -> dict[str, object
             "book_margin": 4, "ponder": False, "threads": 1,
             "tt_size": 24, "bb_size": 0, "mode": "go analyze",
             "fresh_state": "new-game before every sibling/budget",
+            "node_budget_contract": (
+                "exact requested N; stock last-info snapshot bounded by next 16-node poll"
+            ),
         },
         "jass_runtime_params": {
             "book": False, "threads": 1, "fresh_engine_each_sibling_budget": True,
             "node_limit_mode": "exact", "egdb_path": str(args.egdb),
+            "max_depth_exhaustion": (
+                "allowed below N only after a complete MAX_PLY=64 search with no stop"
+            ),
         },
         "technical_sentinels": {
             "parents": len(parent_records), "siblings": len(child_records),

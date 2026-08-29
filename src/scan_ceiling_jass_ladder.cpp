@@ -40,6 +40,7 @@ struct LadderCounters {
     std::vector<std::uint64_t> searches;
     std::vector<std::uint64_t> nodes;
     std::vector<std::uint64_t> exact_budget_rows;
+    std::vector<std::uint64_t> max_depth_exhausted_rows;
     std::vector<std::uint64_t> terminal_exact_rows;
     std::vector<std::uint64_t> tb_exact_rows;
     std::vector<std::uint64_t> elapsed_us;
@@ -175,6 +176,9 @@ void write_ladder_report(const std::string& path,
                          const LadderCounters& c) {
     std::ofstream out(path);
     if (!out) throw std::runtime_error("cannot open Scan-ceiling Jass report");
+    std::uint64_t max_depth_exhausted_total = 0;
+    for (const auto rows : c.max_depth_exhausted_rows)
+        max_depth_exhausted_total += rows;
     out << "{\n"
         << "  \"schema\": \"jass.scan_ceiling_jass_ladder.v1\",\n"
         << "  \"input_children\": " << declared << ",\n"
@@ -190,7 +194,12 @@ void write_ladder_report(const std::string& path,
         << "  \"threads_per_search\": 1,\n"
         << "  \"fresh_engine_tt_search_state_each_sibling_budget\": true,\n"
         << "  \"node_limit_mode\": \"exact\",\n"
-        << "  \"reported_nodes_equal_requested_for_all_searches\": true,\n"
+        << "  \"requested_node_caps_exactly_configured\": true,\n"
+        << "  \"node_stopped_rows_equal_requested\": true,\n"
+        << "  \"max_depth_exhaustion_allowed\": true,\n"
+        << "  \"max_ply\": " << jass::MAX_PLY << ",\n"
+        << "  \"reported_nodes_equal_requested_for_all_searches\": "
+        << (max_depth_exhausted_total == 0 ? "true" : "false") << ",\n"
         << "  \"exact_terminal_or_tb_nodes\": 0,\n"
         << "  \"tt_mb\": " << tt_mb << ",\n"
         << "  \"egdb_max_pieces\": " << tb_cap << ",\n"
@@ -203,6 +212,7 @@ void write_ladder_report(const std::string& path,
         out << "    \"" << budgets[i] << "\": {\"searches\": " << c.searches[i]
             << ", \"nodes\": " << c.nodes[i]
             << ", \"exact_budget_rows\": " << c.exact_budget_rows[i]
+            << ", \"max_depth_exhausted_rows\": " << c.max_depth_exhausted_rows[i]
             << ", \"terminal_exact_rows\": " << c.terminal_exact_rows[i]
             << ", \"tb_exact_rows\": " << c.tb_exact_rows[i]
             << ", \"elapsed_us\": " << c.elapsed_us[i] << "}"
@@ -295,12 +305,14 @@ int main(int argc, char** argv) {
     if (!out) return 5;
     out << "row_index\tbudget_nodes\tparent_score\tnodes\tcompleted_depth\t"
            "effective_depth\taborted_iteration\tstop_reason\telapsed_us\t"
-           "pv_enters_egdb\tterminal_exact\ttb_exact\texact_parent_utility\n";
+           "budget_status\tpv_enters_egdb\tterminal_exact\ttb_exact\t"
+           "exact_parent_utility\n";
 
     LadderCounters counters{};
     counters.searches.assign(budgets.size(), 0);
     counters.nodes.assign(budgets.size(), 0);
     counters.exact_budget_rows.assign(budgets.size(), 0);
+    counters.max_depth_exhausted_rows.assign(budgets.size(), 0);
     counters.terminal_exact_rows.assign(budgets.size(), 0);
     counters.tb_exact_rows.assign(budgets.size(), 0);
     counters.elapsed_us.assign(budgets.size(), 0);
@@ -329,7 +341,8 @@ int main(int argc, char** argv) {
                 out << idx << '\t' << budgets[b] << '\t' << exact_parent_score(meta)
                     << "\t0\t0\t0\t0\t"
                     << (meta.terminal ? "terminal_exact" : "tb_exact")
-                    << "\t0\t0\t" << (meta.terminal ? 1 : 0) << '\t'
+                    << "\t0\t" << (meta.terminal ? "terminal_exact" : "tb_exact")
+                    << "\t0\t" << (meta.terminal ? 1 : 0) << '\t'
                     << (meta.tb_exact ? 1 : 0) << '\t' << meta.parent_utility << '\n';
                 continue;
             }
@@ -338,8 +351,20 @@ int main(int argc, char** argv) {
             ++counters.searches[b];
             counters.nodes[b] += obs.nodes;
             counters.elapsed_us[b] += obs.elapsed_us;
-            if (obs.nodes == budgets[b]) ++counters.exact_budget_rows[b];
-            else {
+            const char* budget_status = nullptr;
+            if (obs.nodes == budgets[b]
+                    && obs.stop_reason == jass::SearchStopReason::Nodes
+                    && obs.aborted_iteration) {
+                ++counters.exact_budget_rows[b];
+                budget_status = "requested_nodes_reached";
+            } else if (obs.nodes > 0 && obs.nodes < budgets[b]
+                    && obs.stop_reason == jass::SearchStopReason::None
+                    && obs.completed_depth == jass::MAX_PLY
+                    && obs.effective_depth == jass::MAX_PLY
+                    && !obs.aborted_iteration) {
+                ++counters.max_depth_exhausted_rows[b];
+                budget_status = "max_depth_exhausted";
+            } else {
                 std::cerr << "error: exact Jass node budget mismatch at row " << idx
                           << ": " << obs.nodes << " != " << budgets[b] << '\n';
                 return 4;
@@ -348,7 +373,8 @@ int main(int argc, char** argv) {
                 << obs.nodes << '\t' << obs.completed_depth << '\t'
                 << obs.effective_depth << '\t' << (obs.aborted_iteration ? 1 : 0) << '\t'
                 << search_stop_reason_name(obs.stop_reason) << '\t' << obs.elapsed_us << '\t'
-                << (obs.pv_enters_egdb ? 1 : 0) << "\t0\t0\t2\n";
+                << budget_status << '\t' << (obs.pv_enters_egdb ? 1 : 0)
+                << "\t0\t0\t2\n";
         }
     }
     char trailing = 0;

@@ -25,6 +25,7 @@ BOOTSTRAP_SAMPLES = 200_000
 BOOTSTRAP_SEED = 2026091303
 SCAN_BUDGETS = (1_000, 5_000, 50_000, 200_000, 1_000_000, 2_000_000, 5_000_000)
 JASS_BUDGETS = (1_000, 5_000, 50_000, 200_000, 1_000_000)
+SCAN_NODE_POLL_QUANTUM = 16
 ARTIFACTS = {
     "CURRICULUM": "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1",
     "D1": "e91a55500713154f50be74db5d699b64d7684e1c078725d09e1d15e713549b49",
@@ -40,6 +41,13 @@ FORBIDDEN_POLICY_FIELDS = (
     "training_allowed", "tuning_allowed", "calibration_allowed",
     "model_selection_allowed", "runtime_scale_selection_allowed",
 )
+
+
+def scan_snapshot_upper_bound(budget: int) -> int:
+    if budget <= 0:
+        raise ValueError("Scan budget must be positive")
+    return ((budget + SCAN_NODE_POLL_QUANTUM - 1) // SCAN_NODE_POLL_QUANTUM) \
+        * SCAN_NODE_POLL_QUANTUM
 
 
 def open_text(path: Path):
@@ -188,6 +196,9 @@ def load_long_scores(
         budget: {
             "output_rows": 0, "searched_rows": 0,
             "terminal_exact_rows": 0, "tb_exact_rows": 0,
+            "requested_nodes_reached_rows": 0,
+            "max_depth_exhausted_rows": 0,
+            "snapshot_above_requested_rows": 0,
             "searched_nodes": [],
         }
         for budget in budgets
@@ -198,6 +209,17 @@ def load_long_scores(
             required = {"row_index", "budget_nodes"}
             score_field = "parent_score" if kind == "jass" else "parent_score_centi"
             required.add(score_field)
+            if kind == "jass":
+                required.update({
+                    "nodes", "terminal_exact", "tb_exact", "budget_status",
+                    "stop_reason", "completed_depth", "effective_depth",
+                    "aborted_iteration",
+                })
+            else:
+                required.update({
+                    "requested_nodes", "last_info_nodes", "terminal_exact",
+                    "snapshot_upper_bound", "snapshot_above_requested",
+                })
             if reader.fieldnames is None or not required.issubset(reader.fieldnames):
                 raise ValueError(f"{path}: {kind} score fields drift")
             for row in reader:
@@ -212,22 +234,58 @@ def load_long_scores(
                     nodes = int(row["nodes"])
                     terminal = int(row.get("terminal_exact", "0"))
                     tb_exact = int(row.get("tb_exact", "0"))
+                    if terminal not in (0, 1) or tb_exact not in (0, 1) \
+                            or terminal + tb_exact > 1:
+                        raise ValueError("Jass exact-row flags drift")
                     exact = terminal or tb_exact
-                    if (exact and nodes != 0) or (not exact and nodes != budget):
+                    status = row["budget_status"]
+                    exact_status = "terminal_exact" if terminal else "tb_exact"
+                    requested_reached = (
+                        not exact and nodes == budget
+                        and status == "requested_nodes_reached"
+                        and row["stop_reason"] == "nodes"
+                        and int(row["aborted_iteration"]) == 1
+                    )
+                    max_depth_exhausted = (
+                        not exact and 0 < nodes < budget
+                        and status == "max_depth_exhausted"
+                        and row["stop_reason"] == "none"
+                        and int(row["completed_depth"]) == 64
+                        and int(row["effective_depth"]) == 64
+                        and int(row["aborted_iteration"]) == 0
+                    )
+                    if (exact and (nodes != 0 or status != exact_status)) \
+                            or (not exact and not requested_reached and not max_depth_exhausted):
                         raise ValueError("Jass exact-node contract drift")
                 else:
                     requested = int(row["requested_nodes"])
                     nodes = int(row["last_info_nodes"])
                     terminal = int(row["terminal_exact"])
+                    snapshot_upper = scan_snapshot_upper_bound(budget)
+                    snapshot_above = int(nodes > budget)
                     if requested != budget or (terminal and nodes != 0) \
-                            or (not terminal and not 0 < nodes <= budget):
+                            or (not terminal and not 0 < nodes <= snapshot_upper) \
+                            or int(row["snapshot_upper_bound"]) != (0 if terminal else snapshot_upper) \
+                            or int(row["snapshot_above_requested"]) != (0 if terminal else snapshot_above):
                         raise ValueError("Scan requested/snapshot node contract drift")
                     tb_exact = 0
                     exact = terminal
+                    requested_reached = False
+                    max_depth_exhausted = False
                 diag = diagnostics[budget]
                 diag["output_rows"] = int(diag["output_rows"]) + 1
                 diag["terminal_exact_rows"] = int(diag["terminal_exact_rows"]) + int(terminal)
                 diag["tb_exact_rows"] = int(diag["tb_exact_rows"]) + int(tb_exact)
+                diag["requested_nodes_reached_rows"] = int(
+                    diag["requested_nodes_reached_rows"]
+                ) + int(requested_reached)
+                diag["max_depth_exhausted_rows"] = int(
+                    diag["max_depth_exhausted_rows"]
+                ) + int(max_depth_exhausted)
+                if kind == "scan" and not terminal:
+                    diag["snapshot_above_requested_rows"] = int(
+                        diag["snapshot_above_requested_rows"]
+                    ) + snapshot_above
                 if not exact:
                     diag["searched_rows"] = int(diag["searched_rows"]) + 1
                     cast_nodes = diag["searched_nodes"]
@@ -257,9 +315,13 @@ def load_long_scores(
             "reported_or_snapshot_nodes_min": int(np.min(observed)) if observed.size else None,
             "reported_or_snapshot_nodes_max": int(np.max(observed)) if observed.size else None,
             "reported_or_snapshot_nodes_mean": float(np.mean(observed)) if observed.size else None,
+            "scan_snapshot_upper_bound": (
+                scan_snapshot_upper_bound(budget) if kind == "scan" else None
+            ),
             "node_semantics": (
-                "exact_reported_search_nodes" if kind == "jass"
-                else "last_complete_info_progressive_snapshot_not_total_consumed"
+                "exact_cap; node-stopped rows equal N; complete MAX_PLY rows may end below N"
+                if kind == "jass" else
+                "exact requested N; last complete info is a progressive snapshot bounded by the next 16-node poll, not total consumed"
             ),
         }
     return output, {"engine": kind, "by_budget": by_budget}

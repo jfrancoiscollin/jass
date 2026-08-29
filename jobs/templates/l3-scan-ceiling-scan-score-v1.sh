@@ -184,6 +184,8 @@ from pathlib import Path
 root=Path(sys.argv[1]); label,tag,budgets=sys.argv[2:5]; report,plan_path,selection=map(Path,sys.argv[5:8]); r=json.loads(report.read_text()); plan=json.loads(plan_path.read_text()); planned=plan['shards'][int(tag)]; want=[int(x) for x in budgets.split(',')]; cohort=json.loads(selection.read_text())['cohort_identity_sha256']
 if r.get('schema')!='jass.scan_ceiling_scan_ladder.v1' or r.get('budgets_nodes')!=want: raise SystemExit('Scan report ladder drift')
 if r.get('source_commit')!='7aae17e7b7bfc47744601afb1ee7655e18983ce5' or r.get('mode')!='go analyze': raise SystemExit('Scan provenance/mode drift')
+expected_bounds={str(n):((n+15)//16)*16 for n in want}
+if r.get('requested_nodes_exactly_configured') is not True or r.get('scan_source_algorithms_modified') is not False or r.get('node_poll_quantum')!=16 or r.get('last_info_snapshot_upper_bound_by_budget')!=expected_bounds: raise SystemExit('Scan requested-node/poll contract drift')
 if r.get('book_enabled') is not False or r.get('threads_per_search')!=1 or r.get('bb_size')!=0 or r.get('fresh_state')!='new-game before every sibling/budget': raise SystemExit('Scan runtime drift')
 if r.get('shard')!=int(tag) or r.get('nshards')!=16 or r.get('processed_rows')!=planned['selected_rows'] or r.get('output_rows')!=planned['selected_rows']*len(want) or r.get('searches')!=planned['searched_rows']*len(want) or r.get('terminal_exact_output_rows')!=(planned['selected_rows']-planned['searched_rows'])*len(want): raise SystemExit('Scan shard coverage drift')
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest(); names=[f'{label}-shard-{tag}-scores.tsv.gz',f'{label}-shard-{tag}-report.json']

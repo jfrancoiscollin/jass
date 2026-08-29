@@ -47,6 +47,25 @@ le timeout dur est dépassé peut uniquement être archivée par une mutation Gi
 auditée ; elle ne peut être réutilisée comme attempt. Aucun doublon de job ou
 de cohort n'est permis.
 
+### 0.1 Amendment technique pré-score — contrat de nœuds observables
+
+Cet amendement est figé après le smoke sentinelle `home-1648` et avant toute
+sélection du cohort ou génération d'un score scientifique. Au moment de cette
+découverte : `parents_scientifiques=0`, `scores_scientifiques=0`, `fits=0`.
+Elle ne change aucun budget nominal, seed, artifact, cohort, subset, référence,
+métrique, bootstrap ou seuil de verdict. Elle corrige uniquement deux
+affirmations techniquement impossibles avec les moteurs inchangés :
+
+1. Scan officiel demande exactement `N` par `level nodes=N`, mais son compteur
+   final consommé n'est pas exposé et son dernier snapshot progressif peut
+   franchir `N` avant le prochain poll interne de 16 nœuds ;
+2. Jass en `NodeLimitMode::Exact` s'arrête exactement à `N` lorsqu'il rencontre
+   la cap, mais une ligne forcée peut finir les `MAX_PLY=64` complets avant `N`.
+
+Les règles source-derived et fail-closed correspondantes sont détaillées aux
+§1, §2 et §6. Aucun algorithme Scan ou Jass n'est modifié pour fabriquer un
+compteur égal à `N`.
+
 ## 1. Provenance Scan immuable
 
 Moteur officiel retenu : **Scan 3.1** de Fabien Letouzey, moteur de dames
@@ -103,14 +122,25 @@ par shard est permis, mais chaque sibling/budget reçoit `new-game` avant
 `go analyze`, jamais `go think` : il recherche aussi un enfant à coup légal
 unique et désactive tout comportement de jeu non pertinent. Le budget est
 envoyé exactement par `level nodes=N`. À un thread et après la profondeur 1,
-le compteur upstream interrompt la recherche lorsque le nœud interne incrémenté
-atteint `N`. Le protocole stock ne réémet pas ce compteur final lors d'un abort :
-ses lignes `info nodes=` sont des snapshots progressifs, pas le total consommé.
-Le manifest publie donc séparément `requested_nodes=N` et
-`last_info_nodes<=N`; il n'appelle jamais ce dernier « nœuds consommés ». Une
-profondeur 1 qui dépasserait N, un snapshot `>N`, l'absence d'`info`, ou une
-autre dérive du contrat source est un abort technique. Aucune tolérance ou
-conversion temps/profondeur n'est admise.
+`Search_Local::inc_node()` du commit épinglé pose le stop root dès
+`m_node >= N`, puis le thread n'observe ce stop qu'au prochain `poll()`, exécuté
+tous les `16` nœuds (`m_node & 15 == 0`). Le protocole stock ne réémet pas le
+compteur final lors de l'abort : ses lignes `info nodes=` sont des snapshots
+progressifs, pas le total consommé. Le manifest publie donc séparément :
+
+```text
+requested_nodes = N
+scan_node_poll_quantum = 16
+last_info_snapshot_upper_bound = ceil(N / 16) * 16
+last_info_nodes = dernier snapshot info complet, jamais appelé consommation finale
+```
+
+À nos budgets, l'upper bound vaut `1008` pour `1k`, `5008` pour `5k`, puis
+exactement `N` pour `50k`, `200k`, `1M`, `2M` et `5M`. Un snapshot nul ou
+supérieur à cette borne, l'absence d'`info`, un replay non déterministe ou une
+autre dérive est un abort technique. Cette borne fixée par le source n'est ni
+une marge empirique, ni un budget adapté par position : la commande reste
+exactement `nodes=N`. Aucune conversion temps/profondeur n'est admise.
 
 Un enfant terminal n'est pas envoyé à Scan, conformément au protocole Hub : il
 reçoit le score terminal natif exact, du point de vue parent (`+100.00` pour un
@@ -146,8 +176,19 @@ Q00/paramètres de production inchangés, livre OFF, un thread par recherche,
 TT de taille `16 MiB`, EGDB de production authentifiée et même priorité
 terminal/tablebase que le teacher T3 gelé. Chaque sibling et chaque budget
 construit un nouvel `Engine` : TT, historique, search state et compteurs frais.
-`NodeLimitMode::Exact` est obligatoire et `reported_nodes == N` pour toute
-ligne effectivement recherchée.
+`NodeLimitMode::Exact` est obligatoire. Une ligne effectivement recherchée est
+acceptée sous exactement un des deux statuts :
+
+- `requested_nodes_reached` : stop `nodes`, itération avortée et
+  `reported_nodes == N` ;
+- `max_depth_exhausted` : `0 < reported_nodes < N`, stop `none`, profondeur
+  complète et effective `64`, itération non avortée.
+
+Tout dépassement de `N`, toute sous-consommation sous un autre statut ou tout
+replay divergent est un abort technique. Les lignes terminales/EGDB directes
+restent à zéro comme défini au §1. Le signal `JassNk` désigne toujours la
+recherche de production lancée avec la cap demandée `N`, et le readout publie
+séparément les comptes/nœuds des lignes `max_depth_exhausted`.
 
 Budgets Jass sur tous les parents :
 
@@ -249,14 +290,16 @@ leurs quotas et SHA256 sont publiés avant le scoring.
 
 Chaque sibling reçoit un score à chaque budget applicable :
 
-| scope | budgets Scan exacts |
+| scope | budgets Scan demandés exacts |
 |---|---|
 | BASE2000 | 1k, 5k, 50k, 200k |
 | DEEP512 additionnel | 1M, 2M |
 | ULTRA256 additionnel | 5M |
 
 Soit exactement `1,000`, `5,000`, `50,000`, `200,000`, `1,000,000`,
-`2,000,000` et `5,000,000` nœuds. Le score retenu est le dernier `info`
+`2,000,000` et `5,000,000` comme valeurs `N` envoyées au moteur. Les abscisses
+de convergence et l'équivalent descriptif utilisent ces budgets demandés
+immuables, jamais le snapshot progressif. Le score retenu est le dernier `info`
 complet avant `done`, conservé comme token décimal exact Scan et comme entier
 en centièmes de pion ; aucune conversion float n'intervient dans les égalités.
 Le score enfant Scan est inversé une seule fois vers le point de vue parent.
@@ -283,8 +326,8 @@ Avant sélection/scoring complet, quelques positions sentinelles fixes et
    obtenu ;
 3. correspondance un-à-un entre sibling Jass et child Scan ;
 4. signe enfant/parent et score POV sur positions à avantage connu par symétrie ;
-5. `level nodes=N`, `go analyze`, preuve du stop interne source à N, snapshots
-   `info nodes<=N`, et absence de dépassement à la profondeur 1 ;
+5. `level nodes=N`, `go analyze`, preuve du stop interne source à N avec poll
+   16 nœuds, snapshots `info` sous la borne source-derived fixée au §1 ;
 6. replay déterministe après `new-game`, incluant score/PV/nœuds ;
 7. enfants terminal, coup forcé non terminal, tablebase Jass et absence de
    recherche terminale Scan ;
@@ -293,7 +336,7 @@ Avant sélection/scoring complet, quelques positions sentinelles fixes et
 
 Le smoke publie seulement PASS/FAIL et des transcripts techniques ; aucune
 accuracy, corrélation ou table du benchmark final. Une ambiguïté de conversion,
-un node mismatch, une non-détermination ou un score POV incohérent produit
+une dérive du contrat de nœuds amendé, une non-détermination ou un score POV incohérent produit
 `SCAN_MAPPING_TECHNICAL_STOP`. Le mapping doit être réparé et retesté avant le
 cohort, sans modifier Scan.
 
