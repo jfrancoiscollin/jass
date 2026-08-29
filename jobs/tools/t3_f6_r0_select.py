@@ -9,8 +9,13 @@ import hashlib
 import json
 import random
 import struct
+import sys
 from collections import Counter
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from jobs.tools.calibrate_vs_scan import parse_jass_fen
 from jobs.tools.tb_frontier_symmetry_dedup import canonical_fingerprint, format_fingerprint

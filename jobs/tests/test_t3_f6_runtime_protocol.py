@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +26,40 @@ EXCLUSIONS = ROOT / "jobs/templates/t3-f6-runtime-exclusions-v1.sh"
 
 
 class T3F6RuntimeProtocolTest(unittest.TestCase):
+    def test_direct_entrypoints_bootstrap_repository_imports(self):
+        for name in ("t3_f6_r0_select.py", "t3_f6_force_pool_select.py"):
+            proc = subprocess.run(
+                [sys.executable, str(ROOT / "jobs/tools" / name), "--help"],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, f"{name}: {proc.stderr}")
+        with tempfile.TemporaryDirectory() as directory:
+            scipy = Path(directory) / "scipy"
+            scipy.mkdir()
+            (scipy / "__init__.py").write_text("", encoding="utf-8")
+            (scipy / "optimize.py").write_text(
+                "def minimize(*args, **kwargs):\n    raise RuntimeError('stub')\n",
+                encoding="utf-8",
+            )
+            (scipy / "special.py").write_text(
+                "def expit(value):\n    return value\n", encoding="utf-8"
+            )
+            env = os.environ.copy()
+            env["PYTHONPATH"] = directory
+            name = "t3_f6_runtime_parity.py"
+            proc = subprocess.run(
+                [sys.executable, str(ROOT / "jobs/tools" / name), "--help"],
+                cwd=directory,
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, f"{name}: {proc.stderr}")
+
     def test_templates_freeze_seeds_budgets_and_sequential_gate(self):
         r0 = R0.read_text(encoding="utf-8")
         p1 = POOL1.read_text(encoding="utf-8")
