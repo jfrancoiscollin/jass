@@ -242,18 +242,25 @@ struct Searcher {
     std::uint64_t       pvs_researches{0};     // DIAG #1 : re-recherches full-window PVS (instabilite valeurs)
     std::uint64_t       moves_searched{0};     // DIAG #1 : coups reellement cherches (coups/noeud)
     mutable std::uint64_t eval_calls{0};
+    std::uint64_t       qsearch_calls{0};
+    std::uint64_t       qnodes{0};
+    std::uint64_t       tt_probes{0};
+    std::uint64_t       tt_hits{0};
+    std::uint64_t       reductions{0};
+    std::uint64_t       reduced_plies{0};
+    std::uint64_t       lmr_researches{0};
+    std::uint64_t       extensions{0};
+    std::uint64_t       singular_extensions{0};
+    std::uint64_t       promotion_extensions{0};
+    std::uint64_t       forcing_extensions{0};
+    std::uint64_t       single_reply_extensions{0};
+    std::uint64_t       null_probes{0};
+    std::uint64_t       null_cutoffs{0};
+    std::uint64_t       ordering_good_updates{0};
+    std::uint64_t       ordering_bad_updates{0};
     std::uint64_t       scan_verify_probes{0};
     std::uint64_t       scan_verify_cutoffs{0};
     std::uint64_t       scan_threat_reentries{0};
-    std::uint64_t       qnodes{0};
-    std::uint64_t       qsearch_calls{0};
-    std::uint64_t       tablebase_probes{0};
-    std::uint64_t       tablebase_hits{0};
-    std::uint64_t       tt_probes{0};
-    std::uint64_t       tt_hits{0};
-    std::uint64_t       terminal_hits{0};
-    std::uint64_t       reductions{0};
-    std::uint64_t       extensions{0};
     // Root depth of the current iterative-deepening iteration. Set by
     // run_root_window before recursing. Used to bound forcing extensions:
     // total extensions accumulated on a path = (depth + ply) - root_depth_.
@@ -530,6 +537,12 @@ struct Searcher {
 inline int order_score(const Searcher& s, const Move& m, int ply,
                        const Move& tt_move, bool tt_hit,
                        const Move& prev_move) noexcept {
+    if (s.params.scan_probabilistic_ordering) {
+        // Frozen Scan 3.1 sort.cpp: TT=PROB_ONE-1; every other move,
+        // captures included, uses the reset-per-search from/to probability.
+        if (tt_hit && m == tt_move) return 4095;
+        return s.history[m.from][m.to];
+    }
     if (tt_hit && m == tt_move) return 1'000'000;
     if (m.is_capture())          return 0;            // captures: keep generation order
     if (m == s.killers[static_cast<std::size_t>(ply)][0])  return   800'000;
@@ -621,8 +634,8 @@ static bool opponent_can_capture(const Position& pos) {
 int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
                          int forcing_left, int promo_left, int threat_left, int sac_left) {
     if (stopped) return 0;
-    ++qnodes;
     ++qsearch_calls;
+    ++qnodes;
     if (depth_one_trace) ++depth_one_trace->qnodes;
     DepthOneMoveTrace* const trace =
         (ply == 1) ? active_depth_one_move : nullptr;
@@ -647,7 +660,6 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
     gen_moves(pos, moves);
     if (trace) trace->qsearch_legal_moves = moves.size();
     if (moves.empty()) {
-        ++terminal_hits;
         if (depth_one_trace) ++depth_one_trace->terminal_hits;
         if (trace) trace->terminal_hit = true;
         return finish(-MATE_SCORE + ply, "qsearch_terminal");
@@ -817,11 +829,9 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //       skip the rest of the work. Like the path-dependent draws this
     //       answer is independent of the alpha-beta window.
     {
-        ++tablebase_probes;
         if (depth_one_trace) ++depth_one_trace->tablebase_probes;
         const EndgameResult eg = probe_endgame(pos);
         if (eg == EndgameResult::Draw) {
-            ++tablebase_hits;
             if (depth_one_trace) ++depth_one_trace->tablebase_hits;
             if (trace) {
                 trace->tablebase_hit = true;
@@ -830,7 +840,6 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             return 0;
         }
         if (eg == EndgameResult::WhiteWin || eg == EndgameResult::BlackWin) {
-            ++tablebase_hits;
             if (depth_one_trace) ++depth_one_trace->tablebase_hits;
             if (trace) {
                 trace->tablebase_hit = true;
@@ -899,7 +908,6 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     MoveList moves;
     gen_moves(pos, moves);
     if (moves.empty()) {
-        ++terminal_hits;
         if (depth_one_trace) ++depth_one_trace->terminal_hits;
         if (trace) {
             trace->terminal_hit = true;
@@ -1037,7 +1045,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     {
         const int NMP_MIN_DEPTH  = params.nmp_min_depth;
         const int NMP_MIN_PIECES = params.nmp_min_pieces;
-        if (depth >= NMP_MIN_DEPTH
+        if (!params.disable_null_move
+            && depth >= NMP_MIN_DEPTH
             && !was_null
             && !is_mate_score(beta)
             && !(eg && params.eg_no_nmp)) {     // endgame regime: NMP off (zugzwang)
@@ -1046,6 +1055,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             if (popcount(all) >= NMP_MIN_PIECES) {
                 const int eval = static_eval();
                 if (eval >= beta) {
+                    ++null_probes;
                     const int R          = params.nmp_r_base + depth / params.nmp_r_div;
                     const int reduced    = depth - 1 - R;
                     const int safe_depth = reduced < 1 ? 1 : reduced;
@@ -1056,6 +1066,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                                                     -beta, -beta + 1);
                     was_null = false;
                     if (!stopped && null_score >= beta) {
+                        ++null_cutoffs;
                         return beta;
                     }
                 }
@@ -1244,7 +1255,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //         decisive)
     //       - shallow nodes (depth < 3 — LMR overhead exceeds saving)
     //       - the first few moves of the ordering (i < 4)
-    const int LMR_MIN_DEPTH        = params.lmr_min_depth;
+    const int LMR_MIN_DEPTH = params.scan_lmr_semantics
+                            ? 2 : params.lmr_min_depth;
     auto lmr_reduction = [&params = params, LMR_MIN_DEPTH,
                           improving]
                          (int d, int move_idx, int hist, bool is_pv) noexcept -> int {
@@ -1252,10 +1264,13 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         // at depth ≥ 12 with index ≥ 16. Capped so the reduced depth
         // stays ≥ 1. When the improving heuristic is on and we are not
         // improving, reduce one extra ply.
-        if (d < LMR_MIN_DEPTH ||
-            move_idx < (is_pv ? params.lmr_first_full_pv : params.lmr_first_full_nonpv)) return 0;
+        const int first_reduced = params.scan_lmr_semantics
+                                ? (is_pv ? 3 : 1)
+                                : (is_pv ? params.lmr_first_full_pv
+                                         : params.lmr_first_full_nonpv);
+        if (d < LMR_MIN_DEPTH || move_idx < first_reduced) return 0;
         int r;
-        if (params.lmr_formula == 3) {
+        if (params.scan_lmr_semantics || params.lmr_formula == 3) {
             // Frozen Scan 3.1 shape (diagnostic): one ply for every
             // eligible late quiet, two plies for non-PV moves from index 4.
             // The eligibility thresholds are supplied separately through
@@ -1287,12 +1302,13 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             r = params.lmr_base + d / params.lmr_depth_div
               + move_idx / params.lmr_idx_div;
         }
-        if (params.use_improving && !improving) r += 1;
+        if (params.scan_lmr_semantics) return r;
+        if (!params.scan_lmr_semantics && params.use_improving && !improving) r += 1;
         r = r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
         // History-based softening (opt-in ; lmr_hist_div=0 = unchanged): reduce
         // high-history quiet moves less. Applied AFTER the base clamp so the
         // default path is byte-identical.
-        if (params.lmr_hist_div > 0) {
+        if (!params.scan_lmr_semantics && params.lmr_hist_div > 0) {
             r -= hist / params.lmr_hist_div;
             if (r < 0) r = 0;
         }
@@ -1338,6 +1354,9 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // Quiet moves actually searched (for the history malus on a beta cutoff).
     std::array<Move, 64> quiets_searched;
     int n_quiets_searched = 0;
+    std::vector<Move> scan_moves_searched;
+    if (params.scan_probabilistic_ordering) scan_moves_searched.reserve(moves.size());
+    int scan_lmr_searched_index = 0;
     for (const auto& m : moves) {
         // LMP : skip late quiet moves at shallow non-PV nodes. When the
         // improving heuristic is on and we are NOT improving, prune one step
@@ -1391,36 +1410,73 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         int            node_ext = (singular_ext && is_tt ? 1 : 0)
                                  + promo_ext + forcing_ext + single_reply_ext;
         if (params.ext_single_reply && node_ext > 1) node_ext = 1;
-        if (node_ext > 0) extensions += static_cast<std::uint64_t>(node_ext);
+        if (node_ext > 0) {
+            ++extensions;
+            if (singular_ext && is_tt) ++singular_extensions;
+            if (promo_ext) ++promotion_extensions;
+            if (forcing_ext) ++forcing_extensions;
+            if (single_reply_ext) ++single_reply_extensions;
+        }
         const int      new_depth = depth - 1 + node_ext;
 
         int score;
-        bool do_lmr = move_idx >= (is_pv_node ? params.lmr_first_full_pv
-                                                : params.lmr_first_full_nonpv)
-                         && depth >= LMR_MIN_DEPTH
-                         && !is_tt
-                         && !m.is_capture()
-                         && !(eg && params.eg_no_lmr)  // endgame regime: full-depth, no reductions
-                         && !singular_ext   // don't reduce when we just extended a singular line
-                         && !forcing_ext    // nor an extended forcing sacrifice (full extended depth)
-                         && single_reply_ext == 0;  // nor a single-reply extension (Scan interplay)
+        const int semantic_move_idx = params.scan_lmr_semantics
+                                    ? scan_lmr_searched_index : move_idx;
+        const int lmr_first_reduced = params.scan_lmr_semantics
+                                    ? (is_pv_node ? 3 : 1)
+                                    : (is_pv_node ? params.lmr_first_full_pv
+                                                  : params.lmr_first_full_nonpv);
+        bool do_lmr = semantic_move_idx >= lmr_first_reduced
+                          && depth >= LMR_MIN_DEPTH
+                          && !is_tt
+                          && !m.is_capture()
+                          && (!params.scan_lmr_semantics || !m.promotes)
+                          && !(eg && params.eg_no_lmr)  // endgame regime: full-depth, no reductions
+                          && !singular_ext   // don't reduce when we just extended a singular line
+                          && !forcing_ext    // nor an extended forcing sacrifice (full extended depth)
+                          && single_reply_ext == 0
+                          && (!params.scan_lmr_semantics || node_ext == 0);
         // Forcing-move exemption: don't reduce a quiet sacrifice that forces
         // the opponent to capture (`next` is already the post-move position).
         if (do_lmr && params.no_reduce_forcing && leaves_forced_capture(next))
             do_lmr = false;
         ++moves_searched;                       // DIAG #1 (passif : n'affecte pas la recherche)
-        if (params.use_pvs && move_idx > 0) {
+        if (params.scan_lmr_semantics) {
+            const int r = do_lmr
+                        ? lmr_reduction(depth, semantic_move_idx, move_history(m), is_pv_node)
+                        : 0;
+            if (r > 0) {
+                ++reductions;
+                reduced_plies += static_cast<std::uint64_t>(r);
+            }
+            // Frozen Scan 3.1 search_move(): scout non-first PV moves and all
+            // reduced moves; any fail-high gets one full-depth full-window
+            // re-search (there is no intermediate full-depth scout).
+            if ((is_pv_node && semantic_move_idx > 0) || r > 0) {
+                score = -negamax(next, new_depth - r, ply + 1, -alpha - 1, -alpha);
+                if (score > alpha) {
+                    if (r > 0) ++lmr_researches;
+                    score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+                }
+            } else {
+                score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+            }
+        } else if (params.use_pvs && move_idx > 0) {
             // Principal Variation Search: once a PV move has raised alpha,
             // scout the remaining moves with a zero-width window (optionally
             // LMR-reduced). Only moves that beat alpha pay for an exact
             // full-window re-search.
             const int r = do_lmr ? lmr_reduction(depth, move_idx, move_history(m), is_pv_node) : 0;
-            if (r > 0) ++reductions;
+            if (r > 0) {
+                ++reductions;
+                reduced_plies += static_cast<std::uint64_t>(r);
+            }
             score = -negamax(next, new_depth - r, ply + 1, -alpha - 1, -alpha);
             if (score > alpha && r > 0) {
                 // The reduction alone may have caused the fail-high; verify
                 // at full depth with the same zero window before paying for
                 // a full-window search.
+                ++lmr_researches;
                 score = -negamax(next, new_depth, ply + 1, -alpha - 1, -alpha);
             }
             if (score > alpha && score < beta) {
@@ -1430,17 +1486,24 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             }
         } else if (do_lmr) {
             const int r = lmr_reduction(depth, move_idx, move_history(m), is_pv_node);
-            if (r > 0) ++reductions;
+            if (r > 0) {
+                ++reductions;
+                reduced_plies += static_cast<std::uint64_t>(r);
+            }
             const int reduced = new_depth - r;
             score = -negamax(next, reduced, ply + 1, -beta, -alpha);
             if (score > alpha && score < beta) {
                 // Tail move surprised — re-search at full depth so its
                 // exact score is established before we accept it.
+                ++lmr_researches;
                 score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
             }
         } else {
             score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
         }
+
+        if (params.scan_probabilistic_ordering) scan_moves_searched.push_back(m);
+        if (params.scan_lmr_semantics) ++scan_lmr_searched_index;
 
         // Record searched quiet moves so a later cutoff can malus the ones that
         // were tried and failed (history malus). Captures are never tracked.
@@ -1458,7 +1521,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             // tracked because the legal-move generator already orders them
             // implicitly (every legal move at a capture node has the same
             // length under the FMJD majority rule).
-            if (!m.is_capture() && ply <= MAX_PLY) {
+            if (!params.scan_probabilistic_ordering
+                && !m.is_capture() && ply <= MAX_PLY) {
                 if (!(m == killers[static_cast<std::size_t>(ply)][0])) {
                     killers[static_cast<std::size_t>(ply)][1] = killers[static_cast<std::size_t>(ply)][0];
                     killers[static_cast<std::size_t>(ply)][0] = m;
@@ -1508,6 +1572,30 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             break;
         }
         ++move_idx;
+    }
+
+    if (params.scan_probabilistic_ordering
+        && best > alpha_orig && moves.size() > 1 && !scan_moves_searched.empty()) {
+        int best_index = -1;
+        for (int i = 0; i < static_cast<int>(scan_moves_searched.size()); ++i) {
+            if (scan_moves_searched[static_cast<std::size_t>(i)] == best_move) {
+                best_index = i;
+                break;
+            }
+        }
+        if (best_index >= 0) {
+            constexpr int PROB_ONE = 4096;
+            constexpr int PROB_SHIFT = 5;
+            int& good = history[best_move.from][best_move.to];
+            good += (PROB_ONE - good) >> PROB_SHIFT;
+            ++ordering_good_updates;
+            for (int i = 0; i < best_index; ++i) {
+                const Move& failed = scan_moves_searched[static_cast<std::size_t>(i)];
+                int& bad = history[failed.from][failed.to];
+                bad -= bad >> PROB_SHIFT;
+                ++ordering_bad_updates;
+            }
+        }
     }
 
     { BD_TIME(path_check); hash_path.pop_back(); }
@@ -1637,6 +1725,9 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     Searcher s;
     s.tt        = &tt;
     s.params    = limits.params;
+    if (s.params.scan_probabilistic_ordering) {
+        for (auto& from : s.history) from.fill(2048);
+    }
     s.hash_path = game_history;
     s.hash_path.push_back(root_hash);  // root is an ancestor for its children
     s.stop_flag = limits.stop_flag;
@@ -1940,18 +2031,25 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     res.pvs_researches     = s.pvs_researches;
     res.moves_searched     = s.moves_searched;
     res.eval_calls         = s.eval_calls;
+    res.qsearch_calls      = s.qsearch_calls;
+    res.qnodes             = s.qnodes;
+    res.tt_probes          = s.tt_probes;
+    res.tt_hits            = s.tt_hits;
+    res.reductions         = s.reductions;
+    res.reduced_plies      = s.reduced_plies;
+    res.lmr_researches     = s.lmr_researches;
+    res.extensions         = s.extensions;
+    res.singular_extensions = s.singular_extensions;
+    res.promotion_extensions = s.promotion_extensions;
+    res.forcing_extensions = s.forcing_extensions;
+    res.single_reply_extensions = s.single_reply_extensions;
+    res.null_probes        = s.null_probes;
+    res.null_cutoffs       = s.null_cutoffs;
+    res.ordering_good_updates = s.ordering_good_updates;
+    res.ordering_bad_updates = s.ordering_bad_updates;
     res.scan_verify_probes = s.scan_verify_probes;
     res.scan_verify_cutoffs = s.scan_verify_cutoffs;
     res.scan_threat_reentries = s.scan_threat_reentries;
-    res.qnodes              = s.qnodes;
-    res.qsearch_calls       = s.qsearch_calls;
-    res.tablebase_probes    = s.tablebase_probes;
-    res.tablebase_hits      = s.tablebase_hits;
-    res.tt_probes           = s.tt_probes;
-    res.tt_hits             = s.tt_hits;
-    res.terminal_hits       = s.terminal_hits;
-    res.reductions          = s.reductions;
-    res.extensions          = s.extensions;
     res.root_order_applications = root_order_applications;
     res.root_order_failures = root_order_failures;
     res.pv        = extract_pv(pos, tt, std::max(res.depth, 1));
