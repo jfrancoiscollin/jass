@@ -3,7 +3,7 @@
 > **Mis à jour : 29 août 2026**
 > **Source de vérité active : ce document.**
 >
-> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [autopsie negamax terminale](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [prereg v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_20260829.md), [readout terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) ; [terminal v1 antérieur](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [prereg v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_20260829.md), [résultat terminal v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -21,7 +21,29 @@ Aucun candidat T3 n'est promu. L'implémentation runtime T3-A reste dormante par
 
 T3-A et T3-B sont des artefacts scientifiques frozen, pas des réseaux de production.
 
-### Gate runtime T3-A — R0-v2 terminal et cause autopsiée
+### Gate runtime T3-A — R0-v3 terminal sur support mécanique
+
+V3 a été preregistrée après l'autopsie et a corrigé le contrat leaf sans
+modifier T3-A, CURRICULUM, F6 ou le search. Son verdict exact est :
+
+```text
+R0_V3_RUNTIME_SUPPORT_INCONCLUSIVE
+```
+
+Sur `120000` candidates classifiées mécaniquement avant toute lecture
+T0/T3/parité/runtime, `119699` identités restent uniques après exclusions,
+avec overlap interdit `0` et reads score/WDL/deep/runtime `0/0/0/0`. P0 offre
+`26004` positions uniques mais seulement `5` témoins leaf isolés, contre `32`
+prerequis. Le sélecteur s'est arrêté fail-closed avant de constituer les `4096`
+positions et avant les gates 1–8. Parité v3, coût runtime, Pool1, Pool2, Q00 et
+chained n'ont donc pas été exécutés ; strength games `0`.
+
+R0 `cpx62-1652` / `20260829T152726Z-880fccbe`, readout `cpx62-1653` /
+`20260829T153756Z-880fccbe`, code `880fccbec5929588e4e4120a2cf81ce5067bcd71`,
+tous deux completed exit `0`. Ce terminal est un support insuffisant de la
+recette v3, pas un défaut T3-A et pas un résultat Elo.
+
+### Historique immuable v1/v2 et autopsie
 
 Le terminal v1 reste immuable. La nouvelle campagne v2 a établi que T3-A
 n'ajoute aucun drift de couleur au baseline, puis s'est arrêtée au gate
@@ -67,8 +89,8 @@ reste un résultat terminal antérieur distinct. Autopsie : Jass PR `#707`, code
 `20260829T141312Z-2a4d1519`, readout `cpx62-1651` attempt
 `20260829T142315Z-2a4d1519`, tous deux exit `0`.
 
-Une éventuelle v3 exige une prereg séparée avec un témoin leaf réellement isolé
-ou une référence reproduisant la quiescence exacte. Elle n'est pas ouverte ici.
+V3 a ensuite été ouverte séparément et s'est fermée sur le déficit de support
+décrit ci-dessus. Aucun ancien verdict n'est réinterprété.
 
 ---
 
@@ -310,7 +332,8 @@ Conséquences :
 1. RF1 puis T3 établissent une chaîne reproductible découverte → confirmation fresh → transfert des 66 observables F6.
 2. Le bras joint exact n'autorise aucun retune ni troisième bras sur ce fresh consommé.
 3. La cohorte 1638/1639/1640 est consommée et interdite à tout fit, tuning, calibration, feature selection ou model selection.
-4. Les probes runtime R0-v2 ont été exécutés ; aucune partie Elo/strength/Q00, aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
-5. Le contrat relatif de drift est établi, mais le gate negamax depth-1 est négatif. Toute éventuelle suite nécessiterait une nouvelle preregistration ; elle est hors de cette mission.
+4. Les campagnes runtime v1/v2/v3 ont toutes terminé avant force ; aucune partie Elo/strength/Q00, aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
+5. Le drift relatif est établi par v2 et l'autopsie exclut un défaut POV T3 démontré. V3 reste inconclusive faute de support mécanique (`5/32` témoins P0), avant ses gates d'évaluation.
+6. Toute nouvelle recette de témoins isolés exige une preregistration séparée ; aucun relâchement post-hoc de v3 n'est permis.
 
 La campagne T3 s'arrête ici.
