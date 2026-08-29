@@ -466,17 +466,29 @@ bottlenecks.
 
 ## 11. Pipeline shardé, immutable et reprenable
 
-Ordre obligatoire, avec un manifest SHA256 et `16` shards déterministes par
-stage de score (`parent_index mod 16`) :
+Ordre logique obligatoire, avec un manifest SHA256 et `16` shards déterministes
+par stage de score (`parent_index mod 16`). L'implémentation est figée ici,
+avant le premier score du cohort, en jobs HOME séparés pour rendre chaque
+frontière de reprise authentifiable :
 
 1. `home-...-scan-ceiling-preflight-v1` : build officiel + smoke seulement ;
 2. `home-...-scan-ceiling-selection-v1` : candidats, exclusions, 2000 parents,
    DEEP512/ULTRA256, zéro score ;
-3. `home-...-scan-ceiling-jass-base-v1` : siblings, statiques, Jass 1k/5k/50k/200k ;
-4. `home-...-scan-ceiling-scan-base-v1` : Scan 1k/5k/50k/200k ;
-5. `home-...-scan-ceiling-deep512-v1` : Jass1M + Scan1M/2M ;
-6. `home-...-scan-ceiling-ultra256-v1` : Scan5M ;
-7. `home-...-scan-ceiling-readout-v1` : analyses et memo terminal.
+3. `home-...-scan-ceiling-static-v1` : T0/D1/RF1/T3-A, première lecture qui
+   consomme définitivement cohort et scores ;
+4. `home-...-scan-ceiling-jass-base-v1` : Jass 1k/5k/50k/200k ;
+5. `home-...-scan-ceiling-scan-base-v1` : Scan 1k/5k/50k/200k ;
+6. `home-...-scan-ceiling-jass-deep-v1` : Jass1M sur DEEP512 ;
+7. `home-...-scan-ceiling-scan-deep-v1` : Scan1M/2M sur DEEP512 ;
+8. `home-...-scan-ceiling-scan-ultra-v1` : Scan5M sur ULTRA256 ;
+9. `home-...-scan-ceiling-readout-v1` : analyses et memo terminal.
+
+Cette décomposition opérationnelle ne change aucun cohort, signal, budget,
+référence, seed, bootstrap, seuil ou ordre de lecture scientifique. HOME reste
+mono-mission : un seul de ces jobs est actif à la fois, indépendamment de
+CPX62. Chaque stage à `16` shards limite la concurrence à `15` workers afin de
+laisser au moins un CPU logique de marge ; le seizième shard est exécuté dans
+une seconde vague avec exactement les mêmes paramètres.
 
 Un stage aval authentifie chaque manifest/cohort/binaire/artifact upstream.
 Chaque shard écrit un fichier temporaire puis le renomme atomiquement, publie

@@ -78,7 +78,12 @@ jobs:
           python -m pip install numpy scipy pytest
 
       - name: Run Python tests
-        run: python -m pytest pattern_jass/tests
+        run: |
+          python -m pytest pattern_jass/tests
+          python -m unittest -v jobs.tests.test_scan_ceiling_benchmark
+
+      - name: Validate Scan-ceiling HOME templates
+        run: bash -n jobs/templates/l3-scan-ceiling-{preflight,selection,static,jass-score,scan-score,readout}-v1.sh
 
   # ---------------------------------------------------------------------------
   # WASM build: install emsdk, run the project's own wasm/build.sh, package

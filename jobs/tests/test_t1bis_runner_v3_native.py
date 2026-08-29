@@ -364,6 +364,30 @@ else:
             )
             self.assertNotEqual(rejected.returncode, 0)
 
+    def test_generic_result_inventory_only_authenticates_complete_failed_inventory(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            failed, _ = self.build_previous_run(
+                root, result_state="failed", exit_code=17
+            )
+            report_path = root / "inventory-report.json"
+            result = self.run_result_fetcher(
+                "--rclone-bin", str(self.fake_rclone(root)),
+                "--prefix", str(failed),
+                "--expected-state", "failed",
+                "--inventory-only",
+                "--out-dir", str(root / "unused"),
+                "--report", str(report_path),
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+            report = json.loads(report_path.read_text())
+            self.assertEqual(report["result_state"], "failed")
+            self.assertEqual(report["exit_code"], 17)
+            paths = {item["path"] for item in report["files"]}
+            self.assertIn("manifest.json", paths)
+            self.assertIn("artefacts/promotion.json", paths)
+            self.assertFalse((root / "unused/artefacts/promotion.json").exists())
+
     def test_launchers_are_native_and_shell_valid(self) -> None:
         for script in (FULL, SMOKE, NEXT):
             subprocess.run(["bash", "-n", str(script)], check=True)
