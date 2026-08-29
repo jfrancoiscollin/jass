@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -42,7 +43,7 @@ class RuntimeV4ProtocolTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "zero.json"
             subprocess.run([
-                "python", str(ROOT / "jobs/tools/t3_f6_zero_artifact_v4.py"),
+                sys.executable, str(ROOT / "jobs/tools/t3_f6_zero_artifact_v4.py"),
                 "--out", str(output),
             ], cwd=ROOT, check=True)
             self.assertEqual(hashlib.sha256(output.read_bytes()).hexdigest(), ZERO_SHA)
