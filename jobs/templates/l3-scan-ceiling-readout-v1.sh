@@ -76,6 +76,7 @@ fetch_stage(){
   args+=(--file "artefacts/JASS_CONTROL_SUMMARY.json=$label-summary.json")
   args+=(--file "artefacts/$manifest=$manifest")
   args+=(--file "artefacts/$label-shard-timeout-plan.json=$label-shard-timeout-plan.json")
+  args+=(--file "artefacts/$label-runtime-timeout-policy.json=$label-runtime-timeout-policy.json")
   for shard in $(seq 0 15); do
     printf -v tag '%02d' "$shard"
     args+=(--file "artefacts/scores/$label-shard-$tag-scores.tsv.gz=$label-$tag.tsv.gz")
@@ -140,9 +141,10 @@ for label,(engine,budgets,row_ids_sha) in expected.items():
  if receipt.get('code_sha')!=stage_codes[label] or receipt.get('result_state')!='completed' or receipt.get('exit_code')!=0: raise SystemExit(f'{label} result/code drift')
  if summary.get('code_sha')!=stage_codes[label] or stage.get('code_sha')!=stage_codes[label] or summary.get('frozen_cohort_code_sha')!=frozen_code or stage.get('frozen_cohort_code_sha')!=frozen_code: raise SystemExit(f'{label} code provenance drift')
  if not summary.get('passed') or summary.get('cohort_identity_sha256')!=cohort or stage.get('cohort_identity_sha256')!=cohort or summary.get('stage_manifest_sha256')!=sha(root/f'{label}-stage-manifest.json') or summary.get('cohort_and_scores_consumed') is not True or not policy_ok(summary) or not policy_ok(stage): raise SystemExit(f'{label} cohort/manifest/quarantine drift')
- plan_path=root/f'{label}-shard-timeout-plan.json'; plan=json.loads(plan_path.read_text())
+ plan_path=root/f'{label}-shard-timeout-plan.json'; plan=json.loads(plan_path.read_text()); runtime_path=root/f'{label}-runtime-timeout-policy.json'; runtime=json.loads(runtime_path.read_text())
  if stage.get('scope')!=label or stage.get('budgets_nodes')!=budgets or plan.get('engine')!=engine or plan.get('budgets_nodes')!=budgets or plan.get('groups_sha256')!=sha(root/'siblings.tsv') or plan.get('row_ids_sha256')!=row_ids_sha: raise SystemExit(f'{label} scope/budget/input drift')
  if stage.get('timeout_plan_sha256')!=sha(plan_path) or stage.get('timeout_plan')!=plan or plan.get('planning_only_not_scientific_metric') is not True or plan.get('scientific_budgets_changed') is not False or plan.get('nshards')!=16 or plan.get('worker_cap')!=15: raise SystemExit(f'{label} timeout plan drift')
+ if stage.get('runtime_timeout_policy_sha256')!=sha(runtime_path) or stage.get('runtime_timeout_policy')!=runtime or runtime.get('schema')!='jass.scan_ceiling_runtime_timeout_policy.v1' or runtime.get('planning_only_not_scientific_metric') is not True or runtime.get('scientific_budgets_changed') is not False or runtime.get('base_timeout_plan_sha256')!=sha(plan_path) or not isinstance(runtime.get('runtime_timeout_multiplier'),int) or not 1<=runtime['runtime_timeout_multiplier']<=10: raise SystemExit(f'{label} runtime timeout policy drift')
  if engine=='Jass' and stage.get('curriculum_sha256')!=expected_artifacts['curriculum']: raise SystemExit(f'{label} Jass evaluator drift')
  if engine=='Scan' and stage.get('scan_binary_sha256')!=pre['scan_binary_sha256']: raise SystemExit(f'{label} Scan binary drift')
  manifests=stage.get('manifests',[])
@@ -150,6 +152,10 @@ for label,(engine,budgets,row_ids_sha) in expected.items():
  for item in manifests:
   payload=item['payload']; tag=f"{int(payload['shard']):02d}"; name=f'{label}-{tag}.tsv.gz'; remote_name=f'{label}-shard-{tag}-scores.tsv.gz'
   if sha(root/name)!=payload['files_sha256'][remote_name] or payload.get('scope')!=label or payload.get('shard')!=int(tag) or payload.get('nshards')!=16 or payload.get('budgets_nodes')!=budgets or payload.get('groups_sha256')!=plan['groups_sha256'] or payload.get('row_ids_sha256')!=plan['row_ids_sha256'] or payload.get('timeout_plan_sha256')!=sha(plan_path) or payload.get('cohort_identity_sha256')!=cohort or not policy_ok(payload): raise SystemExit(f'{label} shard {tag} hash/scope/input/timeout/cohort/quarantine drift')
+  policy_sha=payload.get('runtime_timeout_policy_sha256')
+  if policy_sha is None:
+   if int(tag) not in stage.get('completed_under_legacy_shorter_timeout_shards',[]): raise SystemExit(f'{label} shard {tag} unexplained legacy timeout policy')
+  elif policy_sha!=sha(runtime_path) or payload.get('effective_runtime_timeout_seconds')!=runtime['effective_shard_timeout_seconds'][str(int(tag))]: raise SystemExit(f'{label} shard {tag} effective timeout policy drift')
   if engine=='Jass' and payload.get('curriculum_sha256')!=expected_artifacts['curriculum']: raise SystemExit(f'{label} shard {tag} evaluator drift')
   if engine=='Scan' and payload.get('scan_binary_sha256')!=pre['scan_binary_sha256']: raise SystemExit(f'{label} shard {tag} Scan binary drift')
  guards=stage.get('guards',{})

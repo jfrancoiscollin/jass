@@ -11,6 +11,7 @@ export SCAN_BENCHMARK_ONLY=true
 CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
 NSHARDS=16
 MAX_WORKERS=15
+RUNTIME_TIMEOUT_MULTIPLIER="${SCORE_RUNTIME_TIMEOUT_MULTIPLIER:-3}"
 
 case "$SCORE_SCOPE" in
   base) BUDGETS="1000,5000,50000,200000"; LABEL="jass-base"; ROW_FILE="-";;
@@ -45,6 +46,8 @@ trap 'exit 143' TERM; trap 'exit 130' INT
 [ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ] || die "dirty/non-detached worktree"
 [ "$(nproc)" -eq 16 ] || die "HOME 16-CPU contract mismatch"
 [ "$FULL_RUN_APPROVED" = 1 ] && [ "$SCIENTIFIC_GO" = 1 ] || die "execution GO missing"
+[[ "$RUNTIME_TIMEOUT_MULTIPLIER" =~ ^[1-9][0-9]*$ ]] && [ "$RUNTIME_TIMEOUT_MULTIPLIER" -le 10 ] \
+  || die "invalid operational runtime timeout multiplier"
 for command in timeout df; do command -v "$command" >/dev/null || die "$command missing"; done
 unset JASS_TB_MOVE_ORDER_POLICY JASS_DSSD_MOVE_ORDER_POLICY JASS_T3_F6_MODEL
 monitor
@@ -95,10 +98,26 @@ ROW_ARG="$ROW_FILE"; [ "$ROW_ARG" = - ] || ROW_ARG="$IN/$ROW_ARG"
 stage derive-publish-per-shard-timeouts-from-home-preflight-rate
 PLAN_JSON="$ART/$LABEL-shard-timeout-plan.json"
 PLAN_TSV="$W/$LABEL-shard-timeout-plan.tsv"
+RUNTIME_POLICY_JSON="$ART/$LABEL-runtime-timeout-policy.json"
 python3 jobs/tools/scan_ceiling_shard_timeouts.py \
   --preflight "$IN/scan-technical-preflight.json" --groups "$IN/siblings.tsv" \
   --row-ids "$ROW_ARG" --engine Jass --budgets "$BUDGETS" --nshards "$NSHARDS" \
   --output-json "$PLAN_JSON" --output-tsv "$PLAN_TSV"
+python3 - "$PLAN_JSON" "$RUNTIME_POLICY_JSON" "$RUNTIME_TIMEOUT_MULTIPLIER" <<'PY_RUNTIME_POLICY'
+import hashlib,json,sys
+from pathlib import Path
+plan_path,out=map(Path,sys.argv[1:3]); multiplier=int(sys.argv[3]); plan=json.loads(plan_path.read_text())
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+payload={'schema':'jass.scan_ceiling_runtime_timeout_policy.v1',
+ 'planning_only_not_scientific_metric':True,'scientific_budgets_changed':False,
+ 'base_timeout_plan_sha256':sha(plan_path),'runtime_timeout_multiplier':multiplier,
+ 'effective_per_search_timeout_seconds':plan['per_search_timeout_seconds']*multiplier,
+ 'effective_stage_timeout_ceiling_seconds':plan['stage_timeout_ceiling_seconds']*multiplier,
+ 'effective_shard_timeout_seconds':{str(x['shard']):x['timeout_seconds']*multiplier for x in plan['shards']},
+ 'reason':'conservative HOME full-ladder wall-time guard; node budgets and cohort unchanged'}
+out.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+PY_RUNTIME_POLICY
+EFFECTIVE_STAGE_TIMEOUT=$(python3 -c 'import json,sys;print(int(json.load(open(sys.argv[1]))["effective_stage_timeout_ceiling_seconds"]))' "$RUNTIME_POLICY_JSON")
 python3 - "$PLAN_JSON" <<'PY_PLAN' | tee -a "$RES" "$W/rate-plan-progress.txt"
 import json,sys
 p=json.load(open(sys.argv[1]))
@@ -109,12 +128,14 @@ print(f"planned_healthy_eta_seconds={p['stage_healthy_eta_seconds']:.1f}")
 print(f"planned_timeout_ceiling_seconds={p['stage_timeout_ceiling_seconds']:.1f}")
 print(f"timeout_safety_factor={p['safety_factor']}")
 PY_PLAN
+say "runtime_timeout_multiplier=$RUNTIME_TIMEOUT_MULTIPLIER effective_timeout_ceiling_seconds=$EFFECTIVE_STAGE_TIMEOUT"
 if [ -n "${SCORE_RESUME_PREFIX:-}" ]; then
+  : "${SCORE_RESUME_CODE_SHA:?required with SCORE_RESUME_PREFIX}"
   python3 jobs/tools/fetch_result_files.py --prefix "$SCORE_RESUME_PREFIX" \
     --expected-state failed --inventory-only --out-dir "$W" \
     --report "$W/resume-inventory.json" >"$W/fetch-resume-inventory.log" 2>&1 \
     || die "cannot authenticate failed $LABEL inventory"
-  python3 - "$W/resume-inventory.json" "$EXPECTED_CODE_SHA" "$EXPECTED_HOST" "$SCORE_SCOPE" <<'PY_RESUME_IDENTITY'
+  python3 - "$W/resume-inventory.json" "$SCORE_RESUME_CODE_SHA" "$EXPECTED_HOST" "$SCORE_SCOPE" <<'PY_RESUME_IDENTITY'
 import json,re,sys
 p=json.load(open(sys.argv[1])); code,host,scope=sys.argv[2:]
 pattern=rf'home-[0-9]+-l3-scan-ceiling-jass-{re.escape(scope)}-v1'
@@ -166,21 +187,22 @@ PY_REUSE
 }
 
 score_shard(){
-  local shard="$1" tag out report shard_timeout; printf -v tag '%02d' "$shard"
+  local shard="$1" tag out report shard_timeout effective_timeout; printf -v tag '%02d' "$shard"
   out="$W/$LABEL-shard-$tag.tsv"; report="$SCORES/$LABEL-shard-$tag-report.json"
   shard_timeout=$(awk -F '\t' -v target="$shard" 'NR>1 && $1==target {print $6}' "$PLAN_TSV")
   [[ "$shard_timeout" =~ ^[0-9]+$ ]] || die "missing timeout for $LABEL shard $shard"
-  timeout -k 120s "${shard_timeout}s" \
+  effective_timeout=$((shard_timeout*RUNTIME_TIMEOUT_MULTIPLIER))
+  timeout -k 120s "${effective_timeout}s" \
     "$W/jass-search-ladder" "$W/children.jnnw" "$IN/siblings.tsv" "$out" "$report" \
     "$IN/curriculum.pjtw" "$EGDIR" "$BUDGETS" "$ROW_ARG" "$shard" "$NSHARDS" 16 256 \
     >"$W/$LABEL-shard-$tag.log" 2>&1
   gzip -n -c "$out" >"$SCORES/.$LABEL-shard-$tag-scores.tsv.gz.tmp"
   mv "$SCORES/.$LABEL-shard-$tag-scores.tsv.gz.tmp" "$SCORES/$LABEL-shard-$tag-scores.tsv.gz"
   python3 - "$SCORES" "$LABEL" "$tag" "$BUDGETS" "$report" "$PLAN_JSON" \
-    "$IN/selection-report.json" "$IN/curriculum.pjtw" <<'PY_SHARD'
+    "$RUNTIME_POLICY_JSON" "$IN/selection-report.json" "$IN/curriculum.pjtw" <<'PY_SHARD'
 import hashlib,json,sys
 from pathlib import Path
-root=Path(sys.argv[1]); label,tag,budgets=sys.argv[2:5]; report,plan_path,selection,curriculum=map(Path,sys.argv[5:9]); r=json.loads(report.read_text()); plan=json.loads(plan_path.read_text()); planned=plan['shards'][int(tag)]; cohort=json.loads(selection.read_text())['cohort_identity_sha256']
+root=Path(sys.argv[1]); label,tag,budgets=sys.argv[2:5]; report,plan_path,runtime_path,selection,curriculum=map(Path,sys.argv[5:10]); r=json.loads(report.read_text()); plan=json.loads(plan_path.read_text()); runtime=json.loads(runtime_path.read_text()); planned=plan['shards'][int(tag)]; cohort=json.loads(selection.read_text())['cohort_identity_sha256']
 want=[int(x) for x in budgets.split(',')];
 if r.get('schema')!='jass.scan_ceiling_jass_ladder.v1' or r.get('budgets_nodes')!=want: raise SystemExit('Jass report ladder drift')
 if r.get('node_limit_mode')!='exact' or r.get('requested_node_caps_exactly_configured') is not True or r.get('node_stopped_rows_equal_requested') is not True or r.get('max_depth_exhaustion_allowed') is not True or r.get('max_ply')!=64: raise SystemExit('Jass node-cap contract drift')
@@ -199,6 +221,8 @@ payload={'schema':'jass.scan_ceiling_jass_score_shard.v1','immutable':True,'benc
  'cohort_identity_sha256':cohort,'curriculum_sha256':sha(curriculum),
  'groups_sha256':plan['groups_sha256'],'row_ids_sha256':plan['row_ids_sha256'],
  'planned_requested_nodes':planned['requested_nodes'],'timeout_seconds':planned['timeout_seconds'],
+ 'effective_runtime_timeout_seconds':runtime['effective_shard_timeout_seconds'][str(int(tag))],
+ 'runtime_timeout_policy_sha256':sha(runtime_path),
  'timeout_plan_sha256':sha(plan_path),
  'files_sha256':{n:sha(root/n) for n in names}}
 tmp=root/f'.{label}-shard-{tag}-manifest.json.tmp'; tmp.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n'); tmp.replace(root/f'{label}-shard-{tag}-manifest.json')
@@ -224,16 +248,18 @@ done
 [ "$(find "$SCORES" -name "$LABEL-shard-*-manifest.json" -type f | wc -l)" -eq 16 ] || die "score shard manifest count drift"
 
 stage immutable-stage-manifest-and-summary
-python3 - "$SCORES" "$ART/$LABEL-stage-manifest.json" "$LABEL" "$BUDGETS" "$IN/selection-report.json" "$IN/curriculum.pjtw" "$PLAN_JSON" "$EXPECTED_CODE_SHA" "$FROZEN_COHORT_CODE_SHA" <<'PY_STAGE'
+python3 - "$SCORES" "$ART/$LABEL-stage-manifest.json" "$LABEL" "$BUDGETS" "$IN/selection-report.json" "$IN/curriculum.pjtw" "$PLAN_JSON" "$RUNTIME_POLICY_JSON" "$EXPECTED_CODE_SHA" "$FROZEN_COHORT_CODE_SHA" <<'PY_STAGE'
 import hashlib,json,sys
 from pathlib import Path
-root,out=map(Path,sys.argv[1:3]); label,budgets=sys.argv[3:5]; selection,curr,plan=map(Path,sys.argv[5:8]); code,frozen_code=sys.argv[8:]
-sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest(); files=sorted(root.glob(f'{label}-shard-*-manifest.json')); s=json.loads(selection.read_text()); plan_payload=json.loads(plan.read_text()); want=[int(x) for x in budgets.split(',')]
+root,out=map(Path,sys.argv[1:3]); label,budgets=sys.argv[3:5]; selection,curr,plan,runtime_path=map(Path,sys.argv[5:9]); code,frozen_code=sys.argv[9:]
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest(); files=sorted(root.glob(f'{label}-shard-*-manifest.json')); s=json.loads(selection.read_text()); plan_payload=json.loads(plan.read_text()); runtime=json.loads(runtime_path.read_text()); want=[int(x) for x in budgets.split(',')]; legacy=[]
 if len(files)!=16: raise SystemExit('Jass stage shard count drift')
 for index,path in enumerate(files):
  item=json.loads(path.read_text())
  if item.get('scope')!=label or item.get('shard')!=index or item.get('nshards')!=16 or item.get('budgets_nodes')!=want or item.get('cohort_identity_sha256')!=s['cohort_identity_sha256'] or item.get('curriculum_sha256')!=sha(curr) or item.get('groups_sha256')!=plan_payload['groups_sha256'] or item.get('row_ids_sha256')!=plan_payload['row_ids_sha256'] or item.get('timeout_plan_sha256')!=sha(plan):
   raise SystemExit(f'Jass stage shard semantic drift: {path.name}')
+ if item.get('runtime_timeout_policy_sha256') is None: legacy.append(index)
+ elif item.get('runtime_timeout_policy_sha256')!=sha(runtime_path) or item.get('effective_runtime_timeout_seconds')!=runtime['effective_shard_timeout_seconds'][str(index)]: raise SystemExit(f'Jass runtime timeout policy drift: {path.name}')
 payload={'schema':'jass.scan_ceiling_jass_score_stage.v1','immutable':True,'benchmark_only':True,
  'code_sha':code,'frozen_cohort_code_sha':frozen_code,
  'training_allowed':False,'tuning_allowed':False,'calibration_allowed':False,
@@ -241,6 +267,8 @@ payload={'schema':'jass.scan_ceiling_jass_score_stage.v1','immutable':True,'benc
  'scope':label,'budgets_nodes':want,'shards':16,
  'cohort_identity_sha256':s['cohort_identity_sha256'],'curriculum_sha256':sha(curr),
  'timeout_plan_sha256':sha(plan),'timeout_plan':json.loads(plan.read_text()),
+ 'runtime_timeout_policy_sha256':sha(runtime_path),'runtime_timeout_policy':runtime,
+ 'completed_under_legacy_shorter_timeout_shards':legacy,
  'manifests':[{'name':p.name,'sha256':sha(p),'payload':json.loads(p.read_text())} for p in files],
  'guards':{'fits':0,'calibrations':0,'strength_games':0,'promotions':0,'promotion_authorized':False}}
 out.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
