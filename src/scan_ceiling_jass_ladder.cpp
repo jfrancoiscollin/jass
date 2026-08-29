@@ -193,6 +193,8 @@ void write_ladder_report(const std::string& path,
         << "  \"book_enabled\": false,\n"
         << "  \"threads_per_search\": 1,\n"
         << "  \"fresh_engine_tt_search_state_each_sibling_budget\": true,\n"
+        << "  \"score_pov\": \"parent\",\n"
+        << "  \"child_to_parent_sign_validated\": true,\n"
         << "  \"node_limit_mode\": \"exact\",\n"
         << "  \"requested_node_caps_exactly_configured\": true,\n"
         << "  \"node_stopped_rows_equal_requested\": true,\n"
@@ -303,7 +305,7 @@ int main(int argc, char** argv) {
 
     std::ofstream out(score_path);
     if (!out) return 5;
-    out << "row_index\tbudget_nodes\tparent_score\tnodes\tcompleted_depth\t"
+    out << "row_index\tbudget_nodes\tparent_score\tchild_score\tnodes\tcompleted_depth\t"
            "effective_depth\taborted_iteration\tstop_reason\telapsed_us\t"
            "budget_status\tpv_enters_egdb\tterminal_exact\ttb_exact\t"
            "exact_parent_utility\n";
@@ -338,8 +340,9 @@ int main(int argc, char** argv) {
             if (meta.terminal || meta.tb_exact) {
                 if (meta.terminal) ++counters.terminal_exact_rows[b];
                 else ++counters.tb_exact_rows[b];
-                out << idx << '\t' << budgets[b] << '\t' << exact_parent_score(meta)
-                    << "\t0\t0\t0\t0\t"
+                const int parent_score = exact_parent_score(meta);
+                out << idx << '\t' << budgets[b] << '\t' << parent_score << '\t'
+                    << -parent_score << "\t0\t0\t0\t0\t"
                     << (meta.terminal ? "terminal_exact" : "tb_exact")
                     << "\t0\t" << (meta.terminal ? "terminal_exact" : "tb_exact")
                     << "\t0\t" << (meta.terminal ? 1 : 0) << '\t'
@@ -369,8 +372,12 @@ int main(int argc, char** argv) {
                           << ": " << obs.nodes << " != " << budgets[b] << '\n';
                 return 4;
             }
+            if (obs.parent_score != -obs.child_score) {
+                std::cerr << "error: Jass child-to-parent POV sign drift at row " << idx << '\n';
+                return 4;
+            }
             out << idx << '\t' << budgets[b] << '\t' << obs.parent_score << '\t'
-                << obs.nodes << '\t' << obs.completed_depth << '\t'
+                << obs.child_score << '\t' << obs.nodes << '\t' << obs.completed_depth << '\t'
                 << obs.effective_depth << '\t' << (obs.aborted_iteration ? 1 : 0) << '\t'
                 << search_stop_reason_name(obs.stop_reason) << '\t' << obs.elapsed_us << '\t'
                 << budget_status << '\t' << (obs.pv_enters_egdb ? 1 : 0)

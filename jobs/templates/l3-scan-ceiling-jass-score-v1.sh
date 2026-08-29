@@ -183,6 +183,7 @@ root=Path(sys.argv[1]); label,tag,budgets=sys.argv[2:5]; report,plan_path,select
 want=[int(x) for x in budgets.split(',')];
 if r.get('schema')!='jass.scan_ceiling_jass_ladder.v1' or r.get('budgets_nodes')!=want: raise SystemExit('Jass report ladder drift')
 if r.get('node_limit_mode')!='exact' or r.get('requested_node_caps_exactly_configured') is not True or r.get('node_stopped_rows_equal_requested') is not True or r.get('max_depth_exhaustion_allowed') is not True or r.get('max_ply')!=64: raise SystemExit('Jass node-cap contract drift')
+if r.get('score_pov')!='parent' or r.get('child_to_parent_sign_validated') is not True: raise SystemExit('Jass POV contract drift')
 if r.get('book_enabled') is not False or r.get('threads_per_search')!=1 or r.get('fresh_engine_tt_search_state_each_sibling_budget') is not True or r.get('tt_mb')!=16: raise SystemExit('Jass runtime drift')
 if r.get('shard')!=int(tag) or r.get('nshards')!=16 or r.get('processed_rows')!=planned['selected_rows'] or r.get('invalid_rows')!=0: raise SystemExit('Jass shard coverage drift')
 for budget in want:

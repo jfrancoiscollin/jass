@@ -56,6 +56,7 @@ struct DiskRow {
 };
 
 struct SearchObs {
+    int child_score{0};
     int parent_score{0};
     std::uint64_t nodes{0};
     int completed_depth{0};
@@ -233,6 +234,7 @@ SearchObs run_fresh_search(Engine& engine,
     const auto t1 = std::chrono::steady_clock::now();
     if (result.from_book) throw std::runtime_error("teacher search unexpectedly used opening book");
     SearchObs out;
+    out.child_score = result.score;
     out.parent_score = -result.score;
     out.nodes = result.nodes;
     out.completed_depth = result.completed_depth;
