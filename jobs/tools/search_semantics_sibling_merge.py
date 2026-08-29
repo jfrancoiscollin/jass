@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Merge Discovery A sibling-export shards and freeze DEEP128 row IDs."""
+"""Merge Discovery A score-free sibling shards and freeze DEEP128 row IDs."""
 from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import struct
 import sys
@@ -84,13 +83,20 @@ def main() -> int:
     exports = []; receipts = []
     for shard, (children, groups, report_path) in enumerate(zip(args.children_shard, args.groups_shard, args.report_shard)):
         report = json.loads(report_path.read_text(encoding="utf-8"))
-        if (report.get("schema") != "jass.scan_ceiling_sibling_export.v1" or report.get("shard") != shard
-                or report.get("nshards") != EXPECTED_SHARDS or report.get("input_parents") != EXPECTED_PARENTS
-                or report.get("searches") != 0 or report.get("fits") != 0):
-            raise ValueError(f"Discovery sibling export report drift for shard {shard}")
+        if (report.get("schema") != "jass.search_semantics_sibling_export.v1"
+                or report.get("protocol") != "L3_JASS_SCAN_SEARCH_SEMANTICS_ATTRIBUTION_V1_20260829"
+                or report.get("benchmark_only") is not True or report.get("target_blind") is not True
+                or report.get("score_free") is not True or report.get("curriculum_loaded") is not False
+                or report.get("shard") != shard or report.get("nshards") != EXPECTED_SHARDS
+                or report.get("input_parents") != EXPECTED_PARENTS
+                or report.get("evaluations") != 0 or report.get("searches") != 0
+                or report.get("scores_generated") != 0 or report.get("fits") != 0):
+            raise ValueError(f"Discovery score-free sibling export report drift for shard {shard}")
         rows = load_export(groups, children)
         if report.get("emitted_siblings") != len(rows):
             raise ValueError("Discovery sibling export row count drift")
+        if any(int(row.row["t0_parent"]) != 0 for row in rows):
+            raise ValueError("score-free sibling export contains evaluator score")
         exports.extend(rows)
         receipts.append({"shard": shard, "rows": len(rows), "children_sha256": sha256(children),
                          "groups_sha256": sha256(groups), "report_sha256": sha256(report_path)})
@@ -126,17 +132,18 @@ def main() -> int:
                 "child_fingerprint":raw["child_fingerprint"],"child_canonical":child_canonical,
                 "child_pieces":raw["child_pieces"],"child_legal_moves":raw["child_legal_moves"],
                 "child_forced_capture":raw["child_forced_capture"],"child_rule_terminal":raw["child_rule_terminal"],
-                "child_tb_exact":raw["child_tb_exact"],"exact_parent_utility":raw["exact_parent_utility"],"t0_parent":raw["t0_parent"]}
+                "child_tb_exact":raw["child_tb_exact"],"exact_parent_utility":raw["exact_parent_utility"],"t0_parent":0}
             writer.writerow(output); child_out.write(item.record)
             if pid in deep: deep_rows.append(row_index)
     args.deep_row_ids.write_text("".join(f"{x}\n" for x in deep_rows),encoding="utf-8")
     payload={"schema":"jass.search_semantics_discovery_a_sibling_merge.v1","benchmark_only":True,
+        "target_blind":True,"score_free":True,"curriculum_loaded":False,
         "parents":len(parents),"siblings":len(exports),"parents_by_phase":dict(sorted(Counter(p.phase for p in parents.values()).items())),
         "deep128_parents":len(deep),"deep128_siblings":len(deep_rows),"canonical_sibling_identities_unique":len(sibling_ids)==len(exports),
         "shards":receipts,"parents_sha256":sha256(args.parents),"children_sha256":sha256(args.out_children),
         "groups_sha256":sha256(args.out_groups),"deep_row_ids_sha256":sha256(args.deep_row_ids),
-        "scores_generated":0,"fits":0,"strength_games":0,"training_allowed":False,"tuning_allowed":False,
-        "model_selection_allowed":False,"promotion_authorized":False}
+        "evaluations":0,"searches":0,"scores_generated":0,"fits":0,"strength_games":0,
+        "training_allowed":False,"tuning_allowed":False,"model_selection_allowed":False,"promotion_authorized":False}
     args.manifest.write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     print(json.dumps({"parents":512,"siblings":len(exports),"deep128_siblings":len(deep_rows)},sort_keys=True)); return 0
 
