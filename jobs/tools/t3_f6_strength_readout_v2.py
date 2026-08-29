@@ -24,6 +24,13 @@ POOL2_GENERATOR_SEED = 2026091901
 POOL2_SELECTION_SEED = 2026091902
 POOL2_BOOTSTRAP_SEED = 2026091903
 CHAINED_BOOTSTRAP_SEED = 2026092001
+V3_POOL1_GENERATOR_SEED = 2026092201
+V3_POOL1_SELECTION_SEED = 2026092202
+V3_POOL1_BOOTSTRAP_SEED = 2026092203
+V3_POOL2_GENERATOR_SEED = 2026092301
+V3_POOL2_SELECTION_SEED = 2026092302
+V3_POOL2_BOOTSTRAP_SEED = 2026092303
+V3_CHAINED_BOOTSTRAP_SEED = 2026092401
 
 
 def require(ok: bool, message: str) -> None:
@@ -65,6 +72,7 @@ def main() -> int:
     parser.add_argument("--r0-summary", type=Path, required=True)
     parser.add_argument("--code-sha", required=True)
     parser.add_argument("--search-params", required=True)
+    parser.add_argument("--campaign", choices=("v2", "v3"), default="v2")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -74,9 +82,19 @@ def main() -> int:
     require(sha(args.curriculum) == CURRICULUM_SHA, "CURRICULUM bytes drift")
     executable_sha = sha(args.executable)
     r0 = json.loads(args.r0_summary.read_text(encoding="utf-8"))
-    require(r0.get("verdict") == "R0_RELATIVE_PRODUCTION_LEAF_CONTRACT_ESTABLISHED"
+    v3 = args.campaign == "v3"
+    r0_verdict = ("R0_V3_PRODUCTION_LEAF_CONTRACT_ESTABLISHED" if v3
+                  else "R0_RELATIVE_PRODUCTION_LEAF_CONTRACT_ESTABLISHED")
+    p1_gen = V3_POOL1_GENERATOR_SEED if v3 else POOL1_GENERATOR_SEED
+    p1_select = V3_POOL1_SELECTION_SEED if v3 else POOL1_SELECTION_SEED
+    p1_bootstrap = V3_POOL1_BOOTSTRAP_SEED if v3 else POOL1_BOOTSTRAP_SEED
+    p2_gen = V3_POOL2_GENERATOR_SEED if v3 else POOL2_GENERATOR_SEED
+    p2_select = V3_POOL2_SELECTION_SEED if v3 else POOL2_SELECTION_SEED
+    p2_bootstrap = V3_POOL2_BOOTSTRAP_SEED if v3 else POOL2_BOOTSTRAP_SEED
+    chained_bootstrap = V3_CHAINED_BOOTSTRAP_SEED if v3 else CHAINED_BOOTSTRAP_SEED
+    require(r0.get("verdict") == r0_verdict
             and r0.get("passed") is True and r0.get("pool1_authorized") is True,
-            "R0-v2 authorization missing")
+            f"R0-{args.campaign} authorization missing")
     require(r0.get("code_sha") == args.code_sha
             and r0.get("artifact_sha256") == MODEL_SHA
             and r0.get("curriculum_sha256") == CURRICULUM_SHA
@@ -91,14 +109,14 @@ def main() -> int:
     p1_sha = sha(args.pool1_openings)
     p1_provenance = authenticate_pool(
         args.pool1_provenance, args.pool1_openings,
-        POOL1_GENERATOR_SEED, POOL1_SELECTION_SEED,
+        p1_gen, p1_select,
     )
-    p1 = load_gate(args.pool1_native, seed=POOL1_BOOTSTRAP_SEED, view="native",
+    p1 = load_gate(args.pool1_native, seed=p1_bootstrap, view="native",
                    executable_sha=executable_sha, openings_sha=p1_sha,
                    search_params=args.search_params)
     p1_rate = game_stats(p1)[0]
     payload: dict[str, object] = {
-        "schema": "jass.t3_f6_runtime_strength_readout.v2",
+        "schema": f"jass.t3_f6_runtime_strength_readout.{args.campaign}",
         "artifact_sha256": MODEL_SHA,
         "curriculum_sha256": CURRICULUM_SHA,
         "feature_order_sha256": FEATURE_ORDER_SHA,
@@ -107,6 +125,7 @@ def main() -> int:
         "search_params": args.search_params,
         "r0_summary_sha256": sha(args.r0_summary),
         "r0_relative_drift": r0.get("relative_contract", {}),
+        "r0_leaf_search_contract": r0.get("leaf_search_contract", {}),
         "r0_python_native_parity": r0.get("python_native_parity", {}),
         "r0_runtime_cost_profile": r0.get("runtime_cost_profile", {}),
         "runtime_contract": contract,
@@ -153,14 +172,14 @@ def main() -> int:
         require(p2_sha != p1_sha, "Pool1/Pool2 byte identity")
         p2_provenance = authenticate_pool(
             args.pool2_provenance, args.pool2_openings,
-            POOL2_GENERATOR_SEED, POOL2_SELECTION_SEED,
+            p2_gen, p2_select,
         )
-        p2 = load_gate(args.pool2_native, seed=POOL2_BOOTSTRAP_SEED, view="native",
+        p2 = load_gate(args.pool2_native, seed=p2_bootstrap, view="native",
                        executable_sha=executable_sha, openings_sha=p2_sha,
                        search_params=args.search_params)
         p2_rate = game_stats(p2)[0]
         chained_native = chained(
-            p1, p2, samples=200000, seed=CHAINED_BOOTSTRAP_SEED,
+            p1, p2, samples=200000, seed=chained_bootstrap,
         )
         payload.update({
             "pool2": {"native_primary": cell(p2, args.pool2_native)},

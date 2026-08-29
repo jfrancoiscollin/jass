@@ -383,7 +383,21 @@ struct Searcher {
         } else if (nnue) {
             s = nnue->evaluate(pos);
         } else {
-            return evaluate(pos);  // handcrafted: drawish already applied inside evaluate()
+            s = evaluate(pos);  // handcrafted: drawish already applied inside evaluate()
+            if (depth_one_trace) {
+                auto& leaves = depth_one_trace->leaf_evals;
+                if (leaves.size() < DepthOneSearchTrace::MAX_LEAF_EVALS) {
+                    leaves.push_back(LeafEvalTrace{
+                        pos,
+                        active_depth_one_move ? active_depth_one_move->move : Move{},
+                        ply,
+                        s,
+                    });
+                } else {
+                    depth_one_trace->leaf_eval_overflow = true;
+                }
+            }
+            return s;
         }
         if (t3_f6_nnue) s = t3_f6_nnue->evaluate_from_base(pos, s);
         // Scan's drawish-material scaling on the NETWORK leaf (the pattern eval can't
@@ -397,6 +411,19 @@ struct Searcher {
             const int sb = (pos.side_to_move() == Color::Black) ? s : -s;  // black-POV
             if (sb > 0 && nwk != 0) { if (nbm + nbk <= 3) s /= 8; else if (near_equal) s /= 2; }
             else if (sb < 0 && nbk != 0) { if (nwm + nwk <= 3) s /= 8; else if (near_equal) s /= 2; }
+        }
+        if (depth_one_trace) {
+            auto& leaves = depth_one_trace->leaf_evals;
+            if (leaves.size() < DepthOneSearchTrace::MAX_LEAF_EVALS) {
+                leaves.push_back(LeafEvalTrace{
+                    pos,
+                    active_depth_one_move ? active_depth_one_move->move : Move{},
+                    ply,
+                    s,
+                });
+            } else {
+                depth_one_trace->leaf_eval_overflow = true;
+            }
         }
         return s;
     }
@@ -1544,7 +1571,11 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                     const std::vector<ZobristHash>& game_history) {
     SearchResult res;
     breakdown_reset();
-    if (limits.depth_one_trace) *limits.depth_one_trace = DepthOneSearchTrace{};
+    if (limits.depth_one_trace) {
+        *limits.depth_one_trace = DepthOneSearchTrace{};
+        limits.depth_one_trace->leaf_evals.reserve(
+            DepthOneSearchTrace::MAX_LEAF_EVALS);
+    }
 
     // One-time bootstrap of the external endgame DB (Kingsrow egdb_intl) from
     // JASS_EGDB_PATH. No-op (and free thereafter) in the default build; here

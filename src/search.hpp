@@ -83,8 +83,21 @@ struct DepthOneMoveTrace {
     std::string   first_resolution_stage;
 };
 
+// Every static leaf actually reached below the active depth-one root move.
+// Position is copied only in diagnostic mode; the production path keeps the
+// owning trace pointer null and performs no copy or allocation.
+struct LeafEvalTrace {
+    Position position{};
+    Move     root_move{};
+    int      ply{0};
+    int      score{0};
+};
+
 struct DepthOneSearchTrace {
+    static constexpr std::size_t MAX_LEAF_EVALS = 16384;
     std::vector<DepthOneMoveTrace> moves;
+    std::vector<LeafEvalTrace> leaf_evals;
+    bool leaf_eval_overflow{false};
     std::uint64_t qnodes{0};
     std::uint64_t tablebase_probes{0};
     std::uint64_t tablebase_hits{0};

@@ -6,13 +6,18 @@ set -Eeuo pipefail
 : "${JASS_JOB_ID:?}"; : "${EXPECTED_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"
 : "${JASS_OBJSTORE_REMOTE:?}"; : "${R0_RESULT_PREFIX:?}"
 cd "$JASS_CODE_DIR"
-source jobs/templates/t3-f6-runtime-exclusions-v2.sh
+CAMPAIGN="${T3_F6_RUNTIME_CAMPAIGN:-v2}"
+case "$CAMPAIGN" in
+  v2) source jobs/templates/t3-f6-runtime-exclusions-v2.sh ;;
+  v3) source jobs/templates/t3-f6-runtime-exclusions-v3.sh ;;
+  *) echo "unsupported runtime campaign: $CAMPAIGN" >&2; exit 2 ;;
+esac
 
 MODEL_SHA="16e5db8fd78849bba12b158eee5c1da4ab170129d8aeac1b91ab7a40ad9d0bb2"
 CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
-GEN_SEED=2026091801
-SELECT_SEED=2026091802
-NATIVE_BOOTSTRAP_SEED=2026091803
+GEN_SEED="${T3_F6_POOL1_GEN_SEED:-2026091801}"
+SELECT_SEED="${T3_F6_POOL1_SELECT_SEED:-2026091802}"
+NATIVE_BOOTSTRAP_SEED="${T3_F6_POOL1_BOOTSTRAP_SEED:-2026091803}"
 CANDIDATES=30000
 OPENINGS=3000
 GAMES=6000
@@ -44,7 +49,11 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a
 trap 'exit 143' TERM; trap 'exit 130' INT
 
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
-[[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-t3-f6-runtime-strength-pool1-v2$ ]] || die "job nomenclature drift"
+if [ "$CAMPAIGN" = v2 ]; then
+  [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-t3-f6-runtime-strength-pool1-v2$ ]] || die "job nomenclature drift"
+else
+  [[ "$JASS_JOB_ID" =~ ^cpx62-[0-9]+-l3-t3-f6-runtime-strength-pool1-v3$ ]] || die "v3 job nomenclature drift"
+fi
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ] || die "dirty/non-detached job worktree"
 [ "$(nproc)" -eq 16 ] || die "16-CPU CPX contract mismatch"
@@ -59,8 +68,13 @@ python3 -m py_compile jobs/tools/t3_f6_force_pool_select.py jobs/tools/t3_f6_str
   jobs/tools/run_jass_gate_bounded.py jobs/tools/jass_vs_jass_arch.py
 "$PY" -m unittest jobs.tests.test_t3_f6_runtime_protocol \
   jobs.tests.test_t3_f6_runtime_v2_protocol >"$W/python-tests.log" 2>&1
+[ "$CAMPAIGN" = v2 ] || "$PY" -m unittest jobs.tests.test_t3_f6_runtime_v3_protocol >>"$W/python-tests.log" 2>&1
 
-stage fetch-authenticate-r0-v2-exact-bytes
+stage fetch-authenticate-r0-exact-bytes
+EXTRA_R0_FILES=()
+[ "$CAMPAIGN" = v2 ] || EXTRA_R0_FILES+=(
+  --file artefacts/r0-v2-corpus.fen=r0-v2-corpus.fen
+  --file artefacts/autopsy-exclusions.fen=autopsy-exclusions.fen)
 python3 jobs/tools/fetch_result_files.py --prefix "$R0_RESULT_PREFIX" \
   --file artefacts/JASS_CONTROL_SUMMARY.json=r0-summary.json \
   --file artefacts/jass-t3-f6-force.gz=jass-t3-f6-force.gz \
@@ -68,15 +82,17 @@ python3 jobs/tools/fetch_result_files.py --prefix "$R0_RESULT_PREFIX" \
   --file artefacts/curriculum.pjtw=curriculum.pjtw \
   --file artefacts/r0-corpus.fen=r0-corpus.fen \
   --file artefacts/r0-v1-corpus.fen=r0-v1-corpus.fen \
-  --out-dir "$IN" --report "$ART/verified-r0.json" >"$W/fetch-r0.log" 2>&1 || die "R0-v2 fetch failed"
+  "${EXTRA_R0_FILES[@]}" \
+  --out-dir "$IN" --report "$ART/verified-r0.json" >"$W/fetch-r0.log" 2>&1 || die "R0 fetch failed"
 gunzip -t "$IN/jass-t3-f6-force.gz"; gunzip -c "$IN/jass-t3-f6-force.gz" >"$W/jass"; chmod 755 "$W/jass"; J="$W/jass"
-python3 - "$IN" "$ART" "$EXPECTED_CODE_SHA" "$MODEL_SHA" "$CURRICULUM_SHA" <<'PY_R0'
+python3 - "$IN" "$ART" "$EXPECTED_CODE_SHA" "$MODEL_SHA" "$CURRICULUM_SHA" "$CAMPAIGN" <<'PY_R0'
 import hashlib,json,sys
 from pathlib import Path
-root,art=map(Path,sys.argv[1:3]); code,model,curr=sys.argv[3:]; sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+root,art=map(Path,sys.argv[1:3]); code,model,curr,campaign=sys.argv[3:]; sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 s=json.loads((root/'r0-summary.json').read_text()); receipt=json.loads((art/'verified-r0.json').read_text())
 if receipt.get('result_state')!='completed' or receipt.get('exit_code')!=0: raise SystemExit('R0 result state drift')
-if s.get('verdict')!='R0_RELATIVE_PRODUCTION_LEAF_CONTRACT_ESTABLISHED' or s.get('passed') is not True or s.get('pool1_authorized') is not True: raise SystemExit('R0-v2 authorization drift')
+want='R0_V3_PRODUCTION_LEAF_CONTRACT_ESTABLISHED' if campaign=='v3' else 'R0_RELATIVE_PRODUCTION_LEAF_CONTRACT_ESTABLISHED'
+if s.get('verdict')!=want or s.get('passed') is not True or s.get('pool1_authorized') is not True: raise SystemExit('R0 authorization drift')
 if s.get('code_sha')!=code or receipt.get('code_sha')!=code: raise SystemExit('R0/Pool1 code drift')
 if sha(root/'t3-a-f6-only.json')!=model or s.get('artifact_sha256')!=model: raise SystemExit('T3-A byte drift')
 if sha(root/'curriculum.pjtw')!=curr or s.get('curriculum_sha256')!=curr: raise SystemExit('CURRICULUM byte drift')
@@ -92,6 +108,7 @@ EGDIR=""; for dir in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted
 [ "$EGDIR" = "$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["runtime_contract"]["egdb_path"])' "$IN/r0-summary.json")" ] || die "R0/Pool1 EGDB path drift"
 export JASS_EGDB_PATH="$EGDIR" JASS_EGDB_CACHE_MB="$CACHE_MB"
 IDENTITY_ARGS=(); FORCE_ARGS=(--exclude-fen "$IN/r0-corpus.fen" --exclude-fen "$IN/r0-v1-corpus.fen"); IDENTITY_COUNT=0; FORCE_COUNT=0
+[ "$CAMPAIGN" = v2 ] || FORCE_ARGS+=(--exclude-fen "$IN/r0-v2-corpus.fen" --exclude-fen "$IN/autopsy-exclusions.fen")
 while IFS='|' read -r label prefix remote_path; do [ -n "${label:-}" ] || continue
   python3 jobs/tools/fetch_result_files.py --prefix "$prefix" --file "$remote_path=$label.tsv.gz" --out-dir "$IN" --report "$ART/verified-identity-$label.json" >"$W/fetch-identity-$label.log" 2>&1 || die "identity exclusion fetch failed: $label"
   IDENTITY_ARGS+=(--exclude-tsv "$IN/$label.tsv.gz"); IDENTITY_COUNT=$((IDENTITY_COUNT+1)); done <<<"$T3_F6_IDENTITY_EXCLUDE_SPECS"
@@ -133,12 +150,14 @@ stage pool1-readout-and-decision
   --model "$IN/t3-a-f6-only.json" --curriculum "$IN/curriculum.pjtw" --executable "$J" \
   --pool1-openings "$ART/pool1-openings.fen" --pool1-provenance "$ART/pool1-provenance.json" \
   --r0-summary "$IN/r0-summary.json" --code-sha "$EXPECTED_CODE_SHA" --search-params "$Q00" \
+  --campaign "$CAMPAIGN" \
   --out "$ART/JASS_CONTROL_SUMMARY.json" >"$W/pool1-readout.log" 2>&1
 VERDICT=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["verdict"])' "$ART/JASS_CONTROL_SUMMARY.json")
 AUTHORIZED=$(python3 -c 'import json,sys;print(str(json.load(open(sys.argv[1]))["pool2_authorized"]).lower())' "$ART/JASS_CONTROL_SUMMARY.json")
 cp "$IN/jass-t3-f6-force.gz" "$ART/jass-t3-f6-force.gz"; cp "$IN/t3-a-f6-only.json" "$ART/t3-a-f6-only.json"
 cp "$IN/curriculum.pjtw" "$ART/curriculum.pjtw"; cp "$IN/r0-summary.json" "$ART/r0-summary.json"
 cp "$IN/r0-corpus.fen" "$ART/r0-corpus.fen"; cp "$IN/r0-v1-corpus.fen" "$ART/r0-v1-corpus.fen"
+[ "$CAMPAIGN" = v2 ] || { cp "$IN/r0-v2-corpus.fen" "$ART/r0-v2-corpus.fen"; cp "$IN/autopsy-exclusions.fen" "$ART/autopsy-exclusions.fen"; }
 : >"$ART/VERDICT__$VERDICT"; : >"$ART/GAMES_TOTAL__6000"; : >"$ART/Q00_GAMES__0"
 : >"$ART/POOL2_AUTHORIZED__${AUTHORIZED^^}"; : >"$ART/PROMOTION_AUTHORIZED__FALSE"; : >"$ART/BAKE__FALSE"
 say "$VERDICT native_games=6000 q00_games=0 pool2_authorized=$AUTHORIZED promotion=false"
