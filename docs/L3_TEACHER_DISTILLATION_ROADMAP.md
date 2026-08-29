@@ -1,9 +1,9 @@
 # L3 — Teacher distillation roadmap
 
 > **Mis à jour : 29 août 2026**
-> **Statut : campagne runtime T3-A terminale en R0. Aucun gate de force autorisé.**
+> **Statut : campagne runtime T3-A terminale en R0 ; FAIL negamax autopsié comme semantics de quiescence, pas défaut T3. Aucun gate de force autorisé.**
 >
-> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [protocole v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_20260829.md), [résultat terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) ; [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [protocole v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_20260829.md), [résultat terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) ; [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -157,6 +157,22 @@ search `-51`). Verdict terminal v2 :
 R0_V2_NEGAMAX_OR_TERMINAL_PRECEDENCE_FAILED
 ```
 
+L'autopsie post-terminale `cpx62-1650` / `20260829T141312Z-2a4d1519`
+(readout `1651` / `20260829T142315Z-2a4d1519`) classe exactement :
+
+```text
+QUIESCENCE_OR_DEPTH_SEMANTICS_EXPLAINS_MISMATCH
+```
+
+T0 échoue également (`0` direct, `-1` search d1), contre T3 `+85/-51`.
+Les neuf children n'ont aucune capture, menace, terminal ou TB, mais chacun
+génère `1–2` sacrifices sélectifs : `depth=1` entre donc dans la quiescence de
+production. Les premières divergences T0 et T3 sont toutes deux à
+`qsearch_selective_sac`. La formule/POV native T3 a `0` mismatch ; deux témoins
+leaf isolés passent avec les deux bras. Ce FAIL ne prouve aucun défaut T3 et ne
+teste pas la force : il invalide seulement le raccourci
+`search(depth=1)=max(-eval(child))`.
+
 Le contrat relatif est donc établi, mais le contrat complet de leaf evaluator
 ne l'est pas. Pool1/Pool2 restent interdits et le gain Elo demeure indéterminé.
 Modifier le témoin ou adapter la sémantique de valeur demanderait une nouvelle
@@ -171,6 +187,7 @@ preregistration.
 3. Aucune métrique secondaire ne transforme B−A en PASS.
 4. Aucun retune ni nouveau fresh T3 n'est autorisé.
 5. Le runtime n'a été exercé qu'en contrats R0 target-blind v1/v2 ; aucune partie Elo, strength ou Q00, aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
-6. `next_stage = null` pour cette campagne.
+6. `next_stage = null` pour cette campagne ; une v3 demanderait une prereg
+   séparée avec leaf isolée ou référence de quiescence exacte.
 
 La roadmap T3 runtime s'arrête au verdict R0.

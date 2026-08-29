@@ -49,7 +49,7 @@ class NegamaxAutopsyProtocolTests(unittest.TestCase):
         for token in (
             "R0_V2_NEGAMAX_OR_TERMINAL_PRECEDENCE_FAILED",
             "diagnostic post-terminal",
-            "sans aucune partie de",
+            "Aucune v3 ni partie de force",
             "max(-eval(child))",
             "quiescence",
         ):
