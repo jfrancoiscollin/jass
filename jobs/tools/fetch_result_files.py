@@ -27,24 +27,12 @@ def safe_local_path(value: str) -> Path:
     return path
 
 
-def fetch_files(
+def inspect_result_inventory(
     *,
     rclone: str,
     prefix: str,
-    selections: list[tuple[str, str]],
-    out_dir: Path,
     expected_state: str = "completed",
 ) -> dict:
-    if not selections:
-        raise RuntimeError("at least one result file must be selected")
-    remote_names = [remote for remote, _ in selections]
-    local_names = [local for _, local in selections]
-    if (
-        len(set(remote_names)) != len(remote_names)
-        or len(set(local_names)) != len(local_names)
-    ):
-        raise RuntimeError("duplicate remote path or local output name")
-
     if expected_state not in {"completed", "failed"}:
         raise RuntimeError(f"unsupported expected result state: {expected_state!r}")
     prefix = prefix.rstrip("/")
@@ -66,6 +54,57 @@ def fetch_files(
         or checksums.get("manifest.json") != meta["sha256"]
     ):
         raise RuntimeError("manifest.json metadata is inconsistent")
+    for path, item in files.items():
+        if checksums.get(path) != item["sha256"]:
+            raise RuntimeError(f"checksum metadata mismatch: {path}")
+
+    return {
+        "schema": 1,
+        "state": "verified",
+        "prefix": prefix,
+        "job_id": manifest["job_id"],
+        "attempt_id": manifest["attempt_id"],
+        "code_sha": manifest.get("code_sha"),
+        "host": manifest.get("host"),
+        "result_state": manifest.get("state"),
+        "exit_code": manifest.get("exit_code"),
+        "files": [
+            {"path": path, **item}
+            for path, item in sorted(files.items())
+        ],
+    }
+
+
+def fetch_files(
+    *,
+    rclone: str,
+    prefix: str,
+    selections: list[tuple[str, str]],
+    out_dir: Path,
+    expected_state: str = "completed",
+) -> dict:
+    if not selections:
+        raise RuntimeError("at least one result file must be selected")
+    remote_names = [remote for remote, _ in selections]
+    local_names = [local for _, local in selections]
+    if (
+        len(set(remote_names)) != len(remote_names)
+        or len(set(local_names)) != len(local_names)
+    ):
+        raise RuntimeError("duplicate remote path or local output name")
+
+    verified = inspect_result_inventory(
+        rclone=rclone,
+        prefix=prefix,
+        expected_state=expected_state,
+    )
+    files = {
+        item["path"]: {
+            "sha256": item["sha256"],
+            "size_bytes": item["size_bytes"],
+        }
+        for item in verified["files"]
+    }
 
     out_dir.mkdir(parents=True, exist_ok=True)
     report_files = []
@@ -77,8 +116,6 @@ def fetch_files(
         item = files.get(remote_path)
         if item is None or item["size_bytes"] <= 0:
             raise RuntimeError(f"missing/empty result file: {remote_path}")
-        if checksums.get(remote_path) != item["sha256"]:
-            raise RuntimeError(f"checksum metadata mismatch: {remote_path}")
         target = out_dir / local_path
         target.parent.mkdir(parents=True, exist_ok=True)
         base.download_verified(
@@ -93,18 +130,7 @@ def fetch_files(
             "local_name": local_name,
             **item,
         })
-    return {
-        "schema": 1,
-        "state": "verified",
-        "prefix": prefix,
-        "job_id": manifest["job_id"],
-        "attempt_id": manifest["attempt_id"],
-        "code_sha": manifest.get("code_sha"),
-        "host": manifest.get("host"),
-        "result_state": manifest.get("state"),
-        "exit_code": manifest.get("exit_code"),
-        "files": report_files,
-    }
+    return {**verified, "files": report_files}
 
 
 def parse_selection(value: str) -> tuple[str, str]:
@@ -118,8 +144,13 @@ def parse_selection(value: str) -> tuple[str, str]:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prefix", required=True)
-    parser.add_argument("--file", action="append", required=True,
+    parser.add_argument("--file", action="append",
                         help="result/path[=local-name]; repeatable")
+    parser.add_argument(
+        "--inventory-only",
+        action="store_true",
+        help="authenticate the runner-v3 result and report its complete inventory",
+    )
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--rclone-bin", default=os.environ.get("RCLONE_BIN", "rclone"))
@@ -131,13 +162,24 @@ def main(argv=None) -> int:
     )
     args = parser.parse_args(argv)
     try:
-        report = fetch_files(
-            rclone=args.rclone_bin,
-            prefix=args.prefix,
-            selections=[parse_selection(item) for item in args.file],
-            out_dir=args.out_dir,
-            expected_state=args.expected_state,
-        )
+        if args.inventory_only:
+            if args.file:
+                raise RuntimeError("--inventory-only cannot be combined with --file")
+            report = inspect_result_inventory(
+                rclone=args.rclone_bin,
+                prefix=args.prefix,
+                expected_state=args.expected_state,
+            )
+        else:
+            if not args.file:
+                raise RuntimeError("at least one --file is required")
+            report = fetch_files(
+                rclone=args.rclone_bin,
+                prefix=args.prefix,
+                selections=[parse_selection(item) for item in args.file],
+                out_dir=args.out_dir,
+                expected_state=args.expected_state,
+            )
         if args.report:
             args.report.parent.mkdir(parents=True, exist_ok=True)
             args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")

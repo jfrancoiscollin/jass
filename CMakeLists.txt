@@ -325,6 +325,31 @@ else()
 endif()
 target_link_libraries(jass PRIVATE jass_lib jass_warnings)
 
+# Native benchmark-only tools for the preregistered L3 Scan ceiling campaign.
+# They share the production engine library but expose no fit, tuning, game,
+# bake, or promotion path and are not part of the browser/WASM artefact.
+if(NOT EMSCRIPTEN)
+    add_executable(jass_scan_ceiling_parent_filter
+        src/deep_sibling_parent_filter.cpp
+        $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(jass_scan_ceiling_parent_filter PRIVATE jass_lib jass_warnings)
+
+    add_executable(jass_scan_ceiling_source_generator
+        src/scan_ceiling_source_generator.cpp
+        $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(jass_scan_ceiling_source_generator PRIVATE jass_lib jass_warnings)
+
+    add_executable(jass_scan_ceiling_sibling_export
+        src/scan_ceiling_sibling_export.cpp
+        $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(jass_scan_ceiling_sibling_export PRIVATE jass_lib jass_warnings)
+
+    add_executable(jass_scan_ceiling_jass_ladder
+        src/scan_ceiling_jass_ladder.cpp
+        $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(jass_scan_ceiling_jass_ladder PRIVATE jass_lib jass_warnings)
+endif()
+
 # -----------------------------------------------------------------------------
 # Tests
 # -----------------------------------------------------------------------------
