@@ -120,15 +120,36 @@ void test_search_uses_exactly_one_negamax_inversion() {
         const Position child = root.after(move);
         MoveList replies;
         generate_legal_moves(child, replies);
-        JASS_CHECK(replies.empty() || !replies[0].is_capture());
+        JASS_CHECK(std::none_of(replies.begin(), replies.end(),
+                                [](const Move& reply) { return reply.is_capture(); }));
         expected = std::max(expected, -network.evaluate(child));
     }
     SearchLimits limits;
     limits.max_depth = 1;
     limits.nnue = &network;
+    DepthOneSearchTrace trace;
+    limits.depth_one_trace = &trace;
     TranspositionTable tt;
     tt.resize_mb(1);
-    JASS_CHECK_EQ(search(root, limits, tt).score, expected);
+    const SearchResult traced = search(root, limits, tt);
+    JASS_CHECK_EQ(traced.score, expected);
+    JASS_CHECK_EQ(trace.moves.size(), legal.size());
+    int traced_max = -INF_SCORE;
+    for (const auto& row : trace.moves) {
+        JASS_CHECK_EQ(row.child_return, -row.root_negated_return);
+        traced_max = std::max(traced_max, row.root_negated_return);
+    }
+    JASS_CHECK_EQ(traced_max, traced.score);
+
+    // The null/default path must remain semantically identical.
+    limits.depth_one_trace = nullptr;
+    TranspositionTable control_tt;
+    control_tt.resize_mb(1);
+    const SearchResult control = search(root, limits, control_tt);
+    JASS_CHECK_EQ(control.score, traced.score);
+    JASS_CHECK_EQ(control.best_move, traced.best_move);
+    JASS_CHECK_EQ(control.nodes, traced.nodes);
+    JASS_CHECK_EQ(control.eval_calls, traced.eval_calls);
 }
 
 }  // namespace

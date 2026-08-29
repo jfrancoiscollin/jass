@@ -321,6 +321,10 @@ struct Searcher {
     // base evaluator, while eval_leaf applies the residual exactly once.
     const t3_f6::Network*                 t3_f6_nnue{nullptr};
 
+    // Passive autopsy instrumentation. Both pointers are null in production.
+    DepthOneSearchTrace*                  depth_one_trace{nullptr};
+    DepthOneMoveTrace*                    active_depth_one_move{nullptr};
+
     // Fast-path accumulator support. When `nnue` is an `MLPNetworkQ`,
     // we cache the concrete pointer here and maintain a per-ply
     // `AccumulatorPair` so each leaf eval skips the Layer-1 rebuild.
@@ -581,18 +585,42 @@ static bool opponent_can_capture(const Position& pos) {
 int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
                          int forcing_left, int promo_left, int threat_left, int sac_left) {
     if (stopped) return 0;
+    if (depth_one_trace) ++depth_one_trace->qnodes;
+    DepthOneMoveTrace* const trace =
+        (ply == 1) ? active_depth_one_move : nullptr;
+    if (trace) {
+        trace->entered_quiescence = true;
+        trace->qsearch_alpha = alpha;
+        trace->qsearch_beta = beta;
+    }
+    auto finish = [trace](int score, const char* stage) noexcept {
+        if (trace) {
+            trace->qsearch_return = score;
+            if (trace->first_resolution_stage.empty())
+                trace->first_resolution_stage = stage;
+        }
+        return score;
+    };
     ++nodes;
-    if (check_exact_node_budget()) return 0;
-    if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
+    if (check_exact_node_budget()) return finish(0, "qsearch_node_limit");
+    if ((nodes & 0x3FF) == 0 && check_stop()) return finish(0, "qsearch_stop");
 
     MoveList moves;
     gen_moves(pos, moves);
-    if (moves.empty()) return -MATE_SCORE + ply;
+    if (trace) trace->qsearch_legal_moves = moves.size();
+    if (moves.empty()) {
+        if (depth_one_trace) ++depth_one_trace->terminal_hits;
+        if (trace) trace->terminal_hit = true;
+        return finish(-MATE_SCORE + ply, "qsearch_terminal");
+    }
 
     // generate_legal_moves either returns *all* maximum-length captures or
     // *all* quiet moves — never a mix. So a single check on the first move
     // tells us whether the position is calm.
     if (!moves[0].is_capture()) {
+        if (trace)
+            trace->qsearch_opponent_threat =
+                has_any_capture(pos, opposite(pos.side_to_move()));
         // Exact frozen Scan 3.1 threat semantics. Scan does not enumerate
         // the quiet replies inside qsearch: it re-enters the main search on
         // this same position at depth 1 and a phantom ply+1, with verification
@@ -608,7 +636,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
             suppress_scan_verify = true;
             const int score = negamax(pos, 1, ply + 1, alpha, beta);
             suppress_scan_verify = previous;
-            return score;
+            return finish(score, "qsearch_scan_threat_reentry");
         }
         // Threat extension (Scan) : at the first qs ply, if we are calm but the
         // opponent has a capture ready (we are under threat), the static eval is
@@ -621,6 +649,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
         if (threat_left > 0 && ply < MAX_PLY - 4 && opponent_can_capture(pos)) {
             int best = -INF_SCORE;
             for (const auto& m : moves) {                // our quiet moves
+                if (trace) ++trace->qsearch_moves_searched;
                 const Position child = after_timed(pos, m);
                 push_accumulator(ply, pos, m, child);
                 const int score = -quiescence(child, ply + 1, -beta, -alpha, 0, 0, 0, 0);
@@ -628,9 +657,13 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
                 if (best > alpha) alpha = best;
                 if (alpha >= beta) break;
             }
-            return best;
+            return finish(best, "qsearch_threat_extension");
         }
         const int stand = eval_leaf(pos, ply);
+        if (trace) {
+            trace->qsearch_stand_pat_valid = true;
+            trace->qsearch_stand_pat = stand;
+        }
         // Selective SAC quiescence (Scan add_sacs, src/scan_sacs.cpp) : gated EXACTLY
         // like Scan — a men-only board (no king anywhere) and NOT under threat (the
         // threat case is handled by the extension above). add_sacs' selectivity is the
@@ -642,7 +675,9 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
         // SACRIFICE (forced reply) or a near PROMOTION. Stand-pat-search those
         // (bounded by forcing_left / promo_left / sac_left). All budgets 0 → return
         // the static eval exactly as before (byte-identical when all qs_* are off).
-        if ((forcing_left <= 0 && promo_left <= 0 && !sacs_on) || stand >= beta) return stand;
+        if ((forcing_left <= 0 && promo_left <= 0 && !sacs_on) || stand >= beta)
+            return finish(stand, stand >= beta
+                ? "qsearch_stand_pat_beta_cutoff" : "qsearch_stand_pat");
         int best = stand;
         if (best > alpha) alpha = best;
         for (const auto& m : moves) {                    // forcing/promo : all quiet
@@ -650,6 +685,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
             const bool     is_sac  = forcing_left > 0 && qs_leaves_forced_capture(child);
             const bool     is_promo= promo_left   > 0 && qs_promo_progress(pos, m, promo_left);
             if (!is_sac && !is_promo) continue;
+            if (trace) ++trace->qsearch_moves_searched;
             push_accumulator(ply, pos, m, child);
             const int score = -quiescence(child, ply + 1, -beta, -alpha,
                                           is_sac   ? forcing_left - 1 : forcing_left,
@@ -662,7 +698,9 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
         if (sacs_on && alpha < beta) {
             MoveList sacs;
             scan_add_sacs(pos, sacs);
+            if (trace) trace->qsearch_selective_sacs = sacs.size();
             for (std::size_t i = 0; i < sacs.size(); ++i) {
+                if (trace) ++trace->qsearch_moves_searched;
                 const Position child = after_timed(pos, sacs[i]);
                 push_accumulator(ply, pos, sacs[i], child);
                 const int score = -quiescence(child, ply + 1, -beta, -alpha,
@@ -672,11 +710,17 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
                 if (alpha >= beta) break;                // beta cut-off
             }
         }
-        return best;
+        if (trace && trace->qsearch_selective_sacs > 0)
+            return finish(best, "qsearch_selective_sac");
+        if (forcing_left > 0 || promo_left > 0)
+            return finish(best, "qsearch_forcing_or_promotion");
+        return finish(best, "qsearch_stand_pat_after_empty_sac_generation");
     }
 
+    if (trace) trace->qsearch_forced_capture = true;
     int best = -INF_SCORE;
     for (const auto& m : moves) {
+        if (trace) ++trace->qsearch_moves_searched;
         const Position next  = after_timed(pos, m);
         push_accumulator(ply, pos, m, next);
         // Captures are forced (cheap) — they do NOT consume either budget.
@@ -686,12 +730,14 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
         if (best > alpha) alpha = best;
         if (alpha >= beta) break;  // beta cut-off
     }
-    return best;
+    return finish(best, "qsearch_forced_capture");
 }
 
 int Searcher::negamax(const Position& pos, int depth, int ply,
                       int alpha, int beta) {
     if (stopped) return 0;
+    DepthOneMoveTrace* const trace =
+        (ply == 1) ? active_depth_one_move : nullptr;
     // Hard ply cap so single-move extensions can't run off the end of the
     // killers / hash_path arrays.
     if (ply >= MAX_PLY) return eval_leaf(pos, ply);
@@ -713,16 +759,41 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // 0. Path-dependent draw detection. Path-dependent because it depends
     //    on which prior positions the search has visited, so we must not
     //    consult the TT for these answers.
-    if (path_contains(hash, pos.halfmove_clock()))  return 0;
-    if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES)   return 0;
+    if (path_contains(hash, pos.halfmove_clock())) {
+        if (trace) {
+            trace->path_draw = true;
+            trace->first_resolution_stage = "path_draw";
+        }
+        return 0;
+    }
+    if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES) {
+        if (trace) {
+            trace->fifty_move_draw = true;
+            trace->first_resolution_stage = "fifty_move_draw";
+        }
+        return 0;
+    }
 
     // 0bis. Endgame tablebase: positions with a known theoretical result
     //       skip the rest of the work. Like the path-dependent draws this
     //       answer is independent of the alpha-beta window.
     {
+        if (depth_one_trace) ++depth_one_trace->tablebase_probes;
         const EndgameResult eg = probe_endgame(pos);
-        if (eg == EndgameResult::Draw) return 0;
+        if (eg == EndgameResult::Draw) {
+            if (depth_one_trace) ++depth_one_trace->tablebase_hits;
+            if (trace) {
+                trace->tablebase_hit = true;
+                trace->first_resolution_stage = "tablebase_draw";
+            }
+            return 0;
+        }
         if (eg == EndgameResult::WhiteWin || eg == EndgameResult::BlackWin) {
+            if (depth_one_trace) ++depth_one_trace->tablebase_hits;
+            if (trace) {
+                trace->tablebase_hit = true;
+                trace->first_resolution_stage = "tablebase_win_loss";
+            }
             // Distance-aware TB terminal. A flat win score gave the search no
             // reason to PROGRESS in a won endgame: every winning move tied, so
             // it could shuffle until the FMJD draw rule and throw the win (and,
@@ -760,19 +831,37 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //    keep the suggested move for ordering.
     TTEntry tt_entry;
     bool    tt_hit;
+    if (depth_one_trace) ++depth_one_trace->tt_probes;
     { BD_TIME(tt); tt_hit = tt->probe(hash, tt_entry); }
+    if (depth_one_trace && tt_hit) ++depth_one_trace->tt_hits;
     if (tt_hit && tt_entry.depth >= depth) {
         const int s = score_from_tt(tt_entry.score, ply);
-        if (tt_entry.bound() == Bound::Exact)                    return s;
-        if (tt_entry.bound() == Bound::Lower && s >= beta)       return s;
-        if (tt_entry.bound() == Bound::Upper && s <= alpha)      return s;
+        if (tt_entry.bound() == Bound::Exact) {
+            if (trace) { trace->tt_cutoff = true; trace->first_resolution_stage = "tt_exact"; }
+            return s;
+        }
+        if (tt_entry.bound() == Bound::Lower && s >= beta) {
+            if (trace) { trace->tt_cutoff = true; trace->first_resolution_stage = "tt_lower_cutoff"; }
+            return s;
+        }
+        if (tt_entry.bound() == Bound::Upper && s <= alpha) {
+            if (trace) { trace->tt_cutoff = true; trace->first_resolution_stage = "tt_upper_cutoff"; }
+            return s;
+        }
     }
 
     // 2. Mate / leaf detection. At the horizon we hand off to quiescence
     //    so a forced capture pending at the leaf is not silently misvalued.
     MoveList moves;
     gen_moves(pos, moves);
-    if (moves.empty()) return -MATE_SCORE + ply;
+    if (moves.empty()) {
+        if (depth_one_trace) ++depth_one_trace->terminal_hits;
+        if (trace) {
+            trace->terminal_hit = true;
+            trace->first_resolution_stage = "negamax_terminal";
+        }
+        return -MATE_SCORE + ply;
+    }
     if (depth <= 0)    return quiescence(pos, ply, alpha, beta, params.qs_forcing_depth, params.qs_promo_depth, (params.qs_threat_ext || params.scan_threat_reentry) ? 1 : 0, params.qs_sacs ? (params.qs_sacs_depth0_only ? 1 : 8) : 0);
 
     // Shared, lazily-computed static eval for this node. RFP / NMP / razoring
@@ -1455,6 +1544,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                     const std::vector<ZobristHash>& game_history) {
     SearchResult res;
     breakdown_reset();
+    if (limits.depth_one_trace) *limits.depth_one_trace = DepthOneSearchTrace{};
 
     // One-time bootstrap of the external endgame DB (Kingsrow egdb_intl) from
     // JASS_EGDB_PATH. No-op (and free thereafter) in the default build; here
@@ -1500,6 +1590,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     s.stop_flag = limits.stop_flag;
     s.nnue      = limits.nnue;
     s.t3_f6_nnue = dynamic_cast<const t3_f6::Network*>(limits.nnue);
+    s.depth_one_trace = limits.depth_one_trace;
     const INetwork* accumulator_base = s.t3_f6_nnue
         ? s.t3_f6_nnue->base_network() : limits.nnue;
     // Activate the accumulator fast path when the supplied INetwork is
@@ -1608,10 +1699,31 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
             if (s.stopped) break;
             ++trace_index;
             const int alpha_before = cur_alpha;
+            DepthOneMoveTrace* move_trace = nullptr;
+            if (s.depth_one_trace && depth == 1) {
+                s.depth_one_trace->moves.emplace_back();
+                move_trace = &s.depth_one_trace->moves.back();
+                move_trace->move = m;
+                move_trace->alpha_before = alpha_before;
+                move_trace->beta = beta;
+                move_trace->child_depth = depth - 1;
+                move_trace->nodes_before = s.nodes;
+                move_trace->eval_calls_before = s.eval_calls;
+                s.active_depth_one_move = move_trace;
+            }
             const Position next  = after_timed(pos, m);
             s.push_accumulator(0, pos, m, next);
             const int      score = -s.negamax(next, depth - 1, 1,
                                               -beta, -cur_alpha);
+            if (move_trace) {
+                move_trace->child_return = -score;
+                move_trace->root_negated_return = score;
+                move_trace->nodes_after = s.nodes;
+                move_trace->eval_calls_after = s.eval_calls;
+                if (move_trace->first_resolution_stage.empty())
+                    move_trace->first_resolution_stage = "negamax_return_unclassified";
+                s.active_depth_one_move = nullptr;
+            }
             if (score > iter_score) {
                 iter_score = score;
                 iter_best  = m;
