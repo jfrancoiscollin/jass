@@ -3,7 +3,7 @@
 > **Mis à jour : 29 août 2026**
 > **Source de vérité active : ce document.**
 >
-> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md), merge SHA `17a80ac8ca83cc1fc098a95ef6c0d5613ca9f5cb`.
+> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Protocole runtime : [`experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_20260829.md`](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_20260829.md) ; [readout terminal R0](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -11,7 +11,7 @@
 
 ### `CURRICULUM` — champion courant inchangé
 
-Aucun candidat T3 n'est promu. La campagne s'arrête au verdict deep-fresh offline, avant tout runtime, Elo, strength, bake ou promotion.
+Aucun candidat T3 n'est promu. L'implémentation runtime T3-A reste dormante par défaut ; sa campagne s'arrête au gate R0 avant toute partie Elo/strength, bake ou promotion.
 
 - T0/CURRICULUM raw SHA256 : `319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1` ;
 - D1 scellé SHA256 : `e91a55500713154f50be74db5d699b64d7684e1c078725d09e1d15e713549b49` ;
@@ -20,6 +20,29 @@ Aucun candidat T3 n'est promu. La campagne s'arrête au verdict deep-fresh offli
 - T3-B `JOINT_D1_F6` SHA256 : `227e954bbe98412594641be255c7edd5f69261aaf7fca4092537ef66f6cf668f`.
 
 T3-A et T3-B sont des artefacts scientifiques frozen, pas des réseaux de production.
+
+### Gate runtime T3-A — terminal R0
+
+Le readout exact est :
+
+```text
+R0_PRODUCTION_LEAF_CONTRACT_NOT_ESTABLISHED
+FROZEN_CURRICULUM_FAILS_PREREGISTERED_COLOUR_IMAGE_EXACTNESS
+```
+
+Le probe séquentiel a passé l'indépendance parent/chemin/siblings, une
+transposition légale explicite, l'indépendance TT/search/q-score/WDL et
+l'égalité couleur des 66 features F6 ainsi que du résiduel. Le premier assert
+négatif est `colour-image T0 drift` : CURRICULUM gelé viole l'égalité exacte
+rotate180+colour-swap preregistrée et T3-A, défini par `T0 - residual_F6`,
+hérite de ce drift.
+
+Conséquence fail-closed : Pool1 et Pool2 ne sont pas autorisés, aucune partie
+native ou Q00 n'a été jouée, et la question du transfert en Elo reste
+indéterminée. Aucun refit, retune, calibration, bake ou promotion n'a eu lieu.
+Chaîne terminale : `cpx62-1644` → diagnostics `1645/1646` → readout
+`cpx62-1647`, attempt `20260829T120556Z-362d1a09`, code
+`362d1a09bdb0633ef783f4e4048721d8ae6ee980`.
 
 ---
 
