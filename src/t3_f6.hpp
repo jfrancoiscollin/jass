@@ -29,8 +29,12 @@ inline constexpr const char* FROZEN_D1_SHA256 =
     "e91a55500713154f50be74db5d699b64d7684e1c078725d09e1d15e713549b49";
 inline constexpr const char* FROZEN_FEATURE_ORDER_SHA256 =
     "cc4837e6829d937f7330f7bc71280f3ec0bed3f431e57b2664c651e1d763db4e";
+// Data-free, diagnostic-only V4 artifact. The production environment loader
+// never accepts this SHA; only the explicit ZeroProbeOnly policy does.
+inline constexpr const char* V4_ZERO_PROBE_SHA256 =
+    "160489327d419e3d7bbbbda900d6e0ec7bc960111149fc0a45cc27aaa55bf6aa";
 
-enum class LoadPolicy { FrozenOnly, SchemaOnly };
+enum class LoadPolicy { FrozenOnly, ZeroProbeOnly, SchemaOnly };
 
 struct Model {
     std::array<double, INPUT_WIDTH> mean{};

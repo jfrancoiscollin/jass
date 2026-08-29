@@ -245,6 +245,15 @@ struct Searcher {
     std::uint64_t       scan_verify_probes{0};
     std::uint64_t       scan_verify_cutoffs{0};
     std::uint64_t       scan_threat_reentries{0};
+    std::uint64_t       qnodes{0};
+    std::uint64_t       qsearch_calls{0};
+    std::uint64_t       tablebase_probes{0};
+    std::uint64_t       tablebase_hits{0};
+    std::uint64_t       tt_probes{0};
+    std::uint64_t       tt_hits{0};
+    std::uint64_t       terminal_hits{0};
+    std::uint64_t       reductions{0};
+    std::uint64_t       extensions{0};
     // Root depth of the current iterative-deepening iteration. Set by
     // run_root_window before recursing. Used to bound forcing extensions:
     // total extensions accumulated on a path = (depth + ply) - root_depth_.
@@ -612,6 +621,8 @@ static bool opponent_can_capture(const Position& pos) {
 int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
                          int forcing_left, int promo_left, int threat_left, int sac_left) {
     if (stopped) return 0;
+    ++qnodes;
+    ++qsearch_calls;
     if (depth_one_trace) ++depth_one_trace->qnodes;
     DepthOneMoveTrace* const trace =
         (ply == 1) ? active_depth_one_move : nullptr;
@@ -636,6 +647,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
     gen_moves(pos, moves);
     if (trace) trace->qsearch_legal_moves = moves.size();
     if (moves.empty()) {
+        ++terminal_hits;
         if (depth_one_trace) ++depth_one_trace->terminal_hits;
         if (trace) trace->terminal_hit = true;
         return finish(-MATE_SCORE + ply, "qsearch_terminal");
@@ -805,9 +817,11 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //       skip the rest of the work. Like the path-dependent draws this
     //       answer is independent of the alpha-beta window.
     {
+        ++tablebase_probes;
         if (depth_one_trace) ++depth_one_trace->tablebase_probes;
         const EndgameResult eg = probe_endgame(pos);
         if (eg == EndgameResult::Draw) {
+            ++tablebase_hits;
             if (depth_one_trace) ++depth_one_trace->tablebase_hits;
             if (trace) {
                 trace->tablebase_hit = true;
@@ -816,6 +830,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             return 0;
         }
         if (eg == EndgameResult::WhiteWin || eg == EndgameResult::BlackWin) {
+            ++tablebase_hits;
             if (depth_one_trace) ++depth_one_trace->tablebase_hits;
             if (trace) {
                 trace->tablebase_hit = true;
@@ -858,8 +873,10 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //    keep the suggested move for ordering.
     TTEntry tt_entry;
     bool    tt_hit;
+    ++tt_probes;
     if (depth_one_trace) ++depth_one_trace->tt_probes;
     { BD_TIME(tt); tt_hit = tt->probe(hash, tt_entry); }
+    if (tt_hit) ++tt_hits;
     if (depth_one_trace && tt_hit) ++depth_one_trace->tt_hits;
     if (tt_hit && tt_entry.depth >= depth) {
         const int s = score_from_tt(tt_entry.score, ply);
@@ -882,6 +899,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     MoveList moves;
     gen_moves(pos, moves);
     if (moves.empty()) {
+        ++terminal_hits;
         if (depth_one_trace) ++depth_one_trace->terminal_hits;
         if (trace) {
             trace->terminal_hit = true;
@@ -1373,6 +1391,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         int            node_ext = (singular_ext && is_tt ? 1 : 0)
                                  + promo_ext + forcing_ext + single_reply_ext;
         if (params.ext_single_reply && node_ext > 1) node_ext = 1;
+        if (node_ext > 0) extensions += static_cast<std::uint64_t>(node_ext);
         const int      new_depth = depth - 1 + node_ext;
 
         int score;
@@ -1396,6 +1415,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             // LMR-reduced). Only moves that beat alpha pay for an exact
             // full-window re-search.
             const int r = do_lmr ? lmr_reduction(depth, move_idx, move_history(m), is_pv_node) : 0;
+            if (r > 0) ++reductions;
             score = -negamax(next, new_depth - r, ply + 1, -alpha - 1, -alpha);
             if (score > alpha && r > 0) {
                 // The reduction alone may have caused the fail-high; verify
@@ -1410,6 +1430,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             }
         } else if (do_lmr) {
             const int r = lmr_reduction(depth, move_idx, move_history(m), is_pv_node);
+            if (r > 0) ++reductions;
             const int reduced = new_depth - r;
             score = -negamax(next, reduced, ply + 1, -beta, -alpha);
             if (score > alpha && score < beta) {
@@ -1922,6 +1943,15 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     res.scan_verify_probes = s.scan_verify_probes;
     res.scan_verify_cutoffs = s.scan_verify_cutoffs;
     res.scan_threat_reentries = s.scan_threat_reentries;
+    res.qnodes              = s.qnodes;
+    res.qsearch_calls       = s.qsearch_calls;
+    res.tablebase_probes    = s.tablebase_probes;
+    res.tablebase_hits      = s.tablebase_hits;
+    res.tt_probes           = s.tt_probes;
+    res.tt_hits             = s.tt_hits;
+    res.terminal_hits       = s.terminal_hits;
+    res.reductions          = s.reductions;
+    res.extensions          = s.extensions;
     res.root_order_applications = root_order_applications;
     res.root_order_failures = root_order_failures;
     res.pv        = extract_pv(pos, tt, std::max(res.depth, 1));

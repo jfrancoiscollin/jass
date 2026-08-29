@@ -336,8 +336,11 @@ std::optional<Model> load_model(const std::string& path, LoadPolicy policy,
                                 std::string* err) {
     try {
         const std::string raw=read_file(path);
-        if (policy==LoadPolicy::FrozenOnly && sha256(raw)!=FROZEN_MODEL_SHA256)
+        const std::string artifact_sha=sha256(raw);
+        if (policy==LoadPolicy::FrozenOnly && artifact_sha!=FROZEN_MODEL_SHA256)
             throw std::runtime_error("T3/F6 artifact SHA256 mismatch");
+        if (policy==LoadPolicy::ZeroProbeOnly && artifact_sha!=V4_ZERO_PROBE_SHA256)
+            throw std::runtime_error("T3/F6 ZERO probe artifact SHA256 mismatch");
         const Json root=JsonParser(raw).parse();
         const auto& o=object(root,"root");
         require_string(o,"schema","jass.t3_rf1_joint_ab.v1","root");
