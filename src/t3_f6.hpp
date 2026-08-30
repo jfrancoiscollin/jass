@@ -144,8 +144,9 @@ private:
 // A session can perform at most one search, and that search is rejected unless
 // the cache is still cold. Thus every Gate-C/D root×budget unit necessarily
 // starts from a fresh Network/cache and cannot inherit prior root/search state.
-// The two-argument jass::search overload creates a fresh TT for the accepted
-// search call as required by the preregistered lifecycle.
+// The caller-owned-TT overload exists only so Gate D can construct TT outside
+// its preregistered search-only wall-clock window; both overloads execute the
+// same generic search path with the same limits and fresh state.
 class O1SearchSession final {
 public:
     static std::unique_ptr<O1SearchSession> create(
@@ -160,6 +161,14 @@ public:
 
     std::optional<SearchResult> run_search(
         const Position& pos, SearchLimits limits,
+        std::string* err = nullptr) const {
+        TranspositionTable tt;
+        tt.resize_mb(limits.tt_mb);
+        return run_search(pos, limits, tt, err);
+    }
+
+    std::optional<SearchResult> run_search(
+        const Position& pos, SearchLimits limits, TranspositionTable& tt,
         std::string* err = nullptr) const {
         if (limits.threads != 1) {
             if (err) *err = "T3/F6 O1 cache requires SearchLimits::threads == 1";
@@ -181,7 +190,7 @@ public:
         }
         search_consumed_ = true;
         limits.nnue = network_.get();
-        return jass::search(pos, limits);
+        return jass::search(pos, limits, tt, {});
     }
 
     int evaluate(const Position& pos) const noexcept {
