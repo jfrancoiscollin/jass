@@ -69,11 +69,17 @@ std::optional<Model> load_model(const std::string& path,
 
 class Network final : public INetwork {
 public:
-    Network(std::unique_ptr<INetwork> base, Model model,
-            bool cache_enabled = false)
-        : base_(std::move(base)), model_(std::move(model)),
-          cache_enabled_(cache_enabled),
-          cache_(cache_enabled ? CACHE_CAPACITY : 0U) {}
+    // Historical/control path: cache is always OFF.
+    Network(std::unique_ptr<INetwork> base, Model model)
+        : base_(std::move(base)), model_(std::move(model)) {}
+
+    // The only O1 cache activation path. A cache can only be constructed after
+    // the caller has supplied the actual search thread count; any value other
+    // than exactly one fails before a cached Network exists or any search can
+    // start. Production `maybe_wrap_from_env` never calls this factory.
+    static std::unique_ptr<Network> make_o1_cached(
+        std::unique_ptr<INetwork> base, Model model, int threads,
+        std::string* err = nullptr);
 
     int evaluate(const Position& pos) const noexcept override;
     int evaluate_from_base(const Position& pos, int base_score) const noexcept;
@@ -90,6 +96,12 @@ public:
     static std::uint16_t cache_index(const Position& pos) noexcept;
 
 private:
+    struct CacheActivation {};
+
+    Network(std::unique_ptr<INetwork> base, Model model, CacheActivation)
+        : base_(std::move(base)), model_(std::move(model)),
+          cache_enabled_(true), cache_(CACHE_CAPACITY) {}
+
     struct CacheKey {
         std::uint64_t white_men{0};
         std::uint64_t white_kings{0};
@@ -122,10 +134,10 @@ private:
     mutable CacheStats cache_stats_{};
 };
 
-// Absent env: exact no-op. Present env: authenticate model and CURRICULUM,
-// validate the full contract and fail closed on any discrepancy. The optional
-// O1 cache is separately activated only by JASS_T3_F6_CACHE=1; absent/0 keeps
-// the historical path byte-for-byte in control flow.
+// Production T3 loader remains the exact pre-O1 behavior: absent model env is
+// a no-op; present model env authenticates the frozen model and CURRICULUM and
+// returns a cache-OFF Network. O1 cache activation is deliberately impossible
+// through environment variables and is restricted to `make_o1_cached`.
 std::unique_ptr<INetwork> maybe_wrap_from_env(
     std::unique_ptr<INetwork> base,
     const std::string& base_path,
