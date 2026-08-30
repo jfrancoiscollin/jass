@@ -268,7 +268,7 @@ Toutes les métriques utilisent exactement les mêmes `6800` parents acceptés e
 | T0 | `0.6082147602129492` | `0.5540686274509804` |
 | D1 | `0.7334794257874955` | `0.6492647058823530` |
 | T3-A `F6_ONLY` | **`0.7831693588009130`** | `0.6836764705882353` |
-| T3-B `JOINT_D1_F6` | `0.7782264239676245` | **`0.6883823529411764` |
+| T3-B `JOINT_D1_F6` | `0.7782264239676245` | **`0.6883823529411764`** |
 | q1000 diagnostic | `0.9361726861780656` | `0.8587521008403362` |
 
 Le léger avantage top-hit ponctuel de B sur A ne sauve pas B : sa CI95 top-hit traverse zéro et son effet pairwise primaire est significativement négatif.
