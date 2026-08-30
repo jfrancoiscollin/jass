@@ -77,6 +77,11 @@ class RuntimeV4ProtocolTests(unittest.TestCase):
         ):
             self.assertIn(token, text)
 
+    def test_runtime_probe_accepts_preregistered_v4_benchmark_seed(self) -> None:
+        source = (ROOT / "jobs/tools/t3_f6_runtime_probe.cpp").read_text(encoding="utf-8")
+        self.assertIn("2026092505ULL", source)
+        self.assertIn("R0 benchmark order seed drift", source)
+
     def test_v4_strength_seeds_and_readout(self) -> None:
         for seed in (2026092601, 2026092602, 2026092603):
             self.assertIn(str(seed), P1.read_text(encoding="utf-8"))
