@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // T3/F6 O1 exact-cache technical equivalence harness.
 //
-// This executable is deliberately strength-free. The caller must fetch
-// r0-corpus.fen and r0-selection.json from the same immutable cpx62-1685
-// attempt, then derive roots64.fen with the frozen
-// jobs/tools/t3_f6_search_profile.py::stratified(corpus,16,2026092505)
-// rule. The harness authenticates the corpus against the selector certificate,
-// authenticates the frozen model/eval bytes, executes Gate B on all 4096 rows,
-// then Gate C on exactly 64 roots using the complete R0-v4 same_result set.
+// This executable is deliberately strength-free. It authenticates the exact
+// cpx62-1685 corpus against r0-selection.json, derives the frozen Gate-C roots
+// internally from stratified(corpus,16,2026092505), verifies any supplied root
+// file byte-for-byte at the FEN-order level, then runs Gate B before Gate C.
 #include "egdb_bridge.hpp"
 #include "scan_eval.hpp"
 #include "search.hpp"
@@ -21,10 +18,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -102,6 +101,59 @@ std::uint64_t json_uint_field(const std::string& text, std::string_view key) {
     return std::stoull(text.substr(begin, end - begin));
 }
 
+constexpr std::array<std::uint32_t, 64> SHA_K = {
+    0x428a2f98U,0x71374491U,0xb5c0fbcfU,0xe9b5dba5U,0x3956c25bU,0x59f111f1U,0x923f82a4U,0xab1c5ed5U,
+    0xd807aa98U,0x12835b01U,0x243185beU,0x550c7dc3U,0x72be5d74U,0x80deb1feU,0x9bdc06a7U,0xc19bf174U,
+    0xe49b69c1U,0xefbe4786U,0x0fc19dc6U,0x240ca1ccU,0x2de92c6fU,0x4a7484aaU,0x5cb0a9dcU,0x76f988daU,
+    0x983e5152U,0xa831c66dU,0xb00327c8U,0xbf597fc7U,0xc6e00bf3U,0xd5a79147U,0x06ca6351U,0x14292967U,
+    0x27b70a85U,0x2e1b2138U,0x4d2c6dfcU,0x53380d13U,0x650a7354U,0x766a0abbU,0x81c2c92eU,0x92722c85U,
+    0xa2bfe8a1U,0xa81a664bU,0xc24b8b70U,0xc76c51a3U,0xd192e819U,0xd6990624U,0xf40e3585U,0x106aa070U,
+    0x19a4c116U,0x1e376c08U,0x2748774cU,0x34b0bcb5U,0x391c0cb3U,0x4ed8aa4aU,0x5b9cca4fU,0x682e6ff3U,
+    0x748f82eeU,0x78a5636fU,0x84c87814U,0x8cc70208U,0x90befffaU,0xa4506cebU,0xbef9a3f7U,0xc67178f2U,
+};
+
+std::string sha256_text(std::string_view data) {
+    std::array<std::uint32_t, 8> h = {
+        0x6a09e667U,0xbb67ae85U,0x3c6ef372U,0xa54ff53aU,
+        0x510e527fU,0x9b05688cU,0x1f83d9abU,0x5be0cd19U};
+    const std::uint64_t bit_len = static_cast<std::uint64_t>(data.size()) * 8U;
+    std::vector<unsigned char> bytes(data.begin(), data.end());
+    bytes.push_back(0x80U);
+    while ((bytes.size() % 64U) != 56U) bytes.push_back(0U);
+    for (int shift = 56; shift >= 0; shift -= 8)
+        bytes.push_back(static_cast<unsigned char>((bit_len >> shift) & 0xffU));
+    for (std::size_t off = 0; off < bytes.size(); off += 64U) {
+        std::array<std::uint32_t, 64> w{};
+        for (std::size_t i = 0; i < 16U; ++i) {
+            const std::size_t p = off + 4U * i;
+            w[i] = (static_cast<std::uint32_t>(bytes[p]) << 24U)
+                 | (static_cast<std::uint32_t>(bytes[p + 1U]) << 16U)
+                 | (static_cast<std::uint32_t>(bytes[p + 2U]) << 8U)
+                 | static_cast<std::uint32_t>(bytes[p + 3U]);
+        }
+        for (std::size_t i = 16U; i < 64U; ++i) {
+            const std::uint32_t x = w[i - 15U], y = w[i - 2U];
+            const std::uint32_t s0 = std::rotr(x, 7) ^ std::rotr(x, 18) ^ (x >> 3U);
+            const std::uint32_t s1 = std::rotr(y, 17) ^ std::rotr(y, 19) ^ (y >> 10U);
+            w[i] = w[i - 16U] + s0 + w[i - 7U] + s1;
+        }
+        std::uint32_t a=h[0],b=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
+        for (std::size_t i = 0; i < 64U; ++i) {
+            const std::uint32_t s1 = std::rotr(e,6)^std::rotr(e,11)^std::rotr(e,25);
+            const std::uint32_t ch = (e&f)^((~e)&g);
+            const std::uint32_t t1 = hh+s1+ch+SHA_K[i]+w[i];
+            const std::uint32_t s0 = std::rotr(a,2)^std::rotr(a,13)^std::rotr(a,22);
+            const std::uint32_t t2 = s0+((a&b)^(a&c)^(b&c));
+            hh=g;g=f;f=e;e=d+t1;d=c;c=b;b=a;a=t1+t2;
+        }
+        h[0]+=a;h[1]+=b;h[2]+=c;h[3]+=d;h[4]+=e;h[5]+=f;h[6]+=g;h[7]+=hh;
+    }
+    std::ostringstream out;
+    out << std::hex << std::setfill('0');
+    for (const std::uint32_t v : h) out << std::setw(8) << v;
+    return out.str();
+}
+
 std::string phase(const Position& p) {
     const int pieces = std::popcount(p.occupied());
     if (pieces >= 30 && pieces <= 40) return "P0";
@@ -109,6 +161,30 @@ std::string phase(const Position& p) {
     if (pieces >= 12 && pieces <= 19) return "P2";
     if (pieces >= 9 && pieces <= 11) return "P3";
     return "OUT";
+}
+
+std::vector<std::string> expected_roots(const std::vector<FenRow>& corpus) {
+    constexpr std::string_view seed = "2026092505";
+    std::vector<std::string> out;
+    for (const std::string_view name : {"P0", "P1", "P2", "P3"}) {
+        std::vector<std::string> rows;
+        for (const auto& row : corpus)
+            if (phase(row.position) == name) rows.push_back(row.fen);
+        std::sort(rows.begin(), rows.end(), [&](const std::string& a, const std::string& b) {
+            const std::string ka = sha256_text(std::string(seed) + ":" + a);
+            const std::string kb = sha256_text(std::string(seed) + ":" + b);
+            return ka < kb;
+        });
+        if (rows.size() < 16U)
+            throw std::runtime_error("O1 Gate C phase support below 16");
+        out.insert(out.end(), rows.begin(), rows.begin() + 16);
+    }
+    std::sort(out.begin(), out.end(), [&](const std::string& a, const std::string& b) {
+        const std::string ka = sha256_text(std::string(seed) + ":all:" + a);
+        const std::string kb = sha256_text(std::string(seed) + ":all:" + b);
+        return ka < kb;
+    });
+    return out;
 }
 
 bool same_result(const jass::SearchResult& a, const jass::SearchResult& b) {
@@ -155,8 +231,6 @@ jass::SearchLimits limits_for(const jass::SearchParams& params, Budget budget) {
     } else if (budget == Budget::Depth9) {
         limits.max_depth = 9;
     } else {
-        // Preserve the R0-v4 exact-node contract used by
-        // t3_f6_runtime_contract_v4.cpp for node-budget comparisons.
         limits.max_depth = 6;
         limits.max_nodes = budget == Budget::Nodes1k ? 1000U : 10000U;
         limits.node_limit_mode = jass::NodeLimitMode::Exact;
@@ -208,6 +282,41 @@ std::pair<jass::SearchResult, jass::t3_f6::CacheStats> run_on(
 
 const char* boolean(bool value) noexcept { return value ? "true" : "false"; }
 
+void write_gate_b_failure(const std::string& path,
+                          std::size_t corpus_rows,
+                          const std::string& corpus_sha,
+                          const std::string& selection_sha,
+                          std::size_t residual_mismatches,
+                          std::size_t score_mismatches,
+                          std::size_t replay_residual_mismatches,
+                          std::size_t replay_score_mismatches,
+                          std::size_t flush_residual_mismatches,
+                          std::size_t flush_score_mismatches,
+                          std::size_t nonfinite,
+                          std::uint64_t hits) {
+    std::ofstream report(path);
+    if (!report) throw std::runtime_error("cannot create O1 Gate B report");
+    report << "{\n"
+           << "  \"schema\": \"jass.t3_f6_exact_cache_o1_contract.v1\",\n"
+           << "  \"verdict\": \"O1_EXACT_CACHE_EQUIVALENCE_FAILED\",\n"
+           << "  \"gate_b_pass\": false,\n"
+           << "  \"gate_c_run\": false,\n"
+           << "  \"corpus_rows\": " << corpus_rows << ",\n"
+           << "  \"corpus_sha256\": \"" << corpus_sha << "\",\n"
+           << "  \"selection_certificate_sha256\": \"" << selection_sha << "\",\n"
+           << "  \"residual_mismatches\": " << residual_mismatches << ",\n"
+           << "  \"score_mismatches\": " << score_mismatches << ",\n"
+           << "  \"replay_residual_mismatches\": " << replay_residual_mismatches << ",\n"
+           << "  \"replay_score_mismatches\": " << replay_score_mismatches << ",\n"
+           << "  \"flush_residual_mismatches\": " << flush_residual_mismatches << ",\n"
+           << "  \"flush_score_mismatches\": " << flush_score_mismatches << ",\n"
+           << "  \"nonfinite\": " << nonfinite << ",\n"
+           << "  \"gate_b_hits\": " << hits << ",\n"
+           << "  \"strength_games\": 0,\n"
+           << "  \"scientific_decision\": false\n"
+           << "}\n";
+}
+
 int run_contract(int argc, char** argv) {
     if (argc != 8) {
         throw std::runtime_error(
@@ -224,23 +333,18 @@ int run_contract(int argc, char** argv) {
     const std::string report_path = argv[7];
 
     std::string error;
-    const std::string curriculum_sha =
-        jass::t3_f6::sha256_file(curriculum_path, &error);
+    const std::string curriculum_sha = jass::t3_f6::sha256_file(curriculum_path, &error);
     const std::string model_sha = jass::t3_f6::sha256_file(model_path, &error);
     const std::string corpus_sha = jass::t3_f6::sha256_file(corpus_path, &error);
+    const std::string selection_sha = jass::t3_f6::sha256_file(selection_path, &error);
     if (curriculum_sha != jass::t3_f6::FROZEN_CURRICULUM_SHA256)
         throw std::runtime_error("CURRICULUM SHA256 mismatch");
     if (model_sha != jass::t3_f6::FROZEN_MODEL_SHA256)
         throw std::runtime_error("T3-A SHA256 mismatch");
 
-    // Authenticate the exact cpx62-1685 corpus against the immutable selector
-    // certificate fetched from the same result attempt. Cardinality alone is
-    // intentionally insufficient.
     const std::string selection = read_text(selection_path);
-    if (json_string_field(selection, "schema")
-            != "jass.t3_f6_r0_target_blind_selection.v4"
-        || json_string_field(selection, "verdict")
-            != "R0_V4_TARGET_BLIND_CORPUS_READY"
+    if (json_string_field(selection, "schema") != "jass.t3_f6_r0_target_blind_selection.v4"
+        || json_string_field(selection, "verdict") != "R0_V4_TARGET_BLIND_CORPUS_READY"
         || json_uint_field(selection, "selected") != 4096U
         || json_uint_field(selection, "selection_seed") != 2026092502U
         || json_uint_field(selection, "permutation_seed") != 2026092503U
@@ -258,21 +362,11 @@ int run_contract(int argc, char** argv) {
     if (roots.size() != 64U)
         throw std::runtime_error("O1 Gate C requires exactly 64 roots");
 
-    std::set<std::string> corpus_fens;
-    for (const auto& row : corpus) corpus_fens.insert(row.fen);
-    std::set<std::string> root_fens;
-    std::map<std::string, std::size_t> phases;
-    for (const auto& row : roots) {
-        if (!root_fens.insert(row.fen).second)
-            throw std::runtime_error("duplicate O1 Gate C root");
-        if (!corpus_fens.count(row.fen))
-            throw std::runtime_error("O1 Gate C root not present in authenticated corpus");
-        ++phases[phase(row.position)];
+    const auto expected = expected_roots(corpus);
+    for (std::size_t i = 0; i < roots.size(); ++i) {
+        if (roots[i].fen != expected[i])
+            throw std::runtime_error("O1 Gate C roots differ from frozen stratified order");
     }
-    const std::map<std::string, std::size_t> expected_phases = {
-        {"P0", 16U}, {"P1", 16U}, {"P2", 16U}, {"P3", 16U}};
-    if (phases != expected_phases)
-        throw std::runtime_error("O1 Gate C phase support drift");
 
     const auto model = load_t3(model_path);
     const auto params = jass::parse_search_params(params_spec);
@@ -280,7 +374,6 @@ int run_contract(int argc, char** argv) {
     if (!jass::egdb::available())
         throw std::runtime_error("EGDB unavailable for O1 Gate C");
 
-    // Gate B: exact leaf equality on all 4096 authenticated R0-v4 positions.
     jass::t3_f6::Network off_leaf(load_base(curriculum_path), model);
     auto on_leaf = jass::t3_f6::O1SearchSession::create(
         load_base(curriculum_path), model, 1, &error);
@@ -288,37 +381,64 @@ int run_contract(int argc, char** argv) {
 
     std::size_t residual_mismatches = 0;
     std::size_t score_mismatches = 0;
+    std::size_t replay_residual_mismatches = 0;
+    std::size_t replay_score_mismatches = 0;
+    std::size_t flush_residual_mismatches = 0;
+    std::size_t flush_score_mismatches = 0;
     std::size_t nonfinite = 0;
     for (const auto& row : corpus) {
         const double off_residual = off_leaf.residual_parent(row.position);
         const double on_residual = on_leaf->residual_parent(row.position);
-        residual_mismatches +=
-            std::bit_cast<std::uint64_t>(off_residual)
-            != std::bit_cast<std::uint64_t>(on_residual);
+        residual_mismatches += std::bit_cast<std::uint64_t>(off_residual)
+                            != std::bit_cast<std::uint64_t>(on_residual);
         score_mismatches += off_leaf.evaluate(row.position) != on_leaf->evaluate(row.position);
         nonfinite += !std::isfinite(off_residual) || !std::isfinite(on_residual);
     }
 
-    // Replay in reverse order to force real cache hits despite direct-mapped
-    // replacement collisions. Then prove an explicit flush returns counters
-    // and validity state to the cold-cache contract.
-    for (auto it = corpus.rbegin(); it != corpus.rend(); ++it)
-        (void)on_leaf->residual_parent(it->position);
+    for (auto it = corpus.rbegin(); it != corpus.rend(); ++it) {
+        const double off_residual = off_leaf.residual_parent(it->position);
+        const double on_residual = on_leaf->residual_parent(it->position);
+        replay_residual_mismatches += std::bit_cast<std::uint64_t>(off_residual)
+                                   != std::bit_cast<std::uint64_t>(on_residual);
+        replay_score_mismatches += off_leaf.evaluate(it->position) != on_leaf->evaluate(it->position);
+        nonfinite += !std::isfinite(off_residual) || !std::isfinite(on_residual);
+    }
     const auto replay_stats = on_leaf->cache_stats();
     const bool real_hit_observed = replay_stats.hits > 0U;
+
     on_leaf->clear_cache();
     const bool flush_zero = on_leaf->cache_stats().lookups == 0U;
-    (void)on_leaf->residual_parent(corpus.front().position);
+    const Position& flushed = corpus.front().position;
+    const double off_after_flush = off_leaf.residual_parent(flushed);
+    const double on_after_flush = on_leaf->residual_parent(flushed);
+    flush_residual_mismatches += std::bit_cast<std::uint64_t>(off_after_flush)
+                               != std::bit_cast<std::uint64_t>(on_after_flush);
+    flush_score_mismatches += off_leaf.evaluate(flushed) != on_leaf->evaluate(flushed);
+    nonfinite += !std::isfinite(off_after_flush) || !std::isfinite(on_after_flush);
     const auto cold_after_flush = on_leaf->cache_stats();
-    const bool flush_miss = cold_after_flush.hits == 0U
+    const bool flush_miss = cold_after_flush.hits == 1U
                          && cold_after_flush.misses == 1U
                          && cold_after_flush.extract_f6_executions == 1U;
+
     const bool gate_b = residual_mismatches == 0U
                      && score_mismatches == 0U
+                     && replay_residual_mismatches == 0U
+                     && replay_score_mismatches == 0U
+                     && flush_residual_mismatches == 0U
+                     && flush_score_mismatches == 0U
                      && nonfinite == 0U
                      && real_hit_observed
                      && flush_zero
                      && flush_miss;
+    if (!gate_b) {
+        write_gate_b_failure(report_path, corpus.size(), corpus_sha, selection_sha,
+                             residual_mismatches, score_mismatches,
+                             replay_residual_mismatches, replay_score_mismatches,
+                             flush_residual_mismatches, flush_score_mismatches,
+                             nonfinite, replay_stats.hits);
+        std::cout << "O1_EXACT_CACHE_EQUIVALENCE_FAILED\n";
+        return 2;
+    }
 
     constexpr std::array<Budget, 4> budgets = {
         Budget::Depth1, Budget::Depth9, Budget::Nodes1k, Budget::Nodes10k};
@@ -330,8 +450,7 @@ int run_contract(int argc, char** argv) {
     for (const auto& row : roots) {
         for (const auto budget : budgets) {
             const auto off = run_off(row.position, curriculum_path, model, params, budget);
-            const auto [on, stats] = run_on(
-                row.position, curriculum_path, model, params, budget);
+            const auto [on, stats] = run_on(row.position, curriculum_path, model, params, budget);
             ++search_pairs;
             search_mismatches += !same_result(off, on);
             gate_c_lookups += stats.lookups;
@@ -339,33 +458,31 @@ int run_contract(int argc, char** argv) {
             gate_c_misses += stats.misses;
         }
     }
-    const bool gate_c = search_pairs == 64U * budgets.size()
-                     && search_mismatches == 0U;
-
-    const char* verdict = !gate_b
-        ? "O1_EXACT_CACHE_EQUIVALENCE_FAILED"
-        : !gate_c
-            ? "O1_EXACT_CACHE_SEARCH_EQUIVALENCE_FAILED"
-            : "O1_EXACT_CACHE_ABC_PASS";
+    const bool gate_c = search_pairs == 64U * budgets.size() && search_mismatches == 0U;
 
     std::ofstream report(report_path);
     if (!report) throw std::runtime_error("cannot create O1 Gate B/C report");
     report << "{\n"
-           << "  \"schema\": \"jass.t3_f6_exact_cache_o1_contract.v1\",\n"
-           << "  \"verdict\": \"" << verdict << "\",\n"
-           << "  \"gate_b_pass\": " << boolean(gate_b) << ",\n"
+           << "  \"schema\": \"jass.t3_f6_exact_cache_o1_contract.v1\",\n";
+    if (gate_c)
+        report << "  \"status\": \"O1_GATES_BC_PASS_NONTERMINAL\",\n";
+    else
+        report << "  \"verdict\": \"O1_EXACT_CACHE_SEARCH_EQUIVALENCE_FAILED\",\n";
+    report << "  \"gate_b_pass\": true,\n"
            << "  \"gate_c_pass\": " << boolean(gate_c) << ",\n"
            << "  \"corpus_rows\": " << corpus.size() << ",\n"
            << "  \"corpus_sha256\": \"" << corpus_sha << "\",\n"
-           << "  \"selection_certificate_sha256\": \""
-           << jass::t3_f6::sha256_file(selection_path, &error) << "\",\n"
+           << "  \"selection_certificate_sha256\": \"" << selection_sha << "\",\n"
            << "  \"roots\": " << roots.size() << ",\n"
-           << "  \"roots_sha256\": \""
-           << jass::t3_f6::sha256_file(roots_path, &error) << "\",\n"
+           << "  \"roots_sha256\": \"" << jass::t3_f6::sha256_file(roots_path, &error) << "\",\n"
+           << "  \"root_selection_verified_internally\": true,\n"
            << "  \"order_seed\": 2026092505,\n"
-           << "  \"root_selection_external_contract\": \"t3_f6_search_profile.py::stratified(corpus,16,2026092505)\",\n"
            << "  \"residual_mismatches\": " << residual_mismatches << ",\n"
            << "  \"score_mismatches\": " << score_mismatches << ",\n"
+           << "  \"replay_residual_mismatches\": " << replay_residual_mismatches << ",\n"
+           << "  \"replay_score_mismatches\": " << replay_score_mismatches << ",\n"
+           << "  \"flush_residual_mismatches\": " << flush_residual_mismatches << ",\n"
+           << "  \"flush_score_mismatches\": " << flush_score_mismatches << ",\n"
            << "  \"nonfinite\": " << nonfinite << ",\n"
            << "  \"gate_b_hits\": " << replay_stats.hits << ",\n"
            << "  \"search_pairs\": " << search_pairs << ",\n"
@@ -376,12 +493,17 @@ int run_contract(int argc, char** argv) {
            << "  \"strength_games\": 0,\n"
            << "  \"scientific_decision\": false\n"
            << "}\n";
-    std::cout << verdict << " search_pairs=" << search_pairs
+    std::cout << (gate_c ? "O1_GATES_BC_PASS_NONTERMINAL"
+                         : "O1_EXACT_CACHE_SEARCH_EQUIVALENCE_FAILED")
+              << " search_pairs=" << search_pairs
               << " mismatches=" << search_mismatches << '\n';
-    return gate_b && gate_c ? 0 : 2;
+    return gate_c ? 0 : 2;
 }
 
 int selftest() {
+    if (sha256_text("abc") !=
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+        throw std::runtime_error("O1 SHA256 selftest failed");
     class Square final : public jass::INetwork {
     public:
         int evaluate(const Position& p) const noexcept override {
