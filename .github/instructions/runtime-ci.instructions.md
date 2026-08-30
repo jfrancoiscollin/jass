@@ -1,5 +1,5 @@
 ---
-applyTo: ".github/workflows/**/*.yml,.github/workflows/**/*.yaml,infra/**/*.sh,jobs/**/*.sh"
+applyTo: ".github/workflows/**/*.yml,.github/workflows/**/*.yaml,infra/**,jobs/**/*.sh"
 ---
 
 # Runtime, runners, and CI instructions
