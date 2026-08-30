@@ -19,6 +19,15 @@ These files can consume expensive compute or control long-running experiments. R
 - Runtime estimates must be based on a comparable measured rate plus explicit volume/build/fit/gate overhead.
 - Prefer a light smoke/sizer before expensive runs when the active task authorizes remote compute.
 
+## Cross-host native binary / ISA safety
+
+- A native executable built on one host is **not portable by assumption** to HOME, CPX, CCX, or any other host. Before executing a foreign native binary, prove compatible architecture/ISA or fail closed.
+- Treat exit `132` / `SIGILL` as a technical CPU/ISA incompatibility candidate, never as a scientific result. Record the failing stage and host facts before retrying.
+- For cross-host technical diagnostics, prefer a target-host native rebuild from the pinned source SHA with the exact required CMake/build flags. Record source SHA, build flags, target host/CPU facts, and the resulting binary SHA.
+- A target-host rebuild is **not byte-identical** to a frozen executable and must not silently replace a byte-frozen executable in a scientific strength contract. It is acceptable only when the preregistered contract permits it or when the run is explicitly technical/diagnostic and has no scientific decision authority.
+- When comparing candidate/control cost on a host-native technical build, keep both arms on the same locally built executable and preserve all frozen model/search/runtime inputs. Do not transport absolute wall-clock measurements between hosts as if they were equivalent.
+- Add a cheap loader/`hello` smoke before long search work so unsupported-instruction failures happen before expensive setup.
+
 ## Parallel-job safety
 
 - Every parallel generation/A-B shard needs a calibrated timeout so one stuck shard cannot freeze the whole job.
