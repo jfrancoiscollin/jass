@@ -248,7 +248,7 @@ constexpr std::array<std::uint32_t, 64> SHA_K = {
     0x983e5152U,0xa831c66dU,0xb00327c8U,0xbf597fc7U,0xc6e00bf3U,0xd5a79147U,0x06ca6351U,0x14292967U,
     0x27b70a85U,0x2e1b2138U,0x4d2c6dfcU,0x53380d13U,0x650a7354U,0x766a0abbU,0x81c2c92eU,0x92722c85U,
     0xa2bfe8a1U,0xa81a664bU,0xc24b8b70U,0xc76c51a3U,0xd192e819U,0xd6990624U,0xf40e3585U,0x106aa070U,
-    0x19a4c116U,0x1e376c08U,0x2748774cU,0x34b0bcb5U,0x391c0cb3U,0x4ed8aa4aU,0x5b9cca4fU,0x682e6ff3U,
+    0x19a4c116U,0x1e376c08U,0x2748774cU,0x34b0bcb5U,0x391c0cb5U,0x4ed8aa4aU,0x5b9cca4fU,0x682e6ff3U,
     0x748f82eeU,0x78a5636fU,0x84c87814U,0x8cc70208U,0x90befffaU,0xa4506cebU,0xbef9a3f7U,0xc67178f2U,
 };
 
@@ -389,9 +389,68 @@ std::optional<Model> load_model(const std::string& path, LoadPolicy policy,
     }
 }
 
+Network::CacheKey Network::cache_key(const Position& pos) noexcept {
+    return CacheKey{
+        static_cast<std::uint64_t>(pos.white_men()),
+        static_cast<std::uint64_t>(pos.white_kings()),
+        static_cast<std::uint64_t>(pos.black_men()),
+        static_cast<std::uint64_t>(pos.black_kings()),
+        static_cast<std::uint8_t>(pos.side_to_move() == Color::White ? 0U : 1U),
+    };
+}
+
+std::uint16_t Network::cache_index(const CacheKey& key) noexcept {
+    std::uint64_t h = 14695981039346656037ULL;
+    const auto mix_byte = [&h](std::uint8_t byte) noexcept {
+        h ^= static_cast<std::uint64_t>(byte);
+        h *= 1099511628211ULL;
+    };
+    const auto mix_u64_le = [&mix_byte](std::uint64_t value) noexcept {
+        for (unsigned shift = 0; shift < 64U; shift += 8U) {
+            mix_byte(static_cast<std::uint8_t>((value >> shift) & 0xffULL));
+        }
+    };
+    mix_u64_le(key.white_men);
+    mix_u64_le(key.white_kings);
+    mix_u64_le(key.black_men);
+    mix_u64_le(key.black_kings);
+    mix_byte(key.side_to_move);
+    return static_cast<std::uint16_t>(h & 0xffffULL);
+}
+
+std::uint16_t Network::cache_index(const Position& pos) noexcept {
+    return cache_index(cache_key(pos));
+}
+
+void Network::clear_cache() const noexcept {
+    if (!cache_enabled_) return;
+    for (CacheEntry& entry : cache_) entry.valid = false;
+    cache_stats_ = CacheStats{};
+}
+
 double Network::residual_parent(const Position& pos) const noexcept {
-    try { return model_.residual_parent(residual_features::extract_f6(pos).all_new()); }
-    catch (...) { std::terminate(); }
+    try {
+        if (!cache_enabled_) {
+            return model_.residual_parent(residual_features::extract_f6(pos).all_new());
+        }
+        const CacheKey key = cache_key(pos);
+        CacheEntry& entry = cache_[cache_index(key)];
+        ++cache_stats_.lookups;
+        if (entry.valid && entry.key == key) {
+            ++cache_stats_.hits;
+            return entry.residual;
+        }
+        ++cache_stats_.misses;
+        if (entry.valid) ++cache_stats_.replacements;
+        const double residual = model_.residual_parent(
+            residual_features::extract_f6(pos).all_new());
+        ++cache_stats_.extract_f6_executions;
+        entry.valid = false;
+        entry.key = key;
+        entry.residual = residual;
+        entry.valid = true;
+        return residual;
+    } catch (...) { std::terminate(); }
 }
 int Network::evaluate_from_base(const Position& pos, int base_score) const noexcept {
     return round_score(static_cast<double>(base_score)-residual_parent(pos));
@@ -405,8 +464,24 @@ std::unique_ptr<INetwork> maybe_wrap_from_env(std::unique_ptr<INetwork> base,
                                              const std::string& base_path,
                                              std::string* err) {
     if (!base) return nullptr;
+    bool cache_enabled = false;
+    if (const char* cache_env = std::getenv("JASS_T3_F6_CACHE")) {
+        const std::string_view value(cache_env);
+        if (value == "1") cache_enabled = true;
+        else if (value == "0") cache_enabled = false;
+        else {
+            if (err) *err = "JASS_T3_F6_CACHE must be exactly 0 or 1";
+            return nullptr;
+        }
+    }
     const char* env=std::getenv("JASS_T3_F6_MODEL");
-    if (env==nullptr) return base;
+    if (env==nullptr) {
+        if (cache_enabled) {
+            if (err) *err="JASS_T3_F6_CACHE=1 requires JASS_T3_F6_MODEL";
+            return nullptr;
+        }
+        return base;
+    }
     if (*env=='\0') { if (err) *err="JASS_T3_F6_MODEL is present but empty"; return nullptr; }
     std::string hash_error;
     const std::string base_sha=sha256_file(base_path,&hash_error);
@@ -421,7 +496,7 @@ std::unique_ptr<INetwork> maybe_wrap_from_env(std::unique_ptr<INetwork> base,
     }
     auto model=load_model(env,LoadPolicy::FrozenOnly,err);
     if (!model) return nullptr;
-    return std::make_unique<Network>(std::move(base),std::move(*model));
+    return std::make_unique<Network>(std::move(base),std::move(*model),cache_enabled);
 }
 
 }  // namespace jass::t3_f6
