@@ -70,12 +70,21 @@ Implémenter un cache privé au wrapper `t3_f6::Network` avec le contrat suivant
 2. clé complète = white men, white kings, black men, black kings, side-to-move ;
 3. une collision d'index ne peut jamais produire un hit : la clé complète stockée doit être comparée avant réutilisation ;
 4. capacité fixe `65536` entrées ; aucun sweep de taille ;
-5. indexation déterministe par un mélange 64-bit de la clé complète ; remplacement direct-mapped déterministe ;
+5. indexation **exactement gelée** par FNV-1a 64-bit sur une sérialisation canonique de `33` octets, puis masque bas 16 bits :
+   - ordre des champs : `white_men`, `white_kings`, `black_men`, `black_kings`, `side_to_move` ;
+   - chacun des quatre bitboards est converti en entier non signé 64-bit et sérialisé en **8 octets little-endian**, octet de poids faible d'abord ;
+   - `side_to_move` est un seul octet : `0x00` pour White, `0x01` pour Black ;
+   - état initial `h = 14695981039346656037ULL` (`0xcbf29ce484222325`) ;
+   - pour chacun des 33 octets, dans l'ordre ci-dessus : `h ^= byte; h *= 1099511628211ULL` (`0x100000001b3`), avec overflow modulo `2^64` ;
+   - `index = h & 0xFFFFULL` ;
+   - aucun autre mix, seed, finalizer, bit selection ou variante de hash n'est autorisé dans O1 ;
+   - remplacement direct-mapped déterministe à cet index ;
 6. hit : retourner exactement le `double` stocké ; miss : exécuter exactement l'ancien chemin `extract_f6(pos).all_new()` puis MLP, stocker et retourner ;
 7. `base_->evaluate(pos)` reste appelé selon le chemin actuel ; aucun cache du score CURRICULUM ;
 8. aucun changement de F1/F2/F3/F4/F5, normalisation, poids, arrondi, clamp, POV, movegen, qsearch, pruning, ordering, TT ou terminal/TB ;
 9. cache désactivé par défaut dans le binaire tant que le nouveau contrat n'est pas explicitement activé pour O1 ;
-10. compteur diagnostique exact : lookups, hits, misses, replacements et `extract_f6` réellement exécutés.
+10. **contrat de concurrence gelé** : l'activation O1 du cache est autorisée uniquement avec `threads == 1`, qui est aussi le contrat R0-v4 ; si le cache O1 est explicitement demandé avec `threads != 1`, le programme/job doit échouer avant la première recherche, sans désactivation silencieuse ni cache partagé ; lorsque le cache est désactivé, le comportement multi-thread historique reste inchangé ;
+11. compteur diagnostique exact : lookups, hits, misses, replacements et `extract_f6` réellement exécutés ; ces compteurs O1 ne sont donc mutés que sous `threads == 1`.
 
 Aucune autre optimisation n'est autorisée dans O1. En particulier : pas de refactor F2, pas de vectorisation approximative, pas de compression, pas de quantification, pas de changement de précision.
 
@@ -97,6 +106,8 @@ Support gelé :
 - build Release avec les flags production R0-v4 ;
 - tests existants T3/F6 inchangés ;
 - nouveaux tests cache : miss, hit, collision d'index avec clé différente, remplacement, STM distinct ;
+- test déterministe de la formule FNV-1a/index gelée sur des clés fixtures avec indices attendus littéraux ;
+- test de contrat concurrence : activation cache avec `threads=1` PASS ; activation cache avec `threads>1` doit échouer avant recherche ; cache désactivé conserve le comportement multi-thread historique ;
 - aucun hit ne doit être accepté sur simple hash/index sans égalité de clé complète.
 
 ### Gate B — équivalence leaf exacte
@@ -113,7 +124,7 @@ Tout mismatch donne `O1_EXACT_CACHE_EQUIVALENCE_FAILED` et STOP.
 
 ### Gate C — équivalence search exacte
 
-Sur exactement `64` racines R0-v4, `16` par phase, sélectionnées par l'ordre benchmark déjà gelé `2026092505`, comparer cache OFF puis ON avec moteur/state/TT frais par bras :
+Sur exactement `64` racines R0-v4, `16` par phase, sélectionnées par l'ordre benchmark déjà gelé `2026092505`, comparer cache OFF puis ON avec moteur/state/TT frais par bras, toujours `threads=1` :
 
 - depth exact `1` ;
 - depth exact `9` ;
@@ -128,7 +139,7 @@ Tout mismatch donne `O1_EXACT_CACHE_SEARCH_EQUIVALENCE_FAILED` et STOP.
 
 ### Gate D — profil coût technique
 
-Seulement après A/B/C PASS, mesurer sur CPX62 avec le **même exécutable O1** et mêmes bytes/search :
+Seulement après A/B/C PASS, mesurer sur CPX62 avec le **même exécutable O1** et mêmes bytes/search, `threads=1` :
 
 - exactement `128` racines R0-v4, `32` par phase, ordre déterministe `2026092505` ;
 - cache OFF et ON, ordre alterné ;
@@ -164,6 +175,6 @@ Il **n'autorise aucune partie de force**. Si O1 est établi et son profil est ju
 
 ## 9. Traçabilité requise
 
-Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, build flags, et verdict exact.
+Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
 
 Les terminaux `1685`, `1686`, `1688`, `1689` restent immuables et doivent être référencés, jamais réécrits.
