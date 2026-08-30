@@ -314,11 +314,19 @@ F6 sert uniquement comme **labeler statique offline**. En runtime, le candidat E
 
 Cela supprime **par construction le coût d'extraction F6**, mais **ne garantit pas `wall_ratio=1`** : de nouveaux poids peuvent modifier ordering, cutoffs, reductions et nombre de nœuds. Le coût search total doit donc être mesuré par E3-R avant que le modèle puisse être qualifié de candidat.
 
-### 6.2 Fit gelé
+### 6.2 Fit gelé — POV parent identique au contrat T3
 
 Corpus de fit : corpus courant du champion, byte-identique, hash publié, volume inchangé. La cohorte `1638/1639/1640` reste interdite.
 
-Seule modification de training : préférence de chaque paire de siblings fournie par le **score statique production entier de T3-A gelé** (SHA §1), sans recherche teacher. Pour un tie T3 exact, la paire n'apporte aucune contrainte et est comptée/publiée ; aucun tie-break arbitraire n'est injecté.
+La convention de score est exactement celle de `L3_T3_RF1_JOINT_AB_V1_20260829.md` : pour un sibling child `c`, `T3_A.evaluate(c)` est un score **child-STM POV**. La préférence parent utilisée comme teacher E3 est donc obligatoirement :
+
+```text
+S_T3(parent,c) = -T3_A.evaluate(c)
+```
+
+Il est interdit d'ordonner les siblings par le score child-STM brut sans cette négation. Le score T3 utilisé est l'entier production exact après normalisation/MLP, soustraction à T0, `llround` et clamp inchangés ; aucun raw residual ou score recalibré ne remplace ce contrat.
+
+Seule modification de training : la préférence de chaque paire de siblings est fournie par `S_T3`. Pour un tie T3 exact en parent POV, la paire n'apporte aucune contrainte et est comptée/publiée ; aucun tie-break arbitraire n'est injecté.
 
 Recette gelée :
 
@@ -334,30 +342,49 @@ Aucun sweep, aucun `decay>0`, aucun balayage de lambda, aucun changement de clas
 
 ### 6.3 Holdout de fidélité réellement frais — pas de leakage du fit
 
-Le fit peut conserver **tout son corpus historique** ; la fidélité est évaluée sur un holdout neuf, jamais vu par le fit.
+Le fit conserve tout son corpus historique ; la fidélité est évaluée sur un holdout neuf, jamais vu par le fit.
 
-Générer target-blind `20000` parents légaux, puis sélectionner exactement `4000`, `1000` par phase, par hash canonique :
+Générer target-blind exactement `20000` parents légaux avec :
 
 ```text
-generation_seed = 2026100201
-selection_seed  = 2026100202
+min_ply=8
+max_ply=160
+min_pieces=9
+legal_moves=2..16
+generation_seed=2026100201
 ```
 
-Avant toute lecture T3/CURRICULUM/student : exclure le corpus de fit du champion, `1638/1639/1640`, M3/M5/1612, R0-v4 et tous les pools de force/scientifiques publiés ; overlap canonique exigé `0`. Tous les siblings légaux d'un parent sélectionné restent dans le même cluster.
-
-Aucun q50/q200/q1000, WDL, score de search ou label profond n'est généré. Le seul teacher du holdout est le T3-A statique gelé après sélection/scellement des identités.
-
-### 6.4 Gate E3-P — fidélité de projection
-
-Sur les paires strictement ordonnées par T3-A dans le holdout :
+Dédupliquer identité exacte board+STM puis équivalence rotate180+colour-swap. Sélectionner exactement `4000` parents, `1000` par phase P0/P1/P2/P3, comme les premiers de chaque phase par :
 
 ```text
-agreement = 1.0  si signe(model_i-model_j) == signe(T3_i-T3_j)
-          = 0.5  si model_i == model_j
+SHA256("2026100202:" + canonical_identity)
+```
+
+Avant toute lecture T3/CURRICULUM/student : exclure le corpus de fit du champion, `1638/1639/1640`, M3/M5/1612, R0-v4 et tous les pools de force/corpus scientifiques publiés ; la liste d'exclusion peut seulement croître. Overlap canonique exigé `0`. Tous les siblings légaux d'un parent sélectionné restent dans le même cluster.
+
+Aucun q50/q200/q1000, WDL, score de search ou label profond n'est généré. Le seul teacher du holdout est le T3-A statique gelé, lu seulement après sélection et scellement des identités.
+
+### 6.4 Gate E3-P — fidélité de projection, POV gelé
+
+Pour chaque sibling `c` du holdout :
+
+```text
+S_T3(c)   = -T3_A.evaluate(c)
+S_CURR(c) = -CURRICULUM.evaluate(c)
+S_DIST(c) = -DISTILLED.evaluate(c)
+```
+
+Toutes les comparaisons sont donc en **parent POV**. Sur les paires où `S_T3(i) != S_T3(j)` :
+
+```text
+agreement = 1.0  si signe(S_model(i)-S_model(j)) == signe(S_T3(i)-S_T3(j))
+          = 0.5  si S_model(i) == S_model(j)
           = 0.0  sinon
 ```
 
-Publier pour CURRICULUM et le modèle distillé : pairwise agreement, top-hit, phases/couleurs et nombre de ties teacher/model.
+Top-hit : le dénominateur contient uniquement les parents ayant un **unique** meilleur sibling sous `S_T3`. Succès = le modèle a le même unique argmax ; un argmax modèle ex-aequo compte `0`. Les ties teacher/model et exclusions de dénominateur sont publiés.
+
+Publier pour CURRICULUM et le modèle distillé : pairwise agreement, top-hit, phases/couleurs et comptes de ties.
 
 Estimand primaire :
 
@@ -381,7 +408,7 @@ Aucune partie n'est autorisée si le gate de fidélité échoue.
 
 Seulement après `E3_PROJECTION_TRANSFERS`, profiler le modèle distillé contre CURRICULUM sur CPX62, `threads=1`, book OFF, EGDB identique, engine/state/TT frais.
 
-Support technique : mêmes `128` racines R0-v4 que E1, `32` par phase, `order_seed=2026092505`. Ces racines sont utilisées **uniquement pour runtime**, jamais pour fit ou sélection de modèle.
+Support technique : mêmes `128` racines R0-v4 que E1, `32` par phase, `order_seed=2026092505`. Ces racines sont utilisées uniquement pour runtime, jamais pour fit ou sélection de modèle.
 
 Deux fenêtres gelées :
 
@@ -475,7 +502,7 @@ Chaque terminal publie :
 - nodes, depths, eval calls, wall et NPS par bras ;
 - E1 : table F1..F5 + MLP/base et `nodes_ratio_E1` ;
 - E2 : C1/C2/C3, bootstrap conjoint, `h0_c1`, `delta_info` et verdict exact ;
-- E3-P : fidélité CURRICULUM/student, ties, bootstrap parent-cluster ;
+- E3-P : fidélité CURRICULUM/student en parent POV, ties, bootstrap parent-cluster ;
 - E3-R : `wall/nps/nodes` ratios depth-9 et nodes-20k ;
 - verdict exact pris uniquement dans les listes de ce document.
 
