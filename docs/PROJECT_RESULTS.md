@@ -1,902 +1,122 @@
 # Jass — synthèse consolidée des résultats du projet
 
-> **Périmètre :** du bring-up initial aux verdicts C1-Q1 et C2-X1 (`x1_no_lead`) et à l'autopsie P3-sibling gen2 du 19 juillet 2026
-> **Mis à jour :** 2026-08-19
-> **Rôle :** mémoire scientifique ; empêcher de rouvrir une piste close sans fait nouveau
-> **Plan actif :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
-> **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)
+> **Mis à jour :** 2026-08-30  
+> **Rôle :** registre scientifique courant des directions établies/fermées ; empêcher de rouvrir une piste close sans fait nouveau.  
+> **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)  
+> **Historique consolidé antérieur complet :** [PROJECT_RESULTS_PRE_T3_20260830.md](PROJECT_RESULTS_PRE_T3_20260830.md)
 
-Ce document consolide les résultats utiles des anciens CURRENT, journaux,
-mémos et spécifications. Les documents détaillés restent sous
-[`archives/`](archives/). Ils ne sont plus normatifs. En cas de contradiction,
-le verdict le plus récent fondé sur un run complet et son manifest prévaut sur
-une interprétation antérieure.
+Le registre exhaustif maintenu jusqu'au 19 août 2026 est archivé **byte-identique** au lien ci-dessus. Le snapshot reste au même niveau `docs/` que l'original afin que tous ses liens relatifs continuent de résoudre correctement. Le présent fichier conserve les résultats qui pilotent directement l'état courant et ajoute les terminaux T3/F6 du 30 août. En cas de contradiction, le verdict terminal le plus récent fondé sur un run complet et son manifest prévaut.
 
-## 1. Comment lire ce registre
+## 1. Règle de lecture
 
 | Statut | Sens |
 |---|---|
-| **établi** | résultat direct, suffisamment dimensionné ou répliqué |
-| **supporté** | direction cohérente, mais précision ou réplication limitée |
+| **établi** | résultat direct suffisamment dimensionné ou répliqué |
+| **supporté** | direction cohérente mais précision/réplication limitée |
 | **clos** | mécanisme testé sans gain utile ou avec régression ; ne pas relancer à l'identique |
-| **supersédé** | résultat réel dont l'interprétation a été corrigée par un test ultérieur |
+| **supersédé** | résultat réel dont l'interprétation a été corrigée ultérieurement |
 | **non testé** | idée ou exécution incomplète ; ne pas la présenter comme réfutée |
-| **décision de programme** | choix de périmètre, distinct d'une preuve scientifique |
-
-Une porte close ne se rouvre que si au moins un élément causal change : source
-de vérité, classe de cible, distribution, budget, mécanisme ou erreur démontrée
-dans le run précédent. Augmenter seulement le volume ou changer une seed ne
-suffit pas quand le mécanisme a déjà été testé à puissance adéquate.
-
-### 1.1 Portée des portes closes pour L3
-
-Un verdict obtenu sur Gen2 ou une ancienne lignée ferme la **répétition du même
-protocole**. Il ne prouve pas qu'un paramètre co-adaptatif de recherche,
-d'exploration ou de fit est optimal pour une évaluation jeune partie de
-matériel seul. L3 autorise une seule réouverture native, pré-enregistrée et
-instrumentée, par blocs de mécanismes. Cette exception ne permet ni un nouveau
-sweep aveugle de marges, ni de sélectionner les cellules après lecture.
-
-Inversement, les invariants de vérité — terminal WDL, censure ply-cap, absence
-de teacher et séparation train/holdout — ne dépendent pas de la lignée et ne
-sont pas des facteurs de DoE.
-
-## 2. Résumé exécutif
-
-1. Le moteur, les règles FMJD, le movegen et l'alpha-bêta sont fonctionnels et
-   validés. Le projet a construit une évaluation linéaire Scan-like rapide,
-   une chaîne de self-play, des fits streamés et une infrastructure GitOps/R2.
-2. Les premières lignées MLP/NNUE ont fortement battu le handcrafted mais sont
-   restées très loin de Scan au movetime. Le projet a ensuite choisi de pousser
-   la classe linéaire avant tout retour aux réseaux. **Aucun NNUE n'est actif.**
-3. Les plus gros gains confirmés sont venus de corrections de méthode, de
-   recherche et de fit : `--score-drop`, NMP protégé en finale, coin/NMP,
-   threat handling, history probabiliste et MMTO à travers la recherche.
-4. `gen2-mmto` est le meilleur champion historique consolidé : environ
-   **+52 Elo généraliste** contre gen1 à mt0.3, et **+34 Elo** sur la cellule
-   d9 contre Scan. Le déficit restant contre Scan est toutefois encore de
-   l'ordre de **−128 à −155 Elo au movetime** selon la cellule mesurée.
-   Le gate réparé `home-0965` avait fait de F2M le champion général
-   (`57,25 %` contre Gen2 en Q00, `58,60 %` en cadence native). Depuis la porte
-   `home-0996` du 27 juillet 2026, **TURNOVER remplace F2M comme champion
-   général courant** : `51,98 %` contre F2M sur `n=6000` à vues additionnées,
-   `+13,73 Elo`, IC95 `[50,72 ; 53,23]`, avec cinq garde-fous sur cinq verts.
-   Consolidé sur quatre pools indépendants, l'écart vaut `+11,24 Elo` sur
-   17 000 parties. F2M devient le champion précédent, archivé et restaurable.
-   Depuis la porte `cpx62-1129` du 1er août 2026, **EXACT remplace TURNOVER** :
-   `52,175 %` sur `n=6000` à vues additionnées, `+15,12 Elo`, IC95
-   `[50,95 ; 53,40]`, **avec la base de finales**, les deux vues positives. Le
-   gain ne vient d'aucune donnée neuve ni d'aucune capacité neuve : le fit
-   imposait `cs` seule, qui n'est pas une symétrie du damier, pendant que la
-   seule exacte — `rot180 ∘ cs` — était violée à `25,8 %` ; `--exact-fold`
-   échange l'une contre l'autre à `TB` constant. ⚠️ Succession **moins garnie**
-   que celle de TURNOVER : ni garde Gen2, ni conversion P3/P4, ni second pool.
-5. Le problème de conversion est maintenant séparé de la simple détection :
-   Jass trouve souvent les premières idées comme Scan, mais réalise mal
-   l'avantage. Sur le thermomètre PC Blues, la conversion mesurée était
-   **0,136 pour Jass contre 0,904 pour Scan**. Sur la chaîne `ccx33`, elle reste
-   autour de **0,66–0,67** pendant trois tours.
-6. Les variantes de la famille « re-fit d'un modèle déjà formé avec oracle,
-   gymnase fixe, anchor ou teacher externe » ont plafonné ou régressé. La
-   nouvelle question ouverte est différente : une lignée autonome partie
-   d'une graine matérielle, sans labels externes ni anchor parent, peut-elle
-   apprendre la conversion par ses propres trajectoires complètes ?
-7. C0 A/B a produit deux chaînes G1–G3 complètes. Son job haut-N `0792` a
-   échoué avant les gates (bug de sizing `not enough fixed openings`), relancé
-   corrigé en `0795` : verdict pré-engagé **`retire_frontier_v1_flat`**. La
-   frontière mobile v1 n'améliore pas la conversion (Δglobal −0,023, P3 mince
-   −0,070, IC recouvrant 0) ; le bras A pur atteint la **parité avec
-   `gen2-mmto`** (0,497) depuis une graine matérielle en trois générations. La
-   revue C1 a en parallèle identifié deux dettes de méthode : seulement 5/63
-   paramètres explicités et une recherche de score inutilisée qui préchargeait
-   la TT avant le coup joué.
-8. C1-Q1 a fermé contract-grade la quiescence dans le régime L3 jeune :
-   menace, sacrifices et interaction sont plats ; Q01 gagne légèrement en
-   recherche native sans convertir. Q00 devient la baseline, Q2 n'est pas
-   déclenché. Le bloc suivant pré-enregistré est C2-X1 sur la distribution
-   d'exploration autonome.
-9. **CTX3 sépare désormais clairement information prédictive et force.** Sur le
-   même corpus immuable de 2 M positions, l'écran d'information indépendante
-   (1416b) et le mapper causal exact (1417) passent, puis les deux PatternEval
-   aligned/shuffled sont fités à recette identique (1418). Pourtant, sur deux
-   pools frais disjoints, l'aligned obtient seulement **48,4833 %** au natif,
-   IC95 `[47,8583 ; 49,1042]`, environ **−10,54 Elo**, avec les deux pools sous
-   50 % et compatibles. Q00 confirme la direction : **49,1458 %**, IC95
-   `[48,4708 ; 49,8250]`. L'audit 1420 reproduit exactement le readout brut.
-   **La cible scalaire CTX3 est close pour le déploiement** : le contexte est
-   informatif, mais ce canal d'injection convertit ce signal en régression de
-   jeu. Aucun modèle CTX3 n'est promu.
-
-### 2.1 CTX3 — chaîne terminale et portée de la fermeture
-
-| Étape | Job | Preuve | Verdict |
-|---|---|---|---|
-| information indépendante | `cpx62-1416b` | 9/9 gardes | PASS |
-| mapper aligned vs CTX2/shuffled | `cpx62-1417` | 11/11, 18/18 convergés | PASS statique |
-| fits appariés | `cpx62-1418` | même 2 M, architecture et recette | modèles authentifiés |
-| force deux pools | `cpx62-1419` | 24 000 parties, natif primaire | régression établie |
-| audit terminal | `cpx62-1420` | hashes + recomputation exacte 200k | `JASS_CONTEXT3_TERMINAL_AUDIT_READY` |
-
-Les résultats natifs par pool sont `2703-344-2953` (47,9167 %, IC95
-`[47,0167 ; 48,8167]`) et `2778-330-2892` (49,0500 %, IC95
-`[48,1750 ; 49,9167]`). Le combiné est 48,4833 %, IC95
-`[47,8583 ; 49,1042]`, `P(>50 %) = 0,000005`; les effets sont compatibles
-(`z = −1,779522`). Le diagnostic Q00 est lui aussi négatif : 49,1458 %, IC95
-`[48,4708 ; 49,8250]`, `P(>50 %) = 0,006535`.
-
-La fermeture porte précisément sur la compression du contexte aligné dans une
-cible scalaire PatternEval. Elle ne permet pas de conclure que CTX3 ne contient
-rien : les écrans préalables prouvent le contraire. Une future expérience doit
-conserver le contexte dans un canal de décision séparé ou changer de mécanisme,
-et non relancer la même recette avec plus de volume, d'itérations ou une autre
-seed.
-
-## 3. Chronologie scientifique condensée
-
-### 3.1 Fondation et premières évaluations (`pré-0001` à `0202`)
-
-| Phase | Résultat utile | Verdict durable |
-|---|---|---|
-| moteur handcrafted | movegen/perft et recherche alpha-bêta validés | socle fiable |
-| NNUE v5 | 0,852 vs handcrafted, mais 0,009 vs Scan | progrès interne, écart Scan massif |
-| NNUE v6→v8 | v7 0,667 vs v6 ; v8 +258 Elo cumulés vs v5 | qualité data utile, rendements décroissants et non-transitivités |
-| gros MLP v9/v11 | capacité accrue, toujours 0,009 vs Scan au movetime | gros réseau seul clos |
-| v15 128-64 | meilleur compromis NPS/force, +40,7 % NPS après optimisations | bonne baseline interne, mais environ neutre face à Scan |
-| POC Othello | pattern bat handcrafted 0,675 | infrastructure pattern validée ; problème spécifique aux dames |
-| pattern standalone | variantes très faibles ; hybride squelette+pattern 0,667 vs handcrafted | le pattern augmente un squelette, ne le remplace pas |
-| Scan-style 32 patterns | material anchor : 0,000→0,444 vs handcrafted | architecture linéaire viable |
-| `--score-drop` | val MSE 38→1,8 ; jeu ~0,42→0,94 vs handcrafted | scores extrêmes ±9989 empoisonnaient les fits précédents |
-| ré-ancrage Scan | le champion flatteur contre v15 est ≈0 contre Scan | v15 n'était pas un juge absolu valable |
-
-Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
-[PATTERN_PROGRAM_NOTES.md](archives/PATTERN_PROGRAM_NOTES.md) et
-[SCAN_METHODOLOGY_GAP.md](archives/SCAN_METHODOLOGY_GAP.md).
-
-### 3.2 Représentation, géométrie et fit au scale (`0203` à `0454`)
-
-- Le full-fold a réduit le nombre de poids distincts et fait monter les matches
-  contre handcrafted, mais le proxy Scan est resté quasi plat.
-- Enrichir 32→54 patterns n'a pas payé ; retirer huit patterns a coûté environ
-  **−31 Elo sans gain de vitesse**. L'importance des patterns était répartie.
-- Les patterns men-only étaient structurellement différents de Scan parce que
-  les dames étaient lues comme cases vides. Le correctif king-aware a apporté
-  **+37 Elo** dans le test distillé `0240`, mais le gate ultérieur au scale
-  `0409` a retenu men-only pour la recette active. Cette séquence interdit de
-  relire `0240` isolément comme preuve qu'il faut réactiver king-aware.
-- Le scale du fit a corrigé plusieurs faux verdicts historiques : géométrie,
-  fold et rois doivent être comparés avec le même budget d'optimisation. Les
-  gates finaux ont retenu le color-fold et la géométrie compacte.
-- `champion-egdbmix` (`0454`) a donné **+58 Elo** contre le champion précédent,
-  conversion finale 0,867→0,900 et précision décisive 88,2→94,4 %. Cela a
-  démontré qu'une vérité exacte de finale pouvait encore aider le linéaire.
-
-### 3.3 Mur des données tactiques et localisation search/éval (`0460` à `0605`)
-
-- Environ onze variantes de données ou de génération sont restées autour de
-  la même conversion : volume, distribution, élagage gen ON/OFF, masters,
-  combinaisons externes, sparring v1, bootstrap deep-relabel et asymétrie.
-- Les labels de recherche produits par Jass sur ses propres angles morts n'ont
-  pas enseigné ces angles morts (`0460`, `0462`). Les vraies combinaisons de
-  maîtres surpondérées n'ont pas déplacé la jauge (`0464`, +0,002).
-- `ext_forcing` a presque doublé la jauge à profondeur fixe (`0483`), mais le
-  gain a disparu au movetime : le coût en nœuds annule le bénéfice. Les re-tests
-  ultérieurs sont devenus franchement négatifs.
-- La distillation statique propre de Scan (`0525`) n'a pas levé la conversion.
-  La distillation du score de recherche (`0526`) était encore plus mal posée.
-  Une évaluation statique ne doit pas être forcée à représenter une valeur de
-  recherche multi-ply.
-- L'audit eval-oracle corrigé (`0591`) a trouvé des rangs proches : Spearman
-  global Jass-oracle 0,952 contre Scan-oracle 0,978. Le vieux `r≈0,04` venait
-  d'un mauvais alignement des lignes.
-- La quiescence renforcée a amélioré la profondeur fixe mais a perdu
-  **−92 à −161 Elo au movetime** : meilleure feuille, coût de nœuds excessif.
-- La référence post-search `0605` était environ d9 −310, mt0.3 −161,
-  mt1.0 −133 et NPS-comp −134 contre Scan.
-
-### 3.4 Gains de recherche et champion `gen2-mmto` (`0600` à `0648`)
-
-- L'history probabiliste pure, d'abord jugée neutre sur un petit N (`0599`), a
-  gagné **+20 à +43 Elo** dans la confirmation haut-N `0600`. Le résultat
-  préliminaire est supersédé ; le mécanisme a été baké.
-- Le rank-finetune statique a augmenté la pairwise accuracy mais détruit le
-  jeu : jusqu'à **−847 Elo** à anchor 0,01. La métrique de fit seule ne suffit
-  jamais à promouvoir un candidat.
-- Le MMTO à travers la recherche a été le premier vrai gain d'évaluation :
-  +23 Elo avec professeur humain, puis **+38/+47 Elo** avec professeur Scan ;
-  la boucle externe a atteint environ **+52 Elo** et convergé.
-- Le bake `gen2-mmto` a déplacé la cellule d9 contre Scan de −310 à −276
-  (**+34**) et le match généraliste contre gen1 de **+52 Elo** à mt0.3, tout en
-  gardant la jauge dilf neutre.
-- Le gain d9 ne s'est transféré que de +5–6 Elo au movetime contre Scan :
-  nouvelle référence environ mt0.3 −155, mt1.0 −128, NPS-comp −129.
-  **⚠️ Ces chiffres sont des planchers contaminés, pas des valeurs** (constaté
-  le 27 juillet 2026, `home-1001`). Ils ont été mesurés sur un moteur dont
-  `search()` rendait un coup nul sur toute racine nulle par répétition ou par
-  horloge de 50 plies ; le client HUB lisait ce coup nul comme un abandon, et
-  Jass perdait donc toute partie atteignant une telle position. Le défaut est
-  asymétrique — Scan ne fait rien de tel — et corrigé depuis (`9c1d1e8e`). Sur
-  le moteur réparé, `gen2-mmto` mesure `−255 Elo` à `mt0.3` sur un pool réduit,
-  intervalle de confiance `[−459 ; −140]` : compatible avec l'ancre, mais
-  celle-ci ne doit plus être citée comme référence de campagne.
-- Une deuxième ronde MMTO working-set ON a régressé de **−354/−341 Elo**.
-  WS-OFF l'a ramenée au neutre mais sans gain : le levier a plafonné.
-- Refaire une base WDL fraîche puis MMTO a perdu −33 à −61 Elo. Un fine-tune
-  WDL ancré directement sur gen2-mmto a perdu −36 à −76 Elo malgré une baisse
-  de log-loss. `gen2-mmto` reste le point de comparaison historique.
-
-### 3.5 Auto-apprentissage autonome et conversion (`0650` à `0777`)
-
-- Les tentatives antérieures ne constituent pas une longue lignée pure menée à
-  terme : `0481`/`0482` ont échoué, `0532` mélangeait 4,16 M positions de
-  maîtres, et `0536` a échoué pendant G1. Elles ne ferment donc pas la question
-  aujourd'hui portée par L3-PURE.
-- La chaîne mobile autour de `gen2-mmto` (`0650`–`0656`) est restée sous le
-  champion : tendance teacher d8/d3 −100, d12/d6 −65, d14/d8 −55. Réenseigner
-  un modèle Scan-tuné avec un professeur Jass plus faible ne le dépasse pas.
-- Les DOEs search `0652`, `0657` et `0697` sont restés neutres ou négatifs à
-  haut N. Le lead aspiration +17 du screen était du bruit.
-- Une vraie lignée from-scratch (`0674`) a décollé : G1 a écrasé l'éval zéro et
-  T2 a composé **+170 Elo**. T3 et T4 ont ensuite régressé. Ce résultat prouve
-  qu'une boucle autonome peut apprendre, pas qu'elle sait convertir ni qu'elle
-  a atteint son plafond.
-- L'expérience PC Blues a confirmé le trou de conversion : **0,136 Jass vs
-  0,904 Scan** sur 224 combinaisons. Fitter les préférences humaines a pourtant
-  perdu **−135 Elo** (`0691`) ; injecter les positions en self-play a été neutre
-  ou négatif (`0696`). Le corpus vaut comme thermomètre et QA, pas comme fit
-  d'évaluation dans les recettes testées.
-- Le DOE `0726` a trouvé environ 0,663–0,673 de conversion dans les quatre
-  cellules. Les labels d14+EGDB ont une direction positive sur la force, mais
-  le gymnase G4 n'a pas augmenté la conversion. `ADJ+G1` a été retenu pour la
-  sonde, sans prétendre à un gain établi.
-- La chaîne `ccx33` T1-bis→T3 a été techniquement complète et non régressive,
-  mais plate : conversion **0,667 / 0,657 / 0,669** et rates contre T0
-  **0,5125 / 0,490 / 0,5033**. Les IC de chaque match recouvrent 0,5.
-- Fork C (`cpx62-0774`) : départ 0,3×, refit vs fort **−32,5 Elo** avec
-  `ci_high=0,4932`, conversion hard **−0,0111**, malgré une divergence de
-  politique 5,5→13,7 %. Verdict `stop_regression`.
-- Teacher causal `0777` : B1 −0,010, B2 +0,007, B3 −0,019 contre A sur la
-  hard-conversion, tous sous le seuil +0,02. Verdict `complete_no_signal` ;
-  aucune confirmation P3 n'a été autorisée.
-- **Track parallèle gen2-mmto « tête de conversion P3 » (0811–0822), clos
-  négatif.** Deux mécanismes distincts testés sur le champion gelé, tous deux
-  morts : (1) **tête statique CVH1** — sidecar `.cvh` bornée, P3-gated ; offline
-  +0,016, screen `0813` +0,022 (n=180) prometteur, mais confirmation haut-N
-  `0815` A 0,478 vs C10 0,490 → Δ **+0,012 (n=1255) < +0,020**, IC apparié
-  recouvrant 0 → `better_fit_no_play_signal` (un meilleur fit offline ne se joue
-  pas) ; (2) **décisions-sibling P3** — autopsie D0 `0822`
-  `no_actionable_sibling_signal` (recovery 37,4 % < 50 %, Δ pairé +0,035 IC
-  [−0,022 ; +0,093], n=339). La correction P3 sur gen2, statique **ou** par
-  re-décision, ne déplace pas la conversion jouée. Ce track n'a jamais modifié
-  L3 et est refermé.
-- C0 L3-PURE `0790/0791` : les deux bras ont terminé G1–G3 avec rc=0 et
-  publié modèles, corpus, sidecars, splits et manifests ; B a aussi publié les
-  frontières G1/G2. C'est un succès d'exécution, pas encore un verdict.
-- Le job haut-N `0792` a échoué avec rc=1 sur `not enough fixed openings`
-  (750 requis vs 305 dans `data/dilf_combinations.fen`), avant de produire les
-  gates. Relancé à l'identique en `0795` (NOPEN=300, assert de gate dynamique
-  `n=2·NOPEN`, gauge et critères §7 inchangés). **Verdict C0 :
-  `retire_frontier_v1_flat`** — conversion B−A globale −0,023, P3 mince −0,070,
-  toutes IC recouvrant 0 ; gate généraliste B vs A 0,555 (pas de régression) ;
-  A vs `gen2-mmto` 0,497 (parité), B vs `gen2-mmto` 0,470. Holdout log-loss
-  A 0,451 / B 0,435. La frontière mobile v1 est un levier mort ; la lignée pure
-  reproduit le plateau (~0,67) tout en atteignant la parité avec le champion.
-- **Matrice causale TOP3 stable `0908/0920` :** 2 688 parties sur 384 positions
-  +2 communes, d10. Le gate strict 0908 reste échoué sur un unique cap 400
-  plies ; 0920 l’a adjugé nul sans replay et a publié une sensibilité W/L.
-  G4/G4 vaut 270/1/113 (70,31 % W), mais le contraste apparié d’attaque
-  `G4/G0 − G0/G0` est massivement négatif : −0,6875, IC95
-  [−0,8021 ; −0,5677]. L’effet joint vaut −0,3724, IC95
-  [−0,4818 ; −0,2656]. Scan domine G4 en attaque (+0,5911) comme en défense
-  (+1,3724), IC95 entièrement positifs. Le plateau n’est donc pas une
-  conversion apprise mais cachée par l’agrégat : G4 a causalement dégradé le
-  rôle attaquant sur ce domaine.
-- **Miroir causal L3-PURE `0921` :** protocole identique, 2 688/2 688 parties,
-  zéro erreur et zéro cap, avec le G4 pur de `0842`. G4/G0 vaut 374/0/10 et
-  l’effet d’attaque est positif : +0,1667, IC95 [+0,0990 ; +0,2344]. G0/G4
-  vaut 202/0/182 et l’effet de défense est +0,7292, IC95
-  [+0,6146 ; +0,8438]. G4/G4 reste proche de G0/G0 parce que les deux rôles
-  progressent simultanément. Le self-play WDL et l’architecture linéaire
-  savent donc apprendre la conversion ; la destruction du rôle attaquant est
-  localisée à la recette spécialiste 0890bis.
-- **Autopsie recette 0842/0890bis :**
-  `TOP3_SPECIALIST_RECIPE_FAILURE_LOCALIZED_FACTORS_CONFOUNDED`. Architecture,
-  recherche, bootstrap, exploration, fit et labels sont identiques. Le bundle
-  0890bis change simultanément les départs TOP3, le volume 500 k→2 M et le
-  reweighting `1/2/4`. En G4, 72,59 % de son corpus réel a ≤14 pièces et
-  seulement 5,765 % du fit pré-resampling reste dans le domaine exact ±2
-  hommes/dames égales (8,038 % après resampling). Les matrices brutes sont
-  appariées sur 2 688/2 688 lignes ; remplacer seulement le G4 spécialiste par
-  le G4 pur améliore 171 positions contre 7 régressions en attaque vs G0, et
-  171 contre 17 en défense. 0890bis reste fermé ; seule une ablation `2 × 2`
-  départ standard/TOP3 × reweighting off/on, à volume identique, peut attribuer
-  la cause fine.
-- **Maturité F2M/M2 `0964→0974bis` :** F2M est confirmé puis promu humainement
-  champion L3-PURE et général ; il bat Gen2 à 57,25 % Q00 et 58,60 % native.
-  Une continuation M2 d8 sur 2M positions fraîches est plate contre F2M
-  (50,60/49,05 %). Les bras appariés d10 et d12 ne créent aucune pente :
-  d10 fait 48,80/51,00 %, d12 45,85/46,95 %. À d12, la régression Q00 est
-  établie (−28,9 Elo) alors que la loss holdout s'améliore. L'escalade de
-  profondeur fraîche est donc close ; le mix d10/d12 reste interdit par son
-  garde-fou strict. Le facteur actif suivant est le turnover temporel 1:1 à
-  volume constant, pas davantage de profondeur.
-- **Turnover temporel `0977→0980` :** à parent, d8, 8cf et volume 2M constants,
-  remplacer 1M positions M2 par 1M positions de l'époque F2M produit quatre
-  estimations positives : 52,20/51,05 % contre M2 et 52,10/51,15 % contre F2M
-  en Q00/native. Conversion P3/P4 : 98/99 % ; couverture : 210 381 buckets
-  visités et 28 160 vus au moins 100 fois, au-dessus des deux contrôles.
-  La confirmation indépendante `0980` établit ensuite la supériorité sur M2 :
-  53,775 % Q00 (+26,28 Elo) et 53,20 % native (+22,27 Elo), avec les deux bornes
-  basses à 95 % au-dessus de 50 %. Le cumul atteint 53,25/52,483 % sur 3 000
-  parties par cellule. Face à F2M, 50,35/50,90 % reste compatible avec
-  l'équivalence : TURNOVER n'est pas un nouveau champion. La mémoire temporelle
-  est néanmoins un levier causal confirmé ; le facteur suivant préenregistré
-  est REPLAY25, 500k positions époque F2M + 1,5M époque M2 à volume constant.
-- **REPLAY25 `0981→0983` :** le préflight autoritatif `0981ter` certifie le mix
-  25/75, son split par ouverture et le pool indépendant. `0982` converge
-  réellement en 156 itérations sur 2M records (`gradient_inf_norm=0,0008835`,
-  loss holdout 0,444145) et publie le modèle `289047ff…`, sans promotion.
-  `0983` est le readout indépendant réservé contre M2, TURNOVER, F2M et Gen2.
-- **REPLAY25 clos par `0983` :** sur 1 000 parties indépendantes par cellule,
-  REPLAY25 marque 51,25/53,90 % contre M2 en Q00/native, mais 46,90/49,00 %
-  contre TURNOVER 50/50. La régression Q00 face à TURNOVER est établie
-  (IC95 `[43,83 ; 49,97]`) et le modèle reste plat face à F2M (50,05/49,65 %).
-  Le dosage 25/75 améliore donc le corpus 100 % frais sans rejoindre le 50/50 :
-  **la dose de replay est close, aucune promotion.**
-- **Écran L2 `0984→0986` :** à corpus, parent, split, recherche et objectif
-  constants, `0984bis` certifie le corpus TURNOVER et un pool indépendant de
-  500 ouvertures (`e7b89a5e…`), puis `0985` fitte réellement `L2=1e-5`
-  (375 itérations, loss holdout 0,444361, `27cf9bed…`) et `L2=1e-4`
-  (170 itérations, loss holdout 0,446187, `0b710b80…`) face au contrôle
-  immuable `L2=3e-5` (loss holdout 0,444060, `b2c79b36…`). Les losses sont des
-  diagnostics ; seul le readout `0986` décide, et un lead confirmé ne
-  promeut rien — il n'autorise que le croisement replay `0/25 %`.
-- **Écran L2 tranché par `0987` :** `home-0986` étant tombé sur un bug de
-  harnais (témoin de garde appliqué au défenseur figé), la relance `0987`
-  conclut `TURNOVER_L2_SCREEN_DIRECTIONAL_CONFIRMATION_REVIEW`.
-  **`L2=1e-4` est rejeté** : 47,45 % Q00 et 46,40 % natif contre le contrôle,
-  régression native établie (IC95 `[43,33 ; 49,47]`). **`L2=1e-5` est
-  directionnel** : 50,15 % Q00 et 51,45 % natif, quatre estimations positives
-  mais aucune borne basse au-dessus de 50 %. Ses gardes sont saines
-  (52,60/51,60 % contre F2M, 60,80/58,05 % contre Gen2, conversion P3/P4
-  appariée au contrôle). **`L2=3e-5` reste donc le réglage retenu** tant qu'une
-  confirmation indépendante de `1e-5` n'a pas eu lieu ; le croisement replay
-  `0/25 %` reste fermé et aucune promotion n'est autorisée.
-- **Facteur L2 clos par `0988→0989` :** la confirmation indépendante de
-  `L2_1E5` sur un pool neuf (`71dc575e…`, 1 000 ouvertures, recouvrement nul
-  sur treize pools dont celui de l'écran) conclut
-  `L2_1E5_DIRECTION_NOT_REPLICATED_RETAIN_3E5`. **Les deux vues s'inversent** à
-  modèle identique : la Q00 passe de 50,15 % à 53,02 % (supériorité établie) et
-  la native de 51,45 % à 49,68 %. La règle exigeant les deux vues sur le frais
-  et sur le cumul, **`L2=3e-5` est retenu et le facteur L2 est clos**. La Q00
-  étant déterministe à profondeur fixe, son écart de 2,87 pp entre deux pools
-  mesure la variance d'échantillonnage : **à `n=1000`, une lecture mono-vue de
-  l'ordre de `±10 Elo` ne porte pas de décision** — c'est le repère
-  méthodologique le plus réutilisable de la campagne. Hors question causale,
-  `L2_1E5` domine F2M dans les deux vues sur le cumul de 3 000 parties
-  (52,42 % et 52,63 %) ; les cellules F2M sont des garde-fous, pas un test de
-  promotion, et le candidat comme son contrôle dominent leur parent commun.
-  Le croisement replay `0/25 %` au L2 retenu est le prochain bras à
-  préenregistrer.
-- **Axe de dose replay clos par `0991→0993` :** le croisement `{0 ; 25 %}` du
-  plan était déjà mesuré à `L2=3e-5` ; l'axe n'était vierge qu'au-delà de 50 %.
-  Le bras `REPLAY75` (1,5M époque F2M + 0,5M époque M2) **régresse contre la
-  dose 50 %** : `47,77 %`, IC95 `[46,39 ; 49,15]` sur `n=5000`. La courbe monte
-  de 0 à 50 % puis redescend : **l'optimum est intérieur, à 50 %**. `REPLAY75`
-  avait pourtant la meilleure loss holdout des quatre doses — il converge en
-  6 itérations en ré-apprenant les données de son parent et n'est pas
-  distinguable de F2M (`50,11 %`).
-- **`TURNOVER` dépasse le champion F2M :** premier bras `L3-PURE` à établir sa
-  supériorité sur le champion en titre, dans une cellule préenregistrée et
-  dimensionnée pour cela — `51,98 %`, `+13,77 Elo`, IC95 `[50,61 ; 53,35]` sur
-  `n=5000` à vues additionnées. Les six mesures indépendantes du couple, sur
-  trois pools disjoints, se consolident à `51,42 %`, `+9,89 Elo`, IC95
-  `[50,50 ; 52,35]` sur 11 000 parties. `home-0980` n'avait rien conclu faute de
-  puissance, pas faute de signal. **Aucune promotion n'est autorisée** : une
-  succession de champion exige une revue humaine et les cellules non jouées ici
-  (garde Gen2, conversion P3/P4, couverture, pool supplémentaire).
-- **TOPK3 ne remplace pas TURNOVER (`home-1040`) :** sur le gate complet,
-  frais et disjoint, TOPK3 fait `4496-449-5055` sur 10 000 parties, soit
-  `47,205 %` et `-19,44 Elo`. Q00 (`47,16 %`) et natif (`47,25 %`) régressent
-  séparément à IC90. TOPK3 reste supérieur à Gen2 (`57,8667 %`, `+55,12 Elo`)
-  mais moins que TURNOVER sur cette garde (`59,7667 %`, `+68,75 Elo`).
-  Conversion corrigée : P3 `0,763333`/`0,763333`, P4
-  `0,743333`/`0,760000` (TOPK3/TURNOVER). Verdict :
-  `TOPK3_PROMOTION_NOT_RECOMMENDED_POINT_ESTIMATE`; **TURNOVER reste
-  champion**. Le protocole signal passe donc au préflight hard-replay
-  UNIFORM, un seul facteur causal.
-- **Le hard-replay 1 M est fermé par capacité (`home-1042`) :** sur les 2 M
-  records UNIFORM authentifiés, 325 233 portent le signal
-  `failed_conversion`, mais il ne reste que 29 454 positions canoniques après
-  `one-per-game` et déduplication, soit **58 908 records** avec miroir couleur.
-  La dose préenregistrée de 1 M n'est donc pas disponible :
-  `L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT`,
-  `training_authorized=false`. Aucun fit n'est lancé et la dose n'est pas
-  réduite post-hoc.
-- **Le replay `failed_conversion` 50/50 régresse fortement (`1068→1076`) :**
-  après réouverture sur une source UNIFORM 40 M, `HARD_REPLAY` fait
-  `222-24-9754` contre `UNIFORM_REPLAY` sur 10 000 parties fraîches et
-  appariées, soit `2,34 %` et `-648,20 Elo`. Q00 et natif régressent
-  séparément. Les optimiseurs convergent et les modèles sont authentifiés ;
-  le bras hard outcome-conditioned déplace le prior WDL assemblé à
-  51,29 % wins contre 31,52 % losses STM, soit 19,77 points d'asymétrie,
-  contre 0,37 point pour UNIFORM. La couverture augmente pourtant de
-  194 334 à 210 436 buckets. Verdict
-  `L3_PURE_HARD_REPLAY_BELOW_UNIFORM_REPLAY` : la recette brute avec cibles
-  historiques conservées est close. La suite est le reverse self-play
-  zero-target apparié, qui régénère les WDL terminales.
-
-Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
-[post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
-[forkc_c0_verdict_20260717.md](archives/forkc_c0_verdict_20260717.md) et
-[CURRENT.md](archives/CURRENT.md).
-
-## 4. Résultats de référence à ne pas perdre
-
-### 4.1 Champion et thermomètres historiques
-
-| Objet | Valeur consolidée | Usage futur |
-|---|---|---|
-| `gen2-mmto` | +52 Elo vs gen1 mt0.3 ; d9-vs-Scan +34 | référence fixe externe, jamais professeur de L3 |
-| écart gen2-mmto vs Scan | environ −155 mt0.3 / −128 mt1.0, **plancher contaminé par le coup nul (cf §3.4)** | thermomètre absolu, pas cible de fit |
-| PC Blues 224 | Jass 0,136 vs Scan 0,904 | thermomètre tactique figé |
-| T3 `ccx33` | conversion globale 0,669 | référence de conversion historique |
-| T3 P1/P2/P3/P4 | 0,841 / 0,609 / 0,489 / 0,513 | diagnostic par strate |
-| `conv_self` ancien | gen2 environ 0,62 | preuve historique du déficit de réalisation |
-
-Ces chiffres appartiennent à des harness et distributions différents. Ils ne
-doivent pas être comparés comme une même probabilité absolue. Seules les
-différences au sein d'un protocole apparié portent une causalité.
-
-### 4.2 Gains réellement retenus
-
-| Levier | Signal | Statut |
-|---|---:|---|
-| `--score-drop` des labels extrêmes | MSE 38→1,8 ; gros gain vs handcrafted | acquis fit |
-| capture pre-filter + SIMD | +40,7 % NPS sur v15 | acquis perf |
-| protection NMP / améliorations search | gains multiples, environ +187 cumulés selon l'ancien CURRENT | acquis historique, non additif au chiffre près |
-| history probabiliste pure | +20 à +43 Elo haut-N | baké |
-| optimisations eval 2026-07 | +13–15 %, puis +4,8–9,9 % NPS selon phase | bakées, byte-identiques |
-| MMTO à travers recherche | jusqu'à +52 Elo vs gen1 ; +34 d9-vs-Scan | bake `gen2-mmto` |
-| EGDB mix exact | +58 Elo dans `0454`, finale améliorée | preuve qu'une vérité exacte peut aider ; recette historique |
-| **fold sur la symétrie exacte du damier** | **+17,10 Elo** vs son contrôle IC95 `[+9,2 ; +25,0]` ; **+13,32 Elo** vs le champion TURNOVER IC95 `[+5,5 ; +21,2]`, n=6000 chacune (`cpx62-1118`/`1121`) | **acquis fit**, candidat à promotion non baké ; EGDB absent des portes donc Elo non comparable en absolu |
-| **candidat `context30` sur corpus courant** | **+5,91 Elo** vs L2LOW IC95 `[−0,15 ; +11,97]`, `P(>0)=97,2 %`, n=12 000 (`cpx62-1354`) — aucune donnée nouvelle | **signal prometteur, attribution cible encore ouverte** : A est un refit supplémentaire de L2LOW ; le contrôle causal ALIGNED/SHUFFLED-WDL-stratifié/OUTCOME est [préenregistré](experiments/L3_CONTEXT30_CAUSAL_GATE_PREREGISTRATION_20260816.md) |
-| apport marginal du **volume** (mégacorpus 4 M en pré-entraînement) | **+2,32 Elo** IC95 `[−6,24 ; +10,88]`, `z = 0,53` (`cpx62-1354` contre `cpx62-1349`, même pool) | ⚠️ **ni établi ni réfuté** ; le trancher à 95 % demanderait 163 800 parties/bras (×13,7) ≈ 29 h cpx62 pour un seul pool — **hors de prix** (§4.4) |
-
-## 4.4 Décomposition du gain de CURRICULUM — signal cible candidat, volume non démontré
-
-CURRICULUM, champion depuis le 15 août, est un **curriculum à deux étages** :
-pré-entraînement sur `MEGA_FULL_4M`, puis recentrage sur `CURRENT_2M` avec la
-cible alignée `CONTEXT_30`. Les deux étages coûtent des ordres de grandeur
-différents — le volume demande de générer et conserver 4 M de positions, le
-ré-étiquetage ne demande **aucune donnée nouvelle**.
-
-`cpx62-1354` sépare proprement le curriculum du corpus courant : le bras
-`A = CURRENT_C30` partage avec CURRICULUM l'étiquetage, la recette de fit, le
-volume de fit (2 M) et le fold exact, et n'en diffère que par le **prior issu du
-mégacorpus**. Même pool que `cpx62-1349`, même budget, `n = 12 000`, zéro refit
-au moment de la porte et zéro self-play.
-
-⚠️ Ce contraste attribue `D−A` au pré-entraînement Mega, mais **n'attribue pas
-`A−L2LOW` à `CONTEXT_30` seul** : A est lui-même un refit supplémentaire depuis
-L2LOW. Cette attribution exige les contrôles marginal-matched SHUFFLED et
-terminal OUTCOME, désormais
-[préenregistrés](experiments/L3_CONTEXT30_CAUSAL_GATE_PREREGISTRATION_20260816.md).
-
-| | Elo | IC95 | `P(Elo>0)` |
-|---|---|---|---|
-| `A` = corpus courant + `context30`, **sans mégacorpus** | **+5,91** | `[−0,15 ; +11,97]` | **97,2 %** |
-| `D` = CURRICULUM, même pool | +8,22 | `[+2,18 ; +14,28]` | 99,6 % |
-| `D − A` = apport marginal du volume | **+2,32** | `[−6,24 ; +10,88]` | `z = 0,53` |
-
-⛔ **Leçon de méthode, plus durable que le chiffre : un verdict frequentiste lu
-seul peut renverser la conclusion.** Le template a rendu
-`A_FLAT_VS_B_NO_ESTABLISHED_GAIN` — sur une borne basse à `−0,15`, un cheveu
-sous zéro — et la première lecture en séance en a conclu « le mégacorpus n'est
-pas décoratif », soit l'inverse de ce que disent les chiffres. C'est exactement
-le cas de figure pour lequel le critère du 5 août regarde la **position de la
-masse**. Une étiquette n'est pas un résultat ; la magnitude l'est.
-
-⚠️ **Et le test de la différence ne pouvait pas trancher**, ce qui était su
-**avant** la lecture : par simulation sur trois scénarios, même un `A` nul ne
-sortirait qu'à `z = −1,88`. Un `|z| < 1,96` ici ne prouve pas l'égalité.
-
-Conséquence de campagne : la direction « volume + diversité + WDL conditionnel »
-se **sépare en trois**. Le WDL conditionnel paie et il est bon marché ; le volume
-n'est pas démontré et son plafond crédible est modeste. Le prochain
-investissement rentable est du côté de la **cible**, pas du corpus. Tout
-protocole visant un effet de l'ordre de `+2` doit publier son sizing **avant** sa
-phase de force. Bornes :
-[`experiments/L3_CURRICULUM_ATTRIBUTION_20260815.md`](experiments/L3_CURRICULUM_ATTRIBUTION_20260815.md).
-
-## 4.3 Symétries imposées au fit — la vraie plutôt que l'approximative
-
-Le damier a une symétrie **exacte** : `rot180 ∘ colour-swap`. Tourner le plateau
-de 180° et échanger les couleurs rend une position strictement équivalente,
-d'évaluation opposée. `colour-swap` seule et `rot180` seule sont
-**approximatives** — les pions ont une direction — et `symmetry.py` le dit dans
-son propre docstring depuis toujours.
-
-Or jusqu'au 1er août la campagne fittait avec `--color-fold`, qui impose la
-contrainte **approximative**. Mesuré sur TURNOVER : `cs` seule satisfaite à
-**0,0000 %** près, `rot180∘cs` violée à **25,8 %**. La contrainte fausse était
-imposée structurellement ; la vraie était laissée à l'apprentissage, et mal
-apprise.
-
-Corrigé par `--exact-fold` (groupe `{id, rot180∘cs}`), mesuré à **+17,10 Elo**
-contre son propre contrôle, corpus et parent identiques.
-
-**Ce n'est pas une question de capacité** : les deux folds mutualisent le même
-nombre de configurations par poids (`TB ≈ 2 125 76x`). Seul change **ce qui est
-mutualisé**. À retenir pour tout fold futur : *mutualiser des positions qui ne
-sont pas équivalentes injecte un biais dans chaque bucket, et ce biais ne se voit
-ni dans la perte ni dans la convergence.*
-
-Reste vrai et non encore exploité : la réflexion gauche-droite est **exacte**
-(signe +1). Un fold `{id, rot180∘cs, LR, LR∘rot180∘cs}` serait le prochain palier
-entièrement vrai. La translation entre patterns, elle, est approximative — même
-piège que `cs` seule.
-
-**Corollaire du même jour, à lire avec sa limite** : un tour **on-policy** depuis
-le modèle exact rend **−9,15 Elo**, IC95 `[−16,9 ; −1,4]`, n=6000
-(`cpx62-1119`/`1120`). ⚠️ **Ce n'est PAS « l'on-policy dégrade »** : le corpus de
-TURNOVER est un mélange 1:1 mémoire/frais, la passe est passée à 100 % frais,
-donc deux facteurs ont bougé — le même écart « frais/mémoire » que cette section
-reproche déjà à VOL8M. Le mécanisme « plus fort → plus de nulles » est réfuté par
-mesure (18,06 % de nulles contre 21,41 %). Question ouverte, pas close.
-
-Détail : [`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).
-
-### 4.4 Mini-Jass PatternEval — signal de cible conditionnelle
-
-La reconstruction Mini-Jass avec l'architecture scalaire `PatternEval` a
-séparé deux voies de correction du bruit de cible :
-
-- **M15-P (`cpx62-1237`)** : le mélange score-racine/WDL apporte seulement
-  `+0,001322` de zero-regret développement, IC95
-  `[+0,000861 ; +0,001783]`, et exclut précisément la récupération pratique
-  gelée `+0,006145`. La cible recherche seule est nocive ; ne pas relancer ce
-  protocole à l'identique.
-- **M15-C (`cpx62-1238`)** : le mélange WDL/prédiction conditionnelle 50% bat
-  le même mélange dont les prédictions sont permutées dans chaque fold de
-  `+0,016016`, IC95 `[+0,014584 ; +0,017448]`, et WDL brut de `+0,003093`,
-  IC95 `[+0,002464 ; +0,003722]`, 20/20 graines positives. Il manque l'ancien
-  seuil pratique `+0,003916`, mais confirme causalement l'information
-  conditionnelle dans la cible scalaire.
-- **M16-P (`home-1321`)** : `LAMBDA_50 − OUTCOME` apporte `+0,001549` de
-  zero-regret développement, IC95 `[+0,000928 ; +0,002170]`, et `+0,005664`
-  dans l'arène descriptive appariée, IC95 `[+0,003722 ; +0,007607]`. La piste
-  est conservée comme **expérience positive** : elle confirme un petit signal
-  temporel (`10,25 %` de l'écart oracle) sans atteindre le gate de récupération
-  majoritaire à 50%. Conserver `LAMBDA_50` pour composition et confirmation de
-  force ; ne pas relancer M16-P à l'identique.
-
-La dose conditionnelle pure nuit (`−0,018970` contre WDL), donc la piste active
-n'est pas « plus de contexte », mais une dose intérieure. **M15-C2
-(`cpx62-1240`)** confirme alpha 30% : zero-regret `+0,008803` contre contrôle
-permuté, IC95 `[+0,008094 ; +0,009511]`, et `+0,004816` contre WDL, IC95
-`[+0,004211 ; +0,005421]`. Les contrastes de force sont eux aussi positifs
-contre permutation (`+0,001172`) et WDL (`+0,001147`), avec IC95 au-dessus de
-zéro. **M15-C2R (`cpx62-1242`) réplique indépendamment 30%** sur les quatre
-axes : statique `+0,006379` contre permutation et `+0,002895` contre WDL ;
-force `+0,001538` et `+0,002051`, avec les quatre IC95 strictement positifs.
-Alpha 40% bat 30% en statique (`+0,001506`) mais pas en force (`+0,000098`,
-IC95 `[-0,000419 ; +0,000615]`) ; 30% reste la dose retenue. **M15-C3
-(`cpx62-1244`) ferme sa composition convexe** : l'incrément temporel est
-négatif en statique (`−0,007067`) malgré un gain de force (`+0,002380`), tandis
-que l'attribution conditionnelle est positive en statique (`+0,005982`) mais
-négative en force (`−0,001017`) ; les quatre IC95 excluent zéro dans ces sens.
-La formule dilue donc un signal en tentant d'ajouter l'autre et `CONTEXT_30`
-reste retenu. **M15-C4 (`cpx62-1250`) ferme aussi la décomposition
-résiduelle** : `RESIDUAL_30 − ADDITIVE_30` est légèrement négatif en statique
-(`−0,000349`, IC95 `[−0,000668 ; −0,000031]`) et indécis en force
-(`−0,000041`, IC95 `[−0,000400 ; +0,000319]`). L'information conditionnelle
-n'est pas réfutée : contre son contrôle mélangé, le résidu gagne `+0,007049`
-en statique, IC95 `[+0,006165 ; +0,007933]`, avec 24/24 graines positives ; le
-fit additif direct donne lui aussi `+0,007203`, IC95
-`[+0,006221 ; +0,008185]`. Mais l'attribution de force résiduelle reste indécise
-(`−0,000671`, IC95 `[−0,001599 ; +0,000256]`) et `RESIDUAL_30` perd nettement
-contre `CONTEXT_30` en statique (`−0,010979`). La fusion en un unique
-`PatternEval` est exacte à l'arrondi FP32 près (`3,87e−7`, zéro paramètre
-d'inférence ajouté) : l'échec est scientifique, pas architectural. Conclusion :
-le signal conditionnel est réel, mais ni la composition convexe ni la voie
-résiduelle séparée ne rendent ses gains additifs avec le signal temporel.
-**M15-C5 (`home-1256`) ferme ensuite la répétition conditionnelle on-policy** :
-G1 réplique le signal (`+0,005142` zero-regret et `+0,001994` force), mais après
-un cycle de feedback le contraste conditionnel devient `−0,002349` en
-zero-regret, IC95 `[−0,003352 ; −0,001346]`, malgré une force encore légèrement
-positive (`+0,001668`, IC95 `[+0,000437 ; +0,002899]`). Le changement de replay
-seul n'explique pas la perte. Conserver `CONTEXT_30` comme preuve statique et
-fermer composition convexe, résidu fusionné et répétition scalaire on-policy.
-La suite doit changer de canal causal, avec force jouée comme endpoint primaire.
-Aucun `frozen_test` n'a été lu, aucune promotion ni transfert direct au 10×10
-n'est autorisé.
-
-## 5. Portes closes à protocole causal identique
-
-Les lignes suivantes interdisent la répétition à l'identique. Les paramètres
-marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
-§1.1 ; le résultat L3 deviendra alors le nouveau verdict de référence.
-
-### 5.1 Modèle et représentation
-
-| Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
-|---|---|---|---|
-| plus gros MLP/NNUE historique | v9/v11 overfit ; v11 0,009 vs Scan | capacité seule sans nouvelle méthode ne paie pas | nouvelle cible et protocole, après décision explicite de changer de classe |
-| NNUE maintenant | décision JFC | hors périmètre tant que L3 linéaire n'est pas exécutée | preuve de plafond L3 + go explicite |
-| pattern standalone sans squelette | 0118–0127 | s'effondre ; hybride seul viable | nouvelle représentation complète, pas un nouveau seed |
-| enrichir la géométrie à petit volume ou en cours de lignée | 54 patterns <32 ; 32cf affamée à petit N, mais gagnante dans d'autres gates au scale | changement prématuré confond capacité et couverture | fork 8cf/32cf depuis G0 après seuil de visites publié et budget d'optimisation apparié |
-| passer à 32cf sur la lignée L3 courante (précondition §6.4 mesurée) | visites/bucket publiées : `0828` 300k → coverage 8cf **5,9 %** ; `0832` cumulatif 1,5M (5 cellules X1) → **9,0 %**, croissance **sous-linéaire** (5× données → 1,5× couverture), ge_100 = 1,0 %, Gini 0,85 | 8cf est **data-limité, pas capacité-limité** : la lignée ne remplit pas sa géométrie actuelle ; 32cf (4× buckets) tomberait à ~2-3 % de couverture → encore plus affamé. Précondition visites+volume **mesurée et NON franchie** → **32cf NO-GO** | un curriculum/volume qui remplit réellement 8cf d'abord (mécanisme causalement différent), puis re-mesure des visites |
-| relancer un tour d'autojeu on-policy à recette constante pour grimper | `cpx62-1127`/`1130`, **un seul facteur** (moitié mémoire byte-identique hash-checkée, `d4`/`d8`, ratio 1:1 asserté depuis le manifeste ; seul le générateur de la moitié fraîche change) : **`−4,05 Elo`, IC95 `[−12,6 ; +4,5]`, `n=6000`, avec EGDB**. Mécanisme mesuré : à volume strictement égal le corpus on-policy visite **124 948 buckets contre 130 086**, soit **−3,9 %** | **PLAT, dans les deux sens.** La régression apparente de `cpx62-1120` (`−9,15`) ne se reproduit pas : elle venait du protocole à deux facteurs (100 % frais au lieu du mélange 1:1). Mais la borne haute `+4,5` **exclut** un gain de l'ordre du fold. Un générateur plus fort **joue plus étroit** et échange de la couverture contre de la qualité d'étiquette — or la couverture est la ressource rare (~4,3 obs/paramètre libre). Corollaire : « plus fort → plus de nulles » réfuté une 2ᵉ fois (19,2 % contre 21,4 %) | ⛔ **la condition que j'avais écrite ici — « un générateur qui augmente la couverture mesurée » — a été testée et FALSIFIÉE le jour même** (`cpx62-1131`→`1134`). Il faut donc autre chose : un mécanisme dont on montre qu'il enrichit la distribution **sur laquelle les parties se jouent réellement**, et la démonstration doit être une PORTE, jamais un compte de buckets |
-| **acheter de la couverture par l'exploration / les ouvertures aléatoires** | `cpx62-1131` : le seul bouton qui monte est `--random-open-plies` (`+4,72 %` de buckets à 16) ; top-k **négatif** (`−2,14 %`) ; eps soutenu disqualifié (nulles `−86,4 %`). `cpx62-1132` : plateau à 24, `+7,11 %`, pas 24→32 sous le bruit. `cpx62-1133` : corpus complet à `rop=24`, un seul facteur, `+2,83 %` de buckets sur 2 M. **`cpx62-1134` : `−9,27 Elo`, IC95 `[−17,9 ; −0,7]`, `n=6000`, avec EGDB — borne haute SOUS zéro, régression ÉTABLIE**, contre `−4,05` pour le même corpus à `rop=8` | **COUVERTURE ET FORCE BOUGENT EN SENS OPPOSÉ.** Des buckets atteints depuis des ouvertures aléatoires profondes ne sont visités par **aucune partie réelle** : on gonfle un compteur en diluant la masse on-distribution. ⛔ **La couverture n'est PAS un proxy de la qualité d'un corpus et ne doit jamais être optimisée comme tel.** Même leçon que hard-replay v1 (couverture `194 334→210 436`, `−648 Elo`), ici à dose fine et sur un corpus par ailleurs sain. Corollaire de méthode : le chiffre de couverture reste un **diagnostic**, au même rang que la loss holdout — il décrit, il ne sélectionne pas | un mécanisme de diversification dont la valeur est démontrée **par une porte**, sur la distribution réellement jouée ; aucune sonde de couverture ne suffira |
-| élaguer les patterns | −31 Elo, zéro vitesse | lose-lose | nouveau hot-path mesuré, pas une intuition mémoire |
-| king-aware par défaut | gate final `0409` en faveur de men-only | gain ancien non transféré au régime scale | A/B au scale sur recette L3 figée, dans un fork séparé |
-
-### 5.2 Données, labels et objectifs
-
-| Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
-|---|---|---|---|
-| plus de volume brut | couverture saturée ; multiples runs plats. **Rouverte puis refermée par `1004`→`1008` (28 juillet 2026)** : la condition de réouverture a été honorée — couverture pré-enregistrée mesurée sur 12 M records, `13,548 %` de buckets contre `9,8 %`, **41,67 observations par paramètre libre contre 4,3**, Gini `0,91`, fit convergé, holdout `0,440449` contre `0,444060`. Force jouée contre TURNOVER, pool neuf de 1500 ouvertures, vues additionnées : **`0,4785`, `−14,95 Elo`, IC95 `[−23,5 ; −6,4]`, `n = 6000`** (`q00` `1360-142-1498` ; `native` `1352-176-1472`). L'IC exclut zéro | le volume achète la couverture et la densité, **pas la force** — et ici il la fait perdre. ⚠️ **Le run ne l'établit pas proprement** : VOL8M s'écarte de la recette TURNOVER sur quatre facteurs (volume `12 M`/`2 M`, frais/mémoire `67/33`/`50/50`, jeu `d9`/`d8`, et l'étiquetage de la moitié mémoire — cf §5.2 bis). Le confond n'est PAS celui que cette ligne affirmait au premier jet : VOL8M est à 67 % post-correctif quand TURNOVER est à 100 % pré-correctif, donc VOL8M a *moins* du défaut. Ce qui reste est un mélange de deux calibrations de nulles incompatibles | **12 M entièrement post-correctif** ; à volume égal et calibration homogène, rien d'autre ne change |
-| phase-weight | −210 Elo sur bons labels | décalibre le jeu global | nouvelle loss normalisée avec preuve mathématique et A/B isolé |
-| label-depth par phase en WDL | no-op sur la cible, TT polluée, −80 | mauvais canal | cible score explicitement utilisée et TT séparée |
-| hygiène `drop-post-eps` comme cure | bundle de fixes −25 Elo | le WDL joué est un vrai retour MC ; « contamination » mal interprétée | preuve directe de biais, pas simple présence d'epsilon |
-| distillation score-recherche Scan | loss 8× ; 0526 pire | une feuille statique ne représente pas une recherche | objectif through-search correctement défini |
-| distillation statique Scan pour la conversion | 0525 ≈ baseline | ne ferme pas le trou aval | nouveau mécanisme de recherche/trajectoire |
-| rank-loss statique | jusqu'à −847 Elo | pairwise↑ mais calibration détruite | objectif through-search ou valeur absolue jointe |
-| MMTO conversion sur gen2 | WS-ON −354 ; WS-OFF neutre | plateau autour du champion | nouveau professeur plus informatif et gate indépendant ; interdit dans L3-PURE |
-| WDL fine-tune de gen2 | −36 à −76 malgré log-loss↓ | optimum de jeu déplacé | nouveau point de départ et protocole, pas re-fit gen2 |
-| PC Blues prefs/seed fit | −135 ; seed neutre/négatif | QA riche, mais mauvais canal d'éval | usage comme thermomètre/recherche, pas fit identique |
-| G4/gymnase fixe | `0726` conversion −0,009 à −0,010 | répétition statique ne convertit pas | curriculum mobile réellement différent, testé par C0 |
-| teacher causal B1/B2/B3 v1 | 0777 sous +0,02 | aucun signal | nouvelle information causale ou nouveau canal, pas plus de N sur mêmes cellules |
-| dose/calendrier d'exploration (écran C2-X1) | verdict `0824` (`l3_x1_verdict.py`, 5 cellules, n appariés 860, bootstrap 10 000) : effets A −0,002 / B +0,002 / C +0,001 / courbure +0,004, tous IC franchissant 0 ; aucun coin Δconv ≥ +0,02 ; gates ≈ 0,5 | `x1_no_lead` — plies d'ouverture, epsilon et décroissance ne déplacent pas la conversion ; plateau ~0,67 | nouveau facteur de trajectoire causalement différent, ou signal sur une lignée plus mûre |
-| tête de conversion statique P3 gen2 (CVH1) | offline +0,016 ; screen `0813` +0,022 (n=180) prometteur ; confirmation haut-N `0815` A 0,478 vs C10 0,490 → **Δ +0,012 (n=1255) < +0,020** ; bootstrap apparié IC recouvrant 0 | `not_confirmed_flat` / `better_fit_no_play_signal` — un meilleur fit offline de la correction ne se traduit pas en conversion jouée ; le head statique gelé sur gen2 est un levier mort | canal de correction P3 non-statique (décision réelle), nouveau gate indépendant |
-| décisions-sibling P3 gen2 (autopsie D0) | `0822` `no_actionable_sibling_signal` : recovery 37,4 % < 50 %, Δ pairé +0,035 IC [−0,022 ; +0,093] straddle 0, n=339 | rejouer un meilleur sibling au leader P3 ne récupère pas assez de failures ; cohérent avec l'échec du head statique CVH1 (`better_fit_no_play_signal`) | mécanisme de décision P3 causalement différent, gate indépendant |
-| compression scalaire des signaux Mini-Jass conditionnel et temporel | M15-C3 (`1244`) : composition convexe, statique temporel `−0,007067` mais force `+0,002380` ; M15-C4 (`1250`) : résidu séparé contre fit direct `−0,000349` statique et force indécise, tandis que le signal conditionnel statique reste `+0,007049` contre permutation ; M15-C5 (`home-1256`) : après feedback on-policy, zero-regret `−0,002349` malgré force `+0,001668` | les deux informations existent mais leurs gains ne s'additionnent pas via les deux algèbres de cible testées et le gain conditionnel statique ne survit pas à sa répétition scalaire ; refaire une dose ou davantage de graines ne change pas le mécanisme | canal de décision causalement différent qui garde les signaux séparés, avec contrôle shuffled et **force** préenregistrée comme endpoint primaire |
-
-### 5.2 bis Défaut d'étiquetage pré-`9c1d1e8e` — les nulles supprimées du corpus
-
-Avant `9c1d1e8e` (27 juillet 2026, 16h10 FR), `search()` renvoyait un coup
-**nul** dès que la racine répétait une position déjà jouée. En self-play
-`--gen-data-wdl`, `Engine::apply_move` rejette ce coup, la boucle de jeu casse,
-`hit_ply_cap` reste vrai, et `--drop-plycap` — actif dans toute la chaîne
-L3-PURE — jette la **partie entière**. Les répétitions naissent dans les
-positions de manœuvre : ce sont donc les **nulles** qui disparaissaient.
-
-Mesuré en rejouant le binaire pré-fix contre le post-fix, mêmes graine, parent,
-profondeur `d8` et options, 3000 records, `--drop-plycap` :
-
-| | défaites | **nulles** | victoires |
-|---|---:|---:|---:|
-| moteur cassé | 47,8 % | **4,8 %** | 47,4 % |
-| moteur réparé | 39,5 % | **20,3 %** | 40,2 % |
-
-Facteur **4,2** sur les nulles ; le corpus cassé est décisif à 97,6 %. L'effet
-est invisible dans tous les compteurs publiés à l'époque.
-
-**Corpus touchés** — tout ce qui a été généré avant le 27 juillet 16h10 FR :
-`M1` (`home-0944`), `M2` (`home-0966bis`), et **TURNOVER lui-même**
-(`home-0977`, `new_generation_performed=false`, corpus = 1 M `fresh_m2` + 1 M
-`parent_f2m`). L2LOW, champion courant au moment de ce diagnostic, était donc
-entraîné à 100 % sur des données
-d'où les nulles avaient été filtrées. VOL8M, à 67 % post-correctif, en a
-**moins** — c'est l'inverse de ce qui avait été écrit le 28 juillet au premier
-jet, et la correction vaut rectification de la ligne « plus de volume brut ».
-
-**Ce que le défaut n'est pas** : il ne mislabellise rien. Les parties gardées
-portent l'étiquette juste ; ce sont des parties entières qui manquent. C'est un
-biais de **sélection**, pas d'étiquetage — d'où l'absence totale de signal dans
-les contrôles d'étiquetage existants.
-
-**Garde anti-récidive** : `jobs/tools/assert_corpus_wdl.py` refuse un corpus
-dont la part de nulles sort de `[0,10 ; 0,60]` ou dont victoires et défaites
-s'écartent de plus de 10 points. Elle porte sur les **données**, pas sur le
-code, donc elle attrape aussi la prochaine cause inconnue produisant le même
-symptôme. Validée sur les deux corpus réels : rejet du cassé (`rc=6`), acceptation
-du réparé. Les gardes `grep root_is_drawn` ne couvraient que 2 des 23 templates
-appelant `--gen-data-wdl`, et n'auraient de toute façon vu qu'une cause connue.
-
-### 5.2 ter Réemploi des positions d'échec de conversion — quatre portes closes
-
-Toutes mesurées en vues additionnées, `n = 6000`, pool neuf apparié, parent
-TURNOVER commun, un seul facteur par contraste.
-
-| Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
-|---|---|---|---|
-| hard replay v1 (cibles historiques conservées) | `home-1076` : `222-24-9754` sur 10 000 parties, `0,0234`, **`−648,20 Elo`** | le bras outcome-conditioned déplace le prior WDL assemblé à `51,29 %` wins contre `31,52 %` losses STM — **19,77 points d'asymétrie** contre `42,55/42,19` pour le contrôle. Ce n'est pas un effet de recette, c'est un corpus dont le signal de valeur s'effondre. La couverture monte pourtant (194 334 → 210 436 buckets) : **la couverture ne protège pas de la décalibration** | source post-correctif plus large ou DOE de dose distinct, sans mélange pré-correctif ni réduction post-hoc. ⚠️ Le canari WDL (§5.2 bis) aurait refusé ce corpus : `max_side_skew` est à `0,10`, l'asymétrie mesurée à `0,1977` |
-| poids d'échec ×2 | `home-1102` : `2709-325-2966`, `0,4786`, **`−14,89 Elo`**, IC95 `[−23,46 ; −6,34]` | pondérer deux fois les positions d'échec dégrade, IC95 entièrement négatif | nouveau canal de correction, pas une autre dose du même poids |
-| reverse-seed, échelle 2M→4M | `home-1091` : `+12,51 Elo` IC95 `[+3,95 ; +21,10]` ; `home-1108` : `−16,28 Elo` IC95 `[−24,88 ; −7,71]` | à volume doublé le signe s'inverse et les IC95 sont disjoints. ⚠️ **Les deux résultats ne pèsent pas pareil** : à 2M seule la vue Q00 exclut zéro, la native la traverse ; à 4M les deux vues l'excluent. L'hypothèse la moins chère n'est donc pas « l'échelle inverse l'effet » mais « un positif mono-vue n'a pas répliqué » | réplication indépendante du 2M **avec les deux vues concordantes**, avant tout mécanisme d'échelle |
-| BLEND50 statique | `home-1105` : `2789-324-2887`, `0,4918`, `−5,68 Elo`, IC95 `[−14,23 ; +2,88]` | **`INCONCLUSIVE`, pas réfuté** — l'IC95 traverse zéro. La clôture est une **décision de programme** : à cette puissance on n'établit qu'un effet de l'ordre de `±8,5 Elo` | aucun fait nouveau requis pour rouvrir : rien n'a été réfuté. Une reprise doit seulement préenregistrer un `n` qui atteigne l'effet visé |
-
-Leçon transverse de ces quatre portes : **trois d'entre elles ont une couverture
-égale ou meilleure que leur contrôle et jouent plus mal.** La couverture reste
-un diagnostic de corpus, jamais un prédicteur de force — au même titre que la
-loss holdout (§8).
-
-### 5.2 quater CTX2 shared-information — attribution réussie, covariance contractée
-
-Le screen `cpx62-1415` et son audit terminal `cpx62-1415a` ont testé si une
-sélection de 24 576 états pouvait rendre CTX2 réellement informatif sans changer
-les mappers. Le pool sélectionné passe toutes les gardes d'attribution et de
-distribution : top-1 `0,312513`, top-3 `0,721110`, `4,786` composantes
-effectives, aligned supérieur aux 10 000 réallocations nulles (`p = 1,000000`),
-TV des strates `0,000487` et skew WDL `0,003743`.
-
-La covariance du contexte échoue toutefois dans le sens opposé à l'objectif :
-dimension effective `8,668 → 6,812`, log-déterminant `−30,389070 → −40,002468`
-et corrélation maximale `0,972752 → 0,981899`. L'optimiseur a équilibré la masse
-des contributions existantes en concentrant les états sur une géométrie encore
-plus redondante ; il n'a pas ajouté de direction conditionnelle indépendante.
-
-**Porte close :** ne pas générer le pilote 600k et ne pas fitter ce pool. Une
-réouverture exige un mapper ou une représentation CTX2 modifiés qui améliorent
-le rang/covariance avant fit. Changer seulement les quotas, le sampler, la seed
-ou le volume répéterait le même mécanisme réfuté.
-
-
-### 5.3 Recherche
-
-| Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
-|---|---|---|---|
-| forcing extensions au jeu | fixed-depth positif, movetime neutre puis −74/−217 | brûle le budget nœuds | gain NPS structurel rendant le coût négligeable, puis haut-N |
-| quiescence forcing plus profonde | −92 à −231 selon variante | profondeur perdue > précision gagnée | Q2 non déclenché après Q1 plat ; réouverture seulement sur signal d'une lignée plus mûre |
-| menace × sacrifices sélectifs (écran C1-Q1) | verdict contract-grade `0812` (63 clés, bootstrap apparié, common+native) : effets menace +0,001 / sacs −0,004 / interaction +0,011, tous IC franchissant 0 ; aucun Δconversion ≥ +0,02 ; gates ≈ 0,5 | `q1_no_lead` — aucun effet sur conversion ni force dans la lignée pure | mécanisme de recherche co-adaptatif hors quiescence, ou signal sur une lignée plus mûre |
-| LMR/NMP/ProbCut/LMP/aspiration OAT | 0657 haut-N neutre ; 0697 pcm100 −19 | knobs locaux épuisés dans ce régime | une ablation native L3 après profil d'activation ; pas un autre sweep fin de marges |
-| offer-no-reduce | détection Jass≈Scan, conversion très différente | attaque la détection, qui n'est pas le goulot | nouvelle mesure montrant un déficit de détection |
-| géométrie pour l'ordering | first-move cutoff ~0,91 | ordering déjà bon ; history prob a capté le gain restant | régression mesurée du node-EBF sur un nouveau moteur |
-| overshoot `go movetime` en finale de dames | **résolu, pas clos** : bitbase 3v1 construite dans `negamax` sous `call_once`, 5,15 s, `movetime 100` rendu à 5558 ms (**55×**) et à `depth=3 score=164` là où le correctif atteint `depth=20 score=0`. Correctif `16f8c151`, baké le 31 juillet | ce n'est pas une porte close mais un **défaut réparé** : le préchauffage des bitbases au handshake HUB ramène 55,58× à 1,01×, déterminisme intact | sans objet — contamination historique **mesurée et faible** : `call_once` ne frappe qu'**une fois par processus**, soit ≤ ~32 coups par cellule sur 3000-5000 parties, et le canal « nulles fabriquées » n'a jamais tiré (`game skipped` = **0** sur `home-1040`, `1008`, `1091`, `1108`, `1102`). Aucun verdict remis en cause. Voir [`experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md`](experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md) |
-
-### 5.4 Conversion et lignées
-
-| Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
-|---|---|---|---|
-| ADJ+G1 multi-tours identique | T1/T2/T3 0,667/0,657/0,669 | aucune composition | recette causalement différente |
-| fork C départ 0,3× | −32,5 Elo, conv −0,011 | divergence sans progrès | autre mécanisme qu'un simple scaling du départ |
-| anchor plus serré | 0716/0719 : vallée réelle, pas bug | fige ou décalibre l'apprentissage | protocole sans anchor — précisément L3-PURE |
-| prédicats statiques de verdict | P1 85,01 % exact ; P2 sous-puissant/faux positifs | loin des 99,9 % requis | preuve exacte ou oracle de règle |
-| TB exceptions dans l'éval | B4 finale +1 Elo neutre | corpus exact ne transfère pas via ce fit | autre objectif ou représentation, fork séparé |
-| chaîne autour de gen2-mmto | 0650–0656 asymptote négative | professeur interne plus faible que le point Scan-tuné | lignée indépendante ne partant pas de gen2 |
-| frontière mobile v1 (25 % seeds G2/G3) | C0 `0795` : Δconv global −0,023, P3 −0,070, IC recouvrant 0 ; B vs A 0,555 | pas de gain de conversion à budget apparié | autre mécanisme de curriculum que le re-seed de frontière matérielle |
-| continuation fraîche F2M, d8→d10→d12 à 2M | `0970bis` 50,60/49,05 %, `0972` 48,80/51,00 %, `0974bis` 45,85/46,95 % contre F2M Q00/native ; d12 Q00 −28,9 Elo établi malgré loss 0,427862 | plus de profondeur sur 2M frais n'améliore pas la force et finit par rétrécir la distribution | changer un seul facteur de distribution/mémoire à volume et d8 constants |
-| pondération role-aware V2 vs globale V1 (imbalance2, @P1 d8) | `0853`→`0857` : pools communs A64/B64 (n=1151/1152, seed 161803, boot 10 k), ΔV2−V1 = −0,013 < 0,02, IC apparié [−0,061 ; +0,035] straddle 0 → `V2_NO_CLEAR_LEAD_AT_P1` ; les deux `STILL_IMPROVING_OR_UNSTABLE` | pas de lead **mesuré** à P1 ; **non close** — V2 retenue (crédit défensif explicite, sémantiquement préférable, décision JFC 20/07) et escaladée P2 | séparation ou plateau V1/V2 en profondeur P2-P4 (d10→d14) — escalade en cours |
-
-## 6. Résultats supersédés ou invalides
-
-| Ancienne lecture | Correction définitive |
-|---|---|
-| « 0,870 / +331 vs Scan-d10 » | invalide : bug de buffer et forfaits Scan sur coups illégaux |
-| « corrélation eval Scan ≈0,04 » | faux alignement par indice ; join bitboards donne Jass-oracle 0,952 |
-| « tb-relabel +18 Elo en 0587 » | phantom : compteur `tb_relabel=0`; le mécanisme n'avait pas tiré |
-| « EGDB ne marche pas » | mauvais chemin ; `/root/egdb_extracted/app` résout correctement en post-gen |
-| « label hygiene corrige 85 % de contamination » | mauvaise notion : l'issue jouée reste un retour MC ; bundle −25 Elo |
-| « history probabiliste neutre » | screen `0599` sous-résolu ; `0600` haut-N +20 à +43, baké |
-| « ext_forcing est un gain search » | vrai à profondeur fixe, faux au movetime ; coût en nœuds dominant |
-| « training loss/pairwise accuracy suffit » | réfuté par rank statique −847, PC Blues −135 et WS-ON −354 |
-| « T1 promote implique une lignée gagnante » | régime jeune = non-régression seulement ; T1→T3 est plat |
-| « divergence de politique implique apprentissage » | fork C diverge 13,7 % mais perd en force et conversion |
-| « #350 épingle toute la recherche C0 » | faux : 5 clés de quiescence explicites, 58 valeurs encore héritées de `SearchParams{}` |
-| « la profondeur de label est un no-op pur en WDL » | sa sortie score est ignorée, mais la recherche partage la TT avec le play et peut donc modifier la trajectoire |
-
-## 7. Questions encore ouvertes
-
-Une seule famille est active : `L3-PURE`.
-
-1. C2-X1 : quelle distribution d'ouverture/epsilon/décroissance augmente la
-   conversion, notamment P3, sans régression ? Le screen demi-factoriel à cinq
-   cellules est pré-enregistré, pas encore exécuté.
-2. Après X1, quel budget de jeu, rapport homme/dame, L2 et replay maximisent la
-   conversion sans régression ? Ces facteurs restent séquencés, pas combinés
-   dans un sweep unique.
-3. Une recette confirmée compose-t-elle sur une rampe longue avec deux graines ?
-4. Quand 8cf est nourrie, un fork 32cf depuis G0 apporte-t-il un résidu
-   représentable supplémentaire ?
-5. Comment traiter P4 matériel-égal sans oracle externe ? La piste réservée est
-   un ensemble de rollouts internes stochastiques.
-6. Le **volume** de corpus vaut-il quelque chose au-delà du ré-étiquetage ?
-   Borné, pas tranché : `+2,32 Elo` IC95 `[−6,24 ; +10,88]` (§4.4). ⚠️ La
-   question ne se réglera **pas** par une porte de plus sur ces deux modèles —
-   il y faudrait ×13,7 en parties. Elle demande soit un effet plus gros à
-   chercher ailleurs, soit un montage apparié partie par partie qui réduise la
-   variance au lieu d'augmenter le `n`.
-
-Ne sont pas des questions actives : « remettre du Scan », « refaire MMTO sur
-gen2 », « resserrer l'anchor », « grossir G4 », changer de géométrie au milieu
-d'une lignée, relancer Q2 sans nouveau signal ou refaire un sweep fin non
-instrumenté des anciens knobs.
-
-### 7.1 Exécutions incomplètes qui ne valent pas verdict
-
-- L'audit MTC a été ignoré pendant T1-bis→T3 ; il reste une réserve sur cette
-  ancienne campagne, pas une dépendance de L3-PURE.
-- Une seconde tentative T3 a fini avec `exit_code=-1`. La première exécution
-  complète reste le verdict scientifique ; la cause de la tentative perdue
-  n'est pas un résultat de force.
-- Le sparring-vs-Scan `0784` était annoncé en phase smoke dans l'ancien CURRENT,
-  mais aucun résultat complet consolidé n'est inscrit ici. Il est donc
-  **non testé/non conclu**, puis sorti du périmètre par la décision L3 sans
-  professeur externe — pas présenté comme scientifiquement réfuté.
-- Le rollout interne multi-échantillon pour P4 matériel-égal n'est pas encore
-  implémenté.
-- `0792` reste historiquement un échec technique sans verdict. Sa cause
-  (`NOPEN=750` pour 305 ouvertures disponibles) a été corrigée sans changer
-  les gates dans `0795`, qui fournit désormais le verdict C0 autoritaire.
-
-## 8. Règles méthodologiques héritées
-
-- juger la force au movetime ou avec un budget apparié ; la profondeur fixe est
-  un diagnostic, pas un bake-decider ;
-- utiliser un N dimensionné et publier les IC ; un point dans l'IC n'est pas
-  un gain ;
-- `n=0`, cellule manquante ou manifest incomplet = échec technique, jamais
-  neutre ;
-- séparer train, holdout et jauges par partie/ouverture ;
-- ne jamais promouvoir sur loss, pairwise accuracy ou divergence seules —
-  **quatre confirmations** que la loss holdout ne prédit pas la force (rank
-  statique `−847`, PC Blues `−135`, WS-ON `−354`, et `1008` où VOL8M a la
-  meilleure loss des deux et perd de `−15 Elo`), plus REPLAY75 qui avait la
-  meilleure loss des quatre doses en étant le plus faible ;
-- ne comparer deux losses holdout que si elles viennent du **même** holdout :
-  celles de TURNOVER (`2 M`) et de VOL8M (`12 M`) portent sur des
-  distributions différentes et ne se citent pas l'une contre l'autre ;
-- un corpus qui change plusieurs facteurs à la fois ne peut pas clore l'axe
-  qu'il prétend tester : `1008` mélange volume, ratio, profondeur et un
-  étiquetage d'avant correctif moteur, donc son verdict nomme un facteur qu'il
-  n'isole pas ;
-- pinner code, inputs, référence fixe, seeds et **toutes** les clés de
-  configuration par SHA ; un fingerprint partiel ne peut pas déclarer
-  `inherited_defaults=false` ;
-- supprimer ou isoler tout calcul dont la sortie est ignorée mais dont l'état
-  mutable (TT, history, RNG) peut influencer la politique ;
-- publier les compteurs qui prouvent qu'un flag a réellement agi ;
-- micro-calibrer nproc, débit, disque et timeout sur chaque box ;
-- écrire résultats/progress hors de l'arbre Git puis les publier explicitement ;
-- garder Scan et Gen2 comme thermomètres externes de L3, jamais comme sources
-  d'entraînement ;
-- un résultat plat est informatif ; il ne justifie pas d'ajuster le seuil après
-  lecture ni d'enchaîner automatiquement un job plus gros.
-
-## 9. Infrastructure et provenance durable
-
-Les runners v3 à v5, `jass-control` et R2 sont les sources d'exécution. Les incidents
-suivants ont déjà coûté des runs et ne doivent pas réapparaître : cache EGDB
-agrégé trop grand, moteurs morts suivis de `BrokenPipe`, `PrivateTmp` démonté,
-glob de merge attrapant les logs, fichier RESULTS réinitialisé par Git, attente
-du monitor en plus des shards, disque ccx33 plein, timeout sans `n_min`, et
-publication R2 501 intermittente.
-
-Le snapshot historique et la procédure de restauration sont décrits dans
-[HISTORICAL_DATA_R2.md](archives/HISTORICAL_DATA_R2.md). Le journal complet et
-l'ancien CURRENT restent disponibles pour l'audit, mais ne doivent plus être
-mis à jour.
-
-## 10. Index minimal des archives
-
-| Besoin | Document archivé |
-|---|---|
-| chronologie détaillée 0001→0263 | [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md) |
-| ancien registre exhaustif des verdicts | [CURRENT.md](archives/CURRENT.md) |
-| méthode et écarts par rapport à Scan | [SCAN_METHODOLOGY_GAP.md](archives/SCAN_METHODOLOGY_GAP.md) |
-| audit architecture Scan | [SCAN_ARCHITECTURE_NOTES.md](archives/SCAN_ARCHITECTURE_NOTES.md) |
-| spec de la sonde T1-bis→T3 | [codex_review_v3_2.md](archives/codex_review_v3_2.md) |
-| résultat fork C | [forkc_c0_verdict_20260717.md](archives/forkc_c0_verdict_20260717.md) |
-| suite post-ccx33 | [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md) |
-| plan historique de migration runner v3 | [RUNNER_V3_MIGRATION.md](archives/infra/RUNNER_V3_MIGRATION.md) |
-| anciens jobs fork C + teacher | [README.md](archives/jobs/prepared/forkc-teacher-20260717/README.md) |
-| anciens jobs post-ccx33 | [README.md](archives/jobs/prepared/post-ccx33-20260717/README.md) |
-| ancienne spec L3 C0 | [L3_PURE_PLAN_C0_20260718.md](archives/l3/L3_PURE_PLAN_C0_20260718.md) |
-| spec L3 v4.1 avant C2-X1 | [L3_PURE_PLAN_V4_1_20260718.md](archives/l3/L3_PURE_PLAN_V4_1_20260718.md) |
-| ancien current L3 C0 en cours | [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md) |
-| ancien benchmark GitHub NNUE | [benchmark-nnue.yml](../archive/workflows/benchmark-nnue.yml) |
-| boucle from-scratch historique | [MEMO_AUTO_SCRATCH.md](archives/MEMO_AUTO_SCRATCH.md) |
-| chaîne itérative historique | [MEMO_CHAINE_ITERATIVE_LONGUE.md](archives/MEMO_CHAINE_ITERATIVE_LONGUE.md) |
-
-Les détails techniques API, architecture, HUB, WASM et extension sont également
-conservés sous `docs/archives/`. Ils décrivent l'état du code au moment de leur
-rédaction et peuvent être périmés ; le code et les tests restent autoritaires.
-
-Les cinq ZIP NNUE historiques (`2`, `3`, `4`, `5`, `7`) sont conservés sous
-`archive/nnue-weights/` et aucun ZIP ne reste à la racine. Le workflow GitHub
-qui consommait le ZIP `2` est lui aussi archivé : il mesurait seulement un
-tournoi NNUE fixed-depth à très faible N, incompatible avec les gates movetime,
-haut-N et manifests du programme actif. Les autres Markdown hors `docs/` sont
-des points d'entrée du dépôt, des obligations de contribution/licence ou des
-README attachés à un composant encore présent ; ils ne sont donc pas des
-documents scientifiques actifs concurrents.
+| **décision de programme** | choix de périmètre distinct d'une preuve scientifique |
+
+Une porte close ne se rouvre que si un élément causal change réellement. Augmenter seulement le volume, changer une seed ou relire une cohorte consommée ne suffit pas.
+
+## 2. État courant
+
+### 2.1 Champion de production
+
+`CURRICULUM` reste le champion de production. Aucun artefact T3 n'est promu ou baké.
+
+### 2.2 Verdict offline T3
+
+Le terminal preregistré est :
+
+```text
+F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE
+```
+
+Sur un fresh commun, T3-A `F6_ONLY` a établi un transfert massif des 66 observables F6 : pairwise `0.7831693588` contre T0/CURRICULUM `0.6082147602`, delta A−T0 `+0.1749545986`, CI95 `[+0.1694074710 ; +0.1804750871]`. Le gain est positif dans P0/P1/P2/P3 et dans les deux couleurs.
+
+L'ajout du scalaire D1 scellé n'est pas additif : B−A pairwise `-0.0049429348`, CI95 `[-0.0083936669 ; -0.0014982551]`, négatif dans les quatre phases et les deux couleurs. Aucun troisième bras, retune ou réemploi du fresh consommé n'est autorisé.
+
+### 2.3 Runtime R0-v4
+
+R0-v4 a établi le contrat production-leaf exact :
+
+```text
+R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED
+```
+
+Job `cpx62-1685-l3-t3-f6-runtime-r0-v4`, attempt `20260830T083226Z-0ead13cb`, completed exit `0`. Ce gate a autorisé **Pool1 uniquement** et n'était pas un résultat de force.
+
+### 2.4 Pool1 T3-A/F6 — direction de force v4 fermée
+
+Le PRIMARY CPX62 a été exécuté :
+
+- job `cpx62-1686-l3-t3-f6-runtime-strength-pool1-v4` ;
+- attempt `20260830T104034Z-0ead13cb` ;
+- `6000` parties, exit `0` ;
+- reçu terminal read-only `cpx62-1689-l3-t3-f6-runtime-pool1-terminal-receipt-v1`, attempt `20260830T114717Z-ea643d77`.
+
+Résultat exact :
+
+```text
+VERDICT = T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED
+W/D/L T3-A = 1167 / 180 / 4653
+score T3-A = 0.2095
+Elo T3-A - CURRICULUM = -230.6871387863655
+game CI95 = [0.19943856856108436 ; 0.21956143143891563]
+paired CI95 = [0.20033333333333334 ; 0.21866666666666668]
+P(score>0.5) = 0.0
+POOL2_AUTHORIZED = FALSE
+```
+
+**Statut : clos.** Le gain offline F6 ne se convertit pas en gain de force native dans l'implémentation v4. Le résultat est loin de la zone d'incertitude. Aucun Pool2 v4, Pool3, bake ou promotion n'est autorisé.
+
+Cette fermeture ne rétracte pas le verdict offline : elle établit précisément que **transfert statique et force au temps sont deux portes différentes**.
+
+### 2.5 Coût runtime — hypothèse technique forte, pas nouveau verdict scientifique
+
+Le diagnostic HOME post-terminal `home-1688-l3-t3-f6-v4-q00-native-repair-v1` a confirmé que le binaire CPX gelé n'était pas portable vers HOME (`SIGILL/132`), puis qu'un rebuild HOME natif des mêmes sources pouvait exécuter le sizer. Sur ce build technique :
+
+```text
+wall_ratio_t3_over_curriculum = 37.154452
+nps_ratio_t3_over_curriculum = 0.053152
+strength_games = 0
+scientific_decision = FALSE
+```
+
+Ces mesures ne sauvent ni ne réinterprètent Pool1. Elles motivent uniquement l'ingénierie exacte O1.
+
+## 3. Prochaine étape autorisée : O1 exact-cache, technique uniquement
+
+Preregistration : [L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md).
+
+O1 teste **une seule transformation** : mémoriser le résiduel raw F6 d'une position déjà évaluée, avec cache direct-mapped `65536` entrées, clé complète board+STM vérifiée à chaque hit et index FNV-1a exactement gelé. Le cache est désactivé par défaut et son activation O1 est fail-closed à `threads == 1`.
+
+O1 doit passer, dans cet ordre : contrats unitaires ; équivalence leaf bit-à-bit ; équivalence search exacte à budgets fixes ; seulement ensuite profil de coût CPX62. Les racines et le cycle de vie du cache sont preregistrés ; aucun sweep de taille/hash/lifecycle n'est permis.
+
+**O1 joue zéro partie de force.** Il n'autorise jamais Pool2, bake ou promotion. Si l'optimisation est établie et suffisamment prometteuse, tout nouveau test causal de force exige une preregistration séparée et un fresh distinct après le terminal O1. Une éventuelle O2 exige également sa propre preregistration.
+
+## 4. Résultats historiques encore structurants
+
+Les détails exhaustifs, valeurs, portes closes et incidents historiques jusqu'au 19 août sont conservés dans le [snapshot byte-identique](PROJECT_RESULTS_PRE_T3_20260830.md). Les points structurants restent :
+
+- corrections de méthode/search/fit (`--score-drop`, NMP/threat/history, MMTO) ont fourni des gains réels ;
+- `gen2-mmto`, F2M, TURNOVER puis EXACT ont constitué les principales successions historiques ;
+- le fold sur la symétrie exacte du damier a apporté un gain établi, alors que des contraintes approximatives injectaient un biais ;
+- la loss holdout, la pairwise offline, la couverture de buckets ou la divergence de politique ne sont jamais des substituts à la force jouée ;
+- plusieurs mécanismes ont amélioré un diagnostic de profondeur fixe tout en perdant au movetime parce que le coût de nœuds dominait ;
+- CTX3 a confirmé qu'une information prédictive réelle peut régresser une fois injectée dans le canal de décision testé ;
+- les cohorts consommés ne doivent pas être réutilisés pour sélection/tuning post-hoc.
+
+## 5. Garde anti-réouverture
+
+1. `CURRICULUM` reste champion jusqu'à une succession explicitement autorisée.
+2. `F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE` reste le verdict offline T3.
+3. `T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED` reste le verdict causal runtime v4.
+4. `POOL2_AUTHORIZED__FALSE` est permanent pour cette campagne v4.
+5. Aucun nouveau modèle, retune/refit/calibration, D1 ou retrait de F6 n'est autorisé dans O1.
+6. Pool1 v4 ne peut jamais devenir un corpus de sélection pour choisir une variante d'optimisation.
+7. Toute nouvelle force sur une implémentation optimisée exige une nouvelle preregistration et un fresh distinct.
+
+Le registre courant suit maintenant la frontière O1 ; l'historique antérieur reste intégralement auditable dans le snapshot lié en tête.

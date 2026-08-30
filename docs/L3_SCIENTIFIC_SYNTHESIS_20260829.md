@@ -1,8 +1,8 @@
-# L3 — synthèse scientifique après RF1, T3 et runtime R0-v4
+# L3 — synthèse scientifique après RF1, T3 et runtime v4
 
 > **Mise à jour : 30 août 2026**  
 > **Statut : synthèse de décision — aucun nouveau résultat scientifique produit par ce document.**  
-> Sources de vérité détaillées : [`L3_CURRENT.md`](L3_CURRENT.md), [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md), prereg T3 [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md), [prereg runtime v4](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [résultat runtime v4](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [résultat runtime v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), benchmark Scan [`experiments/L3_SCAN_CEILING_BENCHMARK_V1_RESULTS_20260829.md`](experiments/L3_SCAN_CEILING_BENCHMARK_V1_RESULTS_20260829.md).
+> Sources de vérité détaillées : [`L3_CURRENT.md`](L3_CURRENT.md), [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md), prereg T3 [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md), [prereg runtime v4](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [résultat runtime v4 + Pool1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [prereg O1 cache exact](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md), [résultat runtime v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), benchmark Scan [`experiments/L3_SCAN_CEILING_BENCHMARK_V1_RESULTS_20260829.md`](experiments/L3_SCAN_CEILING_BENCHMARK_V1_RESULTS_20260829.md).
 
 ---
 
@@ -21,9 +21,10 @@ La découverte de `F6_ALL_NEW`, concaténation fixe de 66 observables mécanique
 5. v1 n'a pas invalidé F6 : il a découvert une asymétrie déjà présente dans CURRICULUM/T0 ;
 6. v2 a établi le drift relatif exact, puis l'autopsie a montré que son témoin depth-1 simplifiait indûment la quiescence ;
 7. v3 s'est fermée avant ses gates d'évaluation faute de support mécanique (`5/32` témoins isolés P0), toujours sans partie de force ;
-8. v4 a ensuite établi séparément le contrat production-leaf exact (`R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED`) et autorisé Pool1, toujours avec `strength_games=0`.
+8. v4 a établi séparément le contrat production-leaf exact (`R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED`) ;
+9. le Pool1 PRIMARY CPX62 a ensuite joué `6000` parties et fermé négativement la force v4 : `T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED`, score T3-A `0.2095`, environ `-230.69 Elo`, `POOL2_AUTHORIZED__FALSE`.
 
-Conclusion actuelle : **la distillation reste la piste principale et est plus crédible qu'avant**, mais la question suivante n'est plus un nouveau model search. Le candidat T3-A/F6 est gelé et doit maintenant recevoir son verdict causal runtime `T3_A_F6 vs CURRICULUM` sur Pool1 PRIMARY CPX62. Aucun retune, D1, retrait de F6 ou promotion automatique n'est permis.
+Conclusion actuelle : **le transfert offline de F6 est établi, mais il ne s'est pas converti en force native à `0.1 s/move` dans l'implémentation v4**. Ce n'est plus une question ouverte. `CURRICULUM` reste champion et la campagne de force v4 est fermée. La seule suite active est O1 : une optimisation runtime strictement équivalente du résiduel F6, technique uniquement, sans nouveau modèle, retune, D1, retrait de F6 ni partie de force.
 
 ---
 
@@ -75,11 +76,11 @@ Le delta pairwise B−A est négatif dans les quatre phases et dans les deux cou
 
 Décision : **D1 est fermé comme input additionnel de cette lignée exacte**. Ce résultat ne prouve pas que toute information historiquement captée par D1 est inutile ; il montre qu'une fois F6 disponible, le scalaire D1 scellé ne fournit pas d'information additive reproductible au student joint preregistré.
 
-### 2.4 Le contrat runtime de T3-A est maintenant établi en R0-v4
+### 2.4 Le contrat runtime de T3-A est établi en R0-v4
 
-Les résultats runtime positifs antérieurs restent immuables : v1 a établi les invariances de chemin/transposition/F6 avant son gate couleur absolu ; v2 a établi zéro extra-drift de T3 et l'autopsie a localisé son échec depth-1 dans la quiescence de production ; v3 a ensuite échoué fail-closed sur le support mécanique de son témoin isolé (`5/32` P0), sans lire les métriques de force.
+Les résultats runtime antérieurs restent immuables : v1 a établi les invariances de chemin/transposition/F6 avant son gate couleur absolu ; v2 a établi zéro extra-drift de T3 et l'autopsie a localisé son échec depth-1 dans la quiescence de production ; v3 a ensuite échoué fail-closed sur le support mécanique de son témoin isolé (`5/32` P0), sans lire les métriques de force.
 
-V4 est une campagne distincte, preregistrée sans retune de T3-A, et son terminal est :
+V4 est une campagne distincte, preregistrée sans retune de T3-A, et son terminal R0 est :
 
 ```text
 R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED
@@ -87,7 +88,24 @@ R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED
 
 Job `cpx62-1685-l3-t3-f6-runtime-r0-v4`, attempt `20260830T083226Z-0ead13cb`, code `0ead13cb3579ce83c1278fe21c6634096d5e8eec`, completed exit `0`.
 
-Le reçu terminal publie `POOL1_AUTHORIZED__TRUE`, `STRENGTH_GAMES__0`, `PROMOTION_AUTHORIZED__FALSE`, `BAKE__FALSE` et `SCIENTIFIC_PARAMETERS_CHANGED__FALSE`. Il établit le contrat production-leaf et l'identité des bytes/runtime ; **il ne constitue pas un résultat Elo**.
+R0 a établi le contrat production-leaf et autorisé Pool1 uniquement ; il n'était pas un résultat Elo.
+
+### 2.5 Le verdict causal runtime v4 est négatif et terminal
+
+Pool1 PRIMARY : `cpx62-1686-l3-t3-f6-runtime-strength-pool1-v4`, attempt `20260830T104034Z-0ead13cb`, `6000` parties, exit `0`. Reçu read-only : `cpx62-1689-l3-t3-f6-runtime-pool1-terminal-receipt-v1`, attempt `20260830T114717Z-ea643d77`.
+
+```text
+VERDICT = T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED
+wins T3-A / draws / wins CURRICULUM = 1167 / 180 / 4653
+score T3-A = 0.2095
+Elo T3-A - CURRICULUM = -230.6871387863655
+game CI95 = [0.19943856856108436 ; 0.21956143143891563]
+paired CI95 = [0.20033333333333334 ; 0.21866666666666668]
+P(score>0.5) = 0.0
+POOL2_AUTHORIZED = FALSE
+```
+
+Le résultat est loin de la zone d'incertitude. **Pool2 v4 est interdit** ; aucun Pool3, bake ou promotion n'est autorisé. Le verdict offline F6 reste vrai dans son domaine, mais il ne peut pas être relu comme preuve de force runtime.
 
 ---
 
@@ -97,11 +115,9 @@ Le reçu terminal publie `POOL1_AUTHORIZED__TRUE`, `STRENGTH_GAMES__0`, `PROMOTI
 
 Réfuté comme explication suffisante. Les teachers plus profonds contiennent un fort signal, mais les tentatives antérieures de transfert vers une représentation T pauvre n'ont pas composé ce signal de façon satisfaisante.
 
-La profondeur du teacher reste utile comme source d'information, mais **elle ne remplace pas les observables nécessaires côté student**.
-
 ### 3.2 « Il suffit d'augmenter la capacité du réseau »
 
-Fortement dépriorisé. T2, avec davantage de capacité, board brut et spécialistes de phase, apprenait un signal réel mais restait sous D1. L'expérience suggère que plus de paramètres ne compensent pas l'absence d'observables mécaniques pertinents.
+Fortement dépriorisé. T2, avec davantage de capacité, board brut et spécialistes de phase, apprenait un signal réel mais restait sous D1. Plus de paramètres ne compensent pas à eux seuls l'absence d'observables mécaniques pertinents.
 
 ### 3.3 « T + D1 + F6 doit forcément être meilleur que T + F6 »
 
@@ -109,31 +125,25 @@ Réfuté pour le bras joint preregistré. T3-B est pairwise significativement in
 
 ### 3.4 « Le fail-close d'un ancien R0 signifie que F6/T3-A est inutilisable »
 
-Réfuté. V1/v2/v3 sont des terminaux techniques distincts qui ont chacun préservé leurs preuves acquises et se sont arrêtés fail-closed. Aucun n'a démontré un défaut de formule/POV F6/T3-A. V4 a ensuite établi son propre contrat de leaf evaluator de production sans réécrire ces résultats antérieurs.
+Réfuté. V1/v2/v3 sont des terminaux techniques distincts. V4 a ensuite établi son propre contrat de leaf evaluator de production sans réécrire ces résultats antérieurs.
+
+### 3.5 « Le gain offline F6 suffit à prédire la force native »
+
+Réfuté pour l'implémentation v4 exacte. Malgré un gain offline massif et fresh, T3-A ne marque que `20.95 %` dans le Pool1 natif preregistré. Le passage offline → runtime doit donc rester une porte indépendante.
 
 ---
 
 ## 4. Ce qui reste inconnu
 
-### 4.1 Le gain q200 devient-il de l'Elo ?
+### 4.1 Quelle fraction de l'échec runtime vient du coût de F6 ?
 
-Toujours inconnu. Les terminaux runtime jusqu'à R0-v4 ont `strength_games = 0`. V4 autorise désormais Pool1 PRIMARY CPX62, mais tant que ce Pool1 n'est pas terminé il n'existe aucun verdict de force à interpréter.
+Le verdict de force est connu ; son mécanisme précis ne l'est pas encore. Le diagnostic HOME post-terminal `1688` est technique uniquement mais mesure, sur un rebuild HOME natif des mêmes sources, `wall_ratio_t3_over_curriculum = 37.154452` et `nps_ratio_t3_over_curriculum = 0.053152` à depth 9. Ces chiffres rendent le coût runtime une hypothèse forte, sans pouvoir réinterpréter Pool1.
 
-La question causale reste exactement :
+F2 `RESPONSE_FRONTIER` implique notamment des générations répétées de coups légaux après les réponses. O1 teste d'abord une transformation plus étroite et parfaitement équivalente : éviter les recomputations F6 pour une position déjà évaluée dans une recherche.
 
-```text
-T3_A_F6 vs CURRICULUM
-```
+### 4.2 Où est le plafond pratique de notre teacher/search ?
 
-### 4.2 Quel est le coût runtime effectif de F6 sous les régimes de force ?
-
-R0-v4 a produit un profil technique authentifié, ce qui établit que le coût peut être mesuré sous les bytes et le search exacts. En revanche, son impact pratique sur le verdict de force sous native `0.1 s/move` et le diagnostic Q00 depth 9 reste à observer dans la campagne autorisée.
-
-F2 `RESPONSE_FRONTIER` implique notamment une énumération bornée de réponses légales. Un scénario possible reste : signal statique positif à profondeur fixe mais coût assez élevé pour réduire le bénéfice wall-clock. Ce scénario doit être tranché par les mesures runtime preregistrées, pas par un retune du modèle.
-
-### 4.3 Où est le plafond pratique de notre teacher/search ?
-
-Le benchmark Scan/Home est maintenant terminal et établit un large headroom de Jass vers Scan profond (`JASS_SEARCH_LARGE_HEADROOM_TO_SCAN_ESTABLISHED`). Ce résultat est benchmark-only et n'autorise aucun tuning de T3-A actuel.
+Le benchmark Scan/Home est terminal et établit un large headroom de Jass vers Scan profond (`JASS_SEARCH_LARGE_HEADROOM_TO_SCAN_ESTABLISHED`). Ce résultat est benchmark-only et n'autorise aucun tuning de T3-A actuel.
 
 Une attribution séparée des six axes search-semantics Jass/Scan s'est également terminée sur `NO_SINGLE_SEARCH_SEMANTICS_AXIS_ESTABLISHED` : aucun axe isolé preregistré n'explique à lui seul le gap selon les critères gelés. Les combinaisons post-hoc ne sont pas autorisées dans cette campagne.
 
@@ -141,44 +151,42 @@ Une attribution séparée des six axes search-semantics Jass/Scan s'est égaleme
 
 ## 5. Pistes actives à creuser
 
-### 5.1 Priorité immédiate — verdict causal Pool1 T3-A/F6 vs CURRICULUM
+### 5.1 Priorité immédiate — O1 cache exact, technique uniquement
 
-R0-v4 est PASS et autorise Pool1 uniquement. La priorité opérationnelle est donc le PRIMARY CPX62 native `0.1 s/move` sous les bytes, pools, seeds, search et runtime gelés par la preregistration v4.
+La campagne de force v4 est fermée. La priorité opérationnelle est désormais la preregistration `L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md`.
 
-Le Q00 Home depth 9 est diagnostic/non bloquant. Il peut aider à séparer signal statique et coût runtime, mais il ne peut jamais sauver un PRIMARY négatif et n'autorise pas Pool2 à lui seul.
+O1 conserve exactement : T3-A, ses poids et normalisation, les 66 F6, CURRICULUM, le POV, l'arrondi et la recherche. Il ajoute un cache direct-mapped du résiduel raw avec vérification de clé complète, puis exige :
 
-Si Pool1 est positif selon le mapping preregistré, Pool2 devient la seule étape de force suivante autorisée. Sinon la campagne de force s'arrête. Aucun Pool3 ni promotion automatique.
+- contrats unitaires, hash/index et concurrence ;
+- équivalence leaf bit-à-bit ;
+- équivalence search exacte à budgets fixes ;
+- seulement ensuite un profil de coût CPX62.
+
+O1 joue **zéro partie de force** et ne peut autoriser ni Pool2 ni promotion. Tout nouveau contraste de force sur une implémentation optimisée exige une nouvelle preregistration séparée après le terminal O1.
 
 ### 5.2 Benchmark Scan et attribution search-semantics — résultats acquis, pas source de retune T3
 
-Le benchmark Scan a établi un large headroom vers la référence profonde. L'attribution single-axis suivante n'a établi aucun axe isolé. Ces résultats orientent la recherche future, mais restent séparés du contraste causal T3-A/F6 actuel.
+Le benchmark Scan a établi un large headroom vers la référence profonde. L'attribution single-axis suivante n'a établi aucun axe isolé. Ces résultats orientent la recherche future, mais restent séparés du contraste causal T3-A/F6 clos.
 
-Ils ne permettent ni de modifier Q00/PRIMARY, ni d'ajouter une combinaison d'axes post-hoc, ni de retuner le candidat avant Pool1.
+### 5.3 Piste future après O1 — seulement sous nouvelle preregistration
 
-### 5.3 Piste future après le verdict de force — représentation-guided distillation / search semantics
+Si O1 établit une optimisation exacte et un profil suffisamment prometteur, un **nouveau fresh de force** peut être preregistré séparément. Le Pool1 v4 consommé ne peut pas servir de pool de confirmation ou de sélection.
 
-Une fois le verdict T3-A/F6 acquis, les données déjà établies suggèrent deux familles de travail futures, qui demanderont chacune une nouvelle preregistration si ouvertes :
-
-- poursuivre la découverte d'observables statiques manquants puis les distiller ;
-- comprendre le headroom search Jass→Scan sans sélectionner post-hoc sur les cohorts consommés.
-
-Le choix entre ces familles doit utiliser les verdicts terminaux comme contexte, pas réutiliser leurs cohorts pour retune/model selection.
+Si O1 est trop peu efficace, une optimisation O2 exacte — par exemple un refactor strictement équivalent de F2 — doit elle aussi être preregistrée séparément ; aucun sweep opportuniste de cache/refactor n'est permis.
 
 ### 5.4 Piste secondaire — asymétrie historique de CURRICULUM
 
-Le gate R0 v1 a découvert que CURRICULUM n'est pas exactement invariant sous rotate180+colour-swap selon le contrat v1. Cette asymétrie préexistante mérite une autopsie séparée.
-
-Elle ne doit pas être corrigée maintenant dans la branche T3 : modifier T0 changerait le baseline et brouillerait le contraste causal. Une future prereg séparée pourra mesurer son origine, sa magnitude et son coût éventuel.
+Le gate R0 v1 a découvert que CURRICULUM n'est pas exactement invariant sous rotate180+colour-swap selon le contrat v1. Cette asymétrie préexistante mérite une autopsie séparée, mais modifier T0 maintenant brouillerait les contrastes déjà gelés.
 
 ---
 
 ## 6. Lecture actuelle de la distillation
 
-La distillation reste la piste centrale pour trois raisons :
+La distillation reste scientifiquement informative, avec une leçon plus précise qu'avant :
 
-1. **on a maintenant une preuve de transfert massive et fresh** : T3-A gagne environ `+17.5 pp` pairwise contre T0 ;
-2. **la découverte d'observables a précédé le succès de transfert** : la représentation, et pas seulement la capacité, était un goulot démontré ;
-3. **il reste beaucoup de headroom** entre T3-A et la recherche profonde/externe.
+1. **F6 transfère massivement offline**, donc la découverte d'observables a résolu un vrai goulot de représentation ;
+2. **ce transfert ne garantit pas la force au temps**, comme l'établit le Pool1 v4 ;
+3. **le coût d'extraction doit être traité comme une partie du contrat d'évaluation**, pas comme un détail après le fit.
 
 La méthode à privilégier devient :
 
@@ -189,10 +197,10 @@ search profond
 → transformer ces informations en observables statiques sûrs
 → distiller dans T
 → confirmer sur fresh
-→ mesurer le coût et l'Elo séparément
+→ prouver l'équivalence de toute optimisation runtime
+→ mesurer le coût
+→ seulement ensuite ouvrir un fresh de force séparé
 ```
-
-Ce schéma est mieux soutenu par les données que les approches « plus gros réseau » ou « teacher plus profond avec mêmes observables » prises isolément.
 
 ---
 
@@ -201,22 +209,22 @@ Ce schéma est mieux soutenu par les données que les approches « plus gros ré
 | Question | État | Décision |
 |---|---|---|
 | F6 contient-il un signal statique réel ? | **ÉTABLI** | conserver F6 exact |
-| F6 transfère-t-il vers T ? | **ÉTABLI** | T3-A reste le candidat scientifique gelé |
+| F6 transfère-t-il vers T offline ? | **ÉTABLI** | T3-A reste l'artefact scientifique gelé |
 | D1 est-il additif au-dessus de F6 ? | **NON ÉTABLI / négatif** | fermer D1 comme input additionnel de cette lignée |
 | T3-A est-il positionnel/transposition-safe et sans extra drift ? | **ÉTABLI par v1/v2** | conserver ces preuves sans réécrire leurs terminaux |
-| Le contrat production-leaf est-il établi ? | **ÉTABLI par R0-v4** | Pool1 PRIMARY autorisé |
-| T3-A gagne-t-il de l'Elo ? | **INCONNU, 0 game** | exécuter Pool1 PRIMARY CPX62 |
-| F6 est-il trop cher en wall-clock ? | **À trancher dans la force/diagnostic v4** | ne pas retuner avant verdict |
+| Le contrat production-leaf est-il établi ? | **ÉTABLI par R0-v4** | contrat runtime validé |
+| T3-A gagne-t-il de l'Elo au natif v4 ? | **NON** | `T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED`; Pool2 fermé |
+| F6 est-il trop cher en wall-clock ? | **HYPOTHÈSE TECHNIQUE FORTE, causalité non établie** | O1 exact-cache, zéro force |
 | Jass possède-t-il du headroom vers Scan profond ? | **ÉTABLI : large headroom** | préserver le benchmark-only |
 | Un axe search-semantics isolé explique-t-il ce gap ? | **NON ÉTABLI** | aucune combinaison post-hoc dans la campagne consommée |
-| Faut-il encore poursuivre la distillation à long terme ? | **OUI, priorité haute** | après le verdict de force courant |
+| Quelle est la prochaine étape autorisée ? | **O1 technique uniquement** | équivalence exacte puis profil, aucun match de force |
 
 ---
 
 ## 8. Garde scientifique
 
-Les cohorts Q1, T2 fresh, RF1 fresh, T3 fresh, R0-v1, R0-v2, R0-v3 et R0-v4 sont consommées selon leurs contrats. Elles ne doivent pas être utilisées pour retune, calibration, feature selection ou model selection futurs ; leurs identités peuvent servir aux exclusions lorsque la preregistration le prévoit.
+Les cohorts Q1, T2 fresh, RF1 fresh, T3 fresh, R0-v1, R0-v2, R0-v3, R0-v4 et Pool1 v4 sont consommées selon leurs contrats. Elles ne doivent pas être utilisées pour retune, calibration, feature selection ou model selection futurs ; leurs identités peuvent servir aux exclusions ou aux tests techniques d'équivalence lorsque la preregistration le prévoit.
 
 Le benchmark Scan et l'attribution search-semantics sont benchmark/diagnostic-only et ne doivent pas devenir une source de tuning du T3-A actuel.
 
-`CURRICULUM` reste champion de production. R0-v4 autorise Pool1, pas une promotion. Aucun résultat décrit ici n'autorise bake ou promotion automatique.
+`CURRICULUM` reste champion de production. `POOL2_AUTHORIZED__FALSE`. O1 n'autorise aucune partie de force, aucun bake et aucune promotion automatique.
