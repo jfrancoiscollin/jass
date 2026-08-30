@@ -418,13 +418,24 @@ int run_profile(int argc, char** argv) {
     const std::size_t total_runs = rows.size() * 2U;
     for (const auto& row : rows) {
         const bool even = (row.root_index % 2U) == 0U;
-        write_run(report, row, !even, false, false); // placeholder overwritten below
-        // The line above is removed by seeking impossible on streams; keep the
-        // actual ordered emission in the two branches below.
-        throw std::logic_error("unreachable ordered emission guard");
+        if (even) {
+            ++emitted;
+            write_run(report, row, false, true, emitted < total_runs);
+            ++emitted;
+            write_run(report, row, true, false, emitted < total_runs);
+        } else {
+            ++emitted;
+            write_run(report, row, true, true, emitted < total_runs);
+            ++emitted;
+            write_run(report, row, false, false, emitted < total_runs);
+        }
     }
-    (void)emitted;
-    (void)total_runs;
+    report << "  ]\n}\n";
+    std::cout << (preflight ? "O1_GATE_D_PREFLIGHT_SIZER_COMPLETE" : "O1_GATE_D_PROFILE_COMPLETE_NONTERMINAL")
+              << " roots=" << roots.size()
+              << " wall_ratio=" << (static_cast<double>(on_wall) / static_cast<double>(off_wall))
+              << " nps_ratio=" << (on_nps / off_nps)
+              << " hit_rate=" << hit_rate << '\n';
     return 0;
 }
 
