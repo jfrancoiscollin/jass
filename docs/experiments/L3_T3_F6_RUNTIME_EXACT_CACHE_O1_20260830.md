@@ -79,6 +79,7 @@ Implémenter un cache privé au wrapper `t3_f6::Network` avec le contrat suivant
    - `index = h & 0xFFFFULL` ;
    - aucun autre mix, seed, finalizer, bit selection ou variante de hash n'est autorisé dans O1 ;
    - remplacement direct-mapped déterministe à cet index ;
+   - **validité d'entrée gelée** : chaque entrée possède un bit `valid`, initialisé à `false` lors de la construction/clear du cache ; un hit est autorisé si et seulement si `valid == true` **et** que la clé complète stockée est exactement égale à la clé demandée ; sur miss, le résiduel est d'abord calculé par l'ancien chemin, puis clé et `double` sont écrits, et `valid` est mis à `true` en dernier. Aucun sentinel implicite ou clé par défaut n'est autorisé ;
 6. hit : retourner exactement le `double` stocké ; miss : exécuter exactement l'ancien chemin `extract_f6(pos).all_new()` puis MLP, stocker et retourner ;
 7. `base_->evaluate(pos)` reste appelé selon le chemin actuel ; aucun cache du score CURRICULUM ;
 8. aucun changement de F1/F2/F3/F4/F5, normalisation, poids, arrondi, clamp, POV, movegen, qsearch, pruning, ordering, TT ou terminal/TB ;
@@ -109,6 +110,7 @@ La sélection de racines C/D reproduit exactement la fonction `stratified` gelé
 - build Release avec les flags production R0-v4 ;
 - tests existants T3/F6 inchangés ;
 - nouveaux tests cache : miss, hit, collision d'index avec clé différente, remplacement, STM distinct ;
+- test explicite de validité : une entrée fraîche (`valid=false`) ne doit jamais produire un hit, y compris pour la clé de fixture entièrement nulle avec STM White ; cette même clé ne peut devenir un hit qu'après calcul réel du miss, stockage de la clé/résiduel et passage de `valid` à `true` ;
 - test déterministe de la formule FNV-1a/index gelée sur des clés fixtures avec indices attendus littéraux ;
 - test de contrat concurrence : activation cache avec `threads=1` PASS ; activation cache avec `threads>1` doit échouer avant recherche ; cache désactivé conserve le comportement multi-thread historique ;
 - test du cycle de vie : nouveau `Network` = cache vide/compteurs zéro ; une recherche peut produire des hits ; la destruction/reconstruction avant la racine suivante remet obligatoirement le cache à vide ;
@@ -184,6 +186,6 @@ Il **n'autorise aucune partie de force**. Si O1 est établi et son profil est ju
 
 ## 9. Traçabilité requise
 
-Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **cycle de vie fresh-Network-per-root×budget**, source exacte des racines C/D (`r0-corpus.fen` + `stratified` seed `2026092505` + préfixes 16/32 par phase), contrat `same_result` complet, **fenêtre wall-clock primaire search-only**, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
+Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **validité explicite des entrées (`valid=false` à vide ; hit seulement si `valid && full_key_equal`)**, **cycle de vie fresh-Network-per-root×budget**, source exacte des racines C/D (`r0-corpus.fen` + `stratified` seed `2026092505` + préfixes 16/32 par phase), contrat `same_result` complet, **fenêtre wall-clock primaire search-only**, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
 
 Les terminaux `1685`, `1686`, `1688`, `1689` restent immuables et doivent être référencés, jamais réécrits.
