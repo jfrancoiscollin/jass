@@ -3,7 +3,7 @@
 > **Mis à jour : 30 août 2026**
 > **Source de vérité active : ce document.**
 >
-> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [prereg v4](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [résultat terminal v4](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [terminal v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [prereg v4](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [résultat terminal v4 + Pool1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [prereg O1 cache exact](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md), [terminal v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -11,7 +11,7 @@
 
 ### `CURRICULUM` — champion courant inchangé
 
-Aucun candidat T3 n'est promu. L'implémentation runtime T3-A reste dormante par défaut. R0-v4 a désormais établi le contrat de leaf evaluator de production et autorise **Pool1 uniquement** ; aucune partie Elo/strength n'a encore été jouée, et aucun bake ou promotion n'est autorisé.
+Aucun candidat T3 n'est promu. L'implémentation runtime T3-A reste dormante par défaut. R0-v4 a établi le contrat de leaf evaluator de production, puis le Pool1 PRIMARY CPX62 a joué `6000` parties et s'est fermé négativement. **Pool2 v4 n'est pas autorisé** ; aucun bake ou promotion n'est autorisé. La seule suite ouverte est l'ingénierie O1 preregistrée, strictement équivalente et sans partie de force.
 
 - T0/CURRICULUM raw SHA256 : `319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1` ;
 - D1 scellé SHA256 : `e91a55500713154f50be74db5d699b64d7684e1c078725d09e1d15e713549b49` ;
@@ -21,9 +21,9 @@ Aucun candidat T3 n'est promu. L'implémentation runtime T3-A reste dormante par
 
 T3-A et T3-B sont des artefacts scientifiques frozen, pas des réseaux de production.
 
-### Gate runtime T3-A — R0-v4 PASS, Pool1 autorisé
+### Runtime T3-A — R0-v4 PASS puis Pool1 terminal négatif
 
-V4 a été preregistrée séparément après les terminaux v1/v2/v3 et leur autopsie, sans retune de T3-A, sans D1, sans retrait de F6 et sans changement de la question causale. Le terminal exact est :
+V4 a été preregistrée séparément après les terminaux v1/v2/v3 et leur autopsie, sans retune de T3-A, sans D1, sans retrait de F6 et sans changement de la question causale. Le terminal R0 exact est :
 
 ```text
 R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED
@@ -32,16 +32,27 @@ R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED
 R0-v4 : job `cpx62-1685-l3-t3-f6-runtime-r0-v4`, attempt
 `20260830T083226Z-0ead13cb`, code
 `0ead13cb3579ce83c1278fe21c6634096d5e8eec`, completed exit `0`. Le résultat
-authentifié publie `POOL1_AUTHORIZED__TRUE`, `STRENGTH_GAMES__0`,
+authentifié a publié `POOL1_AUTHORIZED__TRUE`, `STRENGTH_GAMES__0`,
 `PROMOTION_AUTHORIZED__FALSE`, `BAKE__FALSE` et
 `SCIENTIFIC_PARAMETERS_CHANGED__FALSE`.
 
-Le PASS R0-v4 établit uniquement le contrat de wrapper/leaf preregistré. Il
-n'est pas un résultat de force. La prochaine étape causale autorisée est le
-**Pool1 PRIMARY CPX62**, `T3_A_F6 vs CURRICULUM`, native `0.1 s/move`. Le Q00
-Home depth 9 reste un diagnostic non bloquant ; il ne peut ni autoriser Pool2
-ni sauver un PRIMARY négatif. Pool2 exige d'abord un Pool1 positif selon le
-mapping preregistré. Aucun Pool3 ni promotion automatique n'existe.
+Le Pool1 autorisé a ensuite été exécuté sur CPX62 : job
+`cpx62-1686-l3-t3-f6-runtime-strength-pool1-v4`, attempt
+`20260830T104034Z-0ead13cb`, `6000` parties, exit `0`. Le reçu read-only
+`cpx62-1689-l3-t3-f6-runtime-pool1-terminal-receipt-v1`, attempt
+`20260830T114717Z-ea643d77`, publie exactement :
+
+```text
+VERDICT = T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED
+wins T3-A / draws / wins CURRICULUM = 1167 / 180 / 4653
+score T3-A = 0.2095
+Elo T3-A - CURRICULUM = -230.6871387863655
+paired CI95 = [0.20033333333333334 ; 0.21866666666666668]
+P(score>0.5) = 0.0
+POOL2_AUTHORIZED = FALSE
+```
+
+Ce terminal ferme la campagne de force v4 : aucun Pool2, Pool3, bake ou promotion. Le diagnostic HOME `1688` reste purement technique ; son rebuild HOME natif a observé `wall_ratio=37.154452` et `nps_ratio=0.053152`, ce qui motive seulement l'optimisation exacte O1. O1 preregistre un cache de résiduel F6 strictement exact, sans modèle/search/feature change, et joue `0` partie de force. Tout nouveau test de force après O1 exigerait une preregistration séparée.
 
 ### Historique runtime T3-A — R0-v3 terminal sur support mécanique
 
@@ -113,8 +124,7 @@ reste un résultat terminal antérieur distinct. Autopsie : Jass PR `#707`, code
 `20260829T142315Z-2a4d1519`, tous deux exit `0`.
 
 V3 a ensuite été ouverte séparément et s'est fermée sur le déficit de support
-décrit ci-dessus. V4 a ensuite établi son propre contrat R0. Aucun ancien
-verdict n'est réinterprété.
+décrit ci-dessus. V4 a ensuite établi son propre contrat R0 puis exécuté Pool1 ; aucun ancien verdict n'est réinterprété.
 
 ---
 
@@ -349,6 +359,7 @@ Les métriques secondaires B−D1, B−T0 et q1000−B ne peuvent pas sauver l'�
 F6 transfer = ESTABLISHED
 D1 additive above F6 = NOT ESTABLISHED
 terminal verdict = F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE
+runtime Pool1 verdict = T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED
 ```
 
 Conséquences :
@@ -356,8 +367,8 @@ Conséquences :
 1. RF1 puis T3 établissent une chaîne reproductible découverte → confirmation fresh → transfert des 66 observables F6.
 2. Le bras joint exact n'autorise aucun retune ni troisième bras sur ce fresh consommé.
 3. La cohorte 1638/1639/1640 est consommée et interdite à tout fit, tuning, calibration, feature selection ou model selection.
-4. Les campagnes runtime v1/v2/v3 ont toutes terminé avant force. R0-v4 a ensuite établi séparément le contrat de leaf production avec `STRENGTH_GAMES__0` et autorise désormais Pool1 uniquement ; aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
+4. Les campagnes runtime v1/v2/v3 ont toutes terminé avant force. R0-v4 a établi le contrat production leaf puis Pool1 a produit `T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED` sur `6000` parties ; Pool2 v4, bake et promotion sont fermés.
 5. Le drift relatif reste établi par v2, l'autopsie exclut un défaut POV T3 démontré, et v3 reste inconclusive faute de support mécanique (`5/32` témoins P0). V4 ne réécrit aucun de ces terminaux.
-6. `next_stage = POOL1_PRIMARY_CPX62` sous le contrat v4 gelé. Le Q00 Home depth 9 est diagnostic/non bloquant ; Pool2 n'est accessible qu'après un Pool1 positif.
+6. `next_stage = O1_EXACT_CACHE_TECHNICAL_ONLY` sous la preregistration `L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md`. O1 doit prouver l'équivalence leaf/search exacte avant profilage, joue `0` partie de force et ne peut autoriser aucun Pool2/promotion.
 
-La campagne T3 passe maintenant au verdict causal de force `T3_A_F6 vs CURRICULUM`, sans promotion automatique.
+La campagne T3 est fermée en force v4 et passe uniquement à l'optimisation runtime exacte O1. Tout nouveau test causal de force exige une preregistration séparée après un terminal O1.
