@@ -90,10 +90,10 @@ gunzip -t "$IN/jass-t3-f6-force.gz"
 gunzip -c "$IN/jass-t3-f6-force.gz" >"$W/jass"
 chmod 0555 "$W/jass"
 J="$W/jass"
-python3 - "$IN" "$ART" "$R0_JOB" "$R0_ATTEMPT" "$R0_CODE_SHA" "$MODEL_SHA" "$CURRICULUM_SHA" <<'PY_AUTH'
+python3 - "$IN" "$ART" "$R0_JOB" "$R0_ATTEMPT" "$R0_CODE_SHA" "$MODEL_SHA" "$CURRICULUM_SHA" "$Q00" <<'PY_AUTH'
 import hashlib,json,sys
 from pathlib import Path
-root,art=map(Path,sys.argv[1:3]); job,attempt,code,model,curr=sys.argv[3:]
+root,art=map(Path,sys.argv[1:3]); job,attempt,code,model,curr,q00=sys.argv[3:]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 r=json.loads((art/'verified-r0.json').read_text())
 s=json.loads((root/'r0-summary.json').read_text())
@@ -114,6 +114,11 @@ if sha(root/'curriculum.pjtw')!=curr or s.get('curriculum_sha256')!=curr:
 selection=s.get('selection',{})
 if sha(root/'r0-corpus.fen')!=selection.get('fen_sha256'):
     raise SystemExit('consumed R0-v4 corpus SHA drift')
+contract=s.get('runtime_contract',{})
+if contract.get('search_params')!=q00:
+    raise SystemExit('authenticated R0-v4 Q00 vector drift')
+if contract.get('threads')!=1 or contract.get('tt_mb')!=16 or contract.get('book')!='OFF':
+    raise SystemExit('authenticated R0-v4 search runtime contract drift')
 exe=root.parent/'work'/'jass'
 if sha(exe)!=s.get('executable_sha256'):
     raise SystemExit('R0-v4 executable bytes drift')
@@ -145,21 +150,26 @@ stage validate-no-strength-output
 python3 - "$ART/q00-technical-sizer.json" <<'PY_VALIDATE'
 import json,sys
 p=json.load(open(sys.argv[1]))
-assert p['schema']=='jass.t3_f6_home_q00_technical_sizer.v4'
-assert p['passed'] is True and p['verdict']=='HOME_Q00_V4_TECHNICAL_SIZER_PASS'
-assert p['technical_only'] is True and p['source']=='consumed_r0_v4_corpus'
-assert p['source_pool1_excluded'] is True
-assert p['q00_depth']==9 and p['order_seed']==2026092505
-assert p['roots']==16 and p['roots_by_phase']=={'P0':8,'P1':8}
-assert p['score_values_published'] is False and p['best_moves_published'] is False
-assert p['wdl_published'] is False and p['strength_games']==0
-assert p['pool_decision_authorized'] is False
-assert p['training'] is False and p['tuning'] is False
-assert p['bake'] is False and p['promotion'] is False
+def require(condition,message):
+    if not condition:
+        raise SystemExit(message)
+require(p.get('schema')=='jass.t3_f6_home_q00_technical_sizer.v4','sizer schema drift')
+require(p.get('passed') is True and p.get('verdict')=='HOME_Q00_V4_TECHNICAL_SIZER_PASS','sizer verdict drift')
+require(p.get('technical_only') is True and p.get('source')=='consumed_r0_v4_corpus','technical source drift')
+require(p.get('source_pool1_excluded') is True,'Pool1 exclusion receipt missing')
+require(p.get('q00_depth')==9 and p.get('order_seed')==2026092505,'Q00 depth/order drift')
+require(p.get('roots')==16 and p.get('roots_by_phase')=={'P0':8,'P1':8},'technical root contract drift')
+require(p.get('score_values_published') is False and p.get('best_moves_published') is False,'score/move suppression drift')
+require(p.get('wdl_published') is False and p.get('strength_games')==0,'strength output drift')
+require(p.get('pool_decision_authorized') is False,'technical sizer cannot authorize Pool1')
+require(p.get('training') is False and p.get('tuning') is False,'training/tuning drift')
+require(p.get('bake') is False and p.get('promotion') is False,'bake/promotion drift')
 for arm in ('curriculum_off','t3_f6_on'):
-    q=p['search_profile'][arm]
-    assert q['searches']==16 and q['nodes']>0 and q['eval_calls']>0 and q['wall_seconds']>0
-assert p['wall_ratio_t3_over_curriculum']>0 and p['nps_ratio_t3_over_curriculum']>0
+    q=p.get('search_profile',{}).get(arm,{})
+    require(q.get('searches')==16 and q.get('nodes',0)>0 and q.get('eval_calls',0)>0 and q.get('wall_seconds',0)>0,
+            f'{arm} telemetry incomplete')
+require(p.get('wall_ratio_t3_over_curriculum',0)>0 and p.get('nps_ratio_t3_over_curriculum',0)>0,
+        'technical ratio receipt invalid')
 PY_VALIDATE
 
 for marker in \
