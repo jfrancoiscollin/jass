@@ -1,13 +1,13 @@
 # L3 — Teacher distillation roadmap
 
-> **Mis à jour : 29 août 2026**
-> **Statut : runtime T3-A terminal en R0-v3 sur support mécanique insuffisant (`5/32` témoins P0). Aucun gate de force autorisé.**
+> **Mis à jour : 30 août 2026**
+> **Statut : runtime T3-A R0-v4 établi (`R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED`) ; Pool1 PRIMARY CPX62 autorisé, encore `0` partie de force.**
 >
-> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [v3 terminal](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [v4 terminal](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [v4 prereg](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [v3 terminal](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
-## 1. Verdict qui clôt la campagne
+## 1. Verdict qui clôt la campagne de transfert offline
 
 ```text
 F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE
@@ -174,29 +174,45 @@ teste pas la force : il invalide seulement le raccourci
 `search(depth=1)=max(-eval(child))`.
 
 Le contrat relatif est donc établi, mais le contrat complet de leaf evaluator
-ne l'est pas. V3 a été preregistrée séparément avec `128` témoins isolés requis,
-`32`/phase. Sur `120000` candidates, `119699` uniques après exclusions et zéro
-lecture d'évaluation, P0 ne fournit que `5` témoins isolés parmi `26004`
-positions uniques. Verdict :
+ne l'était pas encore en v2. V3 a été preregistrée séparément avec `128`
+témoins isolés requis, `32`/phase. Sur `120000` candidates, `119699` uniques
+après exclusions et zéro lecture d'évaluation, P0 ne fournit que `5` témoins
+isolés parmi `26004` positions uniques. Verdict :
 
 ```text
 R0_V3_RUNTIME_SUPPORT_INCONCLUSIVE
 ```
 
-Le STOP intervient avant corpus `4096`, drift v3, leaf/search trace, parité et
-profil de coût. Pool1/Pool2/Q00/chained restent à zéro. Ce n'est pas un défaut
-T3-A ; la recette target-blind preregistrée manque de support mécanique et ne
-peut être relâchée post-hoc.
+Le STOP v3 intervient avant corpus `4096`, drift v3, leaf/search trace, parité
+et profil de coût. Ce n'est pas un défaut T3-A ; la recette target-blind
+preregistrée manque de support mécanique et ne peut être relâchée post-hoc.
+
+V4 a ensuite été preregistrée comme campagne distincte et s'est terminée sur :
+
+```text
+R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED
+```
+
+Job `cpx62-1685-l3-t3-f6-runtime-r0-v4`, attempt
+`20260830T083226Z-0ead13cb`, code
+`0ead13cb3579ce83c1278fe21c6634096d5e8eec`, completed exit `0`.
+`POOL1_AUTHORIZED__TRUE`, `STRENGTH_GAMES__0`, promotion/bake `FALSE`, paramètres
+scientifiques inchangés. V4 ne modifie aucun terminal antérieur.
+
+Le prochain verdict autorisé est désormais Pool1 PRIMARY CPX62, native
+`0.1 s/move`, sur le contraste gelé `T3_A_F6 vs CURRICULUM`. Le Q00 Home depth
+9 est diagnostic/non bloquant. Pool2 reste conditionnel à un Pool1 positif.
 
 ---
 
-## 9. Règles terminales
+## 9. Règles terminales et prochaine étape
 
 1. `CURRICULUM` reste champion de production.
-2. `F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE` est le verdict scientifique terminal T3.
+2. `F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE` reste le verdict scientifique terminal T3 offline.
 3. Aucune métrique secondaire ne transforme B−A en PASS.
 4. Aucun retune ni nouveau fresh T3 n'est autorisé.
-5. Le runtime a été exercé en contrats R0 target-blind v1/v2/v3 ; aucune partie Elo, strength ou Q00, aucun selfplay, bake ou promotion n'a été exécuté ou autorisé.
-6. `next_stage = null` : une nouvelle recette de support demanderait une nouvelle preregistration, sans modifier rétroactivement v3.
+5. Les terminaux runtime v1/v2/v3 restent immuables. R0-v4 a établi séparément le contrat production leaf, toujours avec `strength_games=0`.
+6. `next_stage = POOL1_PRIMARY_CPX62` sous les bytes/search/runtime v4 gelés. Le Q00 Home depth 9 est diagnostic/non bloquant et ne peut jamais sauver un PRIMARY négatif.
+7. Pool2 n'est autorisé qu'après un Pool1 positif ; aucun Pool3 ni promotion automatique.
 
-La roadmap T3 runtime s'arrête au verdict R0.
+La roadmap T3 passe maintenant au verdict causal de force `T3_A_F6 vs CURRICULUM`.
