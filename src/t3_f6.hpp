@@ -82,6 +82,9 @@ public:
     const Model& model() const noexcept { return model_; }
 
     bool cache_enabled() const noexcept { return cache_enabled_; }
+    bool thread_contract_ok(int threads) const noexcept {
+        return !cache_enabled_ || threads == 1;
+    }
     CacheStats cache_stats() const noexcept { return cache_stats_; }
     void clear_cache() const noexcept;
     static std::uint16_t cache_index(const Position& pos) noexcept;
