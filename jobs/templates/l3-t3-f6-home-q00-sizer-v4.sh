@@ -111,9 +111,10 @@ if sha(root/'t3-a-f6-only.json')!=model or s.get('artifact_sha256')!=model:
     raise SystemExit('T3-A frozen bytes drift')
 if sha(root/'curriculum.pjtw')!=curr or s.get('curriculum_sha256')!=curr:
     raise SystemExit('CURRICULUM frozen bytes drift')
-if sha(root/'r0-corpus.fen')!=s.get('corpus_sha256'):
+selection=s.get('selection',{})
+if sha(root/'r0-corpus.fen')!=selection.get('fen_sha256'):
     raise SystemExit('consumed R0-v4 corpus SHA drift')
-exe=Path(sys.argv[1]).parent.parent/'work'/'jass'
+exe=root.parent/'work'/'jass'
 if sha(exe)!=s.get('executable_sha256'):
     raise SystemExit('R0-v4 executable bytes drift')
 PY_AUTH
