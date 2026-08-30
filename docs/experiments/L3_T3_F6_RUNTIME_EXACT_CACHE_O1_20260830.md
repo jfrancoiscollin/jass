@@ -1,7 +1,7 @@
 # L3 — T3-A/F6 Runtime Exact Cache O1 — preregistration
 
 > **Date : 30 août 2026**
-> **Statut : preregistration uniquement.** Aucun code d'optimisation ni nouveau job de recherche/force n'est autorisé par ce document tant que cette preregistration n'est pas mergée.
+> **Statut : preregistration uniquement.** Avant merge, aucun code d'optimisation O1 ni job O1 n'est autorisé par ce document. Après merge, ce document autorise **uniquement** l'implémentation O1 et les gates techniques A–D décrits ci-dessous. Il n'autorise jamais un job de force, aucune partie de strength, Pool2, bake ou promotion ; tout test de force ultérieur exige une preregistration séparée.
 
 ## 1. Contexte terminal immuable
 
@@ -95,10 +95,12 @@ O1 peut utiliser les cohorts déjà consommés **uniquement comme tests techniqu
 
 Support gelé :
 
-- corpus R0-v4 exact `4096` positions de `cpx62-1685` ;
-- sous-ensemble search R0-v4 exact ;
+- corpus R0-v4 exact `4096` positions de `cpx62-1685`, artefact authentifié `r0-corpus.fen` ;
+- sous-ensemble search R0-v4 exact `r0-search-roots.fen` conservé comme preuve historique, mais **les Gates C/D O1 utilisent explicitement `r0-corpus.fen`, pas le sous-ensemble 512** ;
 - aucun score teacher/deep nécessaire ;
 - aucun nouveau fresh n'est généré en O1.
+
+La sélection de racines C/D reproduit exactement la fonction `stratified` gelée de `jobs/tools/t3_f6_search_profile.py` avec `order_seed=2026092505` : dans chaque phase P0/P1/P2/P3, trier toutes les FEN de `r0-corpus.fen` par `SHA256(f"2026092505:{fen}")` et prendre les `N` premières (`N=16` pour C, `N=32` pour D), puis trier l'union par `SHA256(f"2026092505:all:{fen}")`. Aucun autre artefact, préfixe, ordre ou sampling n'est autorisé.
 
 ## 6. Gates exacts
 
@@ -126,7 +128,7 @@ Tout mismatch donne `O1_EXACT_CACHE_EQUIVALENCE_FAILED` et STOP.
 
 ### Gate C — équivalence search exacte
 
-Sur exactement `64` racines R0-v4, `16` par phase, sélectionnées par l'ordre benchmark déjà gelé `2026092505`, comparer cache OFF puis ON avec moteur/state/TT/**Network** frais par bras, toujours `threads=1`. Chaque root×budget ON commence cache vide ; le cache n'est conservé que pendant la recherche de cette unité :
+Sur exactement `64` racines de l'artefact authentifié `r0-corpus.fen`, `16` par phase, sélectionnées par la fonction `stratified` exacte définie au §5 avec `order_seed=2026092505`, comparer cache OFF puis ON avec moteur/state/TT/**Network** frais par bras, toujours `threads=1`. Chaque root×budget ON commence cache vide ; le cache n'est conservé que pendant la recherche de cette unité :
 
 - depth exact `1` ;
 - depth exact `9` ;
@@ -143,8 +145,8 @@ Tout mismatch donne `O1_EXACT_CACHE_SEARCH_EQUIVALENCE_FAILED` et STOP.
 
 Seulement après A/B/C PASS, mesurer sur CPX62 avec le **même exécutable O1** et mêmes bytes/search, `threads=1` :
 
-- exactement `128` racines R0-v4, `32` par phase, ordre déterministe `2026092505` ;
-- pour chaque root, exécuter OFF puis ON si son index dans l'ordre gelé est pair, ON puis OFF s'il est impair ; chaque bras reçoit moteur/state/TT/Network frais ;
+- exactement `128` racines de l'artefact authentifié `r0-corpus.fen`, `32` par phase, sélectionnées par la fonction `stratified` exacte définie au §5 avec `order_seed=2026092505` ; le sous-ensemble historique `r0-search-roots.fen` n'est pas utilisé ;
+- pour chaque root, exécuter OFF puis ON si son index dans l'ordre global gelé est pair, ON puis OFF s'il est impair ; chaque bras reçoit moteur/state/TT/Network frais ;
 - pour chaque root×bras, le `Network` est créé juste avant la recherche ; en ON le cache commence vide, persiste uniquement pendant cette recherche depth-9, puis est détruit ; en OFF aucun cache n'est actif ;
 - aucun warm-up, aucune racine d'amorçage et aucune réutilisation inter-root/inter-budget du cache ;
 - depth exact `9` ;
@@ -179,6 +181,6 @@ Il **n'autorise aucune partie de force**. Si O1 est établi et son profil est ju
 
 ## 9. Traçabilité requise
 
-Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **cycle de vie fresh-Network-per-root×budget**, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
+Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **cycle de vie fresh-Network-per-root×budget**, source exacte des racines C/D (`r0-corpus.fen` + `stratified` seed `2026092505`), compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
 
 Les terminaux `1685`, `1686`, `1688`, `1689` restent immuables et doivent être référencés, jamais réécrits.
