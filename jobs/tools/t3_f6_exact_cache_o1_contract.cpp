@@ -41,8 +41,13 @@ constexpr std::string_view R0_SELECTION_SHA256 =
     "8bc8ea375a20a83df3f82ee9235e62adcc37db6ef4035dbcf204279b937f5a18";
 constexpr std::string_view R0_SUMMARY_SHA256 =
     "58d71be1c55d56d5140952e9af1baab48c0769214b615d0666f76b3bcbee0b5f";
-constexpr std::string_view R0_CODE_SHA =
-    "0ead13cb3579ce83c1278fe21c6634096d5e8eec";
+// cpx62-1692 independently parsed the pinned R0 summary's nested
+// runtime_contract, verified threads=1 / tt_mb=16 / book=OFF / 63 params, and
+// published this exact Q00 digest.  Pinning that receipt avoids ambiguous
+// unscoped key lookup in the large nested summary while preserving the exact
+// preregistered search vector byte-for-byte.
+constexpr std::string_view R0_Q00_SHA256 =
+    "61cdaf50cc1948537990331d78f5b296dc6aee71cc7c2b98bcbd0969977619e1";
 
 struct FenRow {
     std::string fen;
@@ -386,20 +391,15 @@ int run_contract(int argc, char** argv) {
         throw std::runtime_error("R0-v4 corpus/selection certificate mismatch");
     }
 
-    const std::string summary = read_text(summary_path);
-    const std::string frozen_params = json_string_field(summary, "search_params");
-    if (json_string_field(summary, "verdict") != "R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED"
-        || json_string_field(summary, "code_sha") != R0_CODE_SHA
-        || !json_bool_field(summary, "passed")
-        || !json_bool_field(summary, "pool1_authorized")
-        || json_uint_field(summary, "threads") != 1U
-        || json_uint_field(summary, "tt_mb") != 16U
-        || json_string_field(summary, "book") != "OFF"
-        || frozen_params != params_spec
+    // The full R0 summary bytes are already pinned above by cpx62-1691.  The
+    // exact nested runtime_contract/Q00 was independently scoped and pinned by
+    // cpx62-1692.  Do not search the nested summary globally for repeated keys
+    // such as `threads`, `book`, `passed`, or `search_params`.
+    const std::string q00_sha = sha256_text(params_spec);
+    if (q00_sha != R0_Q00_SHA256
         || std::count(params_spec.begin(), params_spec.end(), ',') != 62) {
         throw std::runtime_error("R0-v4 terminal/Q00 contract mismatch");
     }
-    const std::string q00_sha = sha256_text(params_spec);
 
     const auto corpus = read_fens(corpus_path);
     const auto roots = read_fens(roots_path);
