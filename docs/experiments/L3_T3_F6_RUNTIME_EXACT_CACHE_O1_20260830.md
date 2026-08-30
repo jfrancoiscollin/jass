@@ -1,7 +1,7 @@
 # L3 — T3-A/F6 Runtime Exact Cache O1 — preregistration
 
 > **Date : 30 août 2026**
-> **Statut : preregistration uniquement.** Avant merge, aucun code d'optimisation O1 ni job O1 n'est autorisé par ce document. Après merge, ce document autorise **uniquement** l'implémentation O1 et les gates techniques A–D décrits ci-dessous. Il n'autorise jamais un job de force, aucune partie de strength, Pool2, bake ou promotion ; tout test de force ultérieur exige une preregistration séparée.
+> **Statut : preregistration uniquement.** Avant merge, aucun code d'optimisation O1 ni job O1 n'est autorisé par ce document. Après merge, ce document autorise **uniquement** l'implémentation O1 et les gates techniques A–D décrits ci-dessous. Il n'autorise jamais un job de force, aucune partie de strength, Pool2, bake ou promotion ; tout test de force ultérieur exige une preregistration séparée. **Le merge n'est pas une permission de lancer CPX62 : tout Gate D distant exige encore un GO explicite JFC après mesure `nproc`, micro-sizer/taux comparable, ETA/sizing, espace disque et checks pré-lancement.**
 
 ## 1. Contexte terminal immuable
 
@@ -100,7 +100,7 @@ Support gelé :
 - aucun score teacher/deep nécessaire ;
 - aucun nouveau fresh n'est généré en O1.
 
-La sélection de racines C/D reproduit exactement la fonction `stratified` gelée de `jobs/tools/t3_f6_search_profile.py` avec `order_seed=2026092505` : dans chaque phase P0/P1/P2/P3, trier toutes les FEN de `r0-corpus.fen` par `SHA256(f"2026092505:{fen}")` et prendre les `N` premières (`N=16` pour C, `N=32` pour D), puis trier l'union par `SHA256(f"2026092505:all:{fen}")`. Aucun autre artefact, préfixe, ordre ou sampling n'est autorisé.
+La sélection de racines C/D reproduit exactement la fonction `stratified` gelée de `jobs/tools/t3_f6_search_profile.py` avec `order_seed=2026092505` : dans chaque phase P0/P1/P2/P3, trier toutes les FEN de `r0-corpus.fen` par `SHA256(f"2026092505:{fen}")` et prendre les **premières** `N` (`N=16` pour C, `N=32` pour D), puis trier l'union par `SHA256(f"2026092505:all:{fen}")`. Aucun autre artefact, préfixe, ordre ou sampling n'est autorisé.
 
 ## 6. Gates exacts
 
@@ -135,7 +135,7 @@ Sur exactement `64` racines de l'artefact authentifié `r0-corpus.fen`, `16` par
 - nodes exact `1000` ;
 - nodes exact `10000`.
 
-Pour chaque root/budget, exiger égalité exacte de tous les champs déterministes déjà suivis en R0-v4 : score, best move, completed/effective depth, PV, nodes, eval calls, qnodes, terminal/TB hits, TT probes/hits, cutoffs, reductions, extensions, qsearch calls et stop reason.
+Pour chaque root/budget, exiger **exactement le même contrat `same_result` que R0-v4** (`jobs/tools/t3_f6_runtime_contract_v4.cpp`) : `best_move`, `score`, `depth`, `effective_depth`, `completed_depth`, `aborted_iteration`, `stop_reason`, `nodes`, `cutoffs`, `first_move_cutoffs`, `pvs_researches`, `moves_searched`, `eval_calls`, `scan_verify_probes`, `scan_verify_cutoffs`, `scan_threat_reentries`, `qnodes`, `qsearch_calls`, `tablebase_probes`, `tablebase_hits`, `tt_probes`, `tt_hits`, `terminal_hits`, `reductions`, `extensions`, `root_order_applications`, `root_order_failures`, `pv` et `from_book`. Aucune sous-liste O1 n'est autorisée.
 
 Les compteurs du cache et le wall-clock ne font évidemment pas partie de l'égalité.
 
@@ -145,7 +145,7 @@ Tout mismatch donne `O1_EXACT_CACHE_SEARCH_EQUIVALENCE_FAILED` et STOP.
 
 Seulement après A/B/C PASS, mesurer sur CPX62 avec le **même exécutable O1** et mêmes bytes/search, `threads=1` :
 
-- exactement `128` racines de l'artefact authentifié `r0-corpus.fen`, `32` par phase, sélectionnées par la fonction `stratified` exacte définie au §5 avec `order_seed=2026092505` ; le sous-ensemble historique `r0-search-roots.fen` n'est pas utilisé ;
+- exactement `128` racines de l'artefact authentifié `r0-corpus.fen`, `32` par phase, sélectionnées comme les **premières 32 par phase** par la fonction `stratified` exacte définie au §5 avec `order_seed=2026092505` ; le sous-ensemble historique `r0-search-roots.fen` n'est pas utilisé ;
 - pour chaque root, exécuter OFF puis ON si son index dans l'ordre global gelé est pair, ON puis OFF s'il est impair ; chaque bras reçoit moteur/state/TT/Network frais ;
 - pour chaque root×bras, le `Network` est créé juste avant la recherche ; en ON le cache commence vide, persiste uniquement pendant cette recherche depth-9, puis est détruit ; en OFF aucun cache n'est actif ;
 - aucun warm-up, aucune racine d'amorçage et aucune réutilisation inter-root/inter-budget du cache ;
@@ -153,6 +153,8 @@ Seulement après A/B/C PASS, mesurer sur CPX62 avec le **même exécutable O1** 
 - publier wall time, NPS, nodes, eval calls, effective depth, cache hit-rate, `extract_f6` executions, movegen calls et famille F1..F5 si disponibles.
 
 Aucun seuil de performance ne transforme O1 en résultat scientifique. Le profil est descriptif : la seule condition de PASS O1 est l'équivalence exacte A/B/C plus une exécution technique saine.
+
+**Boundary de lancement :** la preregistration et son merge ne lancent rien. Avant toute exécution distante de Gate D, le control-plane doit publier les faits machine (`nproc`, host/CPU), un smoke/sizer comparable, le volume exact, l'ETA incluant build/overhead, le disque libre et les checks ISA/hot-path. Le lancement exige ensuite un GO explicite JFC distinct ; sans ce GO, Gate D reste préparé mais non lancé.
 
 ## 7. Verdicts O1 autorisés
 
@@ -181,6 +183,6 @@ Il **n'autorise aucune partie de force**. Si O1 est établi et son profil est ju
 
 ## 9. Traçabilité requise
 
-Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **cycle de vie fresh-Network-per-root×budget**, source exacte des racines C/D (`r0-corpus.fen` + `stratified` seed `2026092505`), compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
+Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **cycle de vie fresh-Network-per-root×budget**, source exacte des racines C/D (`r0-corpus.fen` + `stratified` seed `2026092505` + préfixes 16/32 par phase), contrat `same_result` complet, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
 
 Les terminaux `1685`, `1686`, `1688`, `1689` restent immuables et doivent être référencés, jamais réécrits.
