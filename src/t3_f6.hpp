@@ -4,6 +4,7 @@
 
 #include "nnue.hpp"
 #include "residual_features.hpp"
+#include "search.hpp"
 
 #include <array>
 #include <cstddef>
@@ -67,19 +68,13 @@ std::optional<Model> load_model(const std::string& path,
                                 LoadPolicy policy = LoadPolicy::FrozenOnly,
                                 std::string* err = nullptr);
 
+class O1SearchSession;
+
 class Network final : public INetwork {
 public:
     // Historical/control path: cache is always OFF.
     Network(std::unique_ptr<INetwork> base, Model model)
         : base_(std::move(base)), model_(std::move(model)) {}
-
-    // The only O1 cache activation path. A cache can only be constructed after
-    // the caller has supplied the actual search thread count; any value other
-    // than exactly one fails before a cached Network exists or any search can
-    // start. Production `maybe_wrap_from_env` never calls this factory.
-    static std::unique_ptr<Network> make_o1_cached(
-        std::unique_ptr<INetwork> base, Model model, int threads,
-        std::string* err = nullptr);
 
     int evaluate(const Position& pos) const noexcept override;
     int evaluate_from_base(const Position& pos, int base_score) const noexcept;
@@ -96,11 +91,20 @@ public:
     static std::uint16_t cache_index(const Position& pos) noexcept;
 
 private:
+    friend class O1SearchSession;
     struct CacheActivation {};
 
     Network(std::unique_ptr<INetwork> base, Model model, CacheActivation)
         : base_(std::move(base)), model_(std::move(model)),
           cache_enabled_(true), cache_(CACHE_CAPACITY) {}
+
+    // Private by design: no production/HUB caller can obtain a cache-enabled
+    // Network and then pass it to Lazy SMP. O1SearchSession is the sole legal
+    // owner and re-validates the actual SearchLimits::threads immediately
+    // before every search call.
+    static std::unique_ptr<Network> make_o1_cached(
+        std::unique_ptr<INetwork> base, Model model, int threads,
+        std::string* err = nullptr);
 
     struct CacheKey {
         std::uint64_t white_men{0};
@@ -134,10 +138,61 @@ private:
     mutable CacheStats cache_stats_{};
 };
 
+// The only public O1 activation surface. It owns the cached Network privately,
+// so callers cannot hand the mutable cache to the generic search/HUB API. Both
+// construction and the actual search boundary fail closed unless threads==1.
+// The two-argument jass::search overload used below creates a fresh TT for each
+// call; O1 Gate C additionally creates a fresh O1SearchSession per root×budget.
+class O1SearchSession final {
+public:
+    static std::unique_ptr<O1SearchSession> create(
+        std::unique_ptr<INetwork> base, Model model, int threads,
+        std::string* err = nullptr) {
+        auto network = Network::make_o1_cached(
+            std::move(base), std::move(model), threads, err);
+        if (!network) return nullptr;
+        return std::unique_ptr<O1SearchSession>(
+            new O1SearchSession(std::move(network)));
+    }
+
+    std::optional<SearchResult> run_search(
+        const Position& pos, SearchLimits limits,
+        std::string* err = nullptr) const {
+        if (limits.threads != 1) {
+            if (err) *err = "T3/F6 O1 cache requires SearchLimits::threads == 1";
+            return std::nullopt;
+        }
+        if (limits.nnue != nullptr) {
+            if (err) *err = "T3/F6 O1 session owns SearchLimits::nnue";
+            return std::nullopt;
+        }
+        limits.nnue = network_.get();
+        return jass::search(pos, limits);
+    }
+
+    int evaluate(const Position& pos) const noexcept {
+        return network_->evaluate(pos);
+    }
+    int evaluate_from_base(const Position& pos, int base_score) const noexcept {
+        return network_->evaluate_from_base(pos, base_score);
+    }
+    double residual_parent(const Position& pos) const noexcept {
+        return network_->residual_parent(pos);
+    }
+    CacheStats cache_stats() const noexcept { return network_->cache_stats(); }
+    void clear_cache() const noexcept { network_->clear_cache(); }
+
+private:
+    explicit O1SearchSession(std::unique_ptr<Network> network)
+        : network_(std::move(network)) {}
+
+    std::unique_ptr<Network> network_;
+};
+
 // Production T3 loader remains the exact pre-O1 behavior: absent model env is
 // a no-op; present model env authenticates the frozen model and CURRICULUM and
 // returns a cache-OFF Network. O1 cache activation is deliberately impossible
-// through environment variables and is restricted to `make_o1_cached`.
+// through environment variables and is restricted to O1SearchSession.
 std::unique_ptr<INetwork> maybe_wrap_from_env(
     std::unique_ptr<INetwork> base,
     const std::string& base_path,
