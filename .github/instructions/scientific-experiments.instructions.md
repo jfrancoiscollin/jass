@@ -1,5 +1,5 @@
 ---
-applyTo: "docs/experiments/**/*.md,docs/*.md,jobs/**/*.py,jobs/**/*.sh,jobs/prereg/**,tools/**/*.py,pattern_jass/**/*.py"
+applyTo: "docs/experiments/**/*.md,docs/*.md,jobs/**/*.py,jobs/**/*.sh,jobs/prereg/**,jobs/results/**,tools/**/*.py,pattern_jass/**/*.py"
 ---
 
 # Scientific experiment and preregistration instructions
