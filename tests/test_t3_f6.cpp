@@ -264,19 +264,20 @@ void test_cache_preserves_complete_v4_search_result_contract() {
     if (!on) return;
 
     SearchLimits off_limits;
-    off_limits.max_depth = 2;
+    off_limits.max_depth = 4;
     off_limits.threads = 1;
     off_limits.nnue = &off;
     const SearchResult a = search(root, off_limits);
 
     SearchLimits on_limits;
-    on_limits.max_depth = 2;
+    on_limits.max_depth = 4;
     on_limits.threads = 1;
     const auto b = on->run_search(root, on_limits);
     JASS_CHECK(b.has_value());
     if (!b) return;
     JASS_CHECK(same_result_v4(a, *b));
     JASS_CHECK(on->cache_stats().lookups > 0U);
+    JASS_CHECK(on->cache_stats().hits > 0U);
 }
 
 void test_search_uses_exactly_one_negamax_inversion() {
