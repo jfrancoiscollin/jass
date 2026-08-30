@@ -2,7 +2,7 @@
 
 > **Date : 30 août 2026**
 > **Statut : amendment preregistration, écrit avant tout lancement E1/E2/E3.**
-> Ce document fait partie de la PR `#733` et modifie uniquement les **faits upstream O1** du prereg principal [`L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md`](L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md). Les interventions, seeds, volumes, estimands, gates, kill-switches, interdictions et GO distincts E1/E2/E3 du prereg principal restent inchangés sauf contradiction explicitement nommée ci-dessous.
+> Ce document fait partie de la PR `#733` et modifie les **faits upstream O1** et ferme trois ambiguïtés de protocole du prereg principal [`L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md`](L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md). Les autres interventions, seeds, volumes, gates, kill-switches, interdictions et GO distincts E1/E2/E3 du prereg principal restent inchangés.
 
 ## 1. Fait nouveau observé avant merge de #733 : O1 terminal
 
@@ -23,17 +23,17 @@ Le run a d'abord réauthentifié le preflight brut O1 et rejoué les Gates A/B/C
 Gate D respecte le contrat preregistré :
 
 ```text
-roots                         = 128
-searches                      = 256
-threads                       = 1
-depth                         = 9
-primary wall window           = search-only
-setup/teardown in primary     = false
-search mismatches OFF vs ON   = 0
-nodes OFF == nodes ON         = true
-eval calls OFF == eval calls ON = true
-strength_games                = 0
-scientific_decision           = false
+roots                            = 128
+searches                         = 256
+threads                          = 1
+depth                            = 9
+primary wall window              = search-only
+setup/teardown in primary        = false
+search mismatches OFF vs ON      = 0
+nodes OFF == nodes ON            = true
+eval calls OFF == eval calls ON  = true
+strength_games                   = 0
+scientific_decision              = false
 ```
 
 Métriques CPX62 terminales publiées :
@@ -46,7 +46,7 @@ nps_ratio_ON_over_OFF         = 1.445162
 
 Ainsi le cache O1 réduit la fenêtre de recherche mesurée d'environ `30.8 %` et augmente le NPS d'environ `44.5 %` **sans changer un seul résultat ou compteur de recherche faisant partie du contrat d'équivalence**.
 
-Le reçu read-only terminal est maintenant lui aussi terminé :
+Le reçu read-only terminal est lui aussi terminé :
 
 ```text
 job     = cpx62-1705-l3-t3-f6-o1-terminal-receipt-v1
@@ -85,9 +85,9 @@ Les ratios `home-1688` et Gate D O1 proviennent de machines/builds de mesure dif
 
 E1 doit mesurer directement sur CPX62 les deux bras pertinents.
 
-### 3.3 E2 reste le verrou causal
+### 3.3 E2 reste le verrou du programme
 
-O1 n'établit rien sur la valeur en jeu de l'information F6. Il prouve seulement qu'une partie du coût peut être retirée exactement. Le primary estimand E2 reste donc exactement :
+O1 n'établit rien sur la valeur en jeu de l'information F6. Il prouve seulement qu'une partie du coût peut être retirée exactement. Le primary estimand E2 reste :
 
 ```text
 delta_info = Elo(C1) + log2(nodes_ratio_E1) * slope(C2)
@@ -108,11 +108,60 @@ promotion       = forbidden
 
 #733 reste une preregistration. Même après son merge, E1, E2 et E3 exigent chacun leur GO explicite distinct et leurs faits machine / sizing pré-lancement tels que déjà écrits.
 
-## 4. Conséquence de programme
+## 4. Clarifications gelées avant E1/E2/E3
+
+### 4.1 E1 — état du cache pendant l'attribution de coût
+
+Le prereg principal pouvait laisser implicitement ouverte la question « cache ON ou OFF » pendant l'instrumentation E1. Elle est maintenant fermée :
+
+- **E1 primaire utilise T3-A avec cache O1 OFF.** Les chronomètres F1..F5/MLP/base mesurent ainsi le coût intrinsèque de l'évaluateur F6, sans conditionnement par le hit-rate d'un cache ;
+- `nodes_ratio_E1 = sum(nodes_T3_A)/sum(nodes_CURRICULUM)` est calculé sur ce même bras T3-A cache OFF et CURRICULUM, mêmes `128` racines depth-9 ;
+- O1 ayant établi l'équivalence exacte de l'arbre, une répétition cache ON ne peut être qu'un **contrôle technique non primaire** de l'égalité des nodes. Elle ne peut ni remplacer le ratio primaire, ni modifier une décision E1, ni sélectionner une variante ;
+- aucune autre taille/hash/lifecycle de cache n'est testée dans E1.
+
+Cette clarification ne choisit aucune variante à partir du résultat O1 : elle fixe simplement la baseline non mémoïsée nécessaire pour attribuer le coût F1..F5.
+
+### 4.2 E2 — portée exacte de `delta_info`
+
+`C1` est le contraste expérimental direct à nœuds égaux. En revanche, `delta_info` est une **décomposition mécanistique preregistrée**, pas une identification non-paramétrique garantie du « pur effet information F6 ».
+
+Elle repose explicitement sur l'approximation locale suivante :
+
+1. autour des budgets `10k→20k`, la réponse Elo de CURRICULUM à un facteur de nœuds est localement représentable par `slope(C2) * log2(facteur)` ;
+2. ce péage local peut être appliqué au `nodes_ratio_E1` mesuré à depth-9 pour construire le contre-factuel `h0_c1` ;
+3. l'interaction résiduelle entre identité de l'évaluateur et réponse marginale aux nœuds n'est pas séparément identifiée par E2.
+
+Conséquence :
+
+- une CI95 basse de `delta_info > 0` autorise **uniquement la poursuite du mécanisme de transfert E3** selon la politique pré-déclarée ;
+- elle ne signifie pas « T3-A est prouvé plus fort » et ne peut autoriser bake/promotion/Pool2 ;
+- `elo_c1` et ses diagnostics de profondeur/nodes restent publiés séparément afin que la donnée directe ne soit jamais masquée par le modèle de décomposition ;
+- si `C2` n'établit pas une pente positive ou si les gardes du harnais échouent, E2 reste inconclusif comme déjà preregistré.
+
+Aucune autre forme fonctionnelle, pente ou correction post-hoc ne peut remplacer cette décomposition après lecture des données.
+
+### 4.3 E3 — corpus de fit résolu de manière unique
+
+La phrase « corpus courant du champion » ne donne **aucun droit de choisir un dataset au moment du job**. Avant le premier label T3-A E3 et avant le fit, le job doit résoudre fail-closed une seule provenance :
+
+> **le byte-stream exact utilisé comme entrée de données du dernier stage de fit ayant produit les bytes CURRICULUM SHA256 `319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1`.**
+
+Règles :
+
+- l'identité doit provenir d'un reçu/manifest historique immuable qui relie explicitement ce stage final aux bytes CURRICULUM ;
+- publier avant tout fit : job/attempt source, URI/nom d'artefact, SHA256 du corpus, nombre de lignes/parents et SHA/config de la recette source ;
+- si plusieurs corpus peuvent raisonnablement satisfaire la description, si le manifest ne permet pas de désigner **un unique artefact**, ou si son SHA ne peut pas être authentifié, verdict `E3_TECHNICAL_FAILED` **avant fit** ; aucune sélection manuelle n'est permise ;
+- dans une chaîne multi-stage, les données d'un pré-entraînement antérieur ne sont pas concaténées automatiquement : seul l'input byte-exact du **stage final qui produit les bytes champion** est ré-étiqueté, sauf si ce stage final consommait lui-même explicitement un artefact déjà concaténé ;
+- volume, lignes, poids/duplications et ordre du corpus restent ceux de cet artefact ; seule la cible pairwise est remplacée par le teacher T3-A conformément au prereg principal ;
+- le corpus `1638/1639/1640` et toutes les autres exclusions déjà gravées restent interdits.
+
+Ainsi E3 ne possède plus de degré de liberté de choix de corpus après observation.
+
+## 5. Conséquence de programme
 
 Le résultat O1 renforce la séparation entre deux questions :
 
 1. **ingénierie exacte** : O1 récupère ~31 % du wall sans toucher à l'arbre ;
-2. **valeur informationnelle** : seule E2 peut établir si F6 apporte un gain de décision une fois le handicap d'arbre explicitement corrigé.
+2. **valeur informationnelle / mécanisme de transfert** : E2 teste le contraste direct C1 puis la décomposition `delta_info` preregistrée ; seul son gate peut ouvrir E3.
 
 Il ne justifie ni une O2 opportuniste ni une ablation F6. Toute optimisation exacte supplémentaire hors programme E1/E2/E3 exige sa propre couverture preregistrée.
