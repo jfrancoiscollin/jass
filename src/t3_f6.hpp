@@ -5,8 +5,10 @@
 #include "nnue.hpp"
 #include "residual_features.hpp"
 #include "search.hpp"
+#include "tt.hpp"
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -144,8 +146,10 @@ private:
 // A session can perform at most one search, and that search is rejected unless
 // the cache is still cold. Thus every Gate-C/D root×budget unit necessarily
 // starts from a fresh Network/cache and cannot inherit prior root/search state.
-// The two-argument jass::search overload creates a fresh TT for the accepted
-// search call as required by the preregistered lifecycle.
+// The caller-owned-TT overload exists only so Gate D can construct TT outside
+// its preregistered search-only wall-clock window; both overloads execute the
+// same generic search path with the same limits and fresh state. When requested,
+// `search_wall_ns` times only the inner `jass::search` call after all O1 guards.
 class O1SearchSession final {
 public:
     static std::unique_ptr<O1SearchSession> create(
@@ -161,6 +165,20 @@ public:
     std::optional<SearchResult> run_search(
         const Position& pos, SearchLimits limits,
         std::string* err = nullptr) const {
+        TranspositionTable tt;
+        tt.resize_mb(limits.tt_mb);
+        return run_search(pos, limits, tt, nullptr, err);
+    }
+
+    std::optional<SearchResult> run_search(
+        const Position& pos, SearchLimits limits, TranspositionTable& tt,
+        std::string* err = nullptr) const {
+        return run_search(pos, limits, tt, nullptr, err);
+    }
+
+    std::optional<SearchResult> run_search(
+        const Position& pos, SearchLimits limits, TranspositionTable& tt,
+        std::uint64_t* search_wall_ns, std::string* err = nullptr) const {
         if (limits.threads != 1) {
             if (err) *err = "T3/F6 O1 cache requires SearchLimits::threads == 1";
             return std::nullopt;
@@ -181,7 +199,14 @@ public:
         }
         search_consumed_ = true;
         limits.nnue = network_.get();
-        return jass::search(pos, limits);
+        if (search_wall_ns == nullptr)
+            return jass::search(pos, limits, tt, {});
+        const auto start = std::chrono::steady_clock::now();
+        const SearchResult result = jass::search(pos, limits, tt, {});
+        const auto stop = std::chrono::steady_clock::now();
+        *search_wall_ns = static_cast<std::uint64_t>(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count());
+        return result;
     }
 
     int evaluate(const Position& pos) const noexcept {
