@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -18,6 +19,7 @@ inline constexpr std::size_t INPUT_WIDTH = residual_features::ALL_NEW_WIDTH;
 inline constexpr std::size_t H0 = 256;
 inline constexpr std::size_t H1 = 128;
 inline constexpr std::size_t H2 = 64;
+inline constexpr std::size_t CACHE_CAPACITY = 65536;
 
 inline constexpr const char* FROZEN_MODEL_SHA256 =
     "16e5db8fd78849bba12b158eee5c1da4ab170129d8aeac1b91ab7a40ad9d0bb2";
@@ -52,6 +54,14 @@ struct Model {
         const std::array<float, INPUT_WIDTH>& features) const noexcept;
 };
 
+struct CacheStats {
+    std::uint64_t lookups{0};
+    std::uint64_t hits{0};
+    std::uint64_t misses{0};
+    std::uint64_t replacements{0};
+    std::uint64_t extract_f6_executions{0};
+};
+
 std::string sha256_file(const std::string& path, std::string* err = nullptr);
 std::optional<Model> load_model(const std::string& path,
                                 LoadPolicy policy = LoadPolicy::FrozenOnly,
@@ -59,8 +69,11 @@ std::optional<Model> load_model(const std::string& path,
 
 class Network final : public INetwork {
 public:
-    Network(std::unique_ptr<INetwork> base, Model model)
-        : base_(std::move(base)), model_(std::move(model)) {}
+    Network(std::unique_ptr<INetwork> base, Model model,
+            bool cache_enabled = false)
+        : base_(std::move(base)), model_(std::move(model)),
+          cache_enabled_(cache_enabled),
+          cache_(cache_enabled ? CACHE_CAPACITY : 0U) {}
 
     int evaluate(const Position& pos) const noexcept override;
     int evaluate_from_base(const Position& pos, int base_score) const noexcept;
@@ -68,13 +81,48 @@ public:
     const INetwork* base_network() const noexcept { return base_.get(); }
     const Model& model() const noexcept { return model_; }
 
+    bool cache_enabled() const noexcept { return cache_enabled_; }
+    CacheStats cache_stats() const noexcept { return cache_stats_; }
+    void clear_cache() const noexcept;
+    static std::uint16_t cache_index(const Position& pos) noexcept;
+
 private:
+    struct CacheKey {
+        std::uint64_t white_men{0};
+        std::uint64_t white_kings{0};
+        std::uint64_t black_men{0};
+        std::uint64_t black_kings{0};
+        std::uint8_t side_to_move{0};
+
+        friend bool operator==(const CacheKey& a, const CacheKey& b) noexcept {
+            return a.white_men == b.white_men
+                && a.white_kings == b.white_kings
+                && a.black_men == b.black_men
+                && a.black_kings == b.black_kings
+                && a.side_to_move == b.side_to_move;
+        }
+    };
+
+    struct CacheEntry {
+        CacheKey key{};
+        double residual{0.0};
+        bool valid{false};
+    };
+
+    static CacheKey cache_key(const Position& pos) noexcept;
+    static std::uint16_t cache_index(const CacheKey& key) noexcept;
+
     std::unique_ptr<INetwork> base_;
     Model model_;
+    bool cache_enabled_{false};
+    mutable std::vector<CacheEntry> cache_;
+    mutable CacheStats cache_stats_{};
 };
 
 // Absent env: exact no-op. Present env: authenticate model and CURRICULUM,
-// validate the full contract and fail closed on any discrepancy.
+// validate the full contract and fail closed on any discrepancy. The optional
+// O1 cache is separately activated only by JASS_T3_F6_CACHE=1; absent/0 keeps
+// the historical path byte-for-byte in control flow.
 std::unique_ptr<INetwork> maybe_wrap_from_env(
     std::unique_ptr<INetwork> base,
     const std::string& base_path,
