@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Target-blind native parity dump and non-selective runtime profile for R0.
+#include "t3_f6_e1_profile.hpp"
+
 #include "movegen.hpp"
 #include "position.hpp"
 #include "residual_features.hpp"
@@ -59,6 +61,8 @@ struct Bucket { std::uint64_t ns{0}; std::uint64_t n{0}; };
 }  // namespace
 
 int main(int argc, char** argv) {
+    if (jass_e1_profile::requested(argc, argv))
+        return jass_e1_profile::run(argc, argv);
     try {
         if (argc != 8) {
             std::cerr << "usage: t3_f6_runtime_probe <corpus.fen> <curriculum.pjtw> "
