@@ -3,9 +3,9 @@
 > **Mis à jour :** 2026-08-30  
 > **Rôle :** registre scientifique courant des directions établies/fermées ; empêcher de rouvrir une piste close sans fait nouveau.  
 > **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)  
-> **Historique consolidé antérieur complet :** [PROJECT_RESULTS_PRE_T3_20260830.md](archives/PROJECT_RESULTS_PRE_T3_20260830.md)
+> **Historique consolidé antérieur complet :** [PROJECT_RESULTS_PRE_T3_20260830.md](PROJECT_RESULTS_PRE_T3_20260830.md)
 
-Le registre exhaustif maintenu jusqu'au 19 août 2026 est archivé **byte-identique** au lien ci-dessus. Le présent fichier conserve les résultats qui pilotent directement l'état courant et ajoute les terminaux T3/F6 du 30 août. En cas de contradiction, le verdict terminal le plus récent fondé sur un run complet et son manifest prévaut.
+Le registre exhaustif maintenu jusqu'au 19 août 2026 est archivé **byte-identique** au lien ci-dessus. Le snapshot reste au même niveau `docs/` que l'original afin que tous ses liens relatifs continuent de résoudre correctement. Le présent fichier conserve les résultats qui pilotent directement l'état courant et ajoute les terminaux T3/F6 du 30 août. En cas de contradiction, le verdict terminal le plus récent fondé sur un run complet et son manifest prévaut.
 
 ## 1. Règle de lecture
 
@@ -99,7 +99,7 @@ O1 doit passer, dans cet ordre : contrats unitaires ; équivalence leaf bit-à-b
 
 ## 4. Résultats historiques encore structurants
 
-Les détails exhaustifs, valeurs, portes closes et incidents historiques jusqu'au 19 août sont conservés dans l'[archive byte-identique](archives/PROJECT_RESULTS_PRE_T3_20260830.md). Les points structurants restent :
+Les détails exhaustifs, valeurs, portes closes et incidents historiques jusqu'au 19 août sont conservés dans le [snapshot byte-identique](PROJECT_RESULTS_PRE_T3_20260830.md). Les points structurants restent :
 
 - corrections de méthode/search/fit (`--score-drop`, NMP/threat/history, MMTO) ont fourni des gains réels ;
 - `gen2-mmto`, F2M, TURNOVER puis EXACT ont constitué les principales successions historiques ;
@@ -119,4 +119,4 @@ Les détails exhaustifs, valeurs, portes closes et incidents historiques jusqu'a
 6. Pool1 v4 ne peut jamais devenir un corpus de sélection pour choisir une variante d'optimisation.
 7. Toute nouvelle force sur une implémentation optimisée exige une nouvelle preregistration et un fresh distinct.
 
-Le registre courant suit maintenant la frontière O1 ; l'historique antérieur reste intégralement auditable dans l'archive liée en tête.
+Le registre courant suit maintenant la frontière O1 ; l'historique antérieur reste intégralement auditable dans le snapshot lié en tête.
