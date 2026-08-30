@@ -389,6 +389,16 @@ std::optional<Model> load_model(const std::string& path, LoadPolicy policy,
     }
 }
 
+std::unique_ptr<Network> Network::make_o1_cached(
+    std::unique_ptr<INetwork> base, Model model, int threads, std::string* err) {
+    if (threads != 1) {
+        if (err) *err = "T3/F6 O1 cache requires threads == 1";
+        return nullptr;
+    }
+    return std::unique_ptr<Network>(
+        new Network(std::move(base), std::move(model), CacheActivation{}));
+}
+
 Network::CacheKey Network::cache_key(const Position& pos) noexcept {
     return CacheKey{
         static_cast<std::uint64_t>(pos.white_men()),
@@ -464,24 +474,8 @@ std::unique_ptr<INetwork> maybe_wrap_from_env(std::unique_ptr<INetwork> base,
                                              const std::string& base_path,
                                              std::string* err) {
     if (!base) return nullptr;
-    bool cache_enabled = false;
-    if (const char* cache_env = std::getenv("JASS_T3_F6_CACHE")) {
-        const std::string_view value(cache_env);
-        if (value == "1") cache_enabled = true;
-        else if (value == "0") cache_enabled = false;
-        else {
-            if (err) *err = "JASS_T3_F6_CACHE must be exactly 0 or 1";
-            return nullptr;
-        }
-    }
     const char* env=std::getenv("JASS_T3_F6_MODEL");
-    if (env==nullptr) {
-        if (cache_enabled) {
-            if (err) *err="JASS_T3_F6_CACHE=1 requires JASS_T3_F6_MODEL";
-            return nullptr;
-        }
-        return base;
-    }
+    if (env==nullptr) return base;
     if (*env=='\0') { if (err) *err="JASS_T3_F6_MODEL is present but empty"; return nullptr; }
     std::string hash_error;
     const std::string base_sha=sha256_file(base_path,&hash_error);
@@ -496,7 +490,7 @@ std::unique_ptr<INetwork> maybe_wrap_from_env(std::unique_ptr<INetwork> base,
     }
     auto model=load_model(env,LoadPolicy::FrozenOnly,err);
     if (!model) return nullptr;
-    return std::make_unique<Network>(std::move(base),std::move(*model),cache_enabled);
+    return std::make_unique<Network>(std::move(base),std::move(*model));
 }
 
 }  // namespace jass::t3_f6
