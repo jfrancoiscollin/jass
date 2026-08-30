@@ -4,7 +4,7 @@
 > **Statut : amendment preregistration, écrit avant tout lancement E1/E2/E3.**
 > Ce document fait partie de la PR `#733` et modifie uniquement les **faits upstream O1** du prereg principal [`L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md`](L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md). Les interventions, seeds, volumes, estimands, gates, kill-switches, interdictions et GO distincts E1/E2/E3 du prereg principal restent inchangés sauf contradiction explicitement nommée ci-dessous.
 
-## 1. Fait nouveau observé avant merge de #733 : O1 Gate D PASS
+## 1. Fait nouveau observé avant merge de #733 : O1 terminal
 
 Après rédaction du prereg principal, O1 a poursuivi sa chaîne technique sans aucune partie de force.
 
@@ -46,7 +46,18 @@ nps_ratio_ON_over_OFF         = 1.445162
 
 Ainsi le cache O1 réduit la fenêtre de recherche mesurée d'environ `30.8 %` et augmente le NPS d'environ `44.5 %` **sans changer un seul résultat ou compteur de recherche faisant partie du contrat d'équivalence**.
 
-Le verdict terminal autorisé par la prereg O1 est `O1_EXACT_CACHE_ESTABLISHED`; sa matérialisation read-only terminale dans `jass-control` est la dernière étape administrative de fermeture O1. Aucune donnée E1/E2/E3 n'a été produite au moment de cet amendment.
+Le reçu read-only terminal est maintenant lui aussi terminé :
+
+```text
+job     = cpx62-1705-l3-t3-f6-o1-terminal-receipt-v1
+attempt = 20260830T195143Z-53bddb24
+code    = 53bddb24a2d144af39df486d8c3e53b7d196cf65
+state   = completed
+exit    = 0
+verdict = O1_EXACT_CACHE_ESTABLISHED
+```
+
+Le reçu publie explicitement `O1_EXACT_CACHE_ESTABLISHED`, `O1_GATE_A_PASS`, `O1_GATE_B_PASS`, `O1_GATE_C_PASS`, `O1_GATE_D_PASS`, `O1_TERMINAL_READY`, `STRENGTH_GAMES__0`, `PROMOTION_AUTHORIZED__FALSE` et `BAKE__FALSE`. Aucune donnée E1/E2/E3 n'a été produite avant cet amendment.
 
 ## 2. Ce que ce résultat change dans le prereg principal
 
@@ -54,7 +65,7 @@ Toute phrase du prereg principal disant que **Gate D n'a pas encore été lancé
 
 La caractérisation correcte devient :
 
-> **O1 est fonctionnellement exact et son Gate D CPX62 est sain. Il apporte environ `1.445x` de NPS / `0.692x` de wall sur la fenêtre search-only, avec `32.3 %` de hits, à arbre strictement identique.**
+> **O1 est `O1_EXACT_CACHE_ESTABLISHED`. Son Gate D CPX62 apporte environ `1.445x` de NPS / `0.692x` de wall sur la fenêtre search-only, avec `32.3 %` de hits, à arbre strictement identique.**
 
 ## 3. Ce que ce résultat ne change PAS
 
@@ -86,7 +97,7 @@ avec le bootstrap conjoint et les gates déjà figés dans le prereg principal.
 
 ### 3.4 Aucun nouveau droit de force
 
-O1 Gate D et cet amendment autorisent :
+O1 terminal et cet amendment autorisent :
 
 ```text
 strength games = 0
