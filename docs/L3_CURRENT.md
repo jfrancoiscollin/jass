@@ -3,7 +3,7 @@
 > **Mis à jour : 30 août 2026**
 > **Source de vérité active : ce document.**
 >
-> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [prereg v4](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [résultat terminal v4 + Pool1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [prereg O1 cache exact](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md), [terminal v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Roadmap : [`L3_TEACHER_DISTILLATION_ROADMAP.md`](L3_TEACHER_DISTILLATION_ROADMAP.md). Protocole terminal T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [prereg v4](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [résultat terminal v4 + Pool1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [prereg O1 cache exact](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md), [programme de transfert E1/E2/E3 — prereg DRAFT](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md), [terminal v3](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -53,6 +53,45 @@ POOL2_AUTHORIZED = FALSE
 ```
 
 Ce terminal ferme la campagne de force v4 : aucun Pool2, Pool3, bake ou promotion. Le diagnostic HOME `1688` reste purement technique ; son rebuild HOME natif a observé `wall_ratio=37.154452` et `nps_ratio=0.053152`, ce qui motive seulement l'optimisation exacte O1. O1 preregistre un cache de résiduel F6 strictement exact, sans modèle/search/feature change, et joue `0` partie de force. Tout nouveau test de force après O1 exigerait une preregistration séparée.
+
+#### O1 — Gates A/B/C PASS le 30 août, Gate D non lancé
+
+Le cache exact du résiduel F6 est **prouvé fonctionnellement équivalent**. Job
+`cpx62-1700-l3-t3-f6-o1-gates-abc-q00-auth-v1`, attempt
+`20260830T172656Z-ac3e9415`, code `ac3e94157f958d7a2df8725d44dd32f78f3b2a0e`,
+completed exit `0`, marqueurs publiés `O1_GATE_A_PASS`,
+`O1_GATES_BC_PASS_NONTERMINAL`, `O1_GATES_ABC_TECHNICAL_READY`,
+`GATE_D__NOT_RUN`, `STRENGTH_GAMES__0`.
+
+La chaîne y est arrivée après six tentatives purement techniques
+(`1693`, `1694`, `1695`, `1698` ×2, diagnostic `1699`), dont la cause racine
+nommée par `1699` était
+`t3_f6_exact_cache_o1_contract_R0-v4_terminal_Q00_contract_mismatch`, réparée
+par Jass PR `#732` (authentification du Q00 par reçu immuable). Le verdict O1
+reste **non terminal** : Gate D — le profil de coût — exige un GO explicite JFC
+après faits machine, sizing et ETA.
+
+⚠️ **Décomposition nouvelle du handicap runtime, déduite des ratios de `1688`**
+(`wall = nodes / nps` sur une même fenêtre) :
+`nodes_ratio = 37,154452 × 0,053152 = 1,974833`. Le handicap n'est donc pas un
+effet mais **deux** : `18,8140×` de coût par nœud (ingénierie, ce que O1 attaque)
+et `1,9748×` d'inflation de nœuds à profondeur égale (**qualité d'éval pour
+l'élagage — qu'aucune optimisation de coût n'enlèvera**), soit `37,1545×` en
+nœuds-CURRICULUM équivalents = `5,2155` doublements. Valeur **déduite**, à
+confirmer par le compteur `nodes` direct sur CPX62.
+
+#### Piste de transfert proposée — E1/E2/E3, non autorisée
+
+Preregistration DRAFT en revue :
+[`experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md`](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md).
+Elle ne modifie ni `next_stage`, ni aucun terminal, et n'autorise rien avant
+merge **et** GO explicite par bloc. Constat qui la motive : **Pool1 a réfuté
+T3-A à `0,1 s/coup`, mais n'a pas mesuré la valeur en jeu de l'information F6** —
+les deux effets y sont confondus et aucune donnée existante ne les sépare. Les
+trois blocs sont E1 attribution du coût par famille (`0` partie, `0` fit), E2
+A/B à **nœuds égaux** (le verrou, avec kill switch pré-déclaré), E3 distillation
+de T3-A dans la base pattern à **coût runtime nul** par ré-étiquetage de la
+cible.
 
 ### Historique runtime T3-A — R0-v3 terminal sur support mécanique
 
