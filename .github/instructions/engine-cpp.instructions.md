@@ -1,5 +1,5 @@
 ---
-applyTo: "src/**/*.cpp,src/**/*.hpp,CMakeLists.txt,cmake/**"
+applyTo: "src/**/*.cpp,src/**/*.hpp,src/**/*.inc,pattern_jass/src/**/*.cpp,pattern_jass/src/**/*.hpp,CMakeLists.txt,cmake/**"
 ---
 
 # Engine C++ instructions
