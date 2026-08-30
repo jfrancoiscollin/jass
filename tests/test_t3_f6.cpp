@@ -109,6 +109,132 @@ void test_f6_fast_path_matches_full_extractor_bitwise() {
     }
 }
 
+void test_exact_cache_index_and_validity() {
+    const Position empty{};
+    Position empty_black{};
+    empty_black.set_side_to_move(Color::Black);
+    JASS_CHECK_EQ(t3_f6::Network::cache_index(empty), 26463U);
+    JASS_CHECK_EQ(t3_f6::Network::cache_index(empty_black), 26028U);
+    JASS_CHECK_EQ(t3_f6::Network::cache_index(
+                      parse("W:W28,31,K40:B14,22,K3")), 33051U);
+
+    t3_f6::Network cached(
+        std::make_unique<ConstantNetwork>(73), constant_residual(1.25), true);
+    JASS_CHECK(cached.cache_enabled());
+    JASS_CHECK(cached.thread_contract_ok(1));
+    JASS_CHECK(!cached.thread_contract_ok(2));
+    auto stats = cached.cache_stats();
+    JASS_CHECK_EQ(stats.lookups, 0U);
+    JASS_CHECK_EQ(stats.hits, 0U);
+    JASS_CHECK_EQ(stats.misses, 0U);
+
+    const double first = cached.residual_parent(empty);
+    stats = cached.cache_stats();
+    JASS_CHECK(std::bit_cast<std::uint64_t>(first)
+               == std::bit_cast<std::uint64_t>(1.25));
+    JASS_CHECK_EQ(stats.lookups, 1U);
+    JASS_CHECK_EQ(stats.hits, 0U);
+    JASS_CHECK_EQ(stats.misses, 1U);
+    JASS_CHECK_EQ(stats.replacements, 0U);
+    JASS_CHECK_EQ(stats.extract_f6_executions, 1U);
+
+    const double second = cached.residual_parent(empty);
+    stats = cached.cache_stats();
+    JASS_CHECK_EQ(std::bit_cast<std::uint64_t>(first),
+                  std::bit_cast<std::uint64_t>(second));
+    JASS_CHECK_EQ(stats.lookups, 2U);
+    JASS_CHECK_EQ(stats.hits, 1U);
+    JASS_CHECK_EQ(stats.misses, 1U);
+    JASS_CHECK_EQ(stats.extract_f6_executions, 1U);
+
+    cached.clear_cache();
+    stats = cached.cache_stats();
+    JASS_CHECK_EQ(stats.lookups, 0U);
+    JASS_CHECK_EQ(stats.hits, 0U);
+    JASS_CHECK_EQ(stats.misses, 0U);
+    (void)cached.residual_parent(empty);
+    stats = cached.cache_stats();
+    JASS_CHECK_EQ(stats.hits, 0U);
+    JASS_CHECK_EQ(stats.misses, 1U);
+    JASS_CHECK_EQ(stats.extract_f6_executions, 1U);
+
+    t3_f6::Network control(
+        std::make_unique<ConstantNetwork>(73), constant_residual(1.25), false);
+    JASS_CHECK(!control.cache_enabled());
+    JASS_CHECK(control.thread_contract_ok(8));
+    (void)control.residual_parent(empty);
+    const auto control_stats = control.cache_stats();
+    JASS_CHECK_EQ(control_stats.lookups, 0U);
+    JASS_CHECK_EQ(control_stats.extract_f6_executions, 0U);
+}
+
+void test_exact_cache_collision_is_not_a_hit() {
+    const Position a = parse("W:W10:B46");
+    const Position b = parse("W:W12:B2");
+    JASS_CHECK(a != b);
+    JASS_CHECK_EQ(t3_f6::Network::cache_index(a), 53309U);
+    JASS_CHECK_EQ(t3_f6::Network::cache_index(b), 53309U);
+
+    t3_f6::Network cached(
+        std::make_unique<ConstantNetwork>(0), constant_residual(3.0), true);
+    (void)cached.residual_parent(a);
+    (void)cached.residual_parent(b);
+    auto stats = cached.cache_stats();
+    JASS_CHECK_EQ(stats.lookups, 2U);
+    JASS_CHECK_EQ(stats.hits, 0U);
+    JASS_CHECK_EQ(stats.misses, 2U);
+    JASS_CHECK_EQ(stats.replacements, 1U);
+    JASS_CHECK_EQ(stats.extract_f6_executions, 2U);
+
+    (void)cached.residual_parent(a);
+    stats = cached.cache_stats();
+    JASS_CHECK_EQ(stats.hits, 0U);
+    JASS_CHECK_EQ(stats.misses, 3U);
+    JASS_CHECK_EQ(stats.replacements, 2U);
+}
+
+void test_cache_preserves_search_result() {
+    const Position root = Position::start_position();
+    t3_f6::Network off(
+        std::make_unique<ConstantNetwork>(73), constant_residual(1.25), false);
+    t3_f6::Network on(
+        std::make_unique<ConstantNetwork>(73), constant_residual(1.25), true);
+    SearchLimits limits;
+    limits.max_depth = 2;
+    limits.threads = 1;
+
+    TranspositionTable off_tt;
+    off_tt.resize_mb(1);
+    limits.nnue = &off;
+    const SearchResult a = search(root, limits, off_tt);
+
+    TranspositionTable on_tt;
+    on_tt.resize_mb(1);
+    limits.nnue = &on;
+    const SearchResult b = search(root, limits, on_tt);
+
+    JASS_CHECK_EQ(a.best_move, b.best_move);
+    JASS_CHECK_EQ(a.score, b.score);
+    JASS_CHECK_EQ(a.depth, b.depth);
+    JASS_CHECK_EQ(a.effective_depth, b.effective_depth);
+    JASS_CHECK_EQ(a.completed_depth, b.completed_depth);
+    JASS_CHECK_EQ(a.nodes, b.nodes);
+    JASS_CHECK_EQ(a.cutoffs, b.cutoffs);
+    JASS_CHECK_EQ(a.first_move_cutoffs, b.first_move_cutoffs);
+    JASS_CHECK_EQ(a.pvs_researches, b.pvs_researches);
+    JASS_CHECK_EQ(a.moves_searched, b.moves_searched);
+    JASS_CHECK_EQ(a.eval_calls, b.eval_calls);
+    JASS_CHECK_EQ(a.qnodes, b.qnodes);
+    JASS_CHECK_EQ(a.qsearch_calls, b.qsearch_calls);
+    JASS_CHECK_EQ(a.tt_probes, b.tt_probes);
+    JASS_CHECK_EQ(a.tt_hits, b.tt_hits);
+    JASS_CHECK_EQ(a.terminal_hits, b.terminal_hits);
+    JASS_CHECK_EQ(a.reductions, b.reductions);
+    JASS_CHECK_EQ(a.extensions, b.extensions);
+    JASS_CHECK_EQ(a.pv, b.pv);
+    JASS_CHECK_EQ(a.from_book, b.from_book);
+}
+
 void test_search_uses_exactly_one_negamax_inversion() {
     const Position root = Position::start_position();
     t3_f6::Network network(
@@ -159,5 +285,8 @@ void run_t3_f6_tests() {
     test_exact_formula_rounding_and_clamp();
     test_position_only_and_colour_perspective();
     test_f6_fast_path_matches_full_extractor_bitwise();
+    test_exact_cache_index_and_validity();
+    test_exact_cache_collision_is_not_a_hit();
+    test_cache_preserves_search_result();
     test_search_uses_exactly_one_negamax_inversion();
 }
