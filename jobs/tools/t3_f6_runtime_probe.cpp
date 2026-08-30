@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
         const std::uint64_t order_seed = std::stoull(argv[7]);
         if (passes < 1) throw std::runtime_error("passes must be positive");
         if (order_seed != 2026090904ULL && order_seed != 2026091704ULL
-            && order_seed != 2026092104ULL)
+            && order_seed != 2026092104ULL && order_seed != 2026092505ULL)
             throw std::runtime_error("R0 benchmark order seed drift");
         const auto positions = read_positions(argv[1]);
         std::string err;
