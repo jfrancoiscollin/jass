@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // T3/F6 O1 exact-cache technical equivalence harness.
 //
-// This executable is deliberately strength-free. The caller must derive
-// roots64.fen from the authenticated 4096-row R0-v4 corpus with the frozen
+// This executable is deliberately strength-free. The caller must fetch
+// r0-corpus.fen and r0-selection.json from the same immutable cpx62-1685
+// attempt, then derive roots64.fen with the frozen
 // jobs/tools/t3_f6_search_profile.py::stratified(corpus,16,2026092505)
-// rule before invoking this harness. The harness authenticates the frozen
-// model/eval bytes, Gate-B leaf equality on all 4096 rows, then Gate-C search
-// equality on exactly those 64 roots and the complete R0-v4 same_result set.
+// rule. The harness authenticates the corpus against the selector certificate,
+// authenticates the frozen model/eval bytes, executes Gate B on all 4096 rows,
+// then Gate C on exactly 64 roots using the complete R0-v4 same_result set.
 #include "egdb_bridge.hpp"
 #include "scan_eval.hpp"
 #include "search.hpp"
@@ -14,6 +15,7 @@
 #include "t3_f6.hpp"
 
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cmath>
 #include <cstddef>
@@ -22,7 +24,6 @@
 #include <iostream>
 #include <map>
 #include <memory>
-#include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -59,6 +60,46 @@ std::vector<FenRow> read_fens(const std::string& path) {
         rows.push_back({line, parse(line)});
     }
     return rows;
+}
+
+std::string read_text(const std::string& path) {
+    std::ifstream input(path, std::ios::binary);
+    if (!input) throw std::runtime_error("cannot open certificate: " + path);
+    return std::string(std::istreambuf_iterator<char>(input),
+                       std::istreambuf_iterator<char>());
+}
+
+std::size_t json_value_start(const std::string& text, std::string_view key) {
+    const std::string needle = "\"" + std::string(key) + "\"";
+    const auto key_pos = text.find(needle);
+    if (key_pos == std::string::npos)
+        throw std::runtime_error("certificate missing key: " + std::string(key));
+    const auto colon = text.find(':', key_pos + needle.size());
+    if (colon == std::string::npos)
+        throw std::runtime_error("certificate malformed key: " + std::string(key));
+    const auto value = text.find_first_not_of(" \t\r\n", colon + 1U);
+    if (value == std::string::npos)
+        throw std::runtime_error("certificate missing value: " + std::string(key));
+    return value;
+}
+
+std::string json_string_field(const std::string& text, std::string_view key) {
+    const auto begin = json_value_start(text, key);
+    if (text[begin] != '"')
+        throw std::runtime_error("certificate non-string key: " + std::string(key));
+    const auto end = text.find('"', begin + 1U);
+    if (end == std::string::npos)
+        throw std::runtime_error("certificate unterminated string: " + std::string(key));
+    return text.substr(begin + 1U, end - begin - 1U);
+}
+
+std::uint64_t json_uint_field(const std::string& text, std::string_view key) {
+    const auto begin = json_value_start(text, key);
+    std::size_t end = begin;
+    while (end < text.size() && text[end] >= '0' && text[end] <= '9') ++end;
+    if (end == begin)
+        throw std::runtime_error("certificate non-integer key: " + std::string(key));
+    return std::stoull(text.substr(begin, end - begin));
 }
 
 std::string phase(const Position& p) {
@@ -103,16 +144,6 @@ bool same_result(const jass::SearchResult& a, const jass::SearchResult& b) {
 }
 
 enum class Budget { Depth1, Depth9, Nodes1k, Nodes10k };
-
-const char* budget_name(Budget budget) noexcept {
-    switch (budget) {
-        case Budget::Depth1: return "depth1";
-        case Budget::Depth9: return "depth9";
-        case Budget::Nodes1k: return "nodes1000";
-        case Budget::Nodes10k: return "nodes10000";
-    }
-    return "unknown";
-}
 
 jass::SearchLimits limits_for(const jass::SearchParams& params, Budget budget) {
     jass::SearchLimits limits;
@@ -178,26 +209,46 @@ std::pair<jass::SearchResult, jass::t3_f6::CacheStats> run_on(
 const char* boolean(bool value) noexcept { return value ? "true" : "false"; }
 
 int run_contract(int argc, char** argv) {
-    if (argc != 7) {
+    if (argc != 8) {
         throw std::runtime_error(
             "usage: t3_f6_exact_cache_o1_contract <r0-corpus.fen> <roots64.fen> "
-            "<curriculum.pjtw> <t3.json> <q00-search-params> <report.json>");
+            "<r0-selection.json> <curriculum.pjtw> <t3.json> "
+            "<q00-search-params> <report.json>");
     }
     const std::string corpus_path = argv[1];
     const std::string roots_path = argv[2];
-    const std::string curriculum_path = argv[3];
-    const std::string model_path = argv[4];
-    const std::string params_spec = argv[5];
-    const std::string report_path = argv[6];
+    const std::string selection_path = argv[3];
+    const std::string curriculum_path = argv[4];
+    const std::string model_path = argv[5];
+    const std::string params_spec = argv[6];
+    const std::string report_path = argv[7];
 
     std::string error;
-    if (jass::t3_f6::sha256_file(curriculum_path, &error)
-        != jass::t3_f6::FROZEN_CURRICULUM_SHA256) {
+    const std::string curriculum_sha =
+        jass::t3_f6::sha256_file(curriculum_path, &error);
+    const std::string model_sha = jass::t3_f6::sha256_file(model_path, &error);
+    const std::string corpus_sha = jass::t3_f6::sha256_file(corpus_path, &error);
+    if (curriculum_sha != jass::t3_f6::FROZEN_CURRICULUM_SHA256)
         throw std::runtime_error("CURRICULUM SHA256 mismatch");
-    }
-    if (jass::t3_f6::sha256_file(model_path, &error)
-        != jass::t3_f6::FROZEN_MODEL_SHA256) {
+    if (model_sha != jass::t3_f6::FROZEN_MODEL_SHA256)
         throw std::runtime_error("T3-A SHA256 mismatch");
+
+    // Authenticate the exact cpx62-1685 corpus against the immutable selector
+    // certificate fetched from the same result attempt. Cardinality alone is
+    // intentionally insufficient.
+    const std::string selection = read_text(selection_path);
+    if (json_string_field(selection, "schema")
+            != "jass.t3_f6_r0_target_blind_selection.v4"
+        || json_string_field(selection, "verdict")
+            != "R0_V4_TARGET_BLIND_CORPUS_READY"
+        || json_uint_field(selection, "selected") != 4096U
+        || json_uint_field(selection, "selection_seed") != 2026092502U
+        || json_uint_field(selection, "permutation_seed") != 2026092503U
+        || json_uint_field(selection, "search_seed") != 2026092504U
+        || json_uint_field(selection, "benchmark_seed") != 2026092505U
+        || json_uint_field(selection, "forbidden_overlap") != 0U
+        || json_string_field(selection, "fen_sha256") != corpus_sha) {
+        throw std::runtime_error("R0-v4 corpus/selection certificate mismatch");
     }
 
     const auto corpus = read_fens(corpus_path);
@@ -305,6 +356,9 @@ int run_contract(int argc, char** argv) {
            << "  \"gate_b_pass\": " << boolean(gate_b) << ",\n"
            << "  \"gate_c_pass\": " << boolean(gate_c) << ",\n"
            << "  \"corpus_rows\": " << corpus.size() << ",\n"
+           << "  \"corpus_sha256\": \"" << corpus_sha << "\",\n"
+           << "  \"selection_certificate_sha256\": \""
+           << jass::t3_f6::sha256_file(selection_path, &error) << "\",\n"
            << "  \"roots\": " << roots.size() << ",\n"
            << "  \"roots_sha256\": \""
            << jass::t3_f6::sha256_file(roots_path, &error) << "\",\n"
