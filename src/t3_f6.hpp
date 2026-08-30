@@ -5,6 +5,7 @@
 #include "nnue.hpp"
 #include "residual_features.hpp"
 #include "search.hpp"
+#include "tt.hpp"
 
 #include <array>
 #include <chrono>
