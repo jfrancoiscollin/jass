@@ -1,9 +1,9 @@
 # L3 — Teacher distillation roadmap
 
 > **Mis à jour : 30 août 2026**
-> **Statut : runtime T3-A R0-v4 établi (`R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED`) ; Pool1 PRIMARY CPX62 autorisé, encore `0` partie de force.**
+> **Statut : runtime T3-A v4 fermé négativement (`T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED`) ; Pool2 interdit. Prochaine étape : O1 cache exact, technique uniquement.**
 >
-> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [v4 terminal](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [v4 prereg](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [v3 terminal](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
+> Situation détaillée : [`L3_CURRENT.md`](L3_CURRENT.md). Prereg T3 : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md). Runtime : [v4 terminal + Pool1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md), [O1 cache exact](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md), [v4 prereg](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md), [v3 terminal](experiments/L3_T3_F6_RUNTIME_STRENGTH_V3_RESULTS_20260829.md), [autopsie negamax](experiments/L3_T3_F6_NEGAMAX_AUTOPSY_20260829.md), [terminal v2](experiments/L3_T3_F6_RUNTIME_STRENGTH_V2_RESULTS_20260829.md) et [terminal v1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V1_RESULTS_20260829.md).
 
 ---
 
@@ -141,7 +141,7 @@ Q1, T2 fresh, RF1 fresh et T3 fresh restent des cohorts consommés selon leurs c
 
 ---
 
-## 8. Frontière runtime atteinte
+## 8. Frontière runtime atteinte puis fermée en force v4
 
 V1 a terminalement montré que CURRICULUM ne satisfait pas une symétrie couleur
 absolue. V2, preregistrée séparément, a posé le contraste relatif correct. Sur
@@ -187,7 +187,7 @@ Le STOP v3 intervient avant corpus `4096`, drift v3, leaf/search trace, parité
 et profil de coût. Ce n'est pas un défaut T3-A ; la recette target-blind
 preregistrée manque de support mécanique et ne peut être relâchée post-hoc.
 
-V4 a ensuite été preregistrée comme campagne distincte et s'est terminée sur :
+V4 a ensuite été preregistrée comme campagne distincte et R0 s'est terminé sur :
 
 ```text
 R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED
@@ -196,12 +196,21 @@ R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED
 Job `cpx62-1685-l3-t3-f6-runtime-r0-v4`, attempt
 `20260830T083226Z-0ead13cb`, code
 `0ead13cb3579ce83c1278fe21c6634096d5e8eec`, completed exit `0`.
-`POOL1_AUTHORIZED__TRUE`, `STRENGTH_GAMES__0`, promotion/bake `FALSE`, paramètres
-scientifiques inchangés. V4 ne modifie aucun terminal antérieur.
+R0 a autorisé Pool1 uniquement, sans partie de force pendant le gate.
 
-Le prochain verdict autorisé est désormais Pool1 PRIMARY CPX62, native
-`0.1 s/move`, sur le contraste gelé `T3_A_F6 vs CURRICULUM`. Le Q00 Home depth
-9 est diagnostic/non bloquant. Pool2 reste conditionnel à un Pool1 positif.
+Le Pool1 PRIMARY a ensuite été exécuté par `cpx62-1686-l3-t3-f6-runtime-strength-pool1-v4`, attempt `20260830T104034Z-0ead13cb`, sur `6000` parties. Le reçu terminal `cpx62-1689-l3-t3-f6-runtime-pool1-terminal-receipt-v1` publie :
+
+```text
+T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED
+W/D/L T3-A = 1167 / 180 / 4653
+score = 0.2095
+Elo = -230.6871387863655
+paired CI95 = [0.20033333333333334 ; 0.21866666666666668]
+P(score>0.5) = 0.0
+POOL2_AUTHORIZED = FALSE
+```
+
+La direction de force v4 est donc terminalement fermée : aucun Pool2, Pool3, bake ou promotion. Le diagnostic HOME 1688 reste technique uniquement ; son coût (`wall_ratio=37.154452`, `nps_ratio=0.053152`) motive O1 mais ne réinterprète pas le verdict de force.
 
 ---
 
@@ -211,8 +220,8 @@ Le prochain verdict autorisé est désormais Pool1 PRIMARY CPX62, native
 2. `F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE` reste le verdict scientifique terminal T3 offline.
 3. Aucune métrique secondaire ne transforme B−A en PASS.
 4. Aucun retune ni nouveau fresh T3 n'est autorisé.
-5. Les terminaux runtime v1/v2/v3 restent immuables. R0-v4 a établi séparément le contrat production leaf, toujours avec `strength_games=0`.
-6. `next_stage = POOL1_PRIMARY_CPX62` sous les bytes/search/runtime v4 gelés. Le Q00 Home depth 9 est diagnostic/non bloquant et ne peut jamais sauver un PRIMARY négatif.
-7. Pool2 n'est autorisé qu'après un Pool1 positif ; aucun Pool3 ni promotion automatique.
+5. Les terminaux runtime v1/v2/v3 restent immuables. R0-v4 a établi séparément le contrat production leaf ; Pool1 v4 a ensuite fermé la force avec `T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED`.
+6. `next_stage = O1_EXACT_CACHE_TECHNICAL_ONLY`. O1 conserve exactement le modèle, les 66 F6, le search, l'arrondi et le POV ; il doit prouver l'équivalence leaf/search avant profilage et joue zéro partie de force.
+7. Pool2 v4 est interdit. Toute future campagne de force sur une implémentation optimisée exige une preregistration séparée après le terminal O1 ; aucun Pool3 ni promotion automatique.
 
-La roadmap T3 passe maintenant au verdict causal de force `T3_A_F6 vs CURRICULUM`.
+La roadmap T3 passe uniquement à l'optimisation runtime exacte O1 ; le verdict causal de force v4 est clos.
