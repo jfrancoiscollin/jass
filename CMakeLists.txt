@@ -412,6 +412,9 @@ if(NOT EMSCRIPTEN)
     add_executable(t3_f6_runtime_contract_v4 jobs/tools/t3_f6_runtime_contract_v4.cpp
                    $<TARGET_OBJECTS:jass_t3_f6_runtime>)
     target_link_libraries(t3_f6_runtime_contract_v4 PRIVATE jass_lib jass_warnings)
+    add_executable(t3_f6_exact_cache_o1_contract jobs/tools/t3_f6_exact_cache_o1_contract.cpp
+                   $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(t3_f6_exact_cache_o1_contract PRIVATE jass_lib jass_warnings)
     add_test(NAME t3_f6_transposition_selftest
              COMMAND t3_f6_invariance_probe --transposition-selftest)
     add_test(NAME t3_f6_relative_transposition_selftest
@@ -422,6 +425,8 @@ if(NOT EMSCRIPTEN)
              COMMAND t3_f6_leaf_contract_v3 --selftest)
     add_test(NAME t3_f6_runtime_contract_v4_selftest
              COMMAND t3_f6_runtime_contract_v4 --selftest)
+    add_test(NAME t3_f6_exact_cache_o1_contract_selftest
+             COMMAND t3_f6_exact_cache_o1_contract --selftest)
 endif()
 
 # -----------------------------------------------------------------------------
