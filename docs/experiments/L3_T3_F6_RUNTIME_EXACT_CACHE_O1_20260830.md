@@ -84,7 +84,8 @@ Implémenter un cache privé au wrapper `t3_f6::Network` avec le contrat suivant
 8. aucun changement de F1/F2/F3/F4/F5, normalisation, poids, arrondi, clamp, POV, movegen, qsearch, pruning, ordering, TT ou terminal/TB ;
 9. cache désactivé par défaut dans le binaire tant que le nouveau contrat n'est pas explicitement activé pour O1 ;
 10. **contrat de concurrence gelé** : l'activation O1 du cache est autorisée uniquement avec `threads == 1`, qui est aussi le contrat R0-v4 ; si le cache O1 est explicitement demandé avec `threads != 1`, le programme/job doit échouer avant la première recherche, sans désactivation silencieuse ni cache partagé ; lorsque le cache est désactivé, le comportement multi-thread historique reste inchangé ;
-11. compteur diagnostique exact : lookups, hits, misses, replacements et `extract_f6` réellement exécutés ; ces compteurs O1 ne sont donc mutés que sous `threads == 1`.
+11. compteur diagnostique exact : lookups, hits, misses, replacements et `extract_f6` réellement exécutés ; ces compteurs O1 ne sont donc mutés que sous `threads == 1` ;
+12. **cycle de vie gelé** : chaque unité root×budget des Gates C/D construit un nouveau `Network` O1 et démarre avec un cache vide et des compteurs à zéro ; le cache persiste uniquement pendant cette recherche unique puis est détruit. Aucun contenu de cache ne traverse deux racines ou deux budgets, et aucun warm-up hors recherche mesurée n'est autorisé.
 
 Aucune autre optimisation n'est autorisée dans O1. En particulier : pas de refactor F2, pas de vectorisation approximative, pas de compression, pas de quantification, pas de changement de précision.
 
@@ -108,6 +109,7 @@ Support gelé :
 - nouveaux tests cache : miss, hit, collision d'index avec clé différente, remplacement, STM distinct ;
 - test déterministe de la formule FNV-1a/index gelée sur des clés fixtures avec indices attendus littéraux ;
 - test de contrat concurrence : activation cache avec `threads=1` PASS ; activation cache avec `threads>1` doit échouer avant recherche ; cache désactivé conserve le comportement multi-thread historique ;
+- test du cycle de vie : nouveau `Network` = cache vide/compteurs zéro ; une recherche peut produire des hits ; la destruction/reconstruction avant la racine suivante remet obligatoirement le cache à vide ;
 - aucun hit ne doit être accepté sur simple hash/index sans égalité de clé complète.
 
 ### Gate B — équivalence leaf exacte
@@ -124,7 +126,7 @@ Tout mismatch donne `O1_EXACT_CACHE_EQUIVALENCE_FAILED` et STOP.
 
 ### Gate C — équivalence search exacte
 
-Sur exactement `64` racines R0-v4, `16` par phase, sélectionnées par l'ordre benchmark déjà gelé `2026092505`, comparer cache OFF puis ON avec moteur/state/TT frais par bras, toujours `threads=1` :
+Sur exactement `64` racines R0-v4, `16` par phase, sélectionnées par l'ordre benchmark déjà gelé `2026092505`, comparer cache OFF puis ON avec moteur/state/TT/**Network** frais par bras, toujours `threads=1`. Chaque root×budget ON commence cache vide ; le cache n'est conservé que pendant la recherche de cette unité :
 
 - depth exact `1` ;
 - depth exact `9` ;
@@ -142,7 +144,9 @@ Tout mismatch donne `O1_EXACT_CACHE_SEARCH_EQUIVALENCE_FAILED` et STOP.
 Seulement après A/B/C PASS, mesurer sur CPX62 avec le **même exécutable O1** et mêmes bytes/search, `threads=1` :
 
 - exactement `128` racines R0-v4, `32` par phase, ordre déterministe `2026092505` ;
-- cache OFF et ON, ordre alterné ;
+- pour chaque root, exécuter OFF puis ON si son index dans l'ordre gelé est pair, ON puis OFF s'il est impair ; chaque bras reçoit moteur/state/TT/Network frais ;
+- pour chaque root×bras, le `Network` est créé juste avant la recherche ; en ON le cache commence vide, persiste uniquement pendant cette recherche depth-9, puis est détruit ; en OFF aucun cache n'est actif ;
+- aucun warm-up, aucune racine d'amorçage et aucune réutilisation inter-root/inter-budget du cache ;
 - depth exact `9` ;
 - publier wall time, NPS, nodes, eval calls, effective depth, cache hit-rate, `extract_f6` executions, movegen calls et famille F1..F5 si disponibles.
 
@@ -175,6 +179,6 @@ Il **n'autorise aucune partie de force**. Si O1 est établi et son profil est ju
 
 ## 9. Traçabilité requise
 
-Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
+Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **cycle de vie fresh-Network-per-root×budget**, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
 
 Les terminaux `1685`, `1686`, `1688`, `1689` restent immuables et doivent être référencés, jamais réécrits.
