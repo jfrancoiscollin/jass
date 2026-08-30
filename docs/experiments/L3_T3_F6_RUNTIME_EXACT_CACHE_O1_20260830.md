@@ -150,7 +150,8 @@ Seulement après A/B/C PASS, mesurer sur CPX62 avec le **même exécutable O1** 
 - pour chaque root×bras, le `Network` est créé juste avant la recherche ; en ON le cache commence vide, persiste uniquement pendant cette recherche depth-9, puis est détruit ; en OFF aucun cache n'est actif ;
 - aucun warm-up, aucune racine d'amorçage et aucune réutilisation inter-root/inter-budget du cache ;
 - depth exact `9` ;
-- publier wall time, NPS, nodes, eval calls, effective depth, cache hit-rate, `extract_f6` executions, movegen calls et famille F1..F5 si disponibles.
+- **fenêtre wall-clock primaire gelée** : chronométrer uniquement l'appel de recherche depth-9, de l'entrée immédiate dans `go/search` jusqu'au retour de cette recherche ; la construction/initialisation de l'Engine, TT, `Network` et des `65536` entrées de cache, ainsi que leur destruction, sont **hors** de la fenêtre primaire ; setup et teardown peuvent être publiés séparément comme diagnostics mais ne peuvent ni être ajoutés au ratio primaire ni servir à sélectionner une variante ;
+- publier wall time primaire, NPS, nodes, eval calls, effective depth, cache hit-rate, `extract_f6` executions, movegen calls et famille F1..F5 si disponibles.
 
 Aucun seuil de performance ne transforme O1 en résultat scientifique. Le profil est descriptif : la seule condition de PASS O1 est l'équivalence exacte A/B/C plus une exécution technique saine.
 
@@ -183,6 +184,6 @@ Il **n'autorise aucune partie de force**. Si O1 est établi et son profil est ju
 
 ## 9. Traçabilité requise
 
-Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **cycle de vie fresh-Network-per-root×budget**, source exacte des racines C/D (`r0-corpus.fen` + `stratified` seed `2026092505` + préfixes 16/32 par phase), contrat `same_result` complet, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
+Le terminal O1 devra publier : code SHA, bytes T3/CURRICULUM, capacité/cache key contract, formule/index FNV-1a gelée, **cycle de vie fresh-Network-per-root×budget**, source exacte des racines C/D (`r0-corpus.fen` + `stratified` seed `2026092505` + préfixes 16/32 par phase), contrat `same_result` complet, **fenêtre wall-clock primaire search-only**, compteurs hit/miss/replacement, résultats d'équivalence leaf/search, profil coût, host/nproc, `threads=1`, build flags, et verdict exact.
 
 Les terminaux `1685`, `1686`, `1688`, `1689` restent immuables et doivent être référencés, jamais réécrits.
