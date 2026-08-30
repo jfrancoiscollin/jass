@@ -389,9 +389,78 @@ std::optional<Model> load_model(const std::string& path, LoadPolicy policy,
     }
 }
 
+std::unique_ptr<Network> Network::make_o1_cached(
+    std::unique_ptr<INetwork> base, Model model, int threads, std::string* err) {
+    if (threads != 1) {
+        if (err) *err = "T3/F6 O1 cache requires threads == 1";
+        return nullptr;
+    }
+    return std::unique_ptr<Network>(
+        new Network(std::move(base), std::move(model), CacheActivation{}));
+}
+
+Network::CacheKey Network::cache_key(const Position& pos) noexcept {
+    return CacheKey{
+        static_cast<std::uint64_t>(pos.white_men()),
+        static_cast<std::uint64_t>(pos.white_kings()),
+        static_cast<std::uint64_t>(pos.black_men()),
+        static_cast<std::uint64_t>(pos.black_kings()),
+        static_cast<std::uint8_t>(pos.side_to_move() == Color::White ? 0U : 1U),
+    };
+}
+
+std::uint16_t Network::cache_index(const CacheKey& key) noexcept {
+    std::uint64_t h = 14695981039346656037ULL;
+    const auto mix_byte = [&h](std::uint8_t byte) noexcept {
+        h ^= static_cast<std::uint64_t>(byte);
+        h *= 1099511628211ULL;
+    };
+    const auto mix_u64_le = [&mix_byte](std::uint64_t value) noexcept {
+        for (unsigned shift = 0; shift < 64U; shift += 8U) {
+            mix_byte(static_cast<std::uint8_t>((value >> shift) & 0xffULL));
+        }
+    };
+    mix_u64_le(key.white_men);
+    mix_u64_le(key.white_kings);
+    mix_u64_le(key.black_men);
+    mix_u64_le(key.black_kings);
+    mix_byte(key.side_to_move);
+    return static_cast<std::uint16_t>(h & 0xffffULL);
+}
+
+std::uint16_t Network::cache_index(const Position& pos) noexcept {
+    return cache_index(cache_key(pos));
+}
+
+void Network::clear_cache() const noexcept {
+    if (!cache_enabled_) return;
+    for (CacheEntry& entry : cache_) entry.valid = false;
+    cache_stats_ = CacheStats{};
+}
+
 double Network::residual_parent(const Position& pos) const noexcept {
-    try { return model_.residual_parent(residual_features::extract_f6(pos).all_new()); }
-    catch (...) { std::terminate(); }
+    try {
+        if (!cache_enabled_) {
+            return model_.residual_parent(residual_features::extract_f6(pos).all_new());
+        }
+        const CacheKey key = cache_key(pos);
+        CacheEntry& entry = cache_[cache_index(key)];
+        ++cache_stats_.lookups;
+        if (entry.valid && entry.key == key) {
+            ++cache_stats_.hits;
+            return entry.residual;
+        }
+        ++cache_stats_.misses;
+        if (entry.valid) ++cache_stats_.replacements;
+        const double residual = model_.residual_parent(
+            residual_features::extract_f6(pos).all_new());
+        ++cache_stats_.extract_f6_executions;
+        entry.valid = false;
+        entry.key = key;
+        entry.residual = residual;
+        entry.valid = true;
+        return residual;
+    } catch (...) { std::terminate(); }
 }
 int Network::evaluate_from_base(const Position& pos, int base_score) const noexcept {
     return round_score(static_cast<double>(base_score)-residual_parent(pos));
