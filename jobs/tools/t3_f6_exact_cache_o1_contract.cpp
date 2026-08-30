@@ -2,9 +2,10 @@
 // T3/F6 O1 exact-cache technical equivalence harness.
 //
 // This executable is deliberately strength-free. It authenticates the exact
-// cpx62-1685 corpus against r0-selection.json, derives the frozen Gate-C roots
+// cpx62-1685 corpus, selector certificate and terminal summary against hashes
+// published by read-only receipt cpx62-1691, derives the frozen Gate-C roots
 // internally from stratified(corpus,16,2026092505), verifies any supplied root
-// file byte-for-byte at the FEN-order level, then runs Gate B before Gate C.
+// file row-for-row, then runs Gate B before Gate C.
 #include "egdb_bridge.hpp"
 #include "scan_eval.hpp"
 #include "search.hpp"
@@ -20,9 +21,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <map>
 #include <memory>
-#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -32,6 +31,18 @@
 namespace {
 
 using jass::Position;
+
+// Exact immutable inputs from cpx62-1685, independently re-authenticated by
+// cpx62-1691-l3-t3-f6-o1-r0-hash-receipt-v1, attempt
+// 20260830T142614Z-4e67610f.  O1 must fail closed if any byte changes.
+constexpr std::string_view R0_CORPUS_SHA256 =
+    "e22b5d8c8a89ff8491ca096a10219f8936f046a9b22977fcf2cfe48f96b309c5";
+constexpr std::string_view R0_SELECTION_SHA256 =
+    "8bc8ea375a20a83df3f82ee9235e62adcc37db6ef4035dbcf204279b937f5a18";
+constexpr std::string_view R0_SUMMARY_SHA256 =
+    "58d71be1c55d56d5140952e9af1baab48c0769214b615d0666f76b3bcbee0b5f";
+constexpr std::string_view R0_CODE_SHA =
+    "0ead13cb3579ce83c1278fe21c6634096d5e8eec";
 
 struct FenRow {
     std::string fen;
@@ -99,6 +110,13 @@ std::uint64_t json_uint_field(const std::string& text, std::string_view key) {
     if (end == begin)
         throw std::runtime_error("certificate non-integer key: " + std::string(key));
     return std::stoull(text.substr(begin, end - begin));
+}
+
+bool json_bool_field(const std::string& text, std::string_view key) {
+    const auto begin = json_value_start(text, key);
+    if (text.compare(begin, 4U, "true") == 0) return true;
+    if (text.compare(begin, 5U, "false") == 0) return false;
+    throw std::runtime_error("certificate non-boolean key: " + std::string(key));
 }
 
 constexpr std::array<std::uint32_t, 64> SHA_K = {
@@ -286,6 +304,8 @@ void write_gate_b_failure(const std::string& path,
                           std::size_t corpus_rows,
                           const std::string& corpus_sha,
                           const std::string& selection_sha,
+                          const std::string& summary_sha,
+                          const std::string& q00_sha,
                           std::size_t residual_mismatches,
                           std::size_t score_mismatches,
                           std::size_t replay_residual_mismatches,
@@ -293,6 +313,7 @@ void write_gate_b_failure(const std::string& path,
                           std::size_t flush_residual_mismatches,
                           std::size_t flush_score_mismatches,
                           std::size_t nonfinite,
+                          std::size_t saturations,
                           std::uint64_t hits) {
     std::ofstream report(path);
     if (!report) throw std::runtime_error("cannot create O1 Gate B report");
@@ -304,6 +325,8 @@ void write_gate_b_failure(const std::string& path,
            << "  \"corpus_rows\": " << corpus_rows << ",\n"
            << "  \"corpus_sha256\": \"" << corpus_sha << "\",\n"
            << "  \"selection_certificate_sha256\": \"" << selection_sha << "\",\n"
+           << "  \"r0_summary_sha256\": \"" << summary_sha << "\",\n"
+           << "  \"q00_sha256\": \"" << q00_sha << "\",\n"
            << "  \"residual_mismatches\": " << residual_mismatches << ",\n"
            << "  \"score_mismatches\": " << score_mismatches << ",\n"
            << "  \"replay_residual_mismatches\": " << replay_residual_mismatches << ",\n"
@@ -311,6 +334,7 @@ void write_gate_b_failure(const std::string& path,
            << "  \"flush_residual_mismatches\": " << flush_residual_mismatches << ",\n"
            << "  \"flush_score_mismatches\": " << flush_score_mismatches << ",\n"
            << "  \"nonfinite\": " << nonfinite << ",\n"
+           << "  \"saturations\": " << saturations << ",\n"
            << "  \"gate_b_hits\": " << hits << ",\n"
            << "  \"strength_games\": 0,\n"
            << "  \"scientific_decision\": false\n"
@@ -318,29 +342,36 @@ void write_gate_b_failure(const std::string& path,
 }
 
 int run_contract(int argc, char** argv) {
-    if (argc != 8) {
+    if (argc != 9) {
         throw std::runtime_error(
             "usage: t3_f6_exact_cache_o1_contract <r0-corpus.fen> <roots64.fen> "
-            "<r0-selection.json> <curriculum.pjtw> <t3.json> "
+            "<r0-selection.json> <r0-summary.json> <curriculum.pjtw> <t3.json> "
             "<q00-search-params> <report.json>");
     }
     const std::string corpus_path = argv[1];
     const std::string roots_path = argv[2];
     const std::string selection_path = argv[3];
-    const std::string curriculum_path = argv[4];
-    const std::string model_path = argv[5];
-    const std::string params_spec = argv[6];
-    const std::string report_path = argv[7];
+    const std::string summary_path = argv[4];
+    const std::string curriculum_path = argv[5];
+    const std::string model_path = argv[6];
+    const std::string params_spec = argv[7];
+    const std::string report_path = argv[8];
 
     std::string error;
     const std::string curriculum_sha = jass::t3_f6::sha256_file(curriculum_path, &error);
     const std::string model_sha = jass::t3_f6::sha256_file(model_path, &error);
     const std::string corpus_sha = jass::t3_f6::sha256_file(corpus_path, &error);
     const std::string selection_sha = jass::t3_f6::sha256_file(selection_path, &error);
+    const std::string summary_sha = jass::t3_f6::sha256_file(summary_path, &error);
     if (curriculum_sha != jass::t3_f6::FROZEN_CURRICULUM_SHA256)
         throw std::runtime_error("CURRICULUM SHA256 mismatch");
     if (model_sha != jass::t3_f6::FROZEN_MODEL_SHA256)
         throw std::runtime_error("T3-A SHA256 mismatch");
+    if (corpus_sha != R0_CORPUS_SHA256
+        || selection_sha != R0_SELECTION_SHA256
+        || summary_sha != R0_SUMMARY_SHA256) {
+        throw std::runtime_error("R0-v4 immutable artifact SHA256 mismatch");
+    }
 
     const std::string selection = read_text(selection_path);
     if (json_string_field(selection, "schema") != "jass.t3_f6_r0_target_blind_selection.v4"
@@ -354,6 +385,21 @@ int run_contract(int argc, char** argv) {
         || json_string_field(selection, "fen_sha256") != corpus_sha) {
         throw std::runtime_error("R0-v4 corpus/selection certificate mismatch");
     }
+
+    const std::string summary = read_text(summary_path);
+    const std::string frozen_params = json_string_field(summary, "search_params");
+    if (json_string_field(summary, "verdict") != "R0_V4_PRODUCTION_LEAF_CONTRACT_ESTABLISHED"
+        || json_string_field(summary, "code_sha") != R0_CODE_SHA
+        || !json_bool_field(summary, "passed")
+        || !json_bool_field(summary, "pool1_authorized")
+        || json_uint_field(summary, "threads") != 1U
+        || json_uint_field(summary, "tt_mb") != 16U
+        || json_string_field(summary, "book") != "OFF"
+        || frozen_params != params_spec
+        || std::count(params_spec.begin(), params_spec.end(), ',') != 62) {
+        throw std::runtime_error("R0-v4 terminal/Q00 contract mismatch");
+    }
+    const std::string q00_sha = sha256_text(params_spec);
 
     const auto corpus = read_fens(corpus_path);
     const auto roots = read_fens(roots_path);
@@ -386,13 +432,17 @@ int run_contract(int argc, char** argv) {
     std::size_t flush_residual_mismatches = 0;
     std::size_t flush_score_mismatches = 0;
     std::size_t nonfinite = 0;
+    std::size_t saturations = 0;
     for (const auto& row : corpus) {
         const double off_residual = off_leaf.residual_parent(row.position);
         const double on_residual = on_leaf->residual_parent(row.position);
+        const int off_score = off_leaf.evaluate(row.position);
+        const int on_score = on_leaf->evaluate(row.position);
         residual_mismatches += std::bit_cast<std::uint64_t>(off_residual)
                             != std::bit_cast<std::uint64_t>(on_residual);
-        score_mismatches += off_leaf.evaluate(row.position) != on_leaf->evaluate(row.position);
+        score_mismatches += off_score != on_score;
         nonfinite += !std::isfinite(off_residual) || !std::isfinite(on_residual);
+        saturations += std::abs(off_score) == 20000 || std::abs(on_score) == 20000;
     }
 
     for (auto it = corpus.rbegin(); it != corpus.rend(); ++it) {
@@ -427,15 +477,17 @@ int run_contract(int argc, char** argv) {
                      && flush_residual_mismatches == 0U
                      && flush_score_mismatches == 0U
                      && nonfinite == 0U
+                     && saturations == 0U
                      && real_hit_observed
                      && flush_zero
                      && flush_miss;
     if (!gate_b) {
         write_gate_b_failure(report_path, corpus.size(), corpus_sha, selection_sha,
+                             summary_sha, q00_sha,
                              residual_mismatches, score_mismatches,
                              replay_residual_mismatches, replay_score_mismatches,
                              flush_residual_mismatches, flush_score_mismatches,
-                             nonfinite, replay_stats.hits);
+                             nonfinite, saturations, replay_stats.hits);
         std::cout << "O1_EXACT_CACHE_EQUIVALENCE_FAILED\n";
         return 2;
     }
@@ -473,6 +525,9 @@ int run_contract(int argc, char** argv) {
            << "  \"corpus_rows\": " << corpus.size() << ",\n"
            << "  \"corpus_sha256\": \"" << corpus_sha << "\",\n"
            << "  \"selection_certificate_sha256\": \"" << selection_sha << "\",\n"
+           << "  \"r0_summary_sha256\": \"" << summary_sha << "\",\n"
+           << "  \"q00_sha256\": \"" << q00_sha << "\",\n"
+           << "  \"q00_parameter_count\": 63,\n"
            << "  \"roots\": " << roots.size() << ",\n"
            << "  \"roots_sha256\": \"" << jass::t3_f6::sha256_file(roots_path, &error) << "\",\n"
            << "  \"root_selection_verified_internally\": true,\n"
@@ -484,6 +539,7 @@ int run_contract(int argc, char** argv) {
            << "  \"flush_residual_mismatches\": " << flush_residual_mismatches << ",\n"
            << "  \"flush_score_mismatches\": " << flush_score_mismatches << ",\n"
            << "  \"nonfinite\": " << nonfinite << ",\n"
+           << "  \"saturations\": " << saturations << ",\n"
            << "  \"gate_b_hits\": " << replay_stats.hits << ",\n"
            << "  \"search_pairs\": " << search_pairs << ",\n"
            << "  \"search_mismatches\": " << search_mismatches << ",\n"
