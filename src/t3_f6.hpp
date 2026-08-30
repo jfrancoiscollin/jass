@@ -141,8 +141,11 @@ private:
 // The only public O1 activation surface. It owns the cached Network privately,
 // so callers cannot hand the mutable cache to the generic search/HUB API. Both
 // construction and the actual search boundary fail closed unless threads==1.
-// The two-argument jass::search overload used below creates a fresh TT for each
-// call; O1 Gate C additionally creates a fresh O1SearchSession per root×budget.
+// A session can perform at most one search, and that search is rejected unless
+// the cache is still cold. Thus every Gate-C/D root×budget unit necessarily
+// starts from a fresh Network/cache and cannot inherit prior root/search state.
+// The two-argument jass::search overload creates a fresh TT for the accepted
+// search call as required by the preregistered lifecycle.
 class O1SearchSession final {
 public:
     static std::unique_ptr<O1SearchSession> create(
@@ -166,6 +169,17 @@ public:
             if (err) *err = "T3/F6 O1 session owns SearchLimits::nnue";
             return std::nullopt;
         }
+        if (search_consumed_) {
+            if (err) *err = "T3/F6 O1 search session is one-shot";
+            return std::nullopt;
+        }
+        const CacheStats before = network_->cache_stats();
+        if (before.lookups != 0 || before.hits != 0 || before.misses != 0
+            || before.replacements != 0 || before.extract_f6_executions != 0) {
+            if (err) *err = "T3/F6 O1 search requires a cold cache";
+            return std::nullopt;
+        }
+        search_consumed_ = true;
         limits.nnue = network_.get();
         return jass::search(pos, limits);
     }
@@ -187,6 +201,7 @@ private:
         : network_(std::move(network)) {}
 
     std::unique_ptr<Network> network_;
+    mutable bool search_consumed_{false};
 };
 
 // Production T3 loader remains the exact pre-O1 behavior: absent model env is
