@@ -26,7 +26,7 @@ These files can consume expensive compute or control long-running experiments. R
 - For cross-host technical diagnostics, prefer a target-host native rebuild from the pinned source SHA with the exact required CMake/build flags. Record source SHA, build flags, target host/CPU facts, and the resulting binary SHA.
 - A target-host rebuild is **not byte-identical** to a frozen executable and must not silently replace a byte-frozen executable in a scientific strength contract. It is acceptable only when the preregistered contract permits it or when the run is explicitly technical/diagnostic and has no scientific decision authority.
 - When comparing candidate/control cost on a host-native technical build, keep both arms on the same locally built executable and preserve all frozen model/search/runtime inputs. Do not transport absolute wall-clock measurements between hosts as if they were equivalent.
-- Add a cheap loader/`hello` smoke before long search work so unsupported-instruction failures happen before expensive setup.
+- Before long cross-host work, run both (1) a cheap loader/`hello` smoke and (2) a deterministic tiny invocation of the same hot work path, such as a shallow search on a fixed legal position with the intended runtime options. The second smoke must actually exercise the search/eval path that the long run will use, so host-specific instructions hidden from the loader path fail early.
 
 ## Parallel-job safety
 
