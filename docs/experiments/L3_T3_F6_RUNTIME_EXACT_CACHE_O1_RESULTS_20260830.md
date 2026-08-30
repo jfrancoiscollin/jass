@@ -150,7 +150,18 @@ promotion_authorized = false
 bake = false
 ```
 
-La matérialisation read-only finale est `cpx62-1705-l3-t3-f6-o1-terminal-receipt-v1`; son attempt exact est ajouté au présent document dès publication du reçu runner.
+Reçu read-only terminal :
+
+```text
+job     = cpx62-1705-l3-t3-f6-o1-terminal-receipt-v1
+attempt = 20260830T195143Z-53bddb24
+code    = 53bddb24a2d144af39df486d8c3e53b7d196cf65
+state   = completed
+exit    = 0
+verdict = O1_EXACT_CACHE_ESTABLISHED
+```
+
+Le reçu publie explicitement `O1_EXACT_CACHE_ESTABLISHED`, `O1_GATE_A_PASS`, `O1_GATE_B_PASS`, `O1_GATE_C_PASS`, `O1_GATE_D_PASS`, `O1_TERMINAL_READY`, `STRENGTH_GAMES__0`, `PROMOTION_AUTHORIZED__FALSE` et `BAKE__FALSE`.
 
 ## 7. Ce qu'O1 établit — et ce qu'il n'établit pas
 
