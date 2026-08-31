@@ -34,14 +34,30 @@ add_subdirectory("${JASS_ROOT}" "${CMAKE_BINARY_DIR}/jass-root" EXCLUDE_FROM_ALL
 file(REMOVE "${PL8_COMPAT_NNUE}" "${PL8_COMPAT_NNUE_TEMPLATE}")
 file(REMOVE_RECURSE "${PL8_COMPAT_CMAKE_DIR}")
 
+# add_compile_definitions() inside the imported root directory is directory
+# scoped. PL8 runtime objects live at this isolated top level, so mirror the
+# exact already-selected production architecture macros here as well. This is
+# purely build plumbing: it makes scan_eval.hpp expose NUM_EXTRAS=120 and the
+# same tempo-stage contract to PL8, with no new feature or runtime degree of
+# freedom.
+add_library(pl8_exact_arch INTERFACE)
+target_compile_definitions(pl8_exact_arch INTERFACE
+    JASS_ENDGAME_FEATURES=1
+    JASS_KING_MOBILITY=1
+    JASS_SCAN_PARITY=1
+    JASS_TEMPO_STAGE=1)
+
 add_library(pl8_runtime STATIC "${JASS_ROOT}/src/pl8.cpp")
 target_include_directories(pl8_runtime PUBLIC "${JASS_ROOT}/src")
-target_link_libraries(pl8_runtime PRIVATE jass_lib jass_warnings)
+target_link_libraries(pl8_runtime PRIVATE jass_lib jass_warnings pl8_exact_arch)
+if(JASS_NATIVE AND NOT EMSCRIPTEN AND NOT MSVC)
+    target_compile_options(pl8_runtime PRIVATE -march=native)
+endif()
 
 function(pl8_tool name source)
     add_executable(${name} "${CMAKE_CURRENT_LIST_DIR}/${source}")
     target_include_directories(${name} PRIVATE "${JASS_ROOT}/src")
-    target_link_libraries(${name} PRIVATE pl8_runtime jass_lib jass_warnings)
+    target_link_libraries(${name} PRIVATE pl8_runtime jass_lib jass_warnings pl8_exact_arch)
     # Engine -march=native is directory-scoped under add_subdirectory(); mirror
     # the same already-selected native contract onto harness translation units.
     if(JASS_NATIVE AND NOT EMSCRIPTEN AND NOT MSVC)
