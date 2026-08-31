@@ -68,6 +68,12 @@ endfunction()
 pl8_tool(pl8_contract_test pl8_contract_test.cpp)
 pl8_tool(pl8_feature_export pl8_feature_export.cpp)
 pl8_tool(pl8_runtime_probe pl8_runtime_probe.cpp)
+# src/search.cpp has compile-time references to the repository's already-existing
+# T3/F6 runtime class even when the active INetwork is PL8. Production jass and
+# jass_tests satisfy those references with this same object target. Link those
+# dormant support objects into the technical search probe only; PL8 itself has
+# no dependency on or activation path to F6/D/D1/Rich-D/micro-search.
+target_sources(pl8_runtime_probe PRIVATE $<TARGET_OBJECTS:jass_t3_f6_runtime>)
 
 enable_testing()
 add_test(NAME pl8_contract_test COMMAND pl8_contract_test)
