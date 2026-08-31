@@ -1,12 +1,17 @@
 import importlib.util
 import pathlib
 import struct
+import sys
 import unittest
 
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 
 def load(name,path):
-    spec=importlib.util.spec_from_file_location(name,ROOT/path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
+    spec=importlib.util.spec_from_file_location(name,ROOT/path)
+    m=importlib.util.module_from_spec(spec)
+    sys.modules[name]=m
+    spec.loader.exec_module(m)
+    return m
 
 class PL8BoundaryBContract(unittest.TestCase):
     def test_deep_readout_frozen_gates(self):
