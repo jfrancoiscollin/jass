@@ -6,15 +6,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 get_filename_component(JASS_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
-# The engine's root CMakeLists predates subproject use and resolves its embedded
-# NNUE input/template through CMAKE_SOURCE_DIR.  When this isolated harness is
-# the top-level project, that variable would otherwise point here and configure
-# would fail before any E2 code is built.  Scope the compatibility override to
-# the add_subdirectory call; normal top-level Jass builds are unchanged.
-set(E2_TOP_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-set(CMAKE_SOURCE_DIR "${JASS_ROOT}")
+# The engine root still resolves its embedded NNUE input/template through
+# CMAKE_SOURCE_DIR.  CMake restores that special variable when entering an
+# add_subdirectory(), so shadowing it in this top-level harness does not reach
+# the engine subdirectory.  Materialize byte-identical compatibility copies at
+# the isolated harness top source only for the duration of configure instead.
+# They are removed immediately after the engine CMakeLists has consumed them;
+# normal top-level Jass builds and all scientific/runtime parameters are
+# unchanged.
+set(E2_COMPAT_NNUE "${CMAKE_CURRENT_LIST_DIR}/nnue.bin")
+set(E2_COMPAT_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake")
+set(E2_COMPAT_NNUE_TEMPLATE "${E2_COMPAT_CMAKE_DIR}/nnue_default_data.cpp.in")
+file(MAKE_DIRECTORY "${E2_COMPAT_CMAKE_DIR}")
+configure_file("${JASS_ROOT}/nnue.bin" "${E2_COMPAT_NNUE}" COPYONLY)
+configure_file("${JASS_ROOT}/cmake/nnue_default_data.cpp.in"
+               "${E2_COMPAT_NNUE_TEMPLATE}" COPYONLY)
 add_subdirectory("${JASS_ROOT}" "${CMAKE_BINARY_DIR}/jass-root" EXCLUDE_FROM_ALL)
-set(CMAKE_SOURCE_DIR "${E2_TOP_SOURCE_DIR}")
+file(REMOVE "${E2_COMPAT_NNUE}" "${E2_COMPAT_NNUE_TEMPLATE}")
+file(REMOVE_RECURSE "${E2_COMPAT_CMAKE_DIR}")
 
 add_executable(t3_f6_e2_match
     "${CMAKE_CURRENT_LIST_DIR}/t3_f6_e2_match.cpp"
