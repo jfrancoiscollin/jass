@@ -113,8 +113,6 @@ Position canonical_stm_black(const Position& pos) noexcept {
 }
 
 double tempo_wmg_exact(const Position& pos) noexcept {
-    // Exact algebra of scan_eval.cpp's frozen JASS_TEMPO_STAGE path, expressed
-    // by square rows to keep PL8 independent of search/movegen semantics.
     long tempo = 0;
     for (Bitboard b = pos.black_men(); b; ) {
         const Square sq = pop_lsb(b);
@@ -255,6 +253,12 @@ std::optional<Model> load_model(const std::string& path, std::string* error) {
 std::unique_ptr<Network> load_network(const std::string& curriculum_path,
                                       const std::string& model_path,
                                       std::string* error) {
+    const std::string actual_curriculum = sha256_file(curriculum_path, error);
+    if (actual_curriculum != CURRICULUM_SHA256) {
+        if (error && actual_curriculum.size() == 64U)
+            *error = "PL8 CURRICULUM SHA256 mismatch";
+        return nullptr;
+    }
     auto model = load_model(model_path, error);
     if (!model) return nullptr;
     auto weights = scan_eval::load_scan_weights(curriculum_path, error);
