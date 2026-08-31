@@ -10,8 +10,11 @@ import numpy as np
 
 PHASES=("P0","P1","P2","P3")
 EXACT_SENTINEL=2
-BOOTSTRAP_SAMPLES=100000
+BOOTSTRAP_SAMPLES=200000
 BOOTSTRAP_SEED=2026103121
+MIN_ACCEPTED=6000
+MIN_ACCEPTED_PHASE=1200
+MIN_ACCEPTED_COLOUR=2400
 
 @dataclass(frozen=True)
 class Parent: pid:int; stm:int; phase:str; pieces:int; legal:int
@@ -77,6 +80,8 @@ def load_scores(path:Path,meta:list[Sib]):
     if seen!=len(meta) or any(not np.all(np.isfinite(v)) for v in cols.values()):raise ValueError('PL8 score count/finite drift')
     teacher_t0=np.asarray([m.t0 for m in meta])
     if np.any(cols['t0_parent']!=teacher_t0):raise ValueError('T0 scalar mismatch vs deep teacher')
+    teacher_q1=np.asarray([m.q1 for m in meta])
+    if np.any(cols['micro1000_parent']!=teacher_q1):raise ValueError('micro1000 diagnostic mismatch vs deep teacher')
     return cols
 
 def parent_metrics(rows,pairs,score):
@@ -103,31 +108,37 @@ def boot_delta(a,b,samples=BOOTSTRAP_SAMPLES,seed=BOOTSTRAP_SEED):
 def summarize(m):return {k:float(v.mean()) for k,v in m.items()}
 
 def main()->int:
-    ap=argparse.ArgumentParser();ap.add_argument('--parents',type=Path,required=True);ap.add_argument('--groups',type=Path,required=True);ap.add_argument('--scores',type=Path,required=True);ap.add_argument('--anchor-report',type=Path,required=True);ap.add_argument('--model-sha',required=True);ap.add_argument('--report',type=Path,required=True);a=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('--parents',type=Path,required=True);ap.add_argument('--groups',type=Path,required=True);ap.add_argument('--scores',type=Path,required=True);ap.add_argument('--score-report',type=Path,required=True);ap.add_argument('--anchor-report',type=Path,required=True);ap.add_argument('--model-sha',required=True);ap.add_argument('--report',type=Path,required=True);a=ap.parse_args()
     parents=load_parents(a.parents);meta=load_groups(a.groups,parents);scores=load_scores(a.scores,meta)
-    anchor=json.loads(a.anchor_report.read_text());anchor_ok=(anchor.get('schema')=='jass.pl8_anchor.v1' and anchor.get('states')==500000 and anchor.get('seed')==2026103102 and anchor.get('serialize_reload') is True and float(anchor.get('rms_abs_cp',1e99))<=12 and float(anchor.get('p99_abs_cp',1e99))<=35)
+    anchor=json.loads(a.anchor_report.read_text());anchor_ok=(anchor.get('schema')=='jass.pl8_anchor.v1' and anchor.get('states')==500000 and anchor.get('seed')==2026103102 and anchor.get('bisection_iterations')==30 and anchor.get('serialize_reload') is True and float(anchor.get('rms_abs_cp',1e99))<=12 and float(anchor.get('p99_abs_cp',1e99))<=35)
     if not anchor_ok:raise ValueError('PL8 anchor guard failed')
+    sr=json.loads(a.score_report.read_text())
+    forbidden=('runtime_micro_search','f6_present_at_inference','d_present_at_inference','d1_present_at_inference','rich_d_present_at_inference')
+    score_contract_ok=(sr.get('schema')=='jass.pl8_scalar_score.v1' and sr.get('rows')==len(meta) and sr.get('curriculum_exact') is True and sr.get('pl8_serialize_reload') is True and all(sr.get(k) is False for k in forbidden))
+    if not score_contract_ok:raise ValueError('PL8 inference contract proof failed')
     parent_rows=defaultdict(list)
     for i,s in enumerate(meta):parent_rows[s.pid].append(i)
     if set(parent_rows)!=set(parents):raise ValueError('PL8 deep teacher missing parents')
     pairs=accepted_pairs(parent_rows,meta);accepted=sorted(pairs)
-    if not accepted:raise ValueError('PL8 has no stable-pair support')
+    phase_support={ph:sum(parents[p].phase==ph for p in accepted) for ph in PHASES}
+    colour_support={'white':sum(parents[p].stm==0 for p in accepted),'black':sum(parents[p].stm==1 for p in accepted)}
+    support_gates={'accepted_parents_ge_6000':len(accepted)>=MIN_ACCEPTED,'each_phase_accepted_ge_1200':all(v>=MIN_ACCEPTED_PHASE for v in phase_support.values()),'each_parent_colour_accepted_ge_2400':all(v>=MIN_ACCEPTED_COLOUR for v in colour_support.values())}
+    stable_pairs=sum(len(v) for v in pairs.values())
+    common={'selected_parents':8000,'phase_selected':{ph:2000 for ph in PHASES},'accepted_parents':len(accepted),'stable_pairs':stable_pairs,'support':{'accepted_by_phase':phase_support,'accepted_by_colour':colour_support,'gates':support_gates},'model_sha256':a.model_sha,'anchor':anchor,'score_contract':sr,'fit_runs_this_stage':0,'fresh_deep_labels':True,'strength_games':0,'runtime_micro_search':False,'f6_present_at_inference':False,'d_present_at_inference':False,'d1_present_at_inference':False,'rich_d_present_at_inference':False,'promotion_authorized':False}
+    if not all(support_gates.values()):
+        report={'schema':'jass.pl8_deep_transfer.v1','verdict':'PL8_FRESH_SUPPORT_NOT_ESTABLISHED','passed':False,'experiment_terminal':True,'next_stage':None,**common}
+        a.report.write_text(json.dumps(report,indent=2,sort_keys=True)+'\n');print(json.dumps({'verdict':report['verdict'],'accepted_parents':len(accepted),'support':common['support']},sort_keys=True));return 0
     m0=metrics(parent_rows,pairs,accepted,scores['t0_parent']);mp=metrics(parent_rows,pairs,accepted,scores['pl8_parent']);mt1=metrics(parent_rows,pairs,accepted,scores['t1_parent']);mm=metrics(parent_rows,pairs,accepted,scores['micro1000_parent'])
     boot=boot_delta(mp,m0)
-    phase={};represented=[]
+    phase={}
     for ph in PHASES:
-        ids=[p for p in accepted if parents[p].phase==ph]
-        if ids:
-            represented.append(ph);x=metrics(parent_rows,pairs,ids,scores['pl8_parent'])['pairwise'];y=metrics(parent_rows,pairs,ids,scores['t0_parent'])['pairwise'];phase[ph]={'accepted_parents':len(ids),'pairwise_delta':float((x-y).mean())}
-        else:phase[ph]={'accepted_parents':0,'pairwise_delta':None}
+        ids=[p for p in accepted if parents[p].phase==ph];x=metrics(parent_rows,pairs,ids,scores['pl8_parent']);y=metrics(parent_rows,pairs,ids,scores['t0_parent'])
+        phase[ph]={'accepted_parents':len(ids),'pairwise_delta':float((x['pairwise']-y['pairwise']).mean()),'top_hit_delta':float((x['top_hit']-y['top_hit']).mean())}
     colour={};colour_ok=True
     for stm,name in ((0,'white'),(1,'black')):
-        ids=[p for p in accepted if parents[p].stm==stm]
-        if ids:
-            x=metrics(parent_rows,pairs,ids,scores['pl8_parent'])['pairwise'];y=metrics(parent_rows,pairs,ids,scores['t0_parent'])['pairwise'];d=float((x-y).mean());colour[name]={'accepted_parents':len(ids),'pairwise_delta':d};colour_ok &= d>0
-        else:colour[name]={'accepted_parents':0,'pairwise_delta':None};colour_ok=False
-    gates={'pl8_minus_t0_pairwise_ci95_low_gt_zero':bool(boot['pairwise']['ci_low']>0),'pl8_minus_t0_top_hit_ci95_low_gt_zero':bool(boot['top_hit']['ci_low']>0),'positive_pairwise_delta_every_represented_phase':bool(represented and all(phase[p]['pairwise_delta']>0 for p in represented)),'positive_pairwise_delta_both_colours':bool(colour_ok),'anchor_guards_survive_serialize_reload':True}
+        ids=[p for p in accepted if parents[p].stm==stm];x=metrics(parent_rows,pairs,ids,scores['pl8_parent'])['pairwise'];y=metrics(parent_rows,pairs,ids,scores['t0_parent'])['pairwise'];d=float((x-y).mean());colour[name]={'accepted_parents':len(ids),'pairwise_delta':d};colour_ok &= d>0
+    gates={'support_established':True,'pl8_minus_t0_pairwise_ci95_low_gt_zero':bool(boot['pairwise']['ci_low']>0),'pl8_minus_t0_top_hit_ci95_low_gt_zero':bool(boot['top_hit']['ci_low']>0),'positive_pairwise_delta_every_phase':all(phase[p]['pairwise_delta']>0 for p in PHASES),'nonnegative_top_hit_delta_every_phase':all(phase[p]['top_hit_delta']>=0 for p in PHASES),'positive_pairwise_delta_both_colours':bool(colour_ok),'anchor_guards_survive_serialize_reload':True,'forbidden_runtime_inputs_absent':True}
     passed=all(gates.values());verdict='PL8_DEEP_TRANSFER_ESTABLISHED' if passed else 'PL8_DEEP_TRANSFER_NOT_ESTABLISHED'
-    report={'schema':'jass.pl8_deep_transfer.v1','verdict':verdict,'passed':passed,'experiment_terminal':not passed,'next_stage':'PL8_RUNTIME_CHARACTERIZATION' if passed else None,'model_sha256':a.model_sha,'selected_parents':8000,'phase_selected':{ph:2000 for ph in PHASES},'accepted_parents':len(accepted),'stable_pairs':sum(len(v) for v in pairs.values()),'represented_phases':represented,'metrics':{'t0':summarize(m0),'pl8':summarize(mp),'old_t1_diagnostic':summarize(mt1),'micro1000_diagnostic':summarize(mm)},'delta_pl8_minus_t0':boot,'phase_deltas':phase,'colour_deltas':colour,'bootstrap':{'samples':BOOTSTRAP_SAMPLES,'seed':BOOTSTRAP_SEED,'cluster':'parent'},'stable_pair_rule':{'same_sign_50k_200k':True,'min_abs_d50_cp':10,'min_abs_d200_cp':30,'exact_terminal_tb_wdl_precedence':True,'teacher_target':'q200_parent'},'gates':gates,'anchor':anchor,'fit_runs_this_stage':0,'fresh_deep_labels':True,'strength_games':0,'runtime_micro_search':False,'f6_present_at_inference':False,'d_present_at_inference':False,'d1_present_at_inference':False,'rich_d_present_at_inference':False,'promotion_authorized':False}
+    report={'schema':'jass.pl8_deep_transfer.v1','verdict':verdict,'passed':passed,'experiment_terminal':not passed,'next_stage':'PL8_RUNTIME_CHARACTERIZATION' if passed else None,**common,'metrics':{'t0':summarize(m0),'pl8':summarize(mp),'old_t1_diagnostic':summarize(mt1),'micro1000_diagnostic':summarize(mm)},'delta_pl8_minus_t0':boot,'phase_deltas':phase,'colour_deltas':colour,'bootstrap':{'samples':BOOTSTRAP_SAMPLES,'seed':BOOTSTRAP_SEED,'cluster':'parent'},'stable_pair_rule':{'same_sign_50k_200k':True,'min_abs_d50_cp':10,'min_abs_d200_cp':30,'exact_terminal_tb_wdl_precedence':True,'teacher_target':'q200_parent'},'gates':gates}
     a.report.write_text(json.dumps(report,indent=2,sort_keys=True)+'\n');print(json.dumps({'verdict':verdict,'accepted_parents':len(accepted),'pairwise':boot['pairwise'],'top_hit':boot['top_hit']},sort_keys=True));return 0
 if __name__=='__main__':raise SystemExit(main())
