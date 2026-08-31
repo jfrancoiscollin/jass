@@ -7,12 +7,13 @@
 
 #include <array>
 #include <bit>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <limits>
+#include <stdexcept>
 #include <string>
 
 using namespace jass;
