@@ -32,3 +32,14 @@ target_include_directories(t3_f6_e2_match PRIVATE
     "${JASS_ROOT}/src"
     "${JASS_ROOT}/jobs/tools")
 target_link_libraries(t3_f6_e2_match PRIVATE jass_lib jass_warnings)
+
+# The engine's -march=native is a directory-scoped compile option inside the
+# add_subdirectory() tree, so CMake does not propagate it back up to this
+# top-level harness target.  Mirror the already-selected production-native flag
+# on the harness translation unit only.  This changes no E2 cell, seed, pool,
+# budget, search semantics, model, F6 feature, or O1 behavior; it merely makes
+# the isolated executable obey the same CPX62 native-ISA build contract that
+# the preregistered preflight audits in compile_commands.json.
+if(JASS_NATIVE AND NOT EMSCRIPTEN AND NOT MSVC)
+    target_compile_options(t3_f6_e2_match PRIVATE -march=native)
+endif()
