@@ -8,9 +8,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 get_filename_component(JASS_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 
-# Boundary A is defined only for the frozen 8cf/120-extra/tempo production
-# architecture. Force those already-existing engine switches before importing
-# the project. No search/movegen/qsearch/TT parameter is changed here.
 set(JASS_ENDGAME_FEATURES ON CACHE BOOL "" FORCE)
 set(JASS_KING_MOBILITY ON CACHE BOOL "" FORCE)
 set(JASS_SCAN_PARITY ON CACHE BOOL "" FORCE)
@@ -20,9 +17,6 @@ set(JASS_DRAWISH_SCALING OFF CACHE BOOL "" FORCE)
 set(JASS_NATIVE ON CACHE BOOL "" FORCE)
 set(JASS_ENABLE_SIMD ON CACHE BOOL "" FORCE)
 
-# Root CMake resolves embedded NNUE support through CMAKE_SOURCE_DIR. As with
-# the E2 isolated harness, materialize byte-identical configure-time copies in
-# this top-level source and delete them immediately after add_subdirectory().
 set(PL8_COMPAT_NNUE "${CMAKE_CURRENT_LIST_DIR}/nnue.bin")
 set(PL8_COMPAT_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(PL8_COMPAT_NNUE_TEMPLATE "${PL8_COMPAT_CMAKE_DIR}/nnue_default_data.cpp.in")
@@ -34,12 +28,6 @@ add_subdirectory("${JASS_ROOT}" "${CMAKE_BINARY_DIR}/jass-root" EXCLUDE_FROM_ALL
 file(REMOVE "${PL8_COMPAT_NNUE}" "${PL8_COMPAT_NNUE_TEMPLATE}")
 file(REMOVE_RECURSE "${PL8_COMPAT_CMAKE_DIR}")
 
-# add_compile_definitions() inside the imported root directory is directory
-# scoped. PL8 runtime objects live at this isolated top level, so mirror the
-# exact already-selected production architecture macros here as well. This is
-# purely build plumbing: it makes scan_eval.hpp expose NUM_EXTRAS=120 and the
-# same tempo-stage contract to PL8, with no new feature or runtime degree of
-# freedom.
 add_library(pl8_exact_arch INTERFACE)
 target_compile_definitions(pl8_exact_arch INTERFACE
     JASS_ENDGAME_FEATURES=1
@@ -47,7 +35,9 @@ target_compile_definitions(pl8_exact_arch INTERFACE
     JASS_SCAN_PARITY=1
     JASS_TEMPO_STAGE=1)
 
-add_library(pl8_runtime STATIC "${JASS_ROOT}/src/pl8.cpp")
+add_library(pl8_runtime STATIC
+    "${JASS_ROOT}/src/pl8.cpp"
+    "${JASS_ROOT}/src/pl8_sha256.cpp")
 target_include_directories(pl8_runtime PUBLIC "${JASS_ROOT}/src")
 target_link_libraries(pl8_runtime PRIVATE jass_lib jass_warnings pl8_exact_arch)
 if(JASS_NATIVE AND NOT EMSCRIPTEN AND NOT MSVC)
@@ -58,8 +48,6 @@ function(pl8_tool name source)
     add_executable(${name} "${CMAKE_CURRENT_LIST_DIR}/${source}")
     target_include_directories(${name} PRIVATE "${JASS_ROOT}/src")
     target_link_libraries(${name} PRIVATE pl8_runtime jass_lib jass_warnings pl8_exact_arch)
-    # Engine -march=native is directory-scoped under add_subdirectory(); mirror
-    # the same already-selected native contract onto harness translation units.
     if(JASS_NATIVE AND NOT EMSCRIPTEN AND NOT MSVC)
         target_compile_options(${name} PRIVATE -march=native)
     endif()
