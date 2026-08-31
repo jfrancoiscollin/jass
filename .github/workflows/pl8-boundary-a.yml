@@ -1,0 +1,64 @@
+name: pl8-boundary-a
+
+on:
+  pull_request:
+    paths:
+      - 'src/pl8.*'
+      - 'jobs/tools/pl8_*'
+      - 'jobs/tools/pl8_boundary_a/**'
+      - 'pattern_jass/tests/test_pl8_boundary_a.py'
+      - '.github/workflows/pl8-boundary-a.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'src/pl8.*'
+      - 'jobs/tools/pl8_*'
+      - 'jobs/tools/pl8_boundary_a/**'
+      - 'pattern_jass/tests/test_pl8_boundary_a.py'
+      - '.github/workflows/pl8-boundary-a.yml'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  exact-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure isolated exact architecture
+        run: cmake -S jobs/tools/pl8_boundary_a -B build-pl8 -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Build PL8 Boundary A tools
+        run: cmake --build build-pl8 -j2 --target pl8_contract_test pl8_feature_export pl8_runtime_probe
+      - name: Run exact C++ contract
+        run: ./build-pl8/pl8_contract_test
+      - name: Audit exact compile architecture
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          rows=json.loads(Path('build-pl8/compile_commands.json').read_text())
+          wanted=('src/pl8.cpp','pl8_contract_test.cpp','pl8_feature_export.cpp','pl8_runtime_probe.cpp')
+          seen={k:False for k in wanted}
+          for row in rows:
+              cmd=row.get('command','')+' '+row.get('file','')
+              for k in wanted:
+                  if k in cmd:
+                      seen[k]=True
+                      assert '-march=native' in cmd
+                      for macro in ('JASS_ENDGAME_FEATURES','JASS_KING_MOBILITY','JASS_SCAN_PARITY','JASS_TEMPO_STAGE'):
+                          assert macro in cmd, (k,macro,cmd)
+          assert all(seen.values()), seen
+          PY
+
+  python-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip && python -m pip install numpy scipy pytest
+      - name: Syntax check frozen tooling
+        run: python -m py_compile jobs/tools/pl8_fit.py jobs/tools/pl8_fresh_select.py jobs/tools/pl8_deep_readout.py
+      - name: Run PL8 deterministic Python contract
+        run: python -m pytest -q pattern_jass/tests/test_pl8_boundary_a.py
