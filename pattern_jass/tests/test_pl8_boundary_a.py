@@ -22,7 +22,10 @@ def test_frozen_pl8_geometry_and_seeds():
     assert pl8_fresh_select.PER_PHASE == 2000
     assert pl8_fresh_select.TOTAL == 8000
     assert pl8_deep_readout.BOOTSTRAP_SEED == 2026103121
-    assert pl8_deep_readout.BOOTSTRAP_SAMPLES == 100000
+    assert pl8_deep_readout.BOOTSTRAP_SAMPLES == 200000
+    assert pl8_deep_readout.MIN_ACCEPTED == 6000
+    assert pl8_deep_readout.MIN_ACCEPTED_PHASE == 1200
+    assert pl8_deep_readout.MIN_ACCEPTED_COLOUR == 2400
 
 
 def test_xavier_initialization_is_deterministic():
