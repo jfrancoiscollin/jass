@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <unistd.h>
 
@@ -32,13 +33,13 @@ scan_eval::ScanWeights test_weights() {
     w.pat.assign(pattern_jass::TOTAL_BUCKETS, {});
     for (std::size_t i = 0; i < w.pat.size(); ++i) {
         if ((i % 9973U) == 0U) {
-            w.pat[i].mg = static_cast<std::int32_t>((i % 101U) - 50U);
-            w.pat[i].eg = static_cast<std::int32_t>((i % 79U) - 39U);
+            w.pat[i].mg = static_cast<std::int32_t>(static_cast<int>(i % 101U) - 50);
+            w.pat[i].eg = static_cast<std::int32_t>(static_cast<int>(i % 79U) - 39);
         }
     }
     for (std::size_t i = 0; i < static_cast<std::size_t>(scan_eval::NUM_EXTRAS); ++i) {
-        w.ext_mg[i] = static_cast<std::int32_t>((i % 11U) - 5U);
-        w.ext_eg[i] = static_cast<std::int32_t>((i % 13U) - 6U);
+        w.ext_mg[i] = static_cast<std::int32_t>(static_cast<int>(i % 11U) - 5);
+        w.ext_eg[i] = static_cast<std::int32_t>(static_cast<int>(i % 13U) - 6);
     }
     return w;
 }
