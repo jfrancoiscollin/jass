@@ -46,7 +46,7 @@ endif()
 
 function(pl8_tool name source)
     add_executable(${name} "${CMAKE_CURRENT_LIST_DIR}/${source}")
-    target_include_directories(${name} PRIVATE "${JASS_ROOT}/src")
+    target_include_directories(${name} PRIVATE "${JASS_ROOT}/src" "${CMAKE_CURRENT_LIST_DIR}")
     target_link_libraries(${name} PRIVATE pl8_runtime jass_lib jass_warnings pl8_exact_arch)
     if(JASS_NATIVE AND NOT EMSCRIPTEN AND NOT MSVC)
         target_compile_options(${name} PRIVATE -march=native)
@@ -56,6 +56,8 @@ endfunction()
 pl8_tool(pl8_contract_test pl8_contract_test.cpp)
 pl8_tool(pl8_feature_export pl8_feature_export.cpp)
 pl8_tool(pl8_runtime_probe pl8_runtime_probe.cpp)
+pl8_tool(pl8_anchor pl8_anchor.cpp)
+pl8_tool(pl8_scalar_score pl8_scalar_score.cpp)
 # src/search.cpp has compile-time references to the repository's already-existing
 # T3/F6 runtime class even when the active INetwork is PL8. Production jass and
 # jass_tests satisfy those references with this same object target. Link those
