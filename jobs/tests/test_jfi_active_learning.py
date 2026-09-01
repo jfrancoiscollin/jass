@@ -172,6 +172,7 @@ class PostSelectionTests(unittest.TestCase):
                 "inputs": {
                     "candidate_manifest": {"sha256": universe.sha256_file(candidate_manifest)},
                     "candidate_data": {"sha256": universe.sha256_file(candidate_data)},
+                    "candidate_feat": {"sha256": universe.sha256_file(feat_path)},
                     "origin_indices": {"sha256": universe.sha256_file(origin)},
                 },
                 "files": {
