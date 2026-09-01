@@ -47,6 +47,10 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND"|tee -a "
 [ -z "$(git branch --show-current)" ] || die "job worktree must be detached"
 [ -z "$(git status --porcelain)" ] || die "job worktree must start clean"
 [ "$(hostname)" = cpx62 ] && [ "$(nproc)" -eq 16 ] || die "CPX62 contract mismatch"
+CPU_MODEL=$(lscpu | awk -F: '/^Model name:/{sub(/^[[:space:]]+/,"",$2);print $2}')
+ISA_FLAGS=$(lscpu | awk -F: '/^Flags:/{sub(/^[[:space:]]+/,"",$2);print $2}')
+[[ " $ISA_FLAGS " == *" avx2 "* ]] && [[ " $ISA_FLAGS " == *" bmi2 "* ]] || die "AVX2/BMI2 absent"
+export CPU_MODEL ISA_FLAGS
 [ -f "$VENV/.jass-runtime-ready-v1" ] || die "numeric runtime absent"
 "$PY" -c 'import numpy,scipy; assert numpy.__version__ and scipy.__version__'
 
@@ -125,13 +129,19 @@ sha=lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
 arms=['A_CURRICULUM_INIT_CURRICULUM_CENTER','B_ZERO_INIT_CURRICULUM_CENTER','C_CURRICULUM_INIT_ZERO_CENTER','D_ZERO_INIT_ZERO_CENTER']
 seconds={a:float((w/f'{a}.seconds').read_text()) for a in arms}
 payload={'schema':'jass.jfi.boundary_a_input.v1','code_sha':code,
- 'machine':{'host':platform.node(),'nproc':os.cpu_count(),'platform':platform.platform()},
+ 'machine':{'host':platform.node(),'nproc':os.cpu_count(),'platform':platform.platform(),
+            'cpu_model':os.environ['CPU_MODEL'],'isa_flags':os.environ['ISA_FLAGS'],
+            'avx2':True,'bmi2':True,'native_build':True},
  'numeric_env':{k:os.environ.get(k) for k in ('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS')},
- 'scratch':{'path':str(w.parent),'free_bytes':os.statvfs(w).f_bavail*os.statvfs(w).f_frsize},
+ 'disk':{'code_path':str(Path.cwd()),'code_free_bytes':os.statvfs(Path.cwd()).f_bavail*os.statvfs(Path.cwd()).f_frsize,
+         'scratch_path':str(w.parent),'scratch_free_bytes':os.statvfs(w).f_bavail*os.statvfs(w).f_frsize},
  'current_2m':{'records':records,'train_records':train,'holdout_records':holdout,'split_seed':577215,'sha256':sha(w/'current.jnnw')},
  'context30':{'sha256':sha(w/'context30.npy')},
  'feature_dump':{'rows':records,'seconds':float((w/'feature.seconds').read_text()),'sha256':sha(w/'current.feat')},
- 'sizer':{'rows':20000,'iterations':2,'seconds':max(seconds.values()),'arm_seconds':seconds},
+ 'sizer':{'rows':20000,'iterations':2,'seconds':max(seconds.values()),'arm_seconds':seconds,
+          'iterations_per_second':2/max(seconds.values()),
+          'rows_per_iteration_second':20000/max(seconds.values()),
+          'full_fit_timeout_seconds':86400},
  'markers':{'FULL_FITS':0,'FRESH_OPENINGS':0,'STRENGTH_GAMES':0,'SCIENTIFIC_DECISION':False,'SCAN_WEIGHT_READS':0,'SCAN_SCORE_READS':0}}
 Path(out).write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
 PY

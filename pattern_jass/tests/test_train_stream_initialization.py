@@ -91,6 +91,15 @@ class IndependentInitializationTests(unittest.TestCase):
         np.testing.assert_array_equal(captured["x0"], prior)
         np.testing.assert_array_equal(fitted, prior)
 
+    def test_optimizer_report_includes_final_objective(self) -> None:
+        matrix = sp.csr_matrix(np.asarray([[1.0], [1.0]]))
+        diagnostics = {}
+        _fitted, objective, _iterations = train_lbfgs_chunked(
+            lambda selected: matrix[selected], np.arange(2), np.asarray([0.0, 1.0]),
+            1e-4, 5, True, 1, 2, optimizer_diagnostics=diagnostics,
+        )
+        self.assertEqual(diagnostics["final_objective"], objective)
+
     def test_initialization_cli_contract(self) -> None:
         base = SimpleNamespace(
             init_mode="legacy", init_file=None, warm_start=None, trainable_region=None
