@@ -10,9 +10,14 @@ import struct
 
 import numpy as np
 
-from jobs.tools.jfi_candidate_universe import (
-    JNNW_DTYPE, JSM1_DTYPE, JSM2_DTYPE, STATE_FIELDS, open_counted, sha256_file,
-)
+try:
+    from .jfi_candidate_universe import (
+        JNNW_DTYPE, JSM1_DTYPE, JSM2_DTYPE, STATE_FIELDS, open_counted, sha256_file,
+    )
+except ImportError:  # direct script execution from jobs/tools
+    from jfi_candidate_universe import (
+        JNNW_DTYPE, JSM1_DTYPE, JSM2_DTYPE, STATE_FIELDS, open_counted, sha256_file,
+    )
 
 
 def open_feat(path, count):
@@ -97,6 +102,7 @@ def materialize(args):
     expected_links = {
         "candidate_manifest": (args.candidate_manifest, sha256_file(args.candidate_manifest)),
         "candidate_data": (args.candidate_data, candidate_digests["data"]),
+        "candidate_feat": (args.candidate_feat, sha256_file(args.candidate_feat)),
         "origin_indices": (args.origin_indices, candidate_digests["origin_indices"]),
     }
     for label, (_path, digest) in expected_links.items():
@@ -178,7 +184,9 @@ def materialize(args):
         "files": files,
         "guards": {
             "selection_manifest_verified_before_source_label_access": True,
-            "source_terminal_label_rows_read_post_freeze": int(len(reference)),
+            "source_terminal_label_rows_read_post_freeze": int(
+                len(reference) + len(active_arm) + len(uniform_arm)
+            ),
             "TARGET_READS_BEFORE_MANIFEST_FREEZE": 0, "SCAN_READS": 0,
         },
     }
