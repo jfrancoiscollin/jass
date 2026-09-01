@@ -1145,8 +1145,8 @@ def train_stream(args):
                   'differs slightly from the trained model. Use 1 for a lossless prune.',
                   file=sys.stderr)
         del ccounts
-    if (args.prior_mean or args.warm_start) and not do_prune:
-        raise SystemExit('--prior-mean/--warm-start require --prune '
+    if (args.prior_mean or args.warm_start or args.init_file) and not do_prune:
+        raise SystemExit('--prior-mean/--warm-start/--init-file require --prune '
                          '(champion must be aligned to the visited dense slots)')
 
     n_cols = 2 * PAT_N + 2 * EVAL_NUM_EXTRAS
@@ -1217,11 +1217,19 @@ def train_stream(args):
     if args.prior_mean:
         prior_mean, prior_prec = build_sequential_prior(
             args, folder, keep, kept_counts, PAT_N, EVAL_NUM_EXTRAS, N, args.l2)
-    elif args.warm_start:
+    if args.warm_start:
         initial_mean, scale_c = project_champion_mean(
             args.warm_start, folder, keep, PAT_N, EVAL_NUM_EXTRAS)
         print(f'warm-start : champion={args.warm_start} (scale={scale_c}) ; '
               'initialisation only, objective keeps ordinary zero-centred L2')
+    elif args.init_mode == 'zero':
+        initial_mean = np.zeros(n_cols, dtype=np.float64)
+        print('initialization : explicit ZERO (independent of L2 centre)')
+    elif args.init_mode == 'file':
+        initial_mean, scale_c = project_champion_mean(
+            args.init_file, folder, keep, PAT_N, EVAL_NUM_EXTRAS)
+        print(f'initialization : FILE={args.init_file} (scale={scale_c}) '
+              '(independent of L2 centre)')
     t0 = time.time()
     optimizer_diagnostics = {}
     w_float, train_loss, n_iter = train_lbfgs_chunked(
@@ -1324,6 +1332,20 @@ def validate_prior_alpha_cap(args):
                              f'combined with an explicit {flag}={val}')
 
 
+def validate_initialization_args(args):
+    """Validate the backward-compatible independent initialization interface."""
+    mode = args.init_mode
+    if args.warm_start:
+        if mode != 'legacy' or args.init_file:
+            raise SystemExit('--warm-start is the legacy file-initialization alias and cannot '
+                             'be combined with --init-mode/--init-file')
+        return
+    if mode == 'file' and not args.init_file:
+        raise SystemExit('--init-mode file requires --init-file')
+    if mode != 'file' and args.init_file:
+        raise SystemExit('--init-file requires --init-mode file')
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1385,6 +1407,14 @@ def main(argv=None):
                          'Unlike --prior-mean, this does not anchor the objective to the parent: '
                          'the ordinary --l2 penalty remains centred on zero. Requires --prune and '
                          '--color-fold, --exact-fold or no fold.')
+    ap.add_argument('--init-mode', choices=['legacy', 'zero', 'file'], default='legacy',
+                    help='optimizer initialization independent of the L2 centre. legacy preserves '
+                         'historical behavior (prior mean when --prior-mean is set, otherwise zero); '
+                         'zero starts at zero; file requires --init-file. --warm-start remains the '
+                         'backward-compatible zero-centred file-initialization alias.')
+    ap.add_argument('--init-file', type=str, default=None,
+                    help='PJTW v3 optimizer starting point for --init-mode file; may be combined '
+                         'with --prior-mean because it does not change the L2 centre')
     ap.add_argument('--prior-visit-scale', type=float, default=0.25,
                     help='λ : prior evidence per accumulated visit (dimensionless ; ~0.25 balances the '
                          'prior against the logistic data-Fisher). Only with --prior-mean.')
@@ -1462,6 +1492,7 @@ def main(argv=None):
                          'men-only binary). Default OFF = men-only occupancy.')
     args = ap.parse_args(argv)
     validate_prior_alpha_cap(args)
+    validate_initialization_args(args)
     return train_stream(args)
 
 

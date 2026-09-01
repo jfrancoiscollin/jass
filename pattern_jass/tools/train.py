@@ -421,15 +421,16 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
     Optional SEQUENTIAL-BAYESIAN prior (both None = OFF = byte-identical L2) : when
     `prior_mean` (length n_cols) and `prior_prec` (length n_cols, per-weight
     precision) are given, the base ridge `0.5·l2·‖w‖²` is REPLACED by the Gaussian
-    prior MAP term `0.5·Σ prec_i·(w_i−μ_i)²` and the optimiser is warm-started at μ.
+    prior MAP term `0.5·Σ prec_i·(w_i−μ_i)²`.  For backward compatibility the
+    optimiser starts at μ unless `initial_mean` is supplied explicitly.
     Carries the previous champion forward as a per-bucket precision-weighted prior
     (anti-forgetting of rare buckets ; see train_stream --prior-mean). Composes with
     hier_l2 (still added on top).
 
-    `initial_mean` is deliberately weaker: it only supplies the optimiser's starting
-    point.  The objective remains the ordinary zero-centred L2 objective.  This is
-    useful for autonomous lineages that want continuity between generations without
-    turning the previous evaluator into a teacher or a ridge target.
+    `initial_mean` only supplies the optimiser's starting point and is independent
+    of the objective centre.  It may therefore be combined with a prior to separate
+    optimiser initialization from the Gaussian ridge centre, or used alone with the
+    ordinary zero-centred L2 objective.
 
     `trainable_mask` is an opt-in strict local-refit contract.  When supplied, it is
     a boolean vector of length ``n_cols``.  L-BFGS sees only the selected coordinates;
@@ -439,8 +440,6 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
     """
     N = len(tr_idx); eps = 1e-12
     use_prior = prior_mean is not None and prior_prec is not None
-    if use_prior and initial_mean is not None:
-        raise ValueError("initial_mean and prior_mean/prior_prec are mutually exclusive")
     if initial_mean is not None and len(initial_mean) != n_cols:
         raise ValueError(f"initial_mean has {len(initial_mean)} weights, expected {n_cols}")
     local_refit = trainable_mask is not None
@@ -512,10 +511,10 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
                 grad[_blk:_blk + pat_n] += hier_l2 * _dev
         return loss, grad
 
-    if use_prior:
-        w0 = prior_mean.copy()
-    elif initial_mean is not None:
+    if initial_mean is not None:
         w0 = np.asarray(initial_mean, dtype=np.float64).copy()
+    elif use_prior:
+        w0 = prior_mean.copy()
     else:
         w0 = np.zeros(n_cols, dtype=np.float64)
     options = {'maxiter': max_iter, 'maxcor': maxcor}
