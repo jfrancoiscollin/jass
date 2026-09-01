@@ -1,7 +1,8 @@
 # Jass-native fit identifiability & active learning (JFI) — preregistration draft v1
 
 Date: 2026-09-01
-Status: **DRAFT / PREREGISTRATION ONLY**. Merge is not a compute GO.
+Operational freeze amendment: 2026-09-02, before any JFI-C target read or fit result.
+Status: **PREREGISTRATION ONLY**. Merge is not a compute GO.
 
 ## 0. Goal
 
@@ -362,6 +363,7 @@ Frozen seeds:
 ```text
 split seed = 2026120102
 selection tie seed = 2026120103
+ACTIVE-vs-UNIFORM bootstrap seed = 2026120104
 ```
 
 Cluster by game/opening; all rows of a cluster stay in one role:
@@ -370,6 +372,18 @@ Cluster by game/opening; all rows of a cluster stay in one role:
 TRAIN_CANDIDATES
 DEV_EVAL
 ```
+
+Operational split freeze:
+
+```text
+role_hash = splitmix64(opening_id XOR 2026120102)
+DEV_EVAL iff role_hash mod 10 == 0
+TRAIN_CANDIDATES otherwise
+```
+
+The candidate file is ordered `TRAIN_CANDIDATES,DEV_EVAL`; the DEV tail is
+excluded from both selectors. All rows sharing an `opening_id` therefore share
+one role.
 
 The selector must not read:
 
@@ -393,6 +407,14 @@ Use this simple target-blind v1. Do not add `p(1-p)` or another term post hoc.
 
 First freeze an exact 10,000,000-row Jass-only candidate universe by deterministic hash, before target read.
 
+The exact universe algorithm is frozen as follows. For every authenticated
+40M-source row, compute a target-blind SplitMix64 chain over the source row ID
+and, in order, `(wm,wk,bm,bk,stm)`, using a distinct fixed per-field constant.
+Keep the 10,000,000 smallest unsigned hashes; source row ID breaks the
+astronomically unlikely terminal hash tie. There is no selection seed. The
+candidate copy sets `score=0` and `wdl=0`, retains the source row-ID sidecar and
+publishes all hashes before any target access.
+
 Select:
 
 ```text
@@ -409,6 +431,20 @@ ACTIVE selection:
 - frozen piece-count bins/quotas to prevent monoculture;
 - deterministic SHA tie-break.
 
+The exact v1 strata are the joint product of:
+
+```text
+piece-count upper-inclusive bins = {<=8, <=16, <=24, <=32, <=40}
+tempo phase bins = 4 equal bins from the frozen PatternEval tempo_wmg_bb value
+colour = original stm in {0,1}
+```
+
+Exact-state de-dup is global under `{identity, rot180+colour-swap}` before arm
+selection. One representative per canonical state is kept by the seeded SHA
+tie-break `SHA256("2026120103:<source_row_id>")`, first 128 bits. Arm quotas are
+Hamilton largest-remainder proportions of the canonical-unique
+TRAIN_CANDIDATES strata, with ascending stratum ID as the remainder tie-break.
+
 UNIFORM control:
 
 - same count;
@@ -416,11 +452,21 @@ UNIFORM control:
 - stratified on phase, colour, source and piece-count bins;
 - same DEV exclusions.
 
+UNIFORM is selected by the same seeded SHA ordering from the pool remaining
+after ACTIVE removal, under exactly the ACTIVE Hamilton quotas. Consequently
+ACTIVE and UNIFORM are disjoint, have equal size and identical joint-stratum
+counts.
+
 Publish row-ID manifests + SHA before target access.
 
 ## 17. Target reconstruction only after selection freeze
 
 Only after ACTIVE/UNIFORM row-ID manifests are immutable, reconstruct/read Context30 using the exact historical recipe and same code path for both arms.
+
+To prevent arm-specific DEV target drift, materialize one common reference in
+the order `[ACTIVE,UNIFORM,DEV_EVAL]`, reconstruct Context30 exactly once, then
+split that sidecar into `[ACTIVE,DEV_EVAL]` and `[UNIFORM,DEV_EVAL]`. The DEV
+target tail must be byte-identical between arms.
 
 ## 18. ACTIVE vs UNIFORM fits
 
@@ -448,6 +494,8 @@ DeltaCE = CE_ACTIVE - CE_UNIFORM
 
 Bootstrap CI95, 100000 fixed replicates with a preregistered implementation seed.
 
+The implementation seed is `2026120104`; resampling units are DEV opening IDs.
+
 PASS iff:
 
 ```text
@@ -461,6 +509,10 @@ effective_df ACTIVE > UNIFORM
 OR fraction DATA_DOMINATED ACTIVE > UNIFORM
 OR posterior_variance_proxy ACTIVE < UNIFORM
 ```
+
+For the third disjunct, the scalar comparison is the median over all reported
+coordinates of `1/(F_j + lambda)`. The other two scalar comparisons use global
+effective-df and global DATA_DOMINATED fraction, respectively.
 
 PASS:
 
