@@ -47,7 +47,10 @@ def main(argv=None):
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
     with np.load(args.design, allow_pickle=False) as archive:
-        forbidden = FORBIDDEN_KEYS.intersection(name.lower() for name in archive.files)
+        forbidden = {
+            name for name in archive.files
+            if any(token in name.lower() for token in FORBIDDEN_KEYS)
+        }
         if forbidden:
             raise SystemExit(f"target-blind selector refuses forbidden arrays: {sorted(forbidden)}")
         required = {"indptr", "indices", "data", "row_id"}

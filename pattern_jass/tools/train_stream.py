@@ -1335,6 +1335,11 @@ def validate_prior_alpha_cap(args):
 def validate_initialization_args(args):
     """Validate the backward-compatible independent initialization interface."""
     mode = args.init_mode
+    if getattr(args, 'trainable_region', None) and (
+        mode != 'legacy' or args.init_file or args.warm_start
+    ):
+        raise SystemExit('--trainable-region freezes outside coordinates at --prior-mean and '
+                         'therefore requires legacy prior initialization')
     if args.warm_start:
         if mode != 'legacy' or args.init_file:
             raise SystemExit('--warm-start is the legacy file-initialization alias and cannot '

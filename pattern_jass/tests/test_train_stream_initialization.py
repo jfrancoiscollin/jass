@@ -89,25 +89,47 @@ class IndependentInitializationTests(unittest.TestCase):
         np.testing.assert_array_equal(fitted, prior)
 
     def test_initialization_cli_contract(self) -> None:
-        base = SimpleNamespace(init_mode="legacy", init_file=None, warm_start=None)
+        base = SimpleNamespace(
+            init_mode="legacy", init_file=None, warm_start=None, trainable_region=None
+        )
         train_stream.validate_initialization_args(base)
         train_stream.validate_initialization_args(
-            SimpleNamespace(init_mode="zero", init_file=None, warm_start=None)
+            SimpleNamespace(
+                init_mode="zero", init_file=None, warm_start=None, trainable_region=None
+            )
         )
         train_stream.validate_initialization_args(
-            SimpleNamespace(init_mode="file", init_file="start.pjtw", warm_start=None)
+            SimpleNamespace(
+                init_mode="file", init_file="start.pjtw", warm_start=None,
+                trainable_region=None,
+            )
         )
         with self.assertRaisesRegex(SystemExit, "requires --init-file"):
             train_stream.validate_initialization_args(
-                SimpleNamespace(init_mode="file", init_file=None, warm_start=None)
+                SimpleNamespace(
+                    init_mode="file", init_file=None, warm_start=None, trainable_region=None
+                )
             )
         with self.assertRaisesRegex(SystemExit, "requires --init-mode file"):
             train_stream.validate_initialization_args(
-                SimpleNamespace(init_mode="zero", init_file="start.pjtw", warm_start=None)
+                SimpleNamespace(
+                    init_mode="zero", init_file="start.pjtw", warm_start=None,
+                    trainable_region=None,
+                )
             )
         with self.assertRaisesRegex(SystemExit, "legacy file-initialization alias"):
             train_stream.validate_initialization_args(
-                SimpleNamespace(init_mode="zero", init_file=None, warm_start="old.pjtw")
+                SimpleNamespace(
+                    init_mode="zero", init_file=None, warm_start="old.pjtw",
+                    trainable_region=None,
+                )
+            )
+        with self.assertRaisesRegex(SystemExit, "freezes outside coordinates"):
+            train_stream.validate_initialization_args(
+                SimpleNamespace(
+                    init_mode="zero", init_file=None, warm_start=None,
+                    trainable_region="region.json",
+                )
             )
 
 
