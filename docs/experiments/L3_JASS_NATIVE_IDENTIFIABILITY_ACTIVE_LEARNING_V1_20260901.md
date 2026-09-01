@@ -262,6 +262,11 @@ l2 in {0, 1e-6, 1e-5, 1e-4}
 
 No other point may be added after metrics are read.
 
+The `l2=0` arm is diagnostic-only. It measures the unregularized endpoint but is
+not eligible for selection or reuse in JFI-C/D. The one-standard-error rule is
+applied only to the strictly positive lambdas. This guarantees that the frozen
+lambda used by every downstream information formula is positive.
+
 ### L2 selection rule
 
 Use historical Context30 holdout only, clustered by opening/game identity.
@@ -321,6 +326,11 @@ Global outputs:
 ```text
 sum_j F_j/(F_j + lambda)
 ```
+
+For the diagnostic-only `l2=0` arm, report an UNSEEN coordinate (`F_j=0`) as
+infinite posterior-variance proxy and zero effective-df contribution; never
+evaluate `0/0`. These conventions are reporting-only and cannot enter model,
+lambda or row selection.
 
 - data-gradient norm;
 - ridge-gradient norm;
