@@ -202,6 +202,7 @@ def score_design(records, feat, fisher, l2, train_count, chunk):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--stage", choices=("c", "d"), default="c")
     ap.add_argument("--data", required=True)
     ap.add_argument("--feat", required=True)
     ap.add_argument("--candidate-manifest", required=True)
@@ -214,13 +215,18 @@ def main(argv=None):
     ap.add_argument("--tie-seed", type=int, default=TIE_SEED)
     ap.add_argument("--chunk", type=int, default=20_000)
     ap.add_argument("--active-indices-out", required=True)
-    ap.add_argument("--uniform-indices-out", required=True)
+    ap.add_argument("--uniform-indices-out")
     ap.add_argument("--active-row-ids-out", required=True)
-    ap.add_argument("--uniform-row-ids-out", required=True)
+    ap.add_argument("--uniform-row-ids-out")
     ap.add_argument("--manifest", required=True)
     args = ap.parse_args(argv)
-    if args.count != 2_000_000 and argv is None:
-        raise SystemExit("production JFI-C arms must each contain exactly 2,000,000 rows")
+    expected_count = 2_000_000 if args.stage == "c" else 4_000_000
+    if args.count != expected_count and argv is None:
+        raise SystemExit(f"production JFI-{args.stage.upper()} active count must be {expected_count}")
+    if args.stage == "c" and (not args.uniform_indices_out or not args.uniform_row_ids_out):
+        raise SystemExit("JFI-C requires UNIFORM output paths")
+    if args.stage == "d" and (args.uniform_indices_out or args.uniform_row_ids_out):
+        raise SystemExit("JFI-D is ACTIVE-only")
     if args.tie_seed != TIE_SEED:
         raise SystemExit("JFI-C tie seed drift")
     started = time.monotonic()
@@ -262,24 +268,30 @@ def main(argv=None):
     active_local, quotas = select_stratified(
         rep_scores, rep_strata, rep_high, rep_low, args.count, active=True,
     )
-    uniform_local, uniform_quotas = select_stratified(
-        rep_scores, rep_strata, rep_high, rep_low, args.count,
-        excluded=active_local, active=False, quotas=quotas,
-    )
-    if not np.array_equal(quotas, uniform_quotas):
-        raise AssertionError("ACTIVE/UNIFORM quota drift")
     active = representatives[active_local]
-    uniform = representatives[uniform_local]
     active_row_ids = np.asarray(origin[active], dtype=np.uint32)
-    uniform_row_ids = np.asarray(origin[uniform], dtype=np.uint32)
     np.save(args.active_indices_out, active.astype(np.uint32), allow_pickle=False)
-    np.save(args.uniform_indices_out, uniform.astype(np.uint32), allow_pickle=False)
     np.save(args.active_row_ids_out, active_row_ids, allow_pickle=False)
-    np.save(args.uniform_row_ids_out, uniform_row_ids, allow_pickle=False)
+    uniform = None
+    if args.stage == "c":
+        uniform_local, uniform_quotas = select_stratified(
+            rep_scores, rep_strata, rep_high, rep_low, args.count,
+            excluded=active_local, active=False, quotas=quotas,
+        )
+        if not np.array_equal(quotas, uniform_quotas):
+            raise AssertionError("ACTIVE/UNIFORM quota drift")
+        uniform = representatives[uniform_local]
+        uniform_row_ids = np.asarray(origin[uniform], dtype=np.uint32)
+        np.save(args.uniform_indices_out, uniform.astype(np.uint32), allow_pickle=False)
+        np.save(args.uniform_row_ids_out, uniform_row_ids, allow_pickle=False)
     elapsed = time.monotonic() - started
     counts = np.bincount(rep_strata, minlength=len(quotas))
     report = {
-        "schema": "jass.jfi.c_active_uniform_selection.v1",
+        "schema": (
+            "jass.jfi.c_active_uniform_selection.v1" if args.stage == "c"
+            else "jass.jfi.d_active_selection.v1"
+        ),
+        "stage": args.stage,
         "algorithm": "diagonal_leverage_v1",
         "formula": "sum_j x_j^2/(F_j+lambda)",
         "l2": args.l2,
@@ -287,8 +299,11 @@ def main(argv=None):
         "candidate_rows": args.train_count,
         "canonical_unique_rows": int(len(representatives)),
         "canonical_duplicates_removed": int(args.train_count - len(representatives)),
-        "active_rows": int(len(active)), "uniform_rows": int(len(uniform)),
-        "active_uniform_disjoint": bool(not np.intersect1d(active, uniform).size),
+        "active_rows": int(len(active)),
+        "uniform_rows": int(len(uniform)) if uniform is not None else None,
+        "active_uniform_disjoint": (
+            bool(not np.intersect1d(active, uniform).size) if uniform is not None else None
+        ),
         "dev_excluded": True,
         "inputs": {
             "candidate_manifest": {
@@ -311,9 +326,7 @@ def main(argv=None):
         },
         "files": {
             "active_indices": {"path": args.active_indices_out, "sha256": sha256_file(args.active_indices_out)},
-            "uniform_indices": {"path": args.uniform_indices_out, "sha256": sha256_file(args.uniform_indices_out)},
             "active_row_ids": {"path": args.active_row_ids_out, "sha256": sha256_file(args.active_row_ids_out)},
-            "uniform_row_ids": {"path": args.uniform_row_ids_out, "sha256": sha256_file(args.uniform_row_ids_out)},
         },
         "rate": {"elapsed_seconds": elapsed, "candidate_rows_per_second": args.train_count / elapsed},
         "guards": {
@@ -321,6 +334,15 @@ def main(argv=None):
             "source_score_values_required_zero": True, "source_wdl_values_required_zero": True,
         },
     }
+    if args.stage == "c":
+        report["files"].update({
+            "uniform_indices": {
+                "path": args.uniform_indices_out, "sha256": sha256_file(args.uniform_indices_out),
+            },
+            "uniform_row_ids": {
+                "path": args.uniform_row_ids_out, "sha256": sha256_file(args.uniform_row_ids_out),
+            },
+        })
     Path(args.manifest).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     return 0
 
