@@ -16,9 +16,11 @@ def valid_input():
     return {
         "schema": "jass.jfi.boundary_a_input.v1",
         "code_sha": "a" * 40,
-        "machine": {"host": "CPX62", "nproc": 8, "isa": "AVX2-BMI2-native"},
+        "machine": {"host": "cpx62", "nproc": 16, "avx2": True, "bmi2": True,
+                    "native_build": True},
         "numeric_env": {"OMP_NUM_THREADS": "1"},
-        "scratch": {"path": "/scratch/jfi", "free_bytes": 10**11},
+        "disk": {"code_path": "/code", "code_free_bytes": 10**11,
+                 "scratch_path": "/scratch/jfi", "scratch_free_bytes": 10**11},
         "current_2m": {
             "records": 2_000_000,
             "train_records": 1_800_796,
@@ -28,7 +30,8 @@ def valid_input():
         },
         "context30": {"sha256": "c" * 64},
         "feature_dump": {"rows": 2_000_000, "seconds": 100.0},
-        "sizer": {"rows": 10_000, "iterations": 2, "seconds": 4.0},
+        "sizer": {"rows": 10_000, "iterations": 2, "seconds": 4.0,
+                  "full_fit_timeout_seconds": 86400},
         "markers": dict(jfi_boundary_a.ZERO_MARKERS),
     }
 
@@ -39,7 +42,7 @@ class BoundaryATests(unittest.TestCase):
         self.assertEqual(facts["verdict"], "JFI_BOUNDARY_A_READY")
         self.assertEqual(facts["next_boundary"], "GO JFI FIT")
         self.assertEqual(facts["markers"], jfi_boundary_a.ZERO_MARKERS)
-        self.assertGreater(facts["sizer"]["projected_seconds_eight_arms"], 0)
+        self.assertGreater(facts["sizer"]["projected_seconds_seven_physical_arms"], 0)
 
     def test_full_fit_marker_fails_closed(self):
         source = valid_input()

@@ -1247,6 +1247,11 @@ def train_stream(args):
             json.dumps(optimizer_diagnostics, indent=2, sort_keys=True) + '\n',
             encoding='utf-8',
         )
+    if args.raw_weights_out:
+        raw_weights_path = Path(args.raw_weights_out)
+        if raw_weights_path.exists():
+            raise SystemExit(f'{raw_weights_path}: raw weights output already exists')
+        np.save(raw_weights_path, np.asarray(w_float, dtype=np.float64), allow_pickle=False)
 
     # --- HOLDOUT log-loss : same forward pass (build_fn + sigmoid CE) as the fit,
     #     on the held-out tail rows [train_N, N), at the fitted weights. Pure data
@@ -1448,6 +1453,9 @@ def main(argv=None):
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
     ap.add_argument('--optimizer-report', type=str, default=None,
                     help='optional JSON report with SciPy success/status/message and gradient norm')
+    ap.add_argument('--raw-weights-out', type=str, default=None,
+                    help='optional float64 .npy dump of the fitted pruned-layout weights; '
+                         'intended for audited optimizer-path diagnostics and not deployment')
     ap.add_argument('--lbfgs-maxcor', type=int, default=5,
                     help='L-BFGS correction history size; larger values use more RAM but improve curvature')
     ap.add_argument('--lbfgs-gtol', type=float, default=None,

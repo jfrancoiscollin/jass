@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import struct
 import tempfile
 import unittest
@@ -52,6 +53,21 @@ class JfiExecutionTemplateTests(unittest.TestCase):
                     "--records",str(MAX_RECORDS+1),"--holdout-count","1",
                     "--out-data","x","--out-feat","y","--out-target-values","z","--manifest","m",
                 ])
+
+    def test_fit_template_has_exact_seven_fit_contract_and_no_force(self):
+        root = Path(__file__).resolve().parents[2]
+        text = (root / "jobs/templates/l3-jfi-factorial-l2-fit-v1.sh").read_text()
+        calls = re.findall(r"^fit (?:A|B|C|D|L2_0|L2_1E6|L2_1E4) ", text, re.MULTILINE)
+        self.assertEqual(len(calls), 7)
+        self.assertIn("D_reused_as_l2_1e5", text)
+        self.assertIn("BOOTSTRAP_SAMPLES=100000", text)
+        self.assertIn("BOOTSTRAP_SEED=2026120101", text)
+        self.assertIn("POST_FACTS_AUTHORIZED", text)
+        self.assertIn("--max-iter \"$MAXIT\"", text)
+        self.assertIn("--lbfgs-maxcor \"$MAXCOR\"", text)
+        self.assertIn("--lbfgs-gtol \"$GTOL\"", text)
+        for forbidden in ("run_match", "fresh-openings", "SCAN_EXACT", "GO_JFI_FORCE"):
+            self.assertNotIn(forbidden, text)
 
 
 if __name__ == "__main__":
