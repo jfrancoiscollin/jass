@@ -7,6 +7,8 @@ set -Eeuo pipefail
 : "${JASS_JOB_ID:?}"; : "${JASS_OBJSTORE_REMOTE:?}"
 : "${EXPECTED_CODE_SHA:?}"; : "${EXPECTED_JOB_ID:?}"
 : "${BOUNDARY_B_ROOT:?}"; : "${EXPECTED_BOUNDARY_B_JOB:?}"; : "${EXPECTED_BOUNDARY_B_ATTEMPT:?}"
+: "${JFI_AB_ROOT:?}"; : "${EXPECTED_JFI_AB_JOB:?}"
+: "${EXPECTED_JFI_AB_ATTEMPT:?}"; : "${EXPECTED_JFI_AB_CODE_SHA:?}"
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"; IN="$JASS_RESULT_DIR/inputs"; ART="$JASS_ARTEFACT_DIR"
 GEOM="$JASS_RESULT_DIR/geom8"; mkdir -p "$W" "$IN" "$ART" "$GEOM"
@@ -15,7 +17,8 @@ say(){ echo "$*" | tee -a "$RES"; }
 die(){ say "ABORT: $*"; exit 1; }
 stage(){ echo "$1" >"$STAGE"; say "phase=$1"; }
 
-AB_ROOT="r2:jass-data/runs/cpx62-1749-l3-jfi-factorial-l2-fit-v1/20260901T225526Z-25bb488e"
+AB_ROOT="$JFI_AB_ROOT"; AB_JOB="$EXPECTED_JFI_AB_JOB"
+AB_ATTEMPT="$EXPECTED_JFI_AB_ATTEMPT"; AB_CODE_SHA="$EXPECTED_JFI_AB_CODE_SHA"
 VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}"
 PY="$VENV/bin/python"; COUNT=2000000; TIE_SEED=2026120103
 
@@ -40,6 +43,11 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND"|tee -a "
 [ "${NO_FRESH_OPENINGS:-0}" = 1 ] || die "fresh-opening guard missing"
 [ "${NO_STRENGTH_GAMES:-0}" = 1 ] || die "strength-game guard missing"
 [ "${NO_SCAN_READS:-0}" = 1 ] || die "Scan-read guard missing"
+[ "$AB_ROOT" = "$JASS_OBJSTORE_REMOTE/runs/$AB_JOB/$AB_ATTEMPT" ] || die "JFI-A/B root identity mismatch"
+[[ "$AB_JOB" =~ ^cpx62-[0-9]+-l3-jfi-factorial-l2-fit-v1$ ]] || die "JFI-A/B job nomenclature drift"
+[[ "$AB_ATTEMPT" =~ ^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$ ]] || die "JFI-A/B attempt nomenclature drift"
+[ "$AB_CODE_SHA" = "25bb488e19bb4bf6e7d696294defaf083142f927" ] || die "JFI-A/B scientific code drift"
+[[ "$AB_ATTEMPT" == *"-${AB_CODE_SHA:0:8}" ]] || die "JFI-A/B attempt/code drift"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] || die "job worktree must be detached"
 [ -z "$(git status --porcelain)" ] || die "job worktree must start clean"

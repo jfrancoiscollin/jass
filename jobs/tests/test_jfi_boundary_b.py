@@ -117,6 +117,34 @@ class BoundaryBTests(unittest.TestCase):
         self.assertNotIn("jfi_active_select_stream.py", template)
         self.assertNotIn("train_stream.py", template)
         self.assertNotIn("run_jass_gate_bounded.py", template)
+        self.assertIn(': "${JFI_AB_ROOT:?}"', template)
+        self.assertIn('AB_ROOT="$JFI_AB_ROOT"', template)
+        self.assertIn("JFI-A/B root identity mismatch", template)
+        self.assertNotIn(
+            "r2:jass-data/runs/cpx62-1749-l3-jfi-factorial-l2-fit-v1/"
+            "20260901T225526Z-25bb488e",
+            template,
+        )
+
+    def test_downstream_templates_pin_authorized_jfi_ab_identity(self):
+        template_dir = Path(__file__).resolve().parents[1] / "templates"
+        for name in (
+            "l3-jfi-active-select-v1.sh",
+            "l3-jfi-active-fit-v1.sh",
+            "l3-jfi-d-active4-select-v1.sh",
+            "l3-jfi-d-active4-fit-v1.sh",
+        ):
+            with self.subTest(template=name):
+                template = (template_dir / name).read_text()
+                self.assertIn(': "${JFI_AB_ROOT:?}"', template)
+                self.assertIn('AB_ROOT="$JFI_AB_ROOT"', template)
+                self.assertIn("JFI-A/B root identity mismatch", template)
+                self.assertIn("JFI-A/B scientific code drift", template)
+                self.assertNotIn(
+                    "r2:jass-data/runs/cpx62-1749-l3-jfi-factorial-l2-fit-v1/"
+                    "20260901T225526Z-25bb488e",
+                    template,
+                )
 
     def test_selector_template_publishes_before_any_target_access(self):
         template = (
