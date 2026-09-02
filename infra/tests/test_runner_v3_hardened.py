@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import json
+import os
+import shlex
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -49,24 +52,31 @@ class HardenedLauncherTests(unittest.TestCase):
     def test_transient_unit_is_minimal_independent_and_unbounded(self):
         with tempfile.TemporaryDirectory() as td:
             pid_path = Path(td) / "runs/job/attempt/wrapper.pid"
+            pid_path.parent.mkdir(parents=True)
             unit = H.transient_unit_name(pid_path)
             wrapper = "echo $$ > /tmp/pid; trap 'rc=$?' EXIT"
-            command = H.systemd_run_command(unit, Path(td), wrapper)
-        joined = "\n".join(command)
-        self.assertIn("--no-block", command)
-        self.assertIn("--collect", command)
-        self.assertIn("--property=Type=exec", command)
-        self.assertIn("--property=KillMode=control-group", command)
-        self.assertIn("--property=ProtectSystem=false", command)
-        self.assertIn("--property=NoNewPrivileges=false", command)
-        self.assertFalse(any("RuntimeMaxSec" in item for item in command))
-        self.assertFalse(any("StandardOutput" in item for item in command))
-        self.assertNotIn("--scope", command)
-        self.assertIn(unit, joined)
-        self.assertEqual(
-            command[-1],
-            "echo $$$$ > /tmp/pid; trap 'rc=$$?' EXIT",
-        )
+            wrapper_script = H.persist_systemd_wrapper(pid_path, wrapper)
+            command = H.systemd_run_command(unit, Path(td), wrapper_script)
+            persisted = wrapper_script.read_text(encoding="utf-8")
+            joined = "\n".join(command)
+            self.assertIn("--no-block", command)
+            self.assertIn("--collect", command)
+            self.assertIn("--property=Type=exec", command)
+            self.assertIn("--property=KillMode=control-group", command)
+            self.assertIn("--property=ProtectSystem=false", command)
+            self.assertIn("--property=NoNewPrivileges=false", command)
+            self.assertFalse(any("RuntimeMaxSec" in item for item in command))
+            self.assertFalse(any("StandardOutput" in item for item in command))
+            self.assertNotIn("--scope", command)
+            self.assertIn(unit, joined)
+            self.assertEqual(command[-2:], ["/usr/bin/bash", str(wrapper_script)])
+            self.assertNotIn("-c", command[-2:])
+            self.assertIn(wrapper, persisted)
+            self.assertNotIn("$$$$", persisted)
+            self.assertIn("runner-wrapper.started", persisted)
+            self.assertIn("exit 125", persisted)
+            if os.name != "nt":
+                self.assertEqual(wrapper_script.stat().st_mode & 0o777, 0o700)
 
     def test_unit_name_is_stable_and_bounded(self):
         path = Path("/var/lib/jass-runner/runs/job/attempt/wrapper.pid")
@@ -75,6 +85,29 @@ class HardenedLauncherTests(unittest.TestCase):
         self.assertTrue(first.startswith("jass-job-"))
         self.assertTrue(first.endswith(".service"))
         self.assertLess(len(first), 64)
+
+    @unittest.skipIf(os.name == "nt", "POSIX shell execution required")
+    def test_persisted_wrapper_runs_once_and_keeps_pid_in_c_int_range(self):
+        with tempfile.TemporaryDirectory() as td:
+            run_dir = Path(td)
+            pid_path = run_dir / "wrapper.pid"
+            executions = run_dir / "executions.txt"
+            wrapper = (
+                f"echo $$ > {shlex.quote(str(pid_path))}; "
+                f"printf 'ran\\n' >> {shlex.quote(str(executions))}"
+            )
+            script = H.persist_systemd_wrapper(pid_path, wrapper)
+
+            first = subprocess.run(["bash", str(script)], check=False)
+            self.assertEqual(first.returncode, 0)
+            recorded_pid = int(pid_path.read_text(encoding="utf-8").strip())
+            self.assertGreater(recorded_pid, 0)
+            self.assertLessEqual(recorded_pid, 2_147_483_647)
+
+            second = subprocess.run(["bash", str(script)], check=False)
+            self.assertEqual(second.returncode, 125)
+            self.assertEqual(executions.read_text(encoding="utf-8"), "ran\n")
+            self.assertEqual((run_dir / "exit_code").read_text().strip(), "125")
 
     def test_launch_contract_exists_before_systemd_starts_job(self):
         class Client:
@@ -91,8 +124,10 @@ class HardenedLauncherTests(unittest.TestCase):
             pid_path = run_dir / "wrapper.pid"
             raw_log = run_dir / "output.log.raw"
             wrapper = (
-                f"exec >{raw_log} 2>&1; echo $$ > {pid_path}; "
-                f"source {run_dir / 'job.env'}; bash {run_dir / 'job.sh'}"
+                f"exec >{shlex.quote(str(raw_log))} 2>&1; "
+                f"echo $$ > {shlex.quote(str(pid_path))}; "
+                f"source {shlex.quote(str(run_dir / 'job.env'))}; "
+                f"bash {shlex.quote(str(run_dir / 'job.sh'))}"
             )
 
             def fake_popen(command, **kwargs):
@@ -104,6 +139,10 @@ class HardenedLauncherTests(unittest.TestCase):
                 report = json.loads((run_dir / "artefacts/runner-launch.json").read_text())
                 self.assertEqual(report["state"], "launching")
                 self.assertIn("--no-block", command)
+                self.assertEqual(command[-2], "/usr/bin/bash")
+                persisted = Path(command[-1])
+                self.assertTrue(persisted.is_file())
+                self.assertIn(wrapper, persisted.read_text(encoding="utf-8"))
                 pid_path.write_text("4321\n")
                 return Client()
 

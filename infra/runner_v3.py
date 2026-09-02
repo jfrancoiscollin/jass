@@ -277,15 +277,28 @@ def alive(pid: int) -> bool:
     try:
         os.kill(pid, 0)
         return True
-    except (ProcessLookupError, PermissionError):
+    except (OSError, OverflowError):
         return False
 
 
 def wrapper_pid(info: dict) -> int:
+    candidates: list[object] = []
     try:
-        return int((Path(info["run_dir"]) / "wrapper.pid").read_text().strip())
+        candidates.append((Path(info["run_dir"]) / "wrapper.pid").read_text().strip())
     except (OSError, ValueError):
-        return int(info.get("pid", -1))
+        pass
+    candidates.append(info.get("pid", -1))
+    for candidate in candidates:
+        try:
+            pid = int(candidate)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        # Linux pid_t is a signed C int.  Reject corrupted concatenations such
+        # as "27270302727030" before they reach os.kill(), and fall back to the
+        # immutable PID recorded in the in-flight metadata.
+        if 0 < pid <= 2_147_483_647:
+            return pid
+    return -1
 
 
 def process_observation(info: dict, pid: int) -> dict:

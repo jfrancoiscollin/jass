@@ -296,6 +296,14 @@ class ResultTests(unittest.TestCase):
                 "wrapper_terminated_without_exit_status",
             )
 
+    def test_corrupted_wrapper_pid_falls_back_without_overflow(self):
+        with tempfile.TemporaryDirectory() as td:
+            run_dir = Path(td)
+            (run_dir / "wrapper.pid").write_text("27270302727030\n")
+            info = {"run_dir": str(run_dir), "pid": 2714139}
+            self.assertEqual(R.wrapper_pid(info), 2714139)
+            self.assertFalse(R.alive(27270302727030))
+
 
 class JsonTests(unittest.TestCase):
     def test_atomic_json(self):

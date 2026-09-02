@@ -53,12 +53,34 @@ def transient_unit_name(wrapper_pid_path: Path) -> str:
     return f"jass-job-{digest}.service"
 
 
-def escape_systemd_exec_dollars(command: str) -> str:
-    """Preserve shell dollar expansion through systemd ExecStart parsing."""
-    return command.replace("$", "$$")
+def persist_systemd_wrapper(wrapper_pid_path: Path, wrapper: str) -> Path:
+    """Persist the exact shell wrapper so systemd never parses its dollars.
+
+    Transient units are serialized during ``daemon-reexec``.  An inline
+    ``bash -c`` command containing escaped ``$$`` can be serialized after one
+    level of parsing and expanded a second time on restore.  Besides corrupting
+    ``wrapper.pid``, that can execute a partially completed scientific attempt
+    again.  A file-backed wrapper avoids both hazards, while the atomic marker
+    makes any unexpected second ExecStart fail closed.
+    """
+    run_dir = wrapper_pid_path.parent
+    script = run_dir / "runner-wrapper.sh"
+    started = run_dir / "runner-wrapper.started"
+    exit_code = run_dir / "exit_code"
+    content = (
+        "#!/usr/bin/bash\n"
+        f"if ! mkdir {shlex.quote(str(started))} 2>/dev/null; then\n"
+        f"  printf '%s\\n' 125 > {shlex.quote(str(exit_code))}\n"
+        "  exit 125\n"
+        "fi\n"
+        f"{wrapper}\n"
+    )
+    script.write_text(content, encoding="utf-8")
+    script.chmod(0o700)
+    return script
 
 
-def systemd_run_command(unit: str, cwd: Path, wrapper: str) -> list[str]:
+def systemd_run_command(unit: str, cwd: Path, wrapper_script: Path) -> list[str]:
     """Return the smallest proven non-blocking transient-service command.
 
     The job wrapper already redirects stdin/stdout/stderr and records its PID,
@@ -80,8 +102,7 @@ def systemd_run_command(unit: str, cwd: Path, wrapper: str) -> list[str]:
         "--property=NoNewPrivileges=false",
         f"--property=WorkingDirectory={cwd}",
         "/usr/bin/bash",
-        "-c",
-        escape_systemd_exec_dollars(wrapper),
+        str(wrapper_script),
     ]
 
 
@@ -147,9 +168,10 @@ def launch_transient(
     cwd = Path(kwargs.get("cwd") or ".").resolve()
     wrapper_pid_path = extract_wrapper_pid_path(wrapper)
     unit = transient_unit_name(wrapper_pid_path)
-    command = systemd_run_command(unit, cwd, wrapper)
+    wrapper_script = persist_systemd_wrapper(wrapper_pid_path, wrapper)
+    command = systemd_run_command(unit, cwd, wrapper_script)
     report: dict[str, Any] = {
-        "schema": 3,
+        "schema": 4,
         "launcher": "systemd-transient-service",
         "state": "launching",
         "unit": unit,
@@ -158,7 +180,9 @@ def launch_transient(
         "kill_mode": "control-group",
         "runtime_max": "infinity",
         "parent_runner_cgroup_isolated": True,
-        "systemd_run_mode": "no-block-minimal",
+        "systemd_run_mode": "no-block-persistent-wrapper",
+        "wrapper_script": str(wrapper_script),
+        "single_start_guard": str(wrapper_pid_path.parent / "runner-wrapper.started"),
     }
 
     persist_launch_contract(wrapper_pid_path, report)
