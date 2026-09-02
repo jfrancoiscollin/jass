@@ -1,0 +1,15 @@
+# Jass — project-level Codex defaults.
+# Keep the root/orchestrator on the strongest reasoning model and let it
+# delegate bounded technical work to Spark according to ../AGENTS.md.
+
+model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
+
+[features.multi_agent_v2]
+enabled = true
+expose_spawn_agent_model_overrides = true
+wait_agent_enabled = true
+non_code_mode_only = false
+max_concurrent_threads_per_session = 2
+root_agent_usage_hint_text = "Follow the automatic Jass model-routing policy in AGENTS.md. Route FAST_TECHNICAL work to gpt-5.3-codex-spark; keep or escalate DEEP_SCIENTIFIC work on gpt-5.6-sol. Do not ask the user to choose a model."
+subagent_usage_hint_text = "Follow AGENTS.md. Do not recursively route work to another agent. If an escalation condition is reached, stop the risky part and hand it back to the parent with evidence."
