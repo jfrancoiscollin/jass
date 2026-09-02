@@ -5,11 +5,14 @@ set -Eeuo pipefail
 : "${JASS_JOB_ID:?}"; : "${JASS_OBJSTORE_REMOTE:?}"; : "${EXPECTED_CODE_SHA:?}"; : "${EXPECTED_JOB_ID:?}"
 : "${JFI_C_ROOT:?}"; : "${EXPECTED_JFI_C_JOB:?}"; : "${EXPECTED_JFI_C_ATTEMPT:?}"; : "${EXPECTED_JFI_C_CODE_SHA:?}"
 : "${BOUNDARY_B_ROOT:?}"
+: "${JFI_AB_ROOT:?}"; : "${EXPECTED_JFI_AB_JOB:?}"
+: "${EXPECTED_JFI_AB_ATTEMPT:?}"; : "${EXPECTED_JFI_AB_CODE_SHA:?}"
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"; IN="$JASS_RESULT_DIR/inputs"; ART="$JASS_ARTEFACT_DIR"; GEOM="$JASS_RESULT_DIR/geom8"
 mkdir -p "$W" "$IN" "$ART" "$GEOM"; RES="$W/RESULTS.txt"; : >"$RES"
 say(){ echo "$*"|tee -a "$RES"; }; die(){ say "ABORT: $*"; exit 1; }
-AB_ROOT="r2:jass-data/runs/cpx62-1749-l3-jfi-factorial-l2-fit-v1/20260901T225526Z-25bb488e"
+AB_ROOT="$JFI_AB_ROOT"; AB_JOB="$EXPECTED_JFI_AB_JOB"
+AB_ATTEMPT="$EXPECTED_JFI_AB_ATTEMPT"; AB_CODE_SHA="$EXPECTED_JFI_AB_CODE_SHA"
 VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}"; PY="$VENV/bin/python"
 finalize(){ rc=$?; trap - EXIT ERR TERM INT; set +e; cp "$RES" "$ART/RESULTS.txt" 2>/dev/null||true; rm -rf "$W/build" "$IN" "$GEOM" 2>/dev/null||true; rm -f "$W"/*.jnnw "$W"/*.jsm "$W"/*.feat "$W"/*.npy 2>/dev/null||true; exit "$rc"; }
 trap finalize EXIT; trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND"|tee -a "$RES"; exit "$rc"' ERR
@@ -18,6 +21,11 @@ trap finalize EXIT; trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BA
 [ "${JFI_C_PASS_AUTHORIZED:-0}" = 1 ] && [ "${NO_TARGET_READS_BEFORE_SELECTION_FREEZE:-0}" = 1 ] || die "JFI-D authorization missing"
 [ "${NO_FULL_FITS:-0}" = 1 ] && [ "${NO_SCAN_READS:-0}" = 1 ] || die "zero-compute guard missing"
 [ "${NO_FRESH_OPENINGS:-0}" = 1 ] && [ "${NO_STRENGTH_GAMES:-0}" = 1 ] || die "game guard missing"
+[ "$AB_ROOT" = "$JASS_OBJSTORE_REMOTE/runs/$AB_JOB/$AB_ATTEMPT" ] || die "JFI-A/B root identity mismatch"
+[[ "$AB_JOB" =~ ^cpx62-[0-9]+-l3-jfi-factorial-l2-fit-v1$ ]] || die "JFI-A/B job nomenclature drift"
+[[ "$AB_ATTEMPT" =~ ^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$ ]] || die "JFI-A/B attempt nomenclature drift"
+[ "$AB_CODE_SHA" = "25bb488e19bb4bf6e7d696294defaf083142f927" ] || die "JFI-A/B scientific code drift"
+[[ "$AB_ATTEMPT" == *"-${AB_CODE_SHA:0:8}" ]] || die "JFI-A/B attempt/code drift"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] && [ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ] || die "source drift"
 [ "$(hostname)" = cpx62 ] && [ "$(nproc)" -eq 16 ] || die "CPX62 contract mismatch"
 [ -f "$VENV/.jass-runtime-ready-v1" ] || die "numeric runtime absent"
