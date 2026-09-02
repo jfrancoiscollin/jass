@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # JFI-A/B: seven physical full fits on one frozen CURRENT_2M/Context30 design.
 # D is also the lambda=1e-5 zero-centred arm. No force, fresh data or Scan read.
+# 2026-09-02 one-time prereg amendment: positive-lambda max_iter=6000;
+# diagnostic-only lambda=0 remains max_iter=2000; gtol and all science unchanged.
 set -Eeuo pipefail
 
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
@@ -22,7 +24,7 @@ TURNOVER_SHA="9b7db67a87025baf9115c72512312ac13ace076cef700c54ff1862f4ab240a2d"
 TURNOVER_META_SHA="acf3bbf4a28e7b44a1077df06bca9658cd4b189fc4cf11ee7f56720661626682"
 CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
 SPLIT_SEED=577215; EXPECTED_RECORDS=2000000; EXPECTED_EXTRAS=120
-MAXIT=2000; MAXCOR=20; GTOL=1e-4; CHUNK=20000
+POS_MAXIT=6000; ZERO_MAXIT=2000; MAXCOR=20; GTOL=1e-4; CHUNK=20000
 BOOTSTRAP_SAMPLES=100000; BOOTSTRAP_SEED=2026120101
 FIT_TIMEOUT="${JFI_FIT_TIMEOUT_SECONDS:-86400}"
 VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}"
@@ -123,7 +125,7 @@ K=$(python3 -c 'import struct,sys;f=open(sys.argv[1],"rb");assert f.read(4)==b"F
 [ "$K" -eq "$EXPECTED_EXTRAS" ] || die "feature width drift"
 
 fit(){
-  local arm="$1"; local l2="$2"; shift 2
+  local arm="$1"; local l2="$2"; local maxit="$3"; shift 3
   local raw=()
   [[ "$arm" =~ ^[ABCD]$ ]] && raw=(--raw-weights-out "$W/$arm.raw.npy")
   /usr/bin/time -f '%e' -o "$W/$arm.seconds" timeout "${FIT_TIMEOUT}s" env \
@@ -131,25 +133,36 @@ fit(){
     "$PY" pattern_jass/tools/train_stream.py --data "$W/current.jnnw" --feat "$W/current.feat" \
     --out "$W/$arm.pjtw" --target external --target-values "$W/context30.npy" \
     --targets-report "$ART/$arm-targets.json" --loss logistic --exact-fold --tempo-stage \
-    --holdout-count "$HOLDOUT" --l2 "$l2" --max-iter "$MAXIT" --chunk "$CHUNK" \
+    --holdout-count "$HOLDOUT" --l2 "$l2" --max-iter "$maxit" --chunk "$CHUNK" \
     --lbfgs-maxcor "$MAXCOR" --lbfgs-gtol "$GTOL" --prune \
     --optimizer-report "$ART/$arm-optimizer.json" "${raw[@]}" "$@" >"$W/$arm.log" 2>&1
   [ -s "$W/$arm.pjtw" ] || die "$arm produced no PJTW"
 }
 
 stage seven-physical-full-fits
-fit A 1e-5 --prior-mean "$W/curriculum.pjtw" --prior-decay 0
-fit B 1e-5 --prior-mean "$W/curriculum.pjtw" --prior-decay 0 --init-mode zero
-fit C 1e-5 --init-mode file --init-file "$W/curriculum.pjtw"
-fit D 1e-5 --init-mode zero
-fit L2_0 0 --init-mode zero
-fit L2_1E6 1e-6 --init-mode zero
-fit L2_1E4 1e-4 --init-mode zero
+fit A 1e-5 "$POS_MAXIT" --prior-mean "$W/curriculum.pjtw" --prior-decay 0
+fit B 1e-5 "$POS_MAXIT" --prior-mean "$W/curriculum.pjtw" --prior-decay 0 --init-mode zero
+fit C 1e-5 "$POS_MAXIT" --init-mode file --init-file "$W/curriculum.pjtw"
+fit D 1e-5 "$POS_MAXIT" --init-mode zero
+fit L2_0 0 "$ZERO_MAXIT" --init-mode zero
+fit L2_1E6 1e-6 "$POS_MAXIT" --init-mode zero
+fit L2_1E4 1e-4 "$POS_MAXIT" --init-mode zero
+
+stage checkpoint-fit-artifacts
+for arm in A B C D L2_0 L2_1E6 L2_1E4; do
+  gzip -n -c "$W/$arm.pjtw" >"$ART/$arm.pjtw.gz"
+done
+for arm in A B C D; do
+  gzip -n -c "$W/$arm.raw.npy" >"$ART/$arm.raw.npy.gz"
+done
+printf '7\n' >"$ART/FIT_CHECKPOINTS__7"
+printf '6000\n' >"$ART/POSITIVE_LAMBDA_MAX_ITER__6000"
+printf '2000\n' >"$ART/L2_ZERO_MAX_ITER__2000"
 
 stage verify-positive-lambda-convergence
 for arm in A B C D L2_1E6 L2_1E4; do
   "$PY" jobs/tools/verify_optimizer_convergence.py --report "$ART/$arm-optimizer.json" --label "$arm" \
-    --expected-max-iterations "$MAXIT" --expected-maxcor "$MAXCOR" --expected-gtol "$GTOL" \
+    --expected-max-iterations "$POS_MAXIT" --expected-maxcor "$MAXCOR" --expected-gtol "$GTOL" \
     --receipt "$ART/$arm-convergence.json"
 done
 
@@ -204,11 +217,11 @@ else
 fi
 
 stage publish-certificate
-for arm in A B C D L2_0 L2_1E6 L2_1E4; do gzip -n -c "$W/$arm.pjtw" >"$ART/$arm.pjtw.gz"; done
-"$PY" - "$ART" "$EXPECTED_CODE_SHA" "$W/current-manifest.json" "$READOUT_RC" <<'PY'
-import hashlib,json,os,sys
+"$PY" - "$ART" "$EXPECTED_CODE_SHA" "$W/current-manifest.json" "$READOUT_RC" "$POS_MAXIT" "$ZERO_MAXIT" <<'PY'
+import hashlib,json,sys
 from pathlib import Path
 art=Path(sys.argv[1]); code=sys.argv[2]; manifest=json.load(open(sys.argv[3])); rc=int(sys.argv[4])
+pos_maxit=int(sys.argv[5]); zero_maxit=int(sys.argv[6])
 def sha(path):
  h=hashlib.sha256()
  with open(path,'rb') as f:
@@ -218,6 +231,8 @@ models={name:sha(art/f'{name}.pjtw.gz') for name in ('A','B','C','D','L2_0','L2_
 payload={'schema':'jass.jfi.a_b_certificate.v1','code_sha':code,'source_manifest':manifest,
  'full_fits':7,'physical_fit_arms':['A','B','C','D','L2_0','L2_1E6','L2_1E4'],
  'D_reused_as_l2_1e5':True,'model_gzip_sha256':models,
+ 'positive_lambda_max_iter':pos_maxit,'l2_zero_max_iter':zero_maxit,
+ 'convergence_amendment':'L3_JFI_POSITIVE_LAMBDA_CONVERGENCE_AMENDMENT_20260902.md',
  'path_verdict':json.load(open(art/'JFI_A_PATH_INDEPENDENCE.json'))['verdict'],
  'selected_l2':json.load(open(art/'JFI_B_L2_CURVE.json'))['selected_l2'],
  'identifiability_published':rc==0,
