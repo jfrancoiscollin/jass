@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import importlib.util
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +14,7 @@ TOOL = ROOT / "jobs" / "tools" / "adaptive_sibling_teacher_shadow.py"
 SPEC = importlib.util.spec_from_file_location("adaptive_shadow", TOOL)
 assert SPEC is not None and SPEC.loader is not None
 shadow = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = shadow
 SPEC.loader.exec_module(shadow)
 
 FIELDS = [
