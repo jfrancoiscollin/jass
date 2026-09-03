@@ -21,34 +21,33 @@ If sources conflict, do not silently choose the convenient interpretation. Prese
 
 ## 2. Automatic model routing — mandatory
 
-The repository-level Codex configuration keeps the root/orchestrator on `gpt-5.6-sol` and enables model overrides for subagents.
+Project Codex configuration defines two named roles:
 
-For every substantive request, classify the work **before editing**:
+- `fast` = `gpt-5.3-codex-spark`, for bounded tactical execution.
+- `scientist` = `gpt-5.6-sol` with deep reasoning, for science/causality/architecture.
 
-### FAST_TECHNICAL → delegate to Spark
+The root/orchestrator defaults to `gpt-5.6-sol`. Do not ask the user which model to use.
 
-Immediately spawn one subagent with:
+For every substantive request, classify the work **before editing**.
 
-- model: `gpt-5.3-codex-spark`
-- scope: the smallest causally narrow task that can complete the request
-- instructions: include the relevant scientific/runtime invariants and required validation
+### FAST_TECHNICAL → delegate to the `fast` role
 
-Use this route for bounded work where the intended behavior is already fixed, including:
+Use the `fast` role for bounded work where intended behavior is already fixed, including:
 
 - inspecting logs, status files, CI output, job artifacts, or a known failing test;
 - locating a technical root cause;
 - small/local shell, Python, C++, config, parser, runner, harness, or CI fixes;
 - adding diagnostics or instrumentation that does not change experimental meaning;
 - implementing an already-decided change;
-- updating mechanical documentation that does not reinterpret scientific results;
+- mechanical documentation edits that do not reinterpret scientific results;
 - running existing targeted tests or deterministic smoke/contract checks;
 - repairing/requeueing an **unchanged** experiment only when the current task already authorizes remote execution and all launch guardrails are satisfied.
 
-The root/orchestrator must not edit the same files concurrently while Spark is working. Wait for the Spark result, then review it.
+Give the fast agent the smallest causally narrow task that can complete the request plus the relevant invariants and required validation. The root/orchestrator must not edit the same files concurrently while the fast agent is working. Review its evidence, diff, and tests before accepting the result.
 
-### DEEP_SCIENTIFIC → keep/escalate to Sol
+### DEEP_SCIENTIFIC → Sol owns the reasoning
 
-`gpt-5.6-sol` must own the reasoning before implementation when the task involves any of:
+Keep the work on the Sol root or delegate it to the `scientist` role when the task involves any of:
 
 - interpreting a scientific result, terminal verdict, transfer claim, Elo/runtime evidence, or causal conclusion;
 - preregistration, protocol, experiment design, control selection, or information barriers;
@@ -58,36 +57,36 @@ The root/orchestrator must not edit the same files concurrently while Spark is w
 - architecture changes with broad semantic impact;
 - a large or cross-cutting refactor where preserving experimental semantics is non-trivial;
 - a second failed attempt at the same technical fix;
-- any request from a Spark agent to cross a science boundary.
+- any request from the fast agent to cross a science boundary.
 
-If the current parent is not `gpt-5.6-sol`, spawn/hand off the reasoning task to a `gpt-5.6-sol` subagent when model override is available.
-
-### MIXED tasks → Sol decides, Spark executes
+### MIXED tasks → Sol decides, Spark executes, Sol reviews
 
 For mixed work:
 
 1. Sol establishes facts, invariants, and the exact allowed change.
-2. Sol delegates the bounded implementation/diagnostic step to Spark.
+2. Delegate the bounded implementation/diagnostic step to the `fast` role.
 3. Spark edits and validates.
 4. Sol reviews the diff/results against the scientific contract.
 5. Repeat only with a newly bounded technical step.
 
-Do not ask the user which model to use.
+### Escalation from Spark
 
-### Model availability fallback
+If a fast task discovers that it requires a scientific decision, causal interpretation, protocol change, broad semantic refactor, or cannot cleanly separate technical from scientific causes, stop the risky part. The fast agent must return `SOL_ESCALATION_REQUIRED` with evidence. Continue on Sol; do not let Spark guess.
 
-If `gpt-5.3-codex-spark` is unavailable, at capacity, not entitled for the account, or rejected by the client:
+### Availability fallback
 
-1. continue automatically on `gpt-5.6-sol`;
+If the `fast` role or Spark model is unavailable, at capacity, not entitled for the account, or rejected by the installed Codex client:
+
+1. continue automatically on the Sol root/current capable model;
 2. preserve the same narrow scope and validation requirements;
 3. mention the fallback once in the final task summary;
 4. do **not** ask the user to change model/settings.
 
-If model override is unavailable because the installed Codex client is too old, continue with the current model and preserve this routing policy semantically rather than blocking the task.
+If sub-agent tools are unavailable, preserve this routing policy semantically and continue safely with the current model rather than blocking the task. Never pretend delegation happened when it did not.
 
 ## 3. Spark execution contract
 
-Every Spark delegation must include enough context to work safely without re-deciding the science.
+Every fast delegation must include enough context to work safely without re-deciding the science.
 
 Spark must:
 
@@ -100,7 +99,7 @@ Spark must:
 - never launch remote compute merely because code is ready;
 - stop the risky part and return to Sol if a scientific decision becomes necessary.
 
-Spark should return a compact handoff with:
+Expected fast handoff fields:
 
 - `FACTS`
 - `ROOT_CAUSE`
@@ -114,6 +113,8 @@ If Spark makes two unsuccessful attempts on the same failure, stop further patch
 ## 4. Scientific integrity — hard boundary
 
 The routing system is an execution optimization, **not** permission to change the science.
+
+Before modifying experiment definitions, jobs, tools, pattern code, datasets, model artifacts, or result documents, read `docs/L3_CURRENT.md`, the relevant preregistration/result document, and `.github/instructions/scientific-experiments.instructions.md`.
 
 Never silently change:
 
@@ -136,7 +137,7 @@ Never auto-promote or auto-bake a candidate. `CURRICULUM` remains champion unles
 
 ## 5. Remote compute and control-plane safety
 
-Automatic routing does not grant compute authorization.
+Automatic model routing does not grant compute authorization.
 
 Before queueing CPX/CCX work, mutating `jass-control`, or launching costly workflows:
 
