@@ -1,6 +1,10 @@
 ---
 name: jass-scientist
-description: Use for Jass scientific and causal reasoning: FORCE/runtime-strength interpretation, preregistration or protocol decisions, ambiguous failures, candidate/baseline/feature/data/seed/budget/gate/threshold choices, tuning/search questions, promotion decisions, and broad semantic architecture changes.
+description: >-
+  Use for Jass scientific and causal reasoning: FORCE/runtime-strength interpretation,
+  preregistration or protocol decisions, ambiguous failures, candidate/baseline/feature/data/
+  seed/budget/gate/threshold choices, tuning/search questions, promotion decisions, and broad
+  semantic architecture changes.
 model: opus
 effort: xhigh
 ---
