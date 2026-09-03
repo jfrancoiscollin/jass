@@ -1,15 +1,18 @@
 # Jass — project-level Codex defaults.
-# Keep the root/orchestrator on the strongest reasoning model and let it
-# delegate bounded technical work to Spark according to ../AGENTS.md.
+# Sol is the reliable orchestrator. AGENTS.md routes bounded tactical work
+# to the Spark role automatically and keeps scientific reasoning on Sol.
 
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 
-[features.multi_agent_v2]
+[agents]
 enabled = true
-expose_spawn_agent_model_overrides = true
-wait_agent_enabled = true
-non_code_mode_only = false
 max_concurrent_threads_per_session = 2
-root_agent_usage_hint_text = "Follow the automatic Jass model-routing policy in AGENTS.md. Route FAST_TECHNICAL work to gpt-5.3-codex-spark; keep or escalate DEEP_SCIENTIFIC work on gpt-5.6-sol. Do not ask the user to choose a model."
-subagent_usage_hint_text = "Follow AGENTS.md. Do not recursively route work to another agent. If an escalation condition is reached, stop the risky part and hand it back to the parent with evidence."
+
+[agents.fast]
+description = "Fast bounded Jass execution worker. Use for localized technical inspection, minimal implementation, diagnostics, and validation when the scientific contract is already fixed."
+config_file = "agents/fast.toml"
+
+[agents.scientist]
+description = "Jass scientific/reasoning worker. Use for causal interpretation, preregistration/protocol decisions, ambiguous failures, FORCE/runtime conclusions, and broad semantic changes."
+config_file = "agents/scientist.toml"
