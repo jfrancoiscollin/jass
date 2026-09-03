@@ -1,6 +1,10 @@
 ---
 name: jass-fast
-description: Use proactively for bounded technical Jass work when the scientific contract is already fixed: logs, failures, small C++/Python/shell/config/CI/runner/harness fixes, instrumentation, and targeted validation. Do not use for scientific interpretation, protocol changes, tuning, gates, thresholds, or promotion decisions.
+description: >-
+  Use proactively for bounded technical Jass work when the scientific contract is already fixed:
+  logs, failures, small C++/Python/shell/config/CI/runner/harness fixes, instrumentation, and
+  targeted validation. Do not use for scientific interpretation, protocol changes, tuning,
+  gates, thresholds, or promotion decisions.
 model: sonnet
 effort: medium
 ---
