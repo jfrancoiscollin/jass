@@ -45,6 +45,110 @@ enum class NodeLimitMode : std::uint8_t {
     Exact,
 };
 
+enum class SearchStopReason : std::uint8_t {
+    None,
+    Nodes,
+    Time,
+    External,
+};
+
+inline const char* search_stop_reason_name(SearchStopReason reason) noexcept {
+    switch (reason) {
+        case SearchStopReason::Nodes:    return "nodes";
+        case SearchStopReason::Time:     return "time";
+        case SearchStopReason::External: return "external";
+        case SearchStopReason::None:     return "none";
+    }
+    return "none";
+}
+
+// A SearchDecisionBound is the fail-soft contract of one completed search
+// against its recorded [alpha, beta] window.  It says nothing about deeper
+// horizons.  None is reserved for interrupted work, whose returned integer is
+// diagnostic only and must not be consumed as a certified bound.
+enum class SearchDecisionBound : std::uint8_t {
+    None,
+    Exact,
+    Lower,
+    Upper,
+};
+
+const char* search_decision_bound_name(SearchDecisionBound bound) noexcept;
+SearchDecisionBound classify_search_decision_bound(
+    int score, int alpha, int beta, bool completed) noexcept;
+
+struct SearchDecisionActionTrace {
+    // Full semantic identity: capture order is intentionally absent from Move;
+    // `captured` is the canonical captured-square set.
+    Move move{};
+    int score{0};
+    SearchDecisionBound bound{SearchDecisionBound::None};
+    int alpha{0};
+    int beta{0};
+    std::uint64_t nodes{0};
+    std::uint64_t eval_calls{0};
+    std::uint64_t pvs_researches{0};
+    bool cutoff{false};
+    bool completed{false};
+    // FNV-1a over the semantic moves in the probe-only TT PV prefix.  A zero
+    // length has the FNV offset-basis hash.  `completed` qualifies the value.
+    std::uint64_t pv_hash{14695981039346656037ULL};
+    std::size_t pv_length{0};
+};
+
+struct SearchDecisionAttemptTrace {
+    int depth{0};
+    int attempt{0};
+    int alpha{0};
+    int beta{0};
+    int score{0};
+    SearchDecisionBound bound{SearchDecisionBound::None};
+    Move best_move{};
+    std::uint64_t nodes_before{0};
+    std::uint64_t nodes_after{0};
+    std::uint64_t eval_calls_before{0};
+    std::uint64_t eval_calls_after{0};
+    std::uint64_t pvs_researches_before{0};
+    std::uint64_t pvs_researches_after{0};
+    bool cutoff{false};
+    // False when a root beta cutoff or interruption left catalogue actions
+    // unvisited. `completed` only means the attempt was not interrupted.
+    bool all_actions_searched{false};
+    bool completed{false};
+    std::vector<SearchDecisionActionTrace> actions;
+};
+
+struct SearchDecisionTrace {
+    static constexpr std::uint32_t SCHEMA_VERSION = 1;
+    std::uint32_t schema_version{SCHEMA_VERSION};
+    bool root_rule_draw{false};
+    bool no_legal_moves{false};
+    // Complete ordered catalogue from root move generation, including actions
+    // an interrupted or cut-off attempt never reached.
+    std::vector<Move> root_actions;
+    std::vector<SearchDecisionAttemptTrace> attempts;
+
+    // Final public search receipt, copied after normal result construction.
+    Move best_move{};
+    int score{0};
+    int completed_depth{0};
+    int effective_depth{0};
+    bool aborted_iteration{false};
+    SearchStopReason stop_reason{SearchStopReason::None};
+    std::uint64_t nodes{0};
+    std::uint64_t eval_calls{0};
+    std::uint64_t pvs_researches{0};
+    std::uint64_t pv_hash{14695981039346656037ULL};
+    std::size_t pv_length{0};
+};
+
+std::uint64_t search_decision_pv_hash_v1(
+    const std::vector<Move>& pv) noexcept;
+// Deterministic UTF-8 JSON with fixed field order and decimal integers.  The
+// serializer performs no search and does not access or mutate a TT.
+std::string serialize_search_decision_trace_v1(
+    const SearchDecisionTrace& trace);
+
 // Passive depth-1 diagnostics.  These records are populated only when a
 // caller supplies SearchLimits::depth_one_trace; the production/default path
 // keeps the pointer null and performs no diagnostic work.  Scores follow the
@@ -138,28 +242,14 @@ struct SearchLimits {
     // Optional passive instrumentation for a completed depth-1 root
     // iteration. Null is the byte/behaviour-identical production default.
     DepthOneSearchTrace* depth_one_trace = nullptr;
+    // Optional passive root-decision instrumentation. Helpers created by lazy
+    // SMP deliberately retain their null default and never share this pointer.
+    SearchDecisionTrace* search_decision_trace = nullptr;
     // Diagnostic-only root ordering schedule. Format:
     // "1:31-26,31-27;2:31-27,31-26". Every depth must list every
     // legal root move exactly once. Empty preserves production ordering.
     std::string root_order_schedule;
 };
-
-enum class SearchStopReason : std::uint8_t {
-    None,
-    Nodes,
-    Time,
-    External,
-};
-
-inline const char* search_stop_reason_name(SearchStopReason reason) noexcept {
-    switch (reason) {
-        case SearchStopReason::Nodes:    return "nodes";
-        case SearchStopReason::Time:     return "time";
-        case SearchStopReason::External: return "external";
-        case SearchStopReason::None:     return "none";
-    }
-    return "none";
-}
 
 struct SearchResult {
     Move              best_move{};

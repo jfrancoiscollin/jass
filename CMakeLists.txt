@@ -263,6 +263,7 @@ add_library(jass_lib STATIC
     pattern_jass/src/weights.cpp
     "${NNUE_DEFAULT_DATA_CPP}"
     src/search.cpp
+    src/search_decision_trace.cpp
     src/zobrist.cpp
     src/tt.cpp
     src/engine.cpp

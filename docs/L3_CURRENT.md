@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 30 août 2026**
+> **Mis à jour : 5 septembre 2026**
 > **Source de vérité active : ce document.**
 >
 > Résultats acquis / portes closes : [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md).  
@@ -9,6 +9,16 @@
 > Runtime v4 : [prereg](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md) · [terminal Pool1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md).  
 > O1 exact cache : [prereg](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md) · [terminal](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_RESULTS_20260830.md).  
 > Programme suivant : [E1/E2/E3](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md) · [amendment O1 terminal](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_O1_TERMINAL_AMENDMENT_20260830.md).
+
+---
+
+## 0. Programme decision-information — reprise du 5 septembre
+
+Le [plan de la PR #771](experiments/L3_DECISION_INFORMATION_IMPLEMENTATION_PLAN_V1_20260903.md) distingue l'instrumentation passive A, le diagnostic/confirmation B et les étapes d'apprentissage ultérieures sous leurs critères propres.
+
+Le diagnostic historique `cpx62-1769-l3-decision-math-adaptive-shadow-b1-v1`, tentative `20260904T221533Z-db6e6a5c`, est terminé avec exit `0` et `B1_HISTORICAL_SHADOW_COMPLETE`. Le readout 1770 a authentifié **41,81% d'économie simulée**, **96,425% de choix de ligne identiques**, regret brut moyen **95,749** et **32 parents sur 8 000** à regret >=100 ; p95 nul. [Reçu et limites B1](experiments/L3_ADAPTIVE_SHADOW_B1_RESULTS_20260905.md). Le diagnostic historique 1771 décompose cette queue de regrets avant le gel de B2. La suite de la branche enseignant reste `B2_PREREGISTER_CONFIRMATION_ONLY`; aucun enseignant adaptatif réel n'est encore confirmé.
+
+Le chantier indépendant suivant du registre des PR est `SearchDecisionTrace` passif, avec identité OFF/ON à profondeur/nœuds déterministes. `CURRICULUM` reste champion. Les sections suivantes conservent les reçus et restrictions des programmes antérieurs ; elles ne constituent pas un état de lancement actualisé de la PR #771.
 
 ---
 

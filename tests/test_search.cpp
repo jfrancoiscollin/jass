@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <locale>
 #include <stdexcept>
 #include <string_view>
 
@@ -670,6 +671,259 @@ void test_root_order_schedule_applies_and_fails_closed() {
     JASS_CHECK_EQ(semantic_applied.root_order_failures, 0U);
 }
 
+void check_search_decision_observables_equal(const SearchResult& off,
+                                             const SearchResult& on) {
+    JASS_CHECK(off.best_move == on.best_move);
+    JASS_CHECK_EQ(off.score, on.score);
+    JASS_CHECK_EQ(off.depth, on.depth);
+    JASS_CHECK_EQ(off.completed_depth, on.completed_depth);
+    JASS_CHECK_EQ(off.effective_depth, on.effective_depth);
+    JASS_CHECK_EQ(off.aborted_iteration, on.aborted_iteration);
+    JASS_CHECK(off.stop_reason == on.stop_reason);
+    JASS_CHECK_EQ(off.nodes, on.nodes);
+    JASS_CHECK_EQ(off.eval_calls, on.eval_calls);
+    JASS_CHECK(off.pv == on.pv);
+}
+
+void test_search_decision_bound_contract() {
+    JASS_CHECK(classify_search_decision_bound(9, 10, 20, true)
+               == SearchDecisionBound::Upper);
+    JASS_CHECK(classify_search_decision_bound(10, 10, 20, true)
+               == SearchDecisionBound::Upper);
+    JASS_CHECK(classify_search_decision_bound(11, 10, 20, true)
+               == SearchDecisionBound::Exact);
+    JASS_CHECK(classify_search_decision_bound(19, 10, 20, true)
+               == SearchDecisionBound::Exact);
+    JASS_CHECK(classify_search_decision_bound(20, 10, 20, true)
+               == SearchDecisionBound::Lower);
+    JASS_CHECK(classify_search_decision_bound(21, 10, 20, true)
+               == SearchDecisionBound::Lower);
+    JASS_CHECK(classify_search_decision_bound(15, 10, 20, false)
+               == SearchDecisionBound::None);
+}
+
+void test_search_decision_trace_is_passive_at_fixed_depth() {
+    const Position p = Position::start_position();
+    SearchLimits off_limits;
+    off_limits.max_depth = 4;
+    const SearchResult off = search(p, off_limits);
+
+    SearchDecisionTrace trace;
+    SearchLimits on_limits = off_limits;
+    on_limits.search_decision_trace = &trace;
+    const SearchResult on = search(p, on_limits);
+
+    check_search_decision_observables_equal(off, on);
+    JASS_CHECK_EQ(trace.schema_version, SearchDecisionTrace::SCHEMA_VERSION);
+    JASS_CHECK(!trace.attempts.empty());
+    JASS_CHECK_EQ(trace.best_move, on.best_move);
+    JASS_CHECK_EQ(trace.score, on.score);
+    JASS_CHECK_EQ(trace.completed_depth, on.completed_depth);
+    JASS_CHECK_EQ(trace.effective_depth, on.effective_depth);
+    JASS_CHECK(trace.stop_reason == on.stop_reason);
+    JASS_CHECK_EQ(trace.nodes, on.nodes);
+    JASS_CHECK_EQ(trace.eval_calls, on.eval_calls);
+    JASS_CHECK_EQ(trace.pv_hash, search_decision_pv_hash_v1(on.pv));
+    JASS_CHECK_EQ(trace.pv_length, on.pv.size());
+    MoveList legal;
+    generate_legal_moves(p, legal);
+    JASS_CHECK_EQ(trace.root_actions.size(), legal.size());
+    for (std::size_t i = 0; i < trace.root_actions.size(); ++i) {
+        JASS_CHECK(trace.root_actions[i] == legal[i]);
+    }
+
+    for (const SearchDecisionAttemptTrace& attempt : trace.attempts) {
+        JASS_CHECK(attempt.nodes_after >= attempt.nodes_before);
+        JASS_CHECK(attempt.eval_calls_after >= attempt.eval_calls_before);
+        if (attempt.completed) {
+            JASS_CHECK(attempt.bound != SearchDecisionBound::None);
+        }
+        for (const SearchDecisionActionTrace& action : attempt.actions) {
+            JASS_CHECK(action.completed);
+            JASS_CHECK(action.bound != SearchDecisionBound::None);
+            JASS_CHECK(action.pv_length >= 1U);
+        }
+    }
+
+    const std::string json = serialize_search_decision_trace_v1(trace);
+    JASS_CHECK(json == serialize_search_decision_trace_v1(trace));
+    JASS_CHECK(json.find("\"schema\":\"jass.search-decision-trace\"")
+               != std::string::npos);
+    JASS_CHECK(json.find("\"version\":1") != std::string::npos);
+}
+
+void test_search_decision_trace_records_exact_node_interruption() {
+    const Position p = Position::start_position();
+    SearchLimits off_limits;
+    off_limits.max_depth = MAX_PLY;
+    off_limits.max_nodes = 1'000;
+    off_limits.node_limit_mode = NodeLimitMode::Exact;
+    const SearchResult off = search(p, off_limits);
+
+    SearchDecisionTrace trace;
+    SearchLimits on_limits = off_limits;
+    on_limits.search_decision_trace = &trace;
+    const SearchResult on = search(p, on_limits);
+
+    check_search_decision_observables_equal(off, on);
+    JASS_CHECK(on.aborted_iteration);
+    JASS_CHECK(!trace.attempts.empty());
+    JASS_CHECK(trace.stop_reason == SearchStopReason::Nodes);
+    const SearchDecisionAttemptTrace& interrupted = trace.attempts.back();
+    JASS_CHECK(!interrupted.completed);
+    JASS_CHECK(interrupted.bound == SearchDecisionBound::None);
+    JASS_CHECK(!interrupted.actions.empty());
+    JASS_CHECK(!interrupted.actions.back().completed);
+    JASS_CHECK(interrupted.actions.back().bound == SearchDecisionBound::None);
+}
+
+void test_search_decision_trace_records_real_aspiration_bounds() {
+    // Existing mid-game fixture, safely outside tablebase scope. Its first
+    // depth-3 aspiration attempt contains a fail-low action followed by the
+    // fail-high action that cuts the root window; the widened retry is Exact.
+    const Position p = parse(
+        "W:W26,29,31,32,38,42,43,46,47,K48:"
+        "B3,5,9,11,12,14,16,18,K22,K25");
+    SearchDecisionTrace trace;
+    SearchLimits limits;
+    limits.max_depth = 3;
+    limits.search_decision_trace = &trace;
+    TranspositionTable tt;  // production/HUB default: 16 MiB
+    const SearchResult result = search(p, limits, tt);
+    JASS_CHECK_EQ(result.completed_depth, 3);
+
+    const auto find_attempt = [&](int depth, int attempt_number)
+        -> const SearchDecisionAttemptTrace* {
+        const auto found = std::find_if(
+            trace.attempts.begin(), trace.attempts.end(),
+            [&](const SearchDecisionAttemptTrace& attempt) {
+                return attempt.depth == depth
+                    && attempt.attempt == attempt_number;
+            });
+        return found == trace.attempts.end() ? nullptr : &*found;
+    };
+
+    const SearchDecisionAttemptTrace* fail_high = find_attempt(3, 1);
+    JASS_CHECK(fail_high != nullptr);
+    if (fail_high) {
+        JASS_CHECK(fail_high->completed);
+        JASS_CHECK(fail_high->cutoff);
+        JASS_CHECK(!fail_high->all_actions_searched);
+        JASS_CHECK(fail_high->score >= fail_high->beta);
+        JASS_CHECK(fail_high->bound == SearchDecisionBound::Lower);
+        JASS_CHECK(fail_high->actions.size() < trace.root_actions.size());
+
+        const auto upper = std::find_if(
+            fail_high->actions.begin(), fail_high->actions.end(),
+            [](const SearchDecisionActionTrace& action) {
+                return action.bound == SearchDecisionBound::Upper;
+            });
+        JASS_CHECK(upper != fail_high->actions.end());
+        if (upper != fail_high->actions.end()) {
+            JASS_CHECK(upper->score <= upper->alpha);
+        }
+    }
+
+    const SearchDecisionAttemptTrace* widened = nullptr;
+    for (const SearchDecisionAttemptTrace& attempt : trace.attempts) {
+        if (attempt.depth == 3) widened = &attempt;
+    }
+    JASS_CHECK(widened != nullptr);
+    if (widened) {
+        JASS_CHECK(widened->attempt > 1);
+        JASS_CHECK(widened->completed);
+        JASS_CHECK(widened->all_actions_searched);
+        JASS_CHECK(widened->bound == SearchDecisionBound::Exact);
+    }
+}
+
+void test_search_decision_trace_depth_one_interruption_and_root_edges() {
+    const Position start = Position::start_position();
+    SearchDecisionTrace interrupted;
+    SearchLimits tiny;
+    tiny.max_depth = MAX_PLY;
+    tiny.max_nodes = 1;
+    tiny.node_limit_mode = NodeLimitMode::Exact;
+    tiny.search_decision_trace = &interrupted;
+    const SearchResult tiny_result = search(start, tiny);
+    JASS_CHECK_EQ(tiny_result.completed_depth, 0);
+    JASS_CHECK_EQ(interrupted.attempts.size(), 1U);
+    JASS_CHECK(!interrupted.attempts[0].completed);
+    JASS_CHECK(interrupted.attempts[0].bound == SearchDecisionBound::None);
+
+    SearchDecisionTrace no_moves;
+    SearchLimits terminal;
+    terminal.search_decision_trace = &no_moves;
+    const SearchResult terminal_result = search(parse("B:W31:B"), terminal);
+    JASS_CHECK(no_moves.no_legal_moves);
+    JASS_CHECK(no_moves.root_actions.empty());
+    JASS_CHECK(no_moves.attempts.empty());
+    JASS_CHECK_EQ(no_moves.score, terminal_result.score);
+
+    Position drawn_position = parse("W:WK50:BK1");
+    drawn_position.set_halfmove_clock(FIFTY_MOVE_PLIES);
+    SearchDecisionTrace drawn;
+    SearchLimits drawn_limits;
+    drawn_limits.max_depth = 1;
+    drawn_limits.search_decision_trace = &drawn;
+    const SearchResult drawn_result = search(drawn_position, drawn_limits);
+    JASS_CHECK(drawn.root_rule_draw);
+    JASS_CHECK_EQ(drawn_result.score, 0);
+    JASS_CHECK_EQ(drawn.score, 0);
+    JASS_CHECK(!drawn.attempts.empty());
+}
+
+void test_search_decision_trace_uses_semantic_capture_identity() {
+    // Historical path-duplication witness: three geometric capture paths to
+    // 2x35 share one (from,to,captured-set) action. Movegen and the trace must
+    // expose the nine semantic actions, never path-weighted duplicates.
+    const Position p = parse("W:W40,43,K2:B8,18,29,30");
+    SearchDecisionTrace trace;
+    SearchLimits limits;
+    limits.max_depth = 1;
+    limits.search_decision_trace = &trace;
+    (void)search(p, limits);
+
+    JASS_CHECK_EQ(trace.root_actions.size(), 9U);
+    JASS_CHECK_EQ(trace.attempts.size(), 1U);
+    JASS_CHECK_EQ(trace.attempts[0].actions.size(), 9U);
+    const auto& actions = trace.attempts[0].actions;
+    for (std::size_t i = 0; i < actions.size(); ++i) {
+        for (std::size_t j = i + 1; j < actions.size(); ++j) {
+            JASS_CHECK(!(actions[i].move == actions[j].move));
+        }
+    }
+}
+
+class GroupedThousandsFacet final : public std::numpunct<char> {
+protected:
+    char do_thousands_sep() const override { return ','; }
+    std::string do_grouping() const override { return "\3"; }
+};
+
+class GlobalLocaleGuard {
+public:
+    explicit GlobalLocaleGuard(std::locale replacement)
+        : prior_(std::locale()) {
+        std::locale::global(std::move(replacement));
+    }
+    ~GlobalLocaleGuard() { std::locale::global(prior_); }
+    GlobalLocaleGuard(const GlobalLocaleGuard&) = delete;
+    GlobalLocaleGuard& operator=(const GlobalLocaleGuard&) = delete;
+private:
+    std::locale prior_;
+};
+
+void test_search_decision_serializer_ignores_global_locale() {
+    SearchDecisionTrace trace;
+    trace.nodes = 1'234;
+    const GlobalLocaleGuard guard(
+        std::locale(std::locale::classic(), new GroupedThousandsFacet));
+    const std::string json = serialize_search_decision_trace_v1(trace);
+    JASS_CHECK(json.find("\"nodes\":1234") != std::string::npos);
+    JASS_CHECK(json.find("1,234") == std::string::npos);
+}
+
 // 1b search refinements (continuation history, improving, IID, multi-cut).
 // `SearchLimits{}` already contains the tuned production SearchParams defaults;
 // assigning `SearchParams{}` explicitly must therefore leave the search identical.
@@ -745,6 +999,13 @@ void run_search_tests() {
     test_legacy_node_cap_keeps_periodic_semantics();
     test_unlimited_depth_search_keeps_historical_result();
     test_root_order_schedule_applies_and_fails_closed();
+    test_search_decision_bound_contract();
+    test_search_decision_trace_is_passive_at_fixed_depth();
+    test_search_decision_trace_records_exact_node_interruption();
+    test_search_decision_trace_records_real_aspiration_bounds();
+    test_search_decision_trace_depth_one_interruption_and_root_edges();
+    test_search_decision_trace_uses_semantic_capture_identity();
+    test_search_decision_serializer_ignores_global_locale();
     test_explicit_default_params_match_searchlimits_default();
     test_1b_each_feature_searches_correctly();
 }
