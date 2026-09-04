@@ -1,7 +1,7 @@
 # L3 — SearchDecisionTrace A3 export/readout contract v1
 
-Date: 2026-09-05  
-Status: implementation contract; diagnostic export and mechanical readout only.  
+Date: 2026-09-05
+Status: implementation contract; diagnostic export and mechanical readout only.
 Base: `develop` @ `107be69832111354cd61504aff208458979f26e9`.
 
 ## Scope
