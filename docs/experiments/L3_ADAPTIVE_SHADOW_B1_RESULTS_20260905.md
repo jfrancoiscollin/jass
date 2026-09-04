@@ -91,7 +91,51 @@ The machine summary's score-class decomposition uses strict thresholds `q > 2993
 
 The pinned teacher loads PatternJass, whose evaluation output is clamped to `[-20000,20000]`. The search deliberately encodes a direct WLD tablebase win/loss below the true-mate threshold as `±(29935 - dist)`, where `dist` includes search ply and available capped MTC information. Consequently the residual `finite` class mixes evaluation-compatible values with reserved high-magnitude score encodings. A stored score alone does not identify the internal node or tablebase hit that produced it; quiescence terminal values and propagated search scores also require care.
 
-Among the 32 raw >=100 cases, 25 contain values in the direct-TB-compatible band, one contains a true-mate-band value and six contain only evaluation-compatible values (differences 121, 203, 126, 119, 467 and 132). A new read-only provenance diagnostic will join immediate child exactness, observed EGDB entry on the stored PV prefix and completion/stop receipts. Those are separate evidence axes: an absent PV entry does not prove an absence of TB search, and a descendant TB hit does not make the child immediately exact. This interpretation changes neither the frozen policy nor its original diagnostic verdict.
+Among the 32 raw >=100 cases, 25 contain values in the direct-TB-compatible band, one contains a true-mate-band value and six contain only evaluation-compatible values (differences 121, 203, 126, 119, 467 and 132). Diagnostic 1772 joins immediate child exactness, observed EGDB entry on the stored PV prefix and completion/stop receipts. Those are separate evidence axes: an absent PV entry does not prove an absence of TB search, and a descendant TB hit does not make the child immediately exact. This interpretation changes neither the frozen policy nor its original diagnostic verdict.
+
+## Score-provenance diagnostic 1772
+
+```text
+job     cpx62-1772-l3-decision-math-b1-score-provenance-v1
+attempt 20260904T233047Z-db6e6a5c
+code    db6e6a5ce88fdd48f8e9b3c998974ceb4f31085e
+start   2026-09-04T23:30:51+00:00
+end     2026-09-04T23:35:52+00:00
+exit    0
+verdict B1_SCORE_PROVENANCE_AUTOPSY_COMPLETE_DEVELOPMENT_ONLY
+```
+
+The [completed control receipt](https://github.com/jfrancoiscollin/jass-control/blob/main/status/cpx62-1772-l3-decision-math-b1-score-provenance-v1.json) embeds the summary and compact provenance for all 32 historical cases. Full per-parent records are `artefacts/all-parent-score-provenance.json` under `r2:jass-data/runs/cpx62-1772-l3-decision-math-b1-score-provenance-v1/20260904T233047Z-db6e6a5c`. The script was queued in control commit `6cc406d`; shell SHA256 is `f2d9e0a67ff4735a71c35a7dbae1c856aec27fd8dc2abbc8fdb7d394e9196a4d`. Twelve local tests, shell syntax and embedded Python/CLI checks passed before queueing.
+
+1772 authenticated the B1 report, teacher groups and 1771 summary by immutable source identity and manifest/inventory checksums. It reproduced the complete frozen B1 report and the published 1771 metrics and cases exactly before interpreting score provenance. It found zero inadmissible q200 observations under its recorded score/depth/stop checks. This is a development diagnostic; no searches, fits, games or confirmation were performed.
+
+| Positive raw difference category | Parents |
+|---|---:|
+| Evaluation-compatible numeric difference | 116 |
+| Encoded order within the TB-compatible band | 54 |
+| Encoded order within the real-mate band | 4 |
+| Same win/loss signal family, different encoding mechanism | 6 |
+| Change of value-signal family | 26 |
+| Total | 206 |
+
+The 26 signal-family changes comprise **17 reference win signals replaced by unresolved numeric values** and **9 unresolved reference values replaced by loss signals**. Their descriptive rate is 26/8,000 = 0.325%. A signal family is a source-compatible score classification, not an authenticated game outcome; numeric zero is not an exact draw. The 32 raw >=100 cases consist of these 26 transitions and six evaluation-compatible differences. They must not all be interpreted as centipawn losses.
+
+Among **6,678 admissible non-exact pairs where both scores are evaluation-compatible**, including equal-score pairs, `finite_scale_numeric_delta` has sum **4,015**, mean **0.6012279125486673**, p95 **0** and maximum **467**. This subset excludes other score families and is not a replacement mean for all 8,000 parents or a proof that every included score originated in ordinary evaluation.
+
+| Phase / STM | Eligible numeric pairs | Mean numeric difference | Maximum | Signal-family changes / all parents |
+|---|---:|---:|---:|---:|
+| P0 / 0 | 987 | 0.0729 | 35 | 0 / 987 |
+| P0 / 1 | 1,013 | 0.1570 | 89 | 0 / 1,013 |
+| P1 / 0 | 983 | 0.3347 | 121 | 1 / 984 |
+| P1 / 1 | 1,013 | 0.2389 | 84 | 0 / 1,016 |
+| P2 / 0 | 900 | 1.7278 | 467 | 7 / 1,020 |
+| P2 / 1 | 868 | 1.1970 | 203 | 3 / 980 |
+| P3 / 0 | 442 | 0.7986 | 61 | 8 / 979 |
+| P3 / 1 | 472 | 0.5636 | 86 | 7 / 1,021 |
+
+The stored q200 PV prefix positively observes EGDB entry on the reference side in 10 of the 32 cases and on the chosen side in five. Across all 74,449 rows, 11,109 have a positive q200 PV observation and 22 have immediate child TB exactness. These are different facts, not interchangeable exactness labels. The historical TSV also omits the full captured-square bitboard; the diagnostic checks row/parent identity and the stored move projection, and does not claim to reconstruct the complete semantic capture identity.
+
+This completes the historical score interpretation needed to design B2 endpoints. The original constants, cohort, report fields and verdicts remain unchanged; no confirmation thresholds have been applied retrospectively, and no B2 policy confirmation or B3 authorization is established.
 
 ## Continuation boundaries
 
