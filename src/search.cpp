@@ -1592,6 +1592,9 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                     const std::vector<ZobristHash>& game_history) {
     SearchResult res;
     breakdown_reset();
+    if (limits.search_decision_trace) {
+        *limits.search_decision_trace = SearchDecisionTrace{};
+    }
     if (limits.depth_one_trace) {
         *limits.depth_one_trace = DepthOneSearchTrace{};
         limits.depth_one_trace->leaf_evals.reserve(
@@ -1626,11 +1629,30 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     for (auto h : game_history) {
         if (h == root_hash) { root_is_drawn = true; break; }
     }
+    if (limits.search_decision_trace) {
+        limits.search_decision_trace->root_rule_draw = root_is_drawn;
+    }
 
     MoveList root_moves;
     gen_moves(pos, root_moves);
+    if (limits.search_decision_trace) {
+        std::vector<Move> semantic_moves;
+        semantic_moves.reserve(root_moves.size());
+        for (const Move& move : root_moves) {
+            if (std::find(semantic_moves.begin(), semantic_moves.end(), move)
+                == semantic_moves.end()) {
+                semantic_moves.push_back(move);
+            }
+        }
+        limits.search_decision_trace->root_actions = std::move(semantic_moves);
+    }
     if (root_moves.empty()) {
         res.score = -MATE_SCORE;
+        if (limits.search_decision_trace) {
+            SearchDecisionTrace& trace = *limits.search_decision_trace;
+            trace.no_legal_moves = true;
+            trace.score = res.score;
+        }
         return res;
     }
 
@@ -1737,6 +1759,21 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         const int trace_attempt = ++root_trace_attempt;
         int trace_index = 0;
         s.root_depth_   = depth;   // baseline for the forcing-extension accumulation cap
+        SearchDecisionAttemptTrace* decision_attempt = nullptr;
+        if (limits.search_decision_trace) {
+            SearchDecisionTrace& trace = *limits.search_decision_trace;
+            trace.attempts.emplace_back();
+            decision_attempt = &trace.attempts.back();
+            decision_attempt->depth = depth;
+            decision_attempt->attempt = trace_attempt;
+            decision_attempt->alpha = alpha;
+            decision_attempt->beta = beta;
+            decision_attempt->best_move = iter_best;
+            decision_attempt->nodes_before = s.nodes;
+            decision_attempt->eval_calls_before = s.eval_calls;
+            decision_attempt->pvs_researches_before = s.pvs_researches;
+            decision_attempt->actions.reserve(root_moves.size());
+        }
         if (root_trace_enabled()) {
             std::ostringstream line;
             line << "event=begin depth=" << depth
@@ -1751,6 +1788,9 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
             if (s.stopped) break;
             ++trace_index;
             const int alpha_before = cur_alpha;
+            const std::uint64_t decision_nodes_before = s.nodes;
+            const std::uint64_t decision_evals_before = s.eval_calls;
+            const std::uint64_t decision_pvs_before = s.pvs_researches;
             DepthOneMoveTrace* move_trace = nullptr;
             if (s.depth_one_trace && depth == 1) {
                 s.depth_one_trace->moves.emplace_back();
@@ -1781,6 +1821,56 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                 iter_best  = m;
             }
             if (iter_score > cur_alpha) cur_alpha = iter_score;
+            if (decision_attempt) {
+                SearchDecisionActionTrace action;
+                action.move = m;
+                action.score = score;
+                action.alpha = alpha_before;
+                action.beta = beta;
+                action.nodes = s.nodes - decision_nodes_before;
+                action.eval_calls = s.eval_calls - decision_evals_before;
+                action.pvs_researches =
+                    s.pvs_researches - decision_pvs_before;
+                action.completed = !s.stopped;
+                action.cutoff = action.completed && cur_alpha >= beta;
+                action.bound = classify_search_decision_bound(
+                    score, alpha_before, beta, action.completed);
+                if (action.completed) {
+                    std::vector<Move> action_pv;
+                    action_pv.reserve(static_cast<std::size_t>(depth));
+                    action_pv.push_back(m);
+                    const std::vector<Move> child_pv = extract_pv(
+                        next, tt, std::max(depth - 1, 0));
+                    action_pv.insert(action_pv.end(),
+                                     child_pv.begin(), child_pv.end());
+                    action.pv_hash = search_decision_pv_hash_v1(action_pv);
+                    action.pv_length = action_pv.size();
+                }
+
+                // Move equality is semantic (captured-square set, not capture
+                // path). Current movegen already emits one such move, and this
+                // guard prevents a future path-level duplicate from becoming
+                // a second decision action in the trace.
+                const auto duplicate = std::find_if(
+                    decision_attempt->actions.begin(),
+                    decision_attempt->actions.end(),
+                    [&](const SearchDecisionActionTrace& prior) {
+                        return prior.move == action.move;
+                    });
+                if (duplicate == decision_attempt->actions.end()) {
+                    decision_attempt->actions.push_back(std::move(action));
+                } else {
+                    duplicate->nodes += action.nodes;
+                    duplicate->eval_calls += action.eval_calls;
+                    duplicate->pvs_researches += action.pvs_researches;
+                    duplicate->completed = duplicate->completed
+                                           && action.completed;
+                    duplicate->cutoff = duplicate->cutoff || action.cutoff;
+                    if (!duplicate->completed) {
+                        duplicate->bound = SearchDecisionBound::None;
+                    }
+                }
+            }
             if (root_trace_enabled()) {
                 std::ostringstream line;
                 line << "event=move depth=" << depth
@@ -1808,6 +1898,21 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                  << " beta=" << beta
                  << " complete=" << (!s.stopped && cur_alpha < beta ? 1 : 0);
             emit_root_trace(line.str());
+        }
+        if (decision_attempt) {
+            decision_attempt->score = iter_score;
+            decision_attempt->best_move = iter_best;
+            decision_attempt->completed = !s.stopped;
+            decision_attempt->cutoff = decision_attempt->completed
+                                       && cur_alpha >= beta;
+            decision_attempt->all_actions_searched =
+                decision_attempt->actions.size()
+                == limits.search_decision_trace->root_actions.size();
+            decision_attempt->bound = classify_search_decision_bound(
+                iter_score, alpha, beta, decision_attempt->completed);
+            decision_attempt->nodes_after = s.nodes;
+            decision_attempt->eval_calls_after = s.eval_calls;
+            decision_attempt->pvs_researches_after = s.pvs_researches;
         }
         return {iter_best, iter_score};
     };
@@ -1955,6 +2060,20 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     res.root_order_applications = root_order_applications;
     res.root_order_failures = root_order_failures;
     res.pv        = extract_pv(pos, tt, std::max(res.depth, 1));
+    if (limits.search_decision_trace) {
+        SearchDecisionTrace& trace = *limits.search_decision_trace;
+        trace.best_move = res.best_move;
+        trace.score = res.score;
+        trace.completed_depth = res.completed_depth;
+        trace.effective_depth = res.effective_depth;
+        trace.aborted_iteration = res.aborted_iteration;
+        trace.stop_reason = res.stop_reason;
+        trace.nodes = res.nodes;
+        trace.eval_calls = res.eval_calls;
+        trace.pvs_researches = res.pvs_researches;
+        trace.pv_hash = search_decision_pv_hash_v1(res.pv);
+        trace.pv_length = res.pv.size();
+    }
     return res;
 }
 
