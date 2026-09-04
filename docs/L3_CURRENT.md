@@ -18,7 +18,9 @@ Le [plan de la PR #771](experiments/L3_DECISION_INFORMATION_IMPLEMENTATION_PLAN_
 
 Le diagnostic historique `cpx62-1769-l3-decision-math-adaptive-shadow-b1-v1`, tentative `20260904T221533Z-db6e6a5c`, est terminé avec exit `0` et `B1_HISTORICAL_SHADOW_COMPLETE`. Le readout 1770 a authentifié **41,81% d'économie simulée**, **96,425% de choix de ligne identiques**, regret brut moyen **95,749** et **32 parents sur 8 000** à regret >=100 ; p95 nul. [Reçu et limites B1](experiments/L3_ADAPTIVE_SHADOW_B1_RESULTS_20260905.md). Le diagnostic historique 1771 décompose cette queue de regrets avant le gel de B2. La suite de la branche enseignant reste `B2_PREREGISTER_CONFIRMATION_ONLY`; aucun enseignant adaptatif réel n'est encore confirmé.
 
-Le chantier indépendant suivant du registre des PR est `SearchDecisionTrace` passif, avec identité OFF/ON à profondeur/nœuds déterministes. `CURRICULUM` reste champion. Les sections suivantes conservent les reçus et restrictions des programmes antérieurs ; elles ne constituent pas un état de lancement actualisé de la PR #771.
+Le diagnostic 1771 est terminé : 80 divergences sont des ex æquo q200 et 206 ont un regret positif ; 222 références sont éliminées à q5, 64 à q50. L'invariance de l'allocation à q200 est vérifiée et aucune ligne non exacte n'a de profondeur complétée nulle. Les écarts sont concentrés en P2/P3. La classe résiduelle nommée `finite` par le diagnostic contient des scores proches de ±30 000 : leur provenance doit être interprétée avant le gel des mesures B2.
+
+`SearchDecisionTrace` A1/A2 est intégré via la [PR #773](https://github.com/jfrancoiscollin/jass/pull/773), commit `107be69832111354cd61504aff208458979f26e9` : identité OFF/ON à profondeur/nœuds déterministes, 27 444 assertions natives, revue indépendante sans P1/P2, CI native/Python/WASM verte. A3 exporteur/readout est la suite indépendante. `CURRICULUM` reste champion. Les sections suivantes conservent les reçus et restrictions des programmes antérieurs ; elles ne constituent pas un état de lancement actualisé de la PR #771.
 
 ---
 
