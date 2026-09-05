@@ -1,6 +1,8 @@
 # L3 adaptive shadow B2 — implémentation et preflight statistique synthétique v1
 
-> **STATUS: CONTRAT D'IMPLÉMENTATION SYNTHETIC-ONLY — NON EXÉCUTÉ SUR CPX, NON PRÉENREGISTRÉ, NON GELÉ**
+> **STATUS: PREFLIGHT SYNTHETIC-ONLY 1774 TERMINÉ ET AUTHENTIFIÉ — B2 NON PRÉENREGISTRÉ, NON GELÉ**
+
+Le reçu terminal du §14 actualise l'état d'exécution. Les mentions « futur » et « non exécuté » des sections initiales décrivent l'état au moment de l'implémentation, avant le lancement 1774 ; ses paramètres sont restés inchangés.
 
 Date : 2026-09-05, Europe/Paris.
 
@@ -440,3 +442,50 @@ Le code et ces microtests ne suffisent pas à geler B2. Il reste obligatoirement
 7. seulement alors finaliser et revoir la preregistration B2 avant toute fraîcheur.
 
 Un échec de support, runtime, checksum ou reproductibilité est technique et arrête la séquence. Il ne devient jamais une preuve négative ou positive sur la policy B2. Aucun preflight ne queue automatiquement sélection, teacher, readout, B3, promotion ou bake.
+
+## 14. Reçu terminal authentifié 1774
+
+La [PR #780](https://github.com/jfrancoiscollin/jass/pull/780) a intégré les outils de projection et de statistiques au commit `519ebe314688e37f91dba67398e87273cef9e14c`, après revue indépendante sans P1/P2 et CI native/Python/WASM verte. Le launcher séparé a passé sept tests hors ligne et la vérification de syntaxe shell. Son SHA256 final est `be54d2169c1bc0712a706a7ea3b54975544f9818804b78813a0103281c262df9`.
+
+```text
+job        cpx62-1774-l3-decision-math-b2-statistical-preflight-v1
+attempt    20260905T020003Z-519ebe31
+code       519ebe314688e37f91dba67398e87273cef9e14c
+start UTC  2026-09-05T02:00:08+00:00
+end UTC    2026-09-05T02:10:18+00:00
+state      completed
+exit       0
+verdict    B2_SYNTHETIC_STATISTICAL_PREFLIGHT_COMPLETE
+next       B2_IMPLEMENTATION_EQUIVALENCE_AND_PREREGISTRATION_BEFORE_FRESH_DATA
+control    002681c (publication terminale)
+```
+
+Les six artefacts suivants ont été relus dans le résultat publié, puis rapprochés du manifeste terminal, de l'inventaire et de `checksums.sha256`. Le préfixe est `r2:jass-data/runs/cpx62-1774-l3-decision-math-b2-statistical-preflight-v1/20260905T020003Z-519ebe31`. Les cinq fichiers de calcul sont sous `artefacts/synthetic-statistical-preflight/`; le résumé est sous `artefacts/`.
+
+| Fichier | Octets | SHA256 |
+|---|---:|---|
+| `scientific-summary.json` | 6840 | `03994f7a6d09d4a948fba3457dda0d5f7e03baf67d5d1be02b70a47cafa5e008` |
+| `synthetic-parent-stats-sufficient-v1.jsonl` | 1282250 | `e74779620c279eef55c77e23924054a5f7450964e7dc698edfbb05fac906350a` |
+| `synthetic-parent-stats-truth-v1.json` | 4741 | `a82ffd476287467b04fea8ab1d1195a2daa9c08a89b05a6e19fa43d66cdf045e` |
+| `synthetic-statistics-v1.json` | 14310 | `7f8b958e9259f34bd6d3184ae5d248ad74d3b184700064a7932e5b125a217627` |
+| `statistical-preflight-receipt-v1.json` | 2509 | `355ab81a76c81ebba0051a813078ff6474dcfb918a97a49a1a79a90df568804d` |
+| `progress.json` | 260 | `d9544f69584c482011a3185d41e968bbf7dec0acf65e46881e8fb68bc5e43f5f` |
+
+Le runtime observé correspond exactement aux sept champs du kernel 1773 : `/usr/bin/python3`, CPython **3.14.4**, Linux `7.0.0-30-generic-x86_64-with-glibc2.43`, x86_64, glibc 2.43 et `nproc=16`. Le PID du calcul, 17660, concorde avec celui du monitor. La mesure complète inclut relecture du JSONL, bootstrap, CP, quantiles, sérialisation et écriture du rapport.
+
+```text
+réplications                    200000
+tirages acceptés                 800000000
+uint64 générés                   800000000
+rejets                          0
+temps bootstrap au dernier point 520.402573329 s
+temps chaîne complète            525.156240400 s
+temps CPU processus              525.109475791 s
+pic RSS                         349532160 octets (333.34 Mio)
+status technique                VALID
+scientific_verdict              null
+```
+
+Le dimensionnement reposait sur une microsonde du même code et du même CPX : 4 millions de tirages en 2.735854463 s, soit une extrapolation linéaire de 547.1708926 s et une enveloppe de 831.32216038 s avec marge et préparation. Les limites du launcher étaient 180 s de préparation, 900 s de calcul complet, 1080 s au total et 300 s sans progrès. Le calcul reste à l'intérieur de ces limites ; le temps `start→end` de 610 s inclut la publication du runner et ne se confond pas avec les 525.156 s mesurées dans le processus.
+
+La fixture exerce volontairement des portes vraies et fausses. `VALID` et le verdict du publisher valident seulement l'exécution technique synthétique. Ils ne constituent aucune confirmation de la policy. Le reçu conserve zéro nouveau parent, zéro lecture fraîche, zéro recherche/fit/partie et `false` pour préenregistrement, confirmation, promotion et bake. Avant toute génération B2 restent l'équivalence exhaustive sur les 8 000 parents historiques, l'implémentation/revue des barrières sélection/teacher/readout et le préenregistrement final épinglant le runtime effectivement authentifié.
