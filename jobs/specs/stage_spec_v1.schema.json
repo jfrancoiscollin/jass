@@ -1,0 +1,271 @@
+{
+  "$defs": {
+    "input": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "scope",
+        "path",
+        "required",
+        "sha256",
+        "size_bytes"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "file",
+            "directory"
+          ]
+        },
+        "nonempty": {
+          "type": "boolean"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        }
+      },
+      "required": [
+        "scope",
+        "path",
+        "kind",
+        "required",
+        "nonempty"
+      ],
+      "type": "object"
+    },
+    "scope": {
+      "enum": [
+        "repo",
+        "result",
+        "artifact"
+      ]
+    }
+  },
+  "$id": "https://jass.local/schemas/stage_spec_v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifact_directory_contract": {
+      "const": "empty_or_runner_launch"
+    },
+    "campaign": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "code_sha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "command": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "environment": {
+      "additionalProperties": false,
+      "properties": {
+        "inherit": {
+          "items": {
+            "not": {
+              "pattern": "^JASS_"
+            },
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "set": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "inherit",
+        "set"
+      ],
+      "type": "object"
+    },
+    "inputs": {
+      "items": {
+        "$ref": "#/$defs/input"
+      },
+      "type": "array"
+    },
+    "outputs": {
+      "items": {
+        "$ref": "#/$defs/output"
+      },
+      "type": "array"
+    },
+    "resources": {
+      "additionalProperties": false,
+      "properties": {
+        "clean_worktree": {
+          "type": "boolean"
+        },
+        "hostname": {
+          "minLength": 1,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nproc": {
+          "maximum": 4096,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "hostname",
+        "nproc",
+        "clean_worktree"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "jass.stage_spec.v1"
+    },
+    "scientific_side_effects": {
+      "additionalProperties": false,
+      "properties": {
+        "bakes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "fits": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "promotions": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "strength_games": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "fits",
+        "strength_games",
+        "promotions",
+        "bakes"
+      ],
+      "type": "object"
+    },
+    "stage": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "success": {
+      "additionalProperties": false,
+      "properties": {
+        "next_stage": {
+          "minLength": 1,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "required_exit_code": {
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "required_exit_code",
+        "next_stage"
+      ],
+      "type": "object"
+    },
+    "timeouts": {
+      "additionalProperties": false,
+      "properties": {
+        "stage_seconds": {
+          "maximum": 604800,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "terminate_grace_seconds": {
+          "maximum": 600,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "stage_seconds",
+        "terminate_grace_seconds"
+      ],
+      "type": "object"
+    },
+    "working_directory": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "campaign",
+    "stage",
+    "code_sha",
+    "command",
+    "working_directory",
+    "inputs",
+    "outputs",
+    "resources",
+    "timeouts",
+    "artifact_directory_contract",
+    "environment",
+    "scientific_side_effects",
+    "success"
+  ],
+  "title": "Jass Experiment Stage Specification v1",
+  "type": "object"
+}

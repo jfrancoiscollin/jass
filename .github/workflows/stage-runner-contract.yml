@@ -1,0 +1,39 @@
+name: stage-runner-contract
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/run_experiment_stage.py'
+      - 'jobs/tests/test_run_experiment_stage.py'
+      - 'jobs/specs/stage_spec_v1.schema.json'
+      - 'docs/operations/JASS_EXPERIMENT_EXECUTION_STANDARD_V1_20260905.md'
+      - '.github/workflows/stage-runner-contract.yml'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'jobs/tools/run_experiment_stage.py'
+      - 'jobs/tests/test_run_experiment_stage.py'
+      - 'jobs/specs/stage_spec_v1.schema.json'
+      - 'docs/operations/JASS_EXPERIMENT_EXECUTION_STANDARD_V1_20260905.md'
+      - '.github/workflows/stage-runner-contract.yml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile runner
+        run: python -m py_compile jobs/tools/run_experiment_stage.py jobs/tests/test_run_experiment_stage.py
+
+      - name: Run stage-runner contract tests
+        run: python -m unittest -v jobs.tests.test_run_experiment_stage
