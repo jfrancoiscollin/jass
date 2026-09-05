@@ -194,8 +194,10 @@ def _validate_report(report: Mapping[str, Any], *, code_sha: str,
             raise PublishError("terminal outputs must be both present or both null")
         if verdict != "B2_ADAPTIVE_SHADOW_SUPPORT_NOT_ESTABLISHED_V1":
             raise PublishError("scientific verdict requires statistics payloads")
-        if statistics["all_gates_passed"] is not None:
-            raise PublishError("support terminal cannot claim gate result")
+        if statistics["status"] is not None \
+                or statistics["scientific_gates_evaluated"] is not False \
+                or statistics["all_gates_passed"] is not None:
+            raise PublishError("no-analysis support terminal summary mismatch")
         expected_names = {"b2-terminal-report-v1.json"}
     else:
         stats_path = terminal_dir / "b2-statistics-v1.json"
@@ -204,14 +206,22 @@ def _validate_report(report: Mapping[str, Any], *, code_sha: str,
         _check_descriptor(progress_path, outputs["progress"], "progress output")
         files.extend([stats_path, progress_path])
         expected_names = {"b2-terminal-report-v1.json", "b2-statistics-v1.json", "progress.json"}
-        if statistics["status"] != "VALID" or statistics["scientific_gates_evaluated"] is not True \
-                or type(statistics["all_gates_passed"]) is not bool:
-            raise PublishError("statistics payload route lacks evaluated VALID analysis")
-        expected_verdict = ("B2_ADAPTIVE_SHADOW_POLICY_CONFIRMED_V1"
-                            if statistics["all_gates_passed"]
-                            else "B2_ADAPTIVE_SHADOW_POLICY_NOT_CONFIRMED_V1")
-        if verdict != expected_verdict:
-            raise PublishError("terminal verdict disagrees with gate result")
+        if statistics["status"] == "VALID":
+            if statistics["scientific_gates_evaluated"] is not True \
+                    or type(statistics["all_gates_passed"]) is not bool:
+                raise PublishError("VALID statistics lack evaluated boolean gate")
+            expected_verdict = ("B2_ADAPTIVE_SHADOW_POLICY_CONFIRMED_V1"
+                                if statistics["all_gates_passed"]
+                                else "B2_ADAPTIVE_SHADOW_POLICY_NOT_CONFIRMED_V1")
+            if verdict != expected_verdict:
+                raise PublishError("terminal verdict disagrees with gate result")
+        elif statistics["status"] == "INVALID_UNKNOWN":
+            if statistics["scientific_gates_evaluated"] is not False \
+                    or statistics["all_gates_passed"] is not None \
+                    or verdict != "B2_ADAPTIVE_SHADOW_SUPPORT_NOT_ESTABLISHED_V1":
+                raise PublishError("INVALID_UNKNOWN terminal route mismatch")
+        else:
+            raise PublishError("terminal statistics status outside closed map")
     if {entry.name for entry in terminal_dir.iterdir()} != expected_names:
         raise PublishError("terminal directory contains unexpected files")
     return files, verdict
