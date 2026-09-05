@@ -24,6 +24,10 @@ Les diagnostics 1771 et 1772 sont terminés. 80 divergences sont des ex æquo q2
 
 A3 exporteur/readout est intégré via la [PR #776](https://github.com/jfrancoiscollin/jass/pull/776), commit `65311d7ddd2f830d229a9cb47da90bc070178437`. [Contrat et limites A3](experiments/L3_SEARCH_DECISION_TRACE_A3_V1_20260905.md) : export natif avec provenance des artefacts, validation des reçus et diagnostics locaux à chaque invocation/contexte/profondeur. Build natif complet, 17 tests Python, neuf tests CTest et exports réels validés ; revue indépendante sans P1/P2, CI native/Python/WASM verte. Cette instrumentation ne constitue ni une confirmation B2 ni une mesure de force. **La prochaine étape enseignant reste le préenregistrement B2 avant toute nouvelle cohorte de confirmation.**
 
+La préparation historique 1773 est terminée avec exit `0`, tentative `20260905T012244Z-1490b353`, code `1490b3536f6943ec5eab62578ea7d42a29395a27`, verdict `B2_HISTORICAL_IDENTITY_PREPARATION_COMPLETE`. Les 40 sources authentifiées donnent 223 317 identités canoniques uniques, avec union/manifeste reproduits à l'identique. La sonde de deux millions de tirages est uniquement une mesure du noyau synthétique. [Reçu et limites de la préparation](experiments/L3_ADAPTIVE_SHADOW_B2_HISTORICAL_PREPARATION_V1_20260905.md).
+
+Les contrats de [projection sans valeurs q200](experiments/L3_ADAPTIVE_SHADOW_B2_PROJECTION_V1_20260905.md) et de [preflight statistique synthétique](experiments/L3_ADAPTIVE_SHADOW_B2_STATISTICAL_PREFLIGHT_V1_20260905.md) accompagnent les outils testés et revus. L'équivalence exhaustive sur les 8 000 parents B1 et le preflight statistique complet restent à exécuter avant le gel B2. Aucun parent de confirmation n'a encore été généré et aucun seuil confirmatoire n'est gelé.
+
 `CURRICULUM` reste champion. Les sections suivantes conservent les reçus et restrictions des programmes antérieurs ; elles ne constituent pas un état de lancement actualisé de la PR #771.
 
 ---

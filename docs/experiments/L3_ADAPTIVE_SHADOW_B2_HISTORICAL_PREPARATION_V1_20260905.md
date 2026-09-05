@@ -337,3 +337,92 @@ La reprise technique conserve le même catalogue, les mêmes règles d'identité
 les deux compilations, la sonde 2M et les limites de travail. Elle doit épingler
 le commit du correctif et publier une nouvelle tentative, sans nouvelle donnée
 de confirmation.
+
+## 12. Reprise technique réussie — reçu terminal et limites de l'audit
+
+La reprise du même job, tentative
+`20260905T012244Z-1490b353`, a exécuté le commit
+`1490b3536f6943ec5eab62578ea7d42a29395a27`. Le statut du contrôle au commit
+`41b872acc6296bc9f6690fb4498f79306e5a0f3d` rapporte :
+
+```text
+job     cpx62-1773-l3-decision-math-b2-historical-identities-v1
+host    cpx62
+start   2026-09-05T01:22:49+00:00
+end     2026-09-05T01:28:19+00:00
+state   completed
+exit    0
+verdict B2_HISTORICAL_IDENTITY_PREPARATION_COMPLETE
+```
+
+L'audit terminal a authentifié cinq artefacts par l'inventaire et les
+checksums du résultat :
+
+```text
+exclusion-sources-catalog.json
+717084aae158141d3730ebc98e1a71592ee3cf690ac345ab01eaafe2c60f90c8
+
+historical-parent-exclusion-manifest.json
+2f1a551bf6fe020e6436689dc8ef8c95940f473d79a2ebc8613e6c15447cff16
+
+historical-parent-canonical-union.txt
+3a751ba967276f6e2562bfa7257dfa36fbe562e33cd710dd49abcfe51afdfc8f
+
+synthetic-statistical-runtime-probe.json
+8bc556adcadf943ebcb15569117dd412ee7ef620f9ba7443dfb0e46be89f52bd
+
+scientific-summary.json
+d1edfa36f18487b5dc6faeb2ddba10c120d0fe0e307c16cd4d21d557778875d9
+```
+
+Le catalogue contient exactement 40 sources dans l'ordre gelé : dix TSV
+parents, un TSV HomeScan et vingt-neuf FEN. Les quarante reçus résumés ont été
+rapprochés du catalogue local sur `source_id`, job, attempt, code, chemin
+d'artefact, nom local, taille et SHA256. Le manifeste réconcilie 223 350 lignes
+d'entrée et 223 317 identités canoniques uniques. Sa comptabilité cumulative
+par source aboutit exactement à cette cardinalité ; `M1_alias_of_RichD_C=true`
+reste attesté sans ajouter une quarante-et-unième source.
+
+L'union de 12 952 386 octets a été lue sur l'hôte et vérifiée ASCII, LF final,
+triée, unique et composée de 223 317 lignes. Son contenu n'a pas été exporté
+localement. La preuve de canonicalité repose sur le compilateur revu, son
+manifeste, la comparaison byte à byte de ses deux compilations et ses 256
+échantillons byte-équivalents avec
+`jobs.tools.tb_frontier_symmetry_dedup.canonical_fingerprint`, ainsi que sur les
+hashes terminaux ci-dessus. Cet audit terminal n'a pas relu ni reparsé une
+seconde fois les quarante payloads historiques ; il ne prétend donc pas fournir
+une deuxième implémentation indépendante de leur parsing.
+
+Le probe synthétique publie :
+
+```text
+kind                              SYNTHETIC_ARITHMETIC_ONLY
+scientific_parents                0
+draws                             2000000
+integer_accumulations_per_draw    10
+elapsed_seconds                   1.957539729999553
+draws_per_second                  1021690.6300034364
+extrapolated_800m_kernel_seconds  783.0158919998212
+splitmix_test_vector_pass         true
+```
+
+Les dix checksums d'accumulateur sont
+`500934807,1001869614,1502804421,2003739228,2504674035,3005608842,3506543649,4007478456,4508413263,5009348070`.
+L'environnement observé reste CPython 3.14.4, `/usr/bin/python3`, Linux
+`7.0.0-30-generic`, `x86_64`, glibc 2.43 et `nproc=16`. Le reçu lie aussi les
+SHA des quatre fichiers de code/catalogue au commit exécuté.
+
+Le résultat établit seulement la préparation historique des identités. Les
+compteurs terminaux restent `new_searches=0`, `new_fits=0`,
+`strength_games=0`, `fresh_parent_generation=0`, avec
+`b2_confirmation_frozen=false`, `b2_confirmation_executed=false`,
+`promotion_authorized=false` et `bake_authorized=false`. L'extrapolation ×400
+porte uniquement sur le noyau de tirage et d'accumulation. Elle ne remplace pas
+le preflight statistique complet, ne dimensionne pas à elle seule le readout et
+n'autorise aucune génération fraîche.
+
+Le rapport local étroit est
+`.codex-tmp/pr771-1773-success-audit.json`, SHA256
+`3098dc8c6184717b81422ac15e83b82d814ca877e3e07a2fd5a17b34ea25d697`.
+Les quatre JSON terminaux utiles et le reçu d'audit sont conservés sous
+`.codex-tmp/pr771-1773-success/`; l'union n'y est pas copiée.
