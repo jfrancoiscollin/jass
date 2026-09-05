@@ -1,6 +1,6 @@
-# AGENTS.md — Jass Codex automatic routing policy
+# AGENTS.md — Jass Codex cost-aware automatic routing policy
 
-These instructions apply to the entire repository. They are designed so the user does **not** have to choose a model manually.
+These instructions apply to the entire repository. The user should **not** have to choose a model manually. Optimize for the cheapest model that can safely finish each bounded step, while preserving Jass scientific integrity.
 
 ## 1. Active truth and precedence
 
@@ -17,100 +17,161 @@ Before any non-trivial change, establish the active project truth. Use this prec
 
 `docs/archives/**` is historical evidence, not active specification. Never rewrite frozen history to make a new result look consistent.
 
-If sources conflict, do not silently choose the convenient interpretation. Preserve terminal/frozen facts and escalate the conflict to the reasoning route below.
+If sources conflict, preserve terminal/frozen facts and escalate the unresolved decision to the appropriate reasoning tier below.
 
-## 2. Automatic model routing — mandatory
+## 2. Automatic cost-aware model routing — mandatory
 
-Project Codex configuration defines two named roles:
+Project Codex configuration defines four roles:
 
-- `fast` = `gpt-5.3-codex-spark`, for bounded tactical execution.
-- `scientist` = `gpt-5.6-sol` with deep reasoning, for science/causality/architecture.
+- `monitor` = **GPT-5.6 Luna / low**, read-only observation and simple factual lookup.
+- `fast` = **GPT-5.6 Luna / medium**, bounded mechanical execution.
+- `dev` = **GPT-5.6 Terra / medium**, normal implementation and non-trivial technical debugging.
+- `scientist` = **GPT-5.6 Sol / high**, deep science, causality, protocol, and broad semantic architecture.
 
-The root/orchestrator defaults to `gpt-5.6-sol`. Do not ask the user which model to use.
+The root/orchestrator defaults to **GPT-5.6 Terra / low**. Its first responsibility is routing, not doing every task itself. Do not ask the user which model to use.
 
-For every substantive request, classify the work **before editing**.
+Choose the **lowest sufficient tier before substantive work**. Escalate only when evidence shows the lower tier is insufficient. After a deep decision is fixed, immediately hand mechanical work back down to Terra or Luna.
 
-### FAST_TECHNICAL → delegate to the `fast` role
+### TIER 0 — OBSERVE → `monitor` (Luna low)
 
-Use the `fast` role for bounded work where intended behavior is already fixed, including:
+Use `monitor` for read-only, bounded work such as:
 
-- inspecting logs, status files, CI output, job artifacts, or a known failing test;
-- locating a technical root cause;
-- small/local shell, Python, C++, config, parser, runner, harness, or CI fixes;
-- adding diagnostics or instrumentation that does not change experimental meaning;
-- implementing an already-decided change;
-- mechanical documentation edits that do not reinterpret scientific results;
-- running existing targeted tests or deterministic smoke/contract checks;
-- repairing/requeueing an **unchanged** experiment only when the current task already authorizes remote execution and all launch guardrails are satisfied.
+- job status, queue, attempt, CI, PR, commit, or artifact lookup;
+- reading a small known log/status/result and reporting the relevant facts;
+- checking whether a process/job is pending/running/completed/failed;
+- locating a known file, symbol, marker, SHA, verdict, or exact string;
+- compact factual summaries where no causal/scientific interpretation is required.
 
-Give the fast agent the smallest causally narrow task that can complete the request plus the relevant invariants and required validation. The root/orchestrator must not edit the same files concurrently while the fast agent is working. Review its evidence, diff, and tests before accepting the result.
+`monitor` must not edit, launch compute, mutate `jass-control`, or interpret scientific meaning.
 
-### DEEP_SCIENTIFIC → Sol owns the reasoning
+### TIER 1 — MECHANICAL → `fast` (Luna medium)
 
-Keep the work on the Sol root or delegate it to the `scientist` role when the task involves any of:
+Use `fast` when intended behavior is already fixed and the task is causally narrow, including:
+
+- fixing a typo, CLI flag, path, shell wrapper, config key, import, schema wiring, or deterministic launcher bug;
+- small/local shell, Python, C++, runner, harness, CI, parser, or packaging edits;
+- adding narrow diagnostics/instrumentation with no semantic change;
+- implementing an already-decided small change;
+- deterministic technical requeue of an unchanged experiment when execution is already authorized;
+- targeted tests/smokes for a bounded repair.
+
+Luna must make the smallest correct diff and must not reinterpret the science.
+
+### TIER 2 — ENGINEERING → `dev` (Terra medium)
+
+Use `dev` for work that is clearly technical but exceeds a Luna-sized task, including:
+
+- multi-file implementation;
+- normal C++/Python feature implementation under an already-fixed contract;
+- non-trivial debugging with more than one plausible technical hypothesis;
+- build/link/runtime problems requiring meaningful code understanding;
+- test design beyond a tiny regression test;
+- localized refactors where semantics must be proven across several components;
+- review/correction of a Luna handoff that failed once or exposed broader technical scope.
+
+A first failed Luna repair normally escalates to Terra, **not Sol**.
+
+### TIER 3 — DEEP SCIENCE → `scientist` (Sol high)
+
+Use Sol only when the task genuinely needs expensive reasoning, including:
 
 - interpreting a scientific result, terminal verdict, transfer claim, Elo/runtime evidence, or causal conclusion;
-- preregistration, protocol, experiment design, control selection, or information barriers;
-- candidate/baseline identity, feature set/order, training data/splits, seeds, budgets, labels, loss, epochs, sample sizes, gates, thresholds, confidence rules, or verdict mapping;
+- preregistration, protocol, experiment design, controls, or information barriers;
+- candidate/baseline identity, feature set/order, training data/splits, seeds, budgets, labels, objective, epochs, sample sizes, gates, thresholds, confidence rules, or verdict mapping;
 - model search, tuning/retuning, promotion/bake/champion decisions;
-- multiple plausible causal explanations or conflicting evidence;
-- architecture changes with broad semantic impact;
-- a large or cross-cutting refactor where preserving experimental semantics is non-trivial;
-- a second failed attempt at the same technical fix;
-- any request from the fast agent to cross a science boundary.
+- conflicting scientific evidence or multiple plausible causal explanations;
+- broad architecture changes whose semantics cannot be locally proven;
+- a technical failure that cannot be separated from a scientific boundary.
 
-### MIXED tasks → Sol decides, Spark executes, Sol reviews
+Do **not** use Sol merely because a technical issue is annoying, repetitive, or has consumed time. Escalate to Sol because the reasoning class requires it.
+
+## 3. Escalation and descent protocol
+
+The normal path is:
+
+`monitor (Luna low) → fast (Luna medium) → dev (Terra medium) → scientist (Sol high)`
+
+Skip tiers only when the task is obviously in a higher class from the start.
+
+Escalation rules:
+
+1. `monitor` discovers an edit is needed → `fast`.
+2. `fast` cannot complete one bounded repair, or the fix is broader than expected → `dev`.
+3. `dev` discovers a scientific/protocol/causal decision is required → `scientist`.
+4. `scientist` fixes the decision/invariants only; implementation returns to `dev` or `fast` whenever possible.
 
 For mixed work:
 
-1. Sol establishes facts, invariants, and the exact allowed change.
-2. Delegate the bounded implementation/diagnostic step to the `fast` role.
-3. Spark edits and validates.
-4. Sol reviews the diff/results against the scientific contract.
-5. Repeat only with a newly bounded technical step.
+1. Terra root establishes the immediate facts and cheapest safe route.
+2. A lower-tier worker performs the bounded step.
+3. Terra root reviews evidence/diff/tests.
+4. Sol is invoked only for the unresolved deep decision.
+5. Once resolved, execution descends again.
 
-### Escalation from Spark
+Workers must return explicit escalation markers when leaving scope:
 
-If a fast task discovers that it requires a scientific decision, causal interpretation, protocol change, broad semantic refactor, or cannot cleanly separate technical from scientific causes, stop the risky part. The fast agent must return `SOL_ESCALATION_REQUIRED` with evidence. Continue on Sol; do not let Spark guess.
+- `TIER_ESCALATION_REQUIRED`
+- `TERRA_ESCALATION_REQUIRED`
+- `SOL_ESCALATION_REQUIRED`
 
-### Availability fallback
+Never let a cheaper tier guess across a science boundary, and never let an expensive tier continue doing routine mechanics after the deep decision is settled.
 
-If the `fast` role or Spark model is unavailable, at capacity, not entitled for the account, or rejected by the installed Codex client:
+## 4. Quota/token hygiene — mandatory
 
-1. continue automatically on the Sol root/current capable model;
-2. preserve the same narrow scope and validation requirements;
-3. mention the fallback once in the final task summary;
-4. do **not** ask the user to change model/settings.
+The routing policy exists to reduce Codex quota burn as well as latency.
 
-If sub-agent tools are unavailable, preserve this routing policy semantically and continue safely with the current model rather than blocking the task. Never pretend delegation happened when it did not.
+- Prefer **one delegated worker at a time**. Do not spawn parallel agents for the same question unless independent parallelism is genuinely needed.
+- Do not ask multiple models to independently solve the same routine task “for confidence”. Review with the Terra root first.
+- Give workers the **smallest causally complete context**: exact files, attempts, invariants, error excerpt, and expected validation. Do not paste entire long histories when a few identifiers suffice.
+- Prefer targeted file reads/searches over repository-wide exploration.
+- Prefer exact log/error excerpts over full logs unless the failure location is unknown.
+- Reuse already-established SHAs, frozen facts, and successful upstream receipts; do not rediscover them every turn.
+- Keep reasoning and response verbosity low for monitoring/mechanical work.
+- Do not use Sol for status polling, Git operations, routine PR work, deterministic requeues, simple wrappers, documentation mechanics, or known-contract test failures.
+- Do not keep Sol alive as an implementation worker after it has produced a bounded engineering contract.
+- Do not repeatedly retry the same Luna hypothesis. One failed bounded Luna repair is a signal to move to Terra.
 
-## 3. Spark execution contract
+## 5. Availability fallback
 
-Every fast delegation must include enough context to work safely without re-deciding the science.
+Model/sub-agent availability can vary by Codex client/version.
 
-Spark must:
+If `monitor` or `fast` cannot spawn with Luna (including a client allow-list/capability mismatch):
 
-- prefer the smallest correct diff; no opportunistic refactor or cleanup;
+1. retry the same bounded task with `dev` / Terra;
+2. preserve the same scope and validation contract;
+3. do **not** jump directly to Sol;
+4. mention the fallback once in the final task summary.
+
+If the `dev` role is unavailable, continue on the Terra root/current capable model with the same bounded scope.
+
+If Sol is required but unavailable, continue only if the current capable model can preserve the scientific boundary; otherwise report the capability blocker rather than silently weakening the reasoning requirement.
+
+If sub-agent tools are unavailable entirely, preserve this tiering semantically with the current model and keep the same escalation discipline. Never pretend delegation happened when it did not.
+
+## 6. Worker execution contracts
+
+Every delegation must include enough context to work safely without re-deciding upstream facts.
+
+All implementation workers must:
+
+- prefer the smallest correct diff; no opportunistic refactor/cleanup;
 - never modify scientific parameters to make a test/job/result pass;
 - distinguish infrastructure/harness/runtime failure from scientific negative evidence;
-- run the smallest relevant existing validation after any code/config/script change;
-- explicitly run tests/checks rather than relying on Spark's lightweight default behavior;
+- run the smallest relevant existing validation after code/config/script changes;
 - never claim a test passed unless it actually ran;
 - never launch remote compute merely because code is ready;
-- stop the risky part and return to Sol if a scientific decision becomes necessary.
+- stop the risky part and escalate if a scientific decision becomes necessary.
 
-Expected fast handoff fields:
+Expected technical handoff fields:
 
 - `FACTS`
 - `ROOT_CAUSE`
 - `CHANGES`
 - `VALIDATION`
 - `RESULT`
-- `ESCALATION_NEEDED` (`yes/no`, with reason)
+- `NEXT_TIER` or `ESCALATION_NEEDED`
 
-If Spark makes two unsuccessful attempts on the same failure, stop further patching and escalate to Sol with the evidence collected.
-
-## 4. Scientific integrity — hard boundary
+## 7. Scientific integrity — hard boundary
 
 The routing system is an execution optimization, **not** permission to change the science.
 
@@ -135,7 +196,7 @@ Never auto-promote or auto-bake a candidate. `CURRICULUM` remains champion unles
 
 `n=0`, undersized cells, missing artifacts, parser failures, broken sanity baselines, or incomplete gates fail closed; they are not neutral evidence.
 
-## 5. Remote compute and control-plane safety
+## 8. Remote compute and control-plane safety
 
 Automatic model routing does not grant compute authorization.
 
@@ -148,20 +209,20 @@ Before queueing CPX/CCX work, mutating `jass-control`, or launching costly workf
 
 A technical requeue is allowed only when the scientific experiment is unchanged and the current task authorizes execution.
 
-## 6. Validation and completion
+## 9. Validation and completion
 
 For modified files, use the repository's existing validation conventions:
 
 - shell: syntax-check changed scripts and exercise the closest smoke/contract path;
 - Python: compile/import-check and run closest tests;
-- C++: use the existing build/test conventions; do not invent semantic compile flags;
+- C++: use existing build/test conventions; do not invent semantic compile flags;
 - scientific tooling: test deterministic identity, read/write round-trips, fail-closed paths, and non-empty baselines when relevant.
 
-The Sol/root agent is responsible for reviewing a Spark result before declaring completion on science-sensitive work.
+The Terra root/orchestrator is responsible for reviewing lower-tier results. Sol reviews only when the task crosses a science/causal boundary.
 
-At the end of the task, report:
+At the end of a task, report:
 
-- route used (`Spark`, `Sol`, or `Sol → Spark → Sol`);
+- route used (for example `Luna`, `Luna → Terra`, `Terra`, or `Terra → Sol → Luna`);
 - what changed;
 - which scientific/runtime invariants were preserved;
 - checks/tests actually run and their results;
