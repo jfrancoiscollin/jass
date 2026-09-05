@@ -1,0 +1,68 @@
+name: b2-synthetic-rehearsal
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b2_*.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_*.py'
+      - '.github/workflows/b2-synthetic-rehearsal.yml'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'jobs/tools/adaptive_sibling_b2_*.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_*.py'
+      - '.github/workflows/b2-synthetic-rehearsal.yml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  rehearsal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install numeric test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy scipy
+
+      - name: Run single-command B2 synthetic rehearsal
+        run: |
+          mkdir -p /tmp/jass-b2-rehearsal
+          python jobs/tools/adaptive_sibling_b2_pipeline_rehearsal.py \
+            --receipt /tmp/jass-b2-rehearsal/receipt.json \
+            --log /tmp/jass-b2-rehearsal/tests.log
+          cat /tmp/jass-b2-rehearsal/receipt.json
+
+      - name: Verify synthetic rehearsal receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('/tmp/jass-b2-rehearsal/receipt.json')
+          r=json.loads(p.read_text(encoding='ascii'))
+          assert r['schema']=='jass.adaptive_sibling_b2_synthetic_pipeline_rehearsal.v1'
+          assert r['status']=='VALID'
+          assert r['verdict']=='B2_SYNTHETIC_CONTRACT_REHEARSAL_PASS'
+          assert r['full_pipeline_rehearsal_pass'] is False
+          assert r['next_gate']=='TARGET_HOST_STAGE_SPEC_REHEARSAL'
+          assert r['scientific_scope']=={
+              'fresh_data_reads':0,'teacher_searches':0,'fits':0,
+              'strength_games':0,'promotions':0,'bakes':0,
+              'scientific_verdict':None}
+          PY
+
+      - name: Upload rehearsal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b2-synthetic-rehearsal
+          path: /tmp/jass-b2-rehearsal
+          if-no-files-found: error
