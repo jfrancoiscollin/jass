@@ -16,6 +16,7 @@ import io
 import json
 import os
 import re
+import stat
 import struct
 import sys
 from dataclasses import dataclass
@@ -42,6 +43,7 @@ CONTRACT_SCHEMA = "jass.adaptive_sibling_b2_selection_contract.v1"
 SOURCE_MANIFEST_SCHEMA = "jass.adaptive_sibling_b2_source_preparation.v1"
 SELECTION_REPORT_SCHEMA = "jass.adaptive_sibling_b2_target_blind_selection.v1"
 EXCLUSION_MANIFEST_SCHEMA = "jass.adaptive_sibling_b2_historical_exclusion_manifest.v1"
+SUPPORT_REPORT_SCHEMA = "jass.adaptive_sibling_b2_target_blind_support.v1"
 EXPECTED_CONTRACT_SHA256 = "5e94e0b8a71089d01959212debcfe0b90700714d96693097b519090462fe0e66"
 JNNW_RECORD_SIZE = 38
 SOURCE_SHARDS = 16
@@ -80,6 +82,46 @@ FILTER_REPORT_KEYS = {
     "below_min_moves", "above_max_moves", "duplicate_move_entries",
     "selected_parents",
 }
+SUPPORT_COUNTER_FIELDS = {
+    "filtered_occurrences", "historical_excluded_occurrences",
+    "exact_duplicate_occurrences_removed", "symmetry_duplicate_occurrences_removed",
+    "unique_canonical_after_exclusion",
+}
+
+
+class InsufficientSupportError(ContractError):
+    """A valid target-blind pool lacks the frozen quota in one or more cells."""
+
+    def __init__(self, support_before_sampling: dict[str, int], counters: dict[str, int]):
+        if list(support_before_sampling) != CELL_ORDER:
+            raise ContractError("support cells are not in frozen CELL_ORDER")
+        if any(type(value) is not int or value < 0 for value in support_before_sampling.values()):
+            raise ContractError("support counts must be non-negative integers")
+        if set(counters) != SUPPORT_COUNTER_FIELDS:
+            raise ContractError("selection support counter fields mismatch")
+        if any(type(value) is not int or value < 0 for value in counters.values()):
+            raise ContractError("selection counters must be non-negative integers")
+        self.support_before_sampling = dict(support_before_sampling)
+        self.insufficient_cells = [
+            cell for cell in CELL_ORDER if support_before_sampling[cell] < CELL_QUOTA
+        ]
+        if not self.insufficient_cells:
+            raise ContractError("InsufficientSupportError requires an insufficient cell")
+        self.counters = dict(counters)
+        super().__init__("insufficient target-blind support")
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "schema": SUPPORT_REPORT_SCHEMA,
+            "cell_order": list(CELL_ORDER),
+            "cell_quota": CELL_QUOTA,
+            "support_before_sampling": self.support_before_sampling,
+            "insufficient_cells": self.insufficient_cells,
+            "counters": self.counters,
+            "target_blind": True,
+            "top_up": False,
+            "outputs_created": 0,
+        }
 
 
 @dataclass(frozen=True)
@@ -671,6 +713,72 @@ def _path_key(path: Path) -> str:
     return str(value).replace("\\", "/").casefold()
 
 
+@dataclass(frozen=True)
+class _InputSnapshot:
+    device: int
+    inode: int
+    size_bytes: int
+    mtime_ns: int
+    ctime_ns: int
+    sha256: str
+
+
+def _snapshot_regular_file(path: Path, label: str) -> _InputSnapshot:
+    try:
+        before = path.lstat()
+        if stat.S_ISLNK(before.st_mode):
+            raise ContractError(f"{label} must not be a symbolic link: {path}")
+        if not stat.S_ISREG(before.st_mode):
+            raise ContractError(f"{label} must be a regular file: {path}")
+        raw = path.read_bytes()
+        after = path.lstat()
+    except OSError as exc:
+        raise ContractError(f"cannot authenticate {label}: {path}: {exc}") from exc
+    before_key = (
+        before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns,
+    )
+    after_key = (
+        after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns,
+    )
+    if before_key != after_key or len(raw) != after.st_size:
+        raise ContractError(f"{label} changed while being authenticated: {path}")
+    return _InputSnapshot(
+        device=after.st_dev,
+        inode=after.st_ino,
+        size_bytes=after.st_size,
+        mtime_ns=after.st_mtime_ns,
+        ctime_ns=after.st_ctime_ns,
+        sha256=sha256_bytes(raw),
+    )
+
+
+def _snapshot_inputs(paths: list[Path]) -> list[_InputSnapshot]:
+    snapshots: list[_InputSnapshot] = []
+    identities: dict[tuple[int, int], Path] = {}
+    for index, path in enumerate(paths):
+        snapshot = _snapshot_regular_file(path, f"input {index}")
+        identity = (snapshot.device, snapshot.inode)
+        if identity in identities:
+            raise ContractError(f"input filesystem alias: {identities[identity]} and {path}")
+        identities[identity] = path
+        snapshots.append(snapshot)
+    return snapshots
+
+
+def _verify_input_snapshots(paths: list[Path], snapshots: list[_InputSnapshot]) -> None:
+    if len(paths) != len(snapshots):
+        raise ContractError("input snapshot cardinality mismatch")
+    for index, (path, expected) in enumerate(zip(paths, snapshots)):
+        if _snapshot_regular_file(path, f"input {index}") != expected:
+            raise ContractError(f"input changed after parsing: {path}")
+
+
+def _verify_outputs_absent(outputs: list[Path], temps: list[Path]) -> None:
+    for path in outputs + temps:
+        if path.is_symlink() or path.exists():
+            raise ContractError(f"output/temp appeared during selection: {path}")
+
+
 def _guard_paths(inputs: list[Path], outputs: list[Path]) -> list[Path]:
     temps = [Path(str(path) + ".tmp") for path in outputs]
     all_paths = inputs + outputs + temps
@@ -681,7 +789,7 @@ def _guard_paths(inputs: list[Path], outputs: list[Path]) -> list[Path]:
             raise ContractError(f"input/output/temp path alias: {keys[key]} and {path}")
         keys[key] = path
     for path in outputs + temps:
-        if path.exists():
+        if path.is_symlink() or path.exists():
             raise ContractError(f"refusing existing output/temp path: {path}")
     return temps
 
@@ -717,16 +825,16 @@ def select_candidates(candidates: list[Candidate], excluded: set[str]) -> tuple[
     for candidate in representatives.values():
         by_cell[f"{candidate.phase}_stm{candidate.stm}"].append(candidate)
     support = {cell: len(by_cell[cell]) for cell in CELL_ORDER}
+    counters["unique_canonical_after_exclusion"] = len(representatives)
+    if any(support[cell] < CELL_QUOTA for cell in CELL_ORDER):
+        raise InsufficientSupportError(support, counters)
     selected: list[Candidate] = []
     for cell in CELL_ORDER:
         ordered = sorted(by_cell[cell], key=lambda candidate: candidate.sort_key)
-        if len(ordered) < CELL_QUOTA:
-            raise ContractError(f"insufficient target-blind support in {cell}: {len(ordered)} < {CELL_QUOTA}")
         selected.extend(ordered[:CELL_QUOTA])
     selected.sort(key=lambda candidate: candidate.sort_key)
     if len(selected) != OUTPUT_RECORDS or len({candidate.canonical for candidate in selected}) != OUTPUT_RECORDS:
         raise ContractError("selected cohort cardinality/identity uniqueness mismatch")
-    counters["unique_canonical_after_exclusion"] = len(representatives)
     return selected, {"counters": counters, "support_before_sampling": support}
 
 
@@ -877,6 +985,11 @@ def _build_report(
 
 
 def run(args: argparse.Namespace, *, contract_override: dict[str, Any] | None = None) -> dict[str, Any]:
+    inputs = [args.contract, args.source_manifest, *args.filtered_jnnw, *args.filtered_meta,
+              *args.filter_report, args.exclusion_union, args.exclusion_manifest, args.exclusion_receipt]
+    outputs = [args.out_jnnw, args.out_tsv, args.report]
+    temps = _guard_paths(inputs, outputs)
+    input_snapshots = _snapshot_inputs(inputs)
     if contract_override is None:
         contract, contract_raw = load_contract(args.contract)
     else:
@@ -887,10 +1000,6 @@ def run(args: argparse.Namespace, *, contract_override: dict[str, Any] | None = 
     meta_by_shard = _match_inputs(args.filtered_meta, source_manifest["shards"], "filtered_meta")
     report_by_shard = _match_inputs(args.filter_report, source_manifest["shards"], "report")
 
-    inputs = [args.contract, args.source_manifest, *args.filtered_jnnw, *args.filtered_meta,
-              *args.filter_report, args.exclusion_union, args.exclusion_manifest, args.exclusion_receipt]
-    outputs = [args.out_jnnw, args.out_tsv, args.report]
-    temps = _guard_paths(inputs, outputs)
     _load_exclusion_manifest(args.exclusion_manifest, contract)
     _, exclusion_receipt_raw = _load_exclusion_receipt(
         args.exclusion_receipt, args.exclusion_union, args.exclusion_manifest, contract
@@ -911,7 +1020,12 @@ def run(args: argparse.Namespace, *, contract_override: dict[str, Any] | None = 
         )
         filter_reports.append(filter_report)
         all_candidates.extend(candidates)
-    selected, selection_receipt = select_candidates(all_candidates, excluded)
+    try:
+        selected, selection_receipt = select_candidates(all_candidates, excluded)
+    except InsufficientSupportError:
+        _verify_input_snapshots(inputs, input_snapshots)
+        _verify_outputs_absent(outputs, temps)
+        raise
     if any(candidate.canonical in excluded for candidate in selected):
         raise ContractError("historical exclusion overlap survived selection")
 
@@ -976,6 +1090,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     try:
         result = run(parse_args(argv))
+    except InsufficientSupportError as exc:
+        print(canonical_json_bytes(exc.payload()).decode("ascii"), end="")
+        return 4
     except (ContractError, OSError, UnicodeError, csv.Error, struct.error) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
