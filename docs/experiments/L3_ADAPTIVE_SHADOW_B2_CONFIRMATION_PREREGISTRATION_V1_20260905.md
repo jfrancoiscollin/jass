@@ -122,8 +122,8 @@ Producer argv semantics are frozen by the contract:
 
 ```text
 --gen-data-wdl 10000
-play_depth = 4
-eval_depth = 8
+eval_depth = 4
+play_depth = 8
 max_plies = 260
 --wdl-zero-score
 --random-open-plies 8
