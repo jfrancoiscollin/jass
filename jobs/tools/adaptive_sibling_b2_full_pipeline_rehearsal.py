@@ -23,7 +23,6 @@ import io
 import json
 import os
 from pathlib import Path
-import shutil
 import sys
 import time
 from typing import Any, Sequence
@@ -69,7 +68,7 @@ def sha256_file(path: Path) -> str:
 
 def descriptor(path: Path) -> dict[str, object]:
     resolved = path.resolve(strict=True)
-    if resolved.is_symlink() or not resolved.is_file():
+    if not resolved.is_file():
         raise FullRehearsalError(f"not a regular file: {path}")
     return {
         "local_name": resolved.name,
@@ -146,6 +145,7 @@ def run_full(work_dir: Path, log: io.StringIO) -> dict[str, object]:
     os.environ["JASS_B2_NATIVE_VERIFIER"] = str(verifier)
     try:
         graph_dir = work_dir / "terminal-graph"
+        graph_dir.mkdir()
         (terminal_path, terminal_raw, terminal_manifest, fixture_runtime,
          _readout_manifest_path, _readout_manifest, merge_report) = \
             terminal_pipeline_fixture(graph_dir)
