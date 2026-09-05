@@ -1,0 +1,79 @@
+name: b2-native-terminal-rehearsal
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b2_native_terminal_rehearsal.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_native_terminal_rehearsal.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_pipeline.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_readout.py'
+      - 'jobs/tests/fixtures/adaptive_sibling_b2_native_fixture.cpp'
+      - 'src/adaptive_sibling_b2_teacher_merge_verify.cpp'
+      - '.github/workflows/b2-native-terminal-rehearsal.yml'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'jobs/tools/adaptive_sibling_b2_native_terminal_rehearsal.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_native_terminal_rehearsal.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_pipeline.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_readout.py'
+      - 'jobs/tests/fixtures/adaptive_sibling_b2_native_fixture.cpp'
+      - 'src/adaptive_sibling_b2_teacher_merge_verify.cpp'
+      - '.github/workflows/b2-native-terminal-rehearsal.yml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  rehearsal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install numeric dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy scipy
+
+      - name: Run native terminal rehearsal
+        run: |
+          rm -rf /tmp/jass-b2-native-build /tmp/jass-b2-native-rehearsal
+          mkdir -p /tmp/jass-b2-native-rehearsal
+          python jobs/tools/adaptive_sibling_b2_native_terminal_rehearsal.py \
+            --build-dir /tmp/jass-b2-native-build \
+            --receipt /tmp/jass-b2-native-rehearsal/receipt.json \
+            --log /tmp/jass-b2-native-rehearsal/rehearsal.log
+          cat /tmp/jass-b2-native-rehearsal/receipt.json
+
+      - name: Verify native rehearsal receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('/tmp/jass-b2-native-rehearsal/receipt.json').read_text(encoding='ascii'))
+          assert r['schema']=='jass.adaptive_sibling_b2_native_terminal_rehearsal.v1'
+          assert r['status']=='VALID'
+          assert r['verdict']=='B2_NATIVE_TERMINAL_REHEARSAL_PASS'
+          assert r['tests']['tests_run']==1
+          assert r['tests']['skipped']==[]
+          assert r['full_pipeline_rehearsal_pass'] is False
+          assert r['next_gate']=='PRODUCTION_STATISTICS_TARGET_HOST_REHEARSAL'
+          assert r['scientific_scope']=={
+              'fresh_data_reads':0,'teacher_searches':0,'fits':0,
+              'strength_games':0,'promotions':0,'bakes':0,
+              'production_bootstrap_replications':0,'scientific_verdict':None}
+          PY
+
+      - name: Upload native rehearsal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b2-native-terminal-rehearsal
+          path: /tmp/jass-b2-native-rehearsal
+          if-no-files-found: error
