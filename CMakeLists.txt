@@ -358,6 +358,13 @@ if(NOT EMSCRIPTEN)
         src/search_semantics_alt.cpp
         $<TARGET_OBJECTS:jass_t3_f6_runtime>)
     target_link_libraries(jass_search_semantics_attribution PRIVATE jass_lib jass_warnings)
+
+    # Native-only passive SearchDecisionTrace exporter. It runs no games or
+    # fitting and is intentionally absent from the production/WASM front-end.
+    add_executable(jass_search_decision_trace_export
+        src/search_decision_trace_export.cpp
+        $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(jass_search_decision_trace_export PRIVATE jass_lib jass_warnings)
 endif()
 
 # -----------------------------------------------------------------------------
