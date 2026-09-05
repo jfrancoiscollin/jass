@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Run one experiment stage from a strict machine-readable stage specification.
 
-The runner deliberately owns orchestration only. It authenticates the repository,
-inputs, runtime facts, artifact-directory precondition and declared outputs, then
-executes one argv vector without a shell. It never writes into JASS_ARTEFACT_DIR;
-that directory belongs to the stage/publisher. A machine-readable stage receipt
-is always written under JASS_RESULT_DIR.
+The runner owns orchestration only. It authenticates the repository, inputs,
+runtime facts, artifact-directory precondition and declared outputs, then
+executes one argv vector without a shell. It never pre-populates
+``JASS_ARTEFACT_DIR``; that directory belongs to the stage/publisher. A
+machine-readable receipt is always written under ``JASS_RESULT_DIR``.
 """
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ ENV_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
 ALLOWED_SCOPES = {"repo", "result", "artifact"}
 ALLOWED_OUTPUT_KINDS = {"file", "directory"}
 ARTIFACT_CONTRACT = "empty_or_runner_launch"
+SAFE_RUNNER_JASS_ENV = ("JASS_JOB_ID", "JASS_ATTEMPT_ID")
 
 ROOT_KEYS = {
     "schema", "campaign", "stage", "code_sha", "command", "working_directory",
@@ -55,7 +56,8 @@ class StageExecutionError(RuntimeError):
 
 def canonical_json_bytes(value: object) -> bytes:
     return (json.dumps(
-        value, sort_keys=True, ensure_ascii=True, allow_nan=False, separators=(",", ":")
+        value, sort_keys=True, ensure_ascii=True, allow_nan=False,
+        separators=(",", ":"),
     ) + "\n").encode("ascii")
 
 
@@ -151,7 +153,8 @@ def validate_spec(spec: Mapping[str, Any]) -> None:
         raise StageSpecError("code_sha must be full lowercase Git SHA")
 
     command = spec["command"]
-    if type(command) is not list or not command or any(type(x) is not str or not x for x in command):
+    if type(command) is not list or not command \
+            or any(type(token) is not str or not token for token in command):
         raise StageSpecError("command must be a non-empty argv string list")
     working = spec["working_directory"]
     if working != ".":
@@ -199,7 +202,7 @@ def validate_spec(spec: Mapping[str, Any]) -> None:
     timeouts = _strict_object(spec["timeouts"], TIMEOUT_KEYS, "timeouts")
     _strict_int(timeouts["stage_seconds"], "timeouts.stage_seconds", 1, 7 * 24 * 3600)
     _strict_int(
-        timeouts["terminate_grace_seconds"], "timeouts.terminate_grace_seconds", 1, 600
+        timeouts["terminate_grace_seconds"], "timeouts.terminate_grace_seconds", 1, 600,
     )
 
     if spec["artifact_directory_contract"] != ARTIFACT_CONTRACT:
@@ -223,7 +226,9 @@ def validate_spec(spec: Mapping[str, Any]) -> None:
         if name in seen_env:
             raise StageSpecError("environment variable cannot be both inherited and set")
 
-    side = _strict_object(spec["scientific_side_effects"], SIDE_EFFECT_KEYS, "scientific_side_effects")
+    side = _strict_object(
+        spec["scientific_side_effects"], SIDE_EFFECT_KEYS, "scientific_side_effects",
+    )
     for key in SIDE_EFFECT_KEYS:
         _strict_int(side[key], f"scientific_side_effects.{key}", 0, (1 << 31) - 1)
 
@@ -264,7 +269,9 @@ def _scope_root(scope: str, repo: Path, result: Path, artifact: Path) -> Path:
     return {"repo": repo, "result": result, "artifact": artifact}[scope]
 
 
-def _resolve_scoped(item: Mapping[str, Any], repo: Path, result: Path, artifact: Path) -> Path:
+def _resolve_scoped(
+    item: Mapping[str, Any], repo: Path, result: Path, artifact: Path,
+) -> Path:
     root = _scope_root(item["scope"], repo, result, artifact).resolve()
     path = (root / item["path"]).resolve()
     try:
@@ -275,7 +282,7 @@ def _resolve_scoped(item: Mapping[str, Any], repo: Path, result: Path, artifact:
 
 
 def authenticate_inputs(
-    spec: Mapping[str, Any], repo: Path, result: Path, artifact: Path
+    spec: Mapping[str, Any], repo: Path, result: Path, artifact: Path,
 ) -> list[dict[str, Any]]:
     receipts: list[dict[str, Any]] = []
     for item in spec["inputs"]:
@@ -310,7 +317,7 @@ def validate_artifact_dir(artifact: Path) -> dict[str, Any]:
     entries = sorted(entry.name for entry in artifact.iterdir())
     if entries not in ([], ["runner-launch.json"]):
         raise StageSpecError(
-            "artifact directory must be empty or contain only runner-launch.json"
+            "artifact directory must be empty or contain only runner-launch.json",
         )
     return {"contract": ARTIFACT_CONTRACT, "initial_entries": entries}
 
@@ -328,7 +335,9 @@ def validate_resources(spec: Mapping[str, Any]) -> dict[str, Any]:
     return {"hostname": hostname, "nproc": nproc, "machine": machine}
 
 
-def _expand_token(token: str, *, repo: Path, result: Path, artifact: Path, spec_path: Path) -> str:
+def _expand_token(
+    token: str, *, repo: Path, result: Path, artifact: Path, spec_path: Path,
+) -> str:
     replacements = {
         "{repo}": str(repo),
         "{result_dir}": str(result),
@@ -343,13 +352,17 @@ def _expand_token(token: str, *, repo: Path, result: Path, artifact: Path, spec_
 
 
 def build_command(
-    spec: Mapping[str, Any], *, repo: Path, result: Path, artifact: Path, spec_path: Path
+    spec: Mapping[str, Any], *, repo: Path, result: Path, artifact: Path,
+    spec_path: Path,
 ) -> tuple[list[str], Path, dict[str, str]]:
     command = [
-        _expand_token(token, repo=repo, result=result, artifact=artifact, spec_path=spec_path)
+        _expand_token(
+            token, repo=repo, result=result, artifact=artifact, spec_path=spec_path,
+        )
         for token in spec["command"]
     ]
-    working = repo if spec["working_directory"] == "." else (repo / spec["working_directory"])
+    working = repo if spec["working_directory"] == "." \
+        else (repo / spec["working_directory"])
     working = working.resolve()
     try:
         working.relative_to(repo.resolve())
@@ -369,6 +382,11 @@ def build_command(
         "JASS_ARTEFACT_DIR": str(artifact),
         "JASS_STAGE_SPEC": str(spec_path),
     })
+    # These two values are runner-owned provenance, not user-selectable stage
+    # environment. Preserve them when the outer runner provided them.
+    for name in SAFE_RUNNER_JASS_ENV:
+        if name in os.environ:
+            env[name] = os.environ[name]
     return command, working, env
 
 
@@ -393,7 +411,7 @@ def _terminate_process_group(proc: subprocess.Popen[Any], grace: int) -> None:
 
 def execute(
     command: Sequence[str], cwd: Path, env: Mapping[str, str], stdout_path: Path,
-    stderr_path: Path, timeout_seconds: int, grace_seconds: int
+    stderr_path: Path, timeout_seconds: int, grace_seconds: int,
 ) -> tuple[int, bool]:
     timed_out = False
     with stdout_path.open("wb") as stdout, stderr_path.open("wb") as stderr:
@@ -411,14 +429,16 @@ def execute(
 
 
 def validate_outputs(
-    spec: Mapping[str, Any], repo: Path, result: Path, artifact: Path
+    spec: Mapping[str, Any], repo: Path, result: Path, artifact: Path,
 ) -> list[dict[str, Any]]:
     receipts: list[dict[str, Any]] = []
     for item in spec["outputs"]:
         path = _resolve_scoped(item, repo, result, artifact)
         exists = path.exists() and not path.is_symlink()
         if item["required"] and not exists:
-            raise StageExecutionError(f"required output missing: {item['scope']}:{item['path']}")
+            raise StageExecutionError(
+                f"required output missing: {item['scope']}:{item['path']}",
+            )
         receipt: dict[str, Any] = {
             "scope": item["scope"], "path": item["path"], "kind": item["kind"],
             "exists": exists, "sha256": None, "size_bytes": None,
@@ -436,7 +456,9 @@ def validate_outputs(
                     raise StageExecutionError(f"output kind mismatch: {item['path']}")
                 entries = sum(1 for _ in path.iterdir())
                 if item["nonempty"] and entries == 0:
-                    raise StageExecutionError(f"output directory unexpectedly empty: {item['path']}")
+                    raise StageExecutionError(
+                        f"output directory unexpectedly empty: {item['path']}",
+                    )
                 receipt["entries"] = entries
         receipts.append(receipt)
     return receipts
@@ -460,7 +482,7 @@ def write_receipt(path: Path, receipt: Mapping[str, Any]) -> None:
 
 
 def run_stage(
-    *, spec_path: Path, repo_root: Path, result_dir: Path, artifact_dir: Path
+    *, spec_path: Path, repo_root: Path, result_dir: Path, artifact_dir: Path,
 ) -> tuple[int, dict[str, Any]]:
     started_wall = time.time()
     started_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(started_wall))
@@ -470,7 +492,7 @@ def run_stage(
     receipt_path = result_dir / "stage-receipt.json"
     for path in (
         stdout_path, stderr_path, receipt_path,
-        receipt_path.with_name(receipt_path.name + ".tmp")
+        receipt_path.with_name(receipt_path.name + ".tmp"),
     ):
         if path.exists() or path.is_symlink():
             raise StageSpecError(f"runner-owned output already exists: {path.name}")
@@ -481,6 +503,7 @@ def run_stage(
     cwd: Path | None = None
     inputs: list[dict[str, Any]] = []
     outputs: list[dict[str, Any]] = []
+    inputs_validated = False
     runtime: dict[str, Any] | None = None
     artifact_precondition: dict[str, Any] | None = None
     failure_class: str | None = None
@@ -504,6 +527,7 @@ def run_stage(
         artifact_precondition = validate_artifact_dir(artifact_dir)
         failure_stage = "INPUTS"
         inputs = authenticate_inputs(spec, repo_root, result_dir, artifact_dir)
+        inputs_validated = True
         failure_stage = "COMMAND"
         command, cwd, env = build_command(
             spec, repo=repo_root, result=result_dir, artifact=artifact_dir,
@@ -518,7 +542,7 @@ def run_stage(
         if exit_code != spec["success"]["required_exit_code"]:
             failure_class = "STAGE_TIMEOUT" if timed_out else "STAGE_EXIT_CODE"
             raise StageExecutionError(
-                f"stage exit {exit_code}, expected {spec['success']['required_exit_code']}"
+                f"stage exit {exit_code}, expected {spec['success']['required_exit_code']}",
             )
         failure_stage = "OUTPUTS"
         outputs = validate_outputs(spec, repo_root, result_dir, artifact_dir)
@@ -558,7 +582,7 @@ def run_stage(
         "error": error_text,
         "exit_code": exit_code,
         "timed_out": timed_out,
-        "inputs_authenticated": state == "completed" or bool(inputs),
+        "inputs_authenticated": inputs_validated,
         "outputs_authenticated": state == "completed",
         "inputs": inputs,
         "outputs": outputs,
