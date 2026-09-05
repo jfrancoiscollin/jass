@@ -1,18 +1,27 @@
-# Jass — project-level Codex defaults.
-# Sol is the reliable orchestrator. AGENTS.md routes bounded tactical work
-# to the Spark role automatically and keeps scientific reasoning on Sol.
+# Jass — project-level Codex defaults optimized for quota efficiency.
+# Terra is the low-cost orchestrator. AGENTS.md delegates bounded work to
+# Luna, normal implementation to Terra, and deep science/architecture to Sol.
 
-model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model = "gpt-5.6-terra"
+model_reasoning_effort = "low"
+model_verbosity = "low"
 
 [agents]
 enabled = true
 max_concurrent_threads_per_session = 2
 
+[agents.monitor]
+description = "Cheapest Jass observer. Use for status/log/CI/artifact inspection, simple repository lookup, and compact factual summaries with no edits or scientific interpretation."
+config_file = "agents/monitor.toml"
+
 [agents.fast]
-description = "Fast bounded Jass execution worker. Use for localized technical inspection, minimal implementation, diagnostics, and validation when the scientific contract is already fixed."
+description = "Low-cost bounded Jass execution worker. Use for localized technical diagnostics, tiny mechanical fixes, deterministic requeues, and narrow validation when the scientific contract is already frozen."
 config_file = "agents/fast.toml"
 
+[agents.dev]
+description = "Balanced Jass implementation worker. Use for normal Python/C++/shell implementation, non-trivial debugging, tests, and technical fixes that exceed Luna scope but do not require a scientific decision."
+config_file = "agents/dev.toml"
+
 [agents.scientist]
-description = "Jass scientific/reasoning worker. Use for causal interpretation, preregistration/protocol decisions, ambiguous failures, FORCE/runtime conclusions, and broad semantic changes."
+description = "Jass deep scientific/reasoning worker. Use only for causal interpretation, preregistration/protocol decisions, ambiguous science boundaries, FORCE/runtime conclusions, and broad semantic architecture changes."
 config_file = "agents/scientist.toml"
