@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "jobs/tools/run_experiment_stage.py"
@@ -21,12 +22,20 @@ class ExperimentStageRunnerTests(unittest.TestCase):
         repo = base / "repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
-        subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
-        subprocess.run(["git", "-C", str(repo), "config", "user.name", "Stage Runner Test"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "config", "user.email", "test@example.invalid"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(repo), "config", "user.name", "Stage Runner Test"],
+            check=True,
+        )
         (repo / "input.txt").write_text("fixture\n", encoding="ascii")
         subprocess.run(["git", "-C", str(repo), "add", "input.txt"], check=True)
         subprocess.run(["git", "-C", str(repo), "commit", "-qm", "fixture"], check=True)
-        head = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+        head = subprocess.check_output(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True,
+        ).strip()
         return repo, head
 
     def base_spec(self, repo: Path, head: str) -> dict:
@@ -126,7 +135,9 @@ class ExperimentStageRunnerTests(unittest.TestCase):
             base = Path(temp)
             repo, head = self.make_repo(base)
             spec = self.base_spec(repo, head)
-            rc, receipt, result, _artifact = self.invoke(base, spec, artifact_extra="contamination.txt")
+            rc, receipt, result, _artifact = self.invoke(
+                base, spec, artifact_extra="contamination.txt",
+            )
             self.assertEqual(rc, 2)
             self.assertEqual(receipt["failure_class"], "PRECONDITION")
             self.assertEqual(receipt["failure_stage"], "ARTIFACT_PRECONDITION")
@@ -167,6 +178,43 @@ class ExperimentStageRunnerTests(unittest.TestCase):
             self.assertEqual(receipt["failure_class"], "EXECUTION")
             self.assertEqual(receipt["failure_stage"], "OUTPUTS")
             self.assertIn("required output missing", receipt["error"])
+            self.assertTrue(receipt["inputs_authenticated"])
+
+    def test_zero_declared_inputs_are_authenticated_before_output_failure(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            repo, head = self.make_repo(base)
+            spec = self.base_spec(repo, head)
+            spec["inputs"] = []
+            spec["command"] = [sys.executable, "-c", "pass"]
+            rc, receipt, _result, _artifact = self.invoke(base, spec)
+            self.assertEqual(rc, 2)
+            self.assertEqual(receipt["failure_stage"], "OUTPUTS")
+            self.assertEqual(receipt["inputs"], [])
+            self.assertTrue(receipt["inputs_authenticated"])
+
+    def test_runner_job_and_attempt_identity_are_propagated(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            repo, head = self.make_repo(base)
+            spec = self.base_spec(repo, head)
+            spec["command"] = [
+                sys.executable,
+                "-c",
+                "import os; from pathlib import Path; Path(r'{result_dir}/out.txt').write_text(os.environ['JASS_JOB_ID']+'\\n'+os.environ['JASS_ATTEMPT_ID']+'\\n', encoding='ascii')",
+            ]
+            with mock.patch.dict(
+                "os.environ",
+                {"JASS_JOB_ID": "cpx62-test-stage", "JASS_ATTEMPT_ID": "attempt-123"},
+                clear=False,
+            ):
+                rc, receipt, result, _artifact = self.invoke(base, spec)
+            self.assertEqual(rc, 0)
+            self.assertEqual(receipt["state"], "completed")
+            self.assertEqual(
+                (result / "out.txt").read_text(encoding="ascii"),
+                "cpx62-test-stage\nattempt-123\n",
+            )
 
     def test_jass_environment_inheritance_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
