@@ -21,6 +21,11 @@ import time
 import unittest
 from typing import Sequence
 
+if __package__ in (None, ""):
+    ROOT = Path(__file__).resolve().parents[2]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+
 SCHEMA = "jass.adaptive_sibling_b2_synthetic_pipeline_rehearsal.v1"
 PASS_VERDICT = "B2_SYNTHETIC_CONTRACT_REHEARSAL_PASS"
 FAIL_VERDICT = "B2_SYNTHETIC_CONTRACT_REHEARSAL_FAIL"
