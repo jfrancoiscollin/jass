@@ -50,7 +50,7 @@ HOME_SCAN_FIELDS = [
     "pieces", "legal_moves", "phase", "source_shard", "source_row_index",
     "selection_hash", "subset_hash", "in_deep512", "in_ultra256",
 ]
-CATALOG_PARENT_SOURCE_IDS = {"00-dssd-a", "04-micro-m3", "06-q1"}
+CATALOG_PARENT_SOURCE_IDS = {"00-dssd-a", "04-micro-m3"}
 
 
 class ContractError(RuntimeError):
