@@ -2,17 +2,20 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import functools
 import hashlib
 import io
 import json
+import os
 import random
 import struct
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from jobs.tools import adaptive_sibling_b2_select as tool
@@ -291,6 +294,34 @@ class SyntheticInputs:
         self.refresh_descriptor(jnnw, "filtered_jnnw")
         self.refresh_descriptor(self.meta[shard], "filtered_meta")
 
+    def remove_one_from_cell(self, phase: str, stm: int) -> Path:
+        for shard, meta in enumerate(self.meta):
+            rows = list(csv.reader(io.StringIO(meta.read_text(encoding="utf-8")), delimiter="\t"))
+            for row_index, row in enumerate(rows[1:]):
+                if tool.phase_for(int(row[4])) != phase or int(row[3]) != stm:
+                    continue
+                jnnw = self.jnnw[shard]
+                raw = jnnw.read_bytes()
+                count = struct.unpack_from("<I", raw, 4)[0]
+                records = [raw[8 + index * 38:8 + (index + 1) * 38] for index in range(count)]
+                del records[row_index]
+                del rows[row_index + 1]
+                for compact_index, remaining in enumerate(rows[1:]):
+                    remaining[0] = str(compact_index)
+                jnnw.write_bytes(b"JNNW" + struct.pack("<I", count - 1) + b"".join(records))
+                with meta.open("w", encoding="utf-8", newline="") as stream:
+                    csv.writer(stream, delimiter="\t", lineterminator="\n").writerows(rows)
+                report_path = self.reports[shard]
+                report = json.loads(report_path.read_text(encoding="utf-8"))
+                report["piece_eligible_rows"] -= 1
+                report["selected_parents"] -= 1
+                report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+                self.refresh_descriptor(jnnw, "filtered_jnnw")
+                self.refresh_descriptor(meta, "filtered_meta")
+                self.refresh_descriptor(report_path, "report")
+                return meta
+        raise AssertionError(f"synthetic fixture lacks {phase}_stm{stm}")
+
 
 class SelectionTests(unittest.TestCase):
     def test_hash_golden_and_rotation(self) -> None:
@@ -525,8 +556,101 @@ class SelectionTests(unittest.TestCase):
                         legal_moves=2, phase=phase, source_shard=0, source_row_index=index,
                         selection_hash=tool.selection_hash(canonical),
                     ))
-        with self.assertRaisesRegex(ContractError, "P3_stm1"):
+        with self.assertRaises(tool.InsufficientSupportError) as raised:
             tool.select_candidates(candidates, set())
+        payload = raised.exception.payload()
+        self.assertEqual(payload["schema"], tool.SUPPORT_REPORT_SCHEMA)
+        self.assertEqual(payload["cell_order"], tool.CELL_ORDER)
+        self.assertEqual(payload["support_before_sampling"]["P3_stm1"], 499)
+        self.assertEqual(payload["insufficient_cells"], ["P3_stm1"])
+        self.assertEqual(payload["cell_quota"], 500)
+        self.assertEqual(payload["outputs_created"], 0)
+        self.assertIs(payload["target_blind"], True)
+        self.assertIs(payload["top_up"], False)
+
+    def test_full_input_path_returns_typed_support_only_after_reauthentication(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = SyntheticInputs(Path(temporary))
+            fixture.remove_one_from_cell("P3", 1)
+            args = fixture.args()
+            with self.assertRaises(tool.InsufficientSupportError) as raised:
+                tool.run(args, contract_override=fixture.contract)
+            payload = raised.exception.payload()
+            self.assertEqual(payload["support_before_sampling"], {
+                **{cell: 500 for cell in tool.CELL_ORDER}, "P3_stm1": 499,
+            })
+            self.assertEqual(payload["insufficient_cells"], ["P3_stm1"])
+            self.assertFalse(args.out_jnnw.exists() or args.out_tsv.exists() or args.report.exists())
+
+    def test_cli_maps_only_typed_support_to_canonical_stdout_rc4(self) -> None:
+        support = {cell: 500 for cell in tool.CELL_ORDER}
+        support["P2_stm0"] = 499
+        error = tool.InsufficientSupportError(support, {
+            "filtered_occurrences": 3999,
+            "historical_excluded_occurrences": 0,
+            "exact_duplicate_occurrences_removed": 0,
+            "symmetry_duplicate_occurrences_removed": 0,
+            "unique_canonical_after_exclusion": 3999,
+        })
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with mock.patch.object(tool, "parse_args", return_value=object()), \
+                mock.patch.object(tool, "run", side_effect=error), \
+                contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            result = tool.main([])
+        self.assertEqual(result, 4)
+        self.assertEqual(stdout.getvalue().encode("ascii"), canonical_json_bytes(error.payload()))
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_cli_keeps_contract_error_on_technical_rc2_stderr(self) -> None:
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with mock.patch.object(tool, "parse_args", return_value=object()), \
+                mock.patch.object(tool, "run", side_effect=ContractError("technical")), \
+                contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            result = tool.main([])
+        self.assertEqual(result, 2)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(stderr.getvalue(), "error: technical\n")
+
+    def test_mutation_before_support_receipt_becomes_technical(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = SyntheticInputs(Path(temporary))
+            mutated = fixture.remove_one_from_cell("P3", 1)
+            args = fixture.args()
+            original = tool.select_candidates
+
+            def mutate_then_select(candidates, excluded):
+                try:
+                    return original(candidates, excluded)
+                except tool.InsufficientSupportError:
+                    mutated.write_bytes(mutated.read_bytes() + b"\n")
+                    raise
+
+            with mock.patch.object(tool, "select_candidates", side_effect=mutate_then_select):
+                with self.assertRaisesRegex(ContractError, "input changed after parsing"):
+                    tool.run(args, contract_override=fixture.contract)
+            self.assertFalse(args.out_jnnw.exists() or args.out_tsv.exists() or args.report.exists())
+
+    def test_existing_output_prevents_support_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = SyntheticInputs(Path(temporary))
+            fixture.remove_one_from_cell("P3", 1)
+            args = fixture.args()
+            args.out_jnnw.write_bytes(b"sentinel")
+            with self.assertRaisesRegex(ContractError, "existing output"):
+                tool.run(args, contract_override=fixture.contract)
+            self.assertEqual(args.out_jnnw.read_bytes(), b"sentinel")
+            self.assertFalse(args.out_tsv.exists() or args.report.exists())
+
+    def test_hardlinked_inputs_are_technical_before_support(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = SyntheticInputs(Path(temporary))
+            fixture.remove_one_from_cell("P3", 1)
+            fixture.reports[1].unlink()
+            os.link(fixture.reports[0], fixture.reports[1])
+            with self.assertRaisesRegex(ContractError, "input filesystem alias"):
+                tool.run(fixture.args(), contract_override=fixture.contract)
 
 
 if __name__ == "__main__":
