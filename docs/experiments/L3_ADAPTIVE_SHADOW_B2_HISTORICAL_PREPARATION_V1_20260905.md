@@ -284,3 +284,56 @@ Le draft scientifique v3 conserve ensuite, hors du périmètre de ce contrat, l'
 Seulement après ce futur reçu complet et sa revue, une préenregistration B2 peut épingler SHA, runtime et sizer, recevoir sa revue finale et merger avant sélection. Aucun paramètre n'est choisi par l'implémenteur et aucune donnée confirmatoire fraîche n'est lue entre ces étapes.
 
 La préparation 1773 s'arrête à ses reçus. Elle ne queue ni le preflight complet, ni B2 frais, ni B3.
+
+## 11. Première tentative — échec technique Q1 et correction
+
+Le job `cpx62-1773-l3-decision-math-b2-historical-identities-v1`, tentative
+`20260905T005721Z-227c7917`, a exécuté le commit
+`227c79177699bdb6e8dac1db77a119f5db7afdbf`. Le runner rapporte un début
+`2026-09-05T00:57:25+00:00`, une finalisation `2026-09-05T01:02:27+00:00`
+et un échec technique avec exit `1`. Les 40 téléchargements ont terminé en
+90,802 s. Le compilateur s'est arrêté sur le schéma Q1 avant de publier
+l'union ou son manifeste et avant la sonde synthétique. Aucun verdict de
+préparation ou de confirmation n'est acquis par cette tentative.
+
+La correspondance de schéma attribuait à tort 14 colonnes à `06-q1`.
+Son payload authentifié `artefacts/q1-selected-parents.tsv.gz`, issu de
+`cpx62-1617-l3-joint-td-q1-select-v7` / `20260828T114236Z-2034c5c9`,
+contient exactement les neuf colonnes suivantes :
+
+```text
+parent_id canonical_fingerprint raw_fingerprint parent_stm pieces legal_moves phase source_row_index sample_hash
+```
+
+Les séparateurs réels sont des tabulations. Le SHA256 du fichier compressé est
+`d04988a233db3cc1f1f1136918421192c239f7b42edfdf1f79abcbd94013d4f5`
+pour 278 386 octets. L'audit des onze en-têtes authentifiés confirme que seules
+les sources A et M3 utilisent le schéma à 14 colonnes, HomeScan celui à 13
+colonnes, et les huit autres sources TSV celui à neuf colonnes.
+
+La correction retire uniquement Q1 de la liste des sources à 14 colonnes.
+Les allowlists restent exactes : aucune colonne supplémentaire, aucun score
+ou label n'est accepté. Le catalogue et ses 40 sources ne changent pas.
+Un test de régression reconstruit explicitement l'en-tête Q1 observé et
+vérifie la compilation des 40 fixtures. Les 14 tests du compilateur passent.
+
+Le reçu de runtime de cette tentative authentifie **CPython 3.14.4**,
+`/usr/bin/python3`, Linux `7.0.0-30-generic`, `x86_64`, glibc `2.43` et
+`nproc=16`. Il n'apporte aucune durée de sonde, aucun résultat statistique et
+ne remplace pas le futur preflight complet.
+
+Le journal et le reçu runtime sont publiés sous le préfixe immuable
+`r2:jass-data/runs/cpx62-1773-l3-decision-math-b2-historical-identities-v1/20260905T005721Z-227c7917`.
+Leurs SHA256 vérifiés contre inventaire et checksums sont respectivement :
+
+```text
+output.log.gz
+1639dfa6ee49405f866fc6716ed58e1db2cdcec75c54ea3babf9239b24c1657b
+artefacts/statistical-runtime-environment.json
+c139b282352ec34b3f40b6779ad1e63609cfb22b687b5a8893f61f0cf442ce30
+```
+
+La reprise technique conserve le même catalogue, les mêmes règles d'identité,
+les deux compilations, la sonde 2M et les limites de travail. Elle doit épingler
+le commit du correctif et publier une nouvelle tentative, sans nouvelle donnée
+de confirmation.

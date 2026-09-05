@@ -163,6 +163,35 @@ class CatalogTests(unittest.TestCase):
 
 
 class CompilerTests(unittest.TestCase):
+    def test_q1_authenticated_compact_header_regression(self):
+        q1_fields = [
+            "parent_id", "canonical_fingerprint", "raw_fingerprint", "parent_stm",
+            "pieces", "legal_moves", "phase", "source_row_index", "sample_hash",
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = Fixture(Path(temporary))
+            source = fixture.catalog["sources"][6]
+            self.assertEqual(source["source_id"], "06-q1")
+            self.assertEqual(q1_fields, subject.COMPACT_PARENT_FIELDS)
+            self.assertNotIn(source["source_id"], subject.CATALOG_PARENT_SOURCE_IDS)
+            artifact = fixture.inputs / source["local_name"]
+            row = {field: "0" for field in q1_fields}
+            row.update({
+                "canonical_fingerprint": CANONICAL,
+                "raw_fingerprint": RAW_FP,
+                "phase": "P3",
+            })
+            with gzip.open(artifact, "wt", encoding="utf-8", newline="") as stream:
+                writer = csv.DictWriter(
+                    stream, fieldnames=q1_fields, delimiter="\t", lineterminator="\n"
+                )
+                writer.writeheader()
+                writer.writerow(row)
+            fixture.write_receipt(source)
+            manifest, _, _ = fixture.compile()
+            self.assertEqual(manifest["sources"][6]["source_id"], "06-q1")
+            self.assertEqual(manifest["sources"][6]["rows"], 1)
+
     def test_boolean_metadata_cannot_impersonate_integer_receipts_or_ordinals(self):
         for field, value in (("schema", True), ("exit_code", False)):
             with self.subTest(field=field), tempfile.TemporaryDirectory() as temporary:
