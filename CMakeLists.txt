@@ -365,6 +365,15 @@ if(NOT EMSCRIPTEN)
         src/search_decision_trace_export.cpp
         $<TARGET_OBJECTS:jass_t3_f6_runtime>)
     target_link_libraries(jass_search_decision_trace_export PRIVATE jass_lib jass_warnings)
+
+    # Native-only structural verifier for the prospective PR771 B2 teacher
+    # merge. It uses production move generation but performs no search, model
+    # load, EGDB probe, fit, game, or promotion action.
+    add_executable(jass_adaptive_sibling_b2_teacher_merge_verify
+        src/adaptive_sibling_b2_teacher_merge_verify.cpp
+        $<TARGET_OBJECTS:jass_t3_f6_runtime>)
+    target_link_libraries(jass_adaptive_sibling_b2_teacher_merge_verify
+        PRIVATE jass_lib jass_warnings)
 endif()
 
 # -----------------------------------------------------------------------------
@@ -440,6 +449,8 @@ if(NOT EMSCRIPTEN)
              COMMAND t3_f6_exact_cache_o1_contract --selftest)
     add_test(NAME t3_f6_exact_cache_o1_profile_selftest
              COMMAND t3_f6_exact_cache_o1_profile --selftest)
+    add_test(NAME adaptive_sibling_b2_teacher_merge_verify_selftest
+             COMMAND jass_adaptive_sibling_b2_teacher_merge_verify --selftest)
 endif()
 
 # -----------------------------------------------------------------------------
