@@ -241,6 +241,21 @@ def replace_exact(text: str, old: str, new: str, *, count: int = 1) -> str:
     return text.replace(old, new)
 
 
+def insert_after_unique_line(text: str, token: str, insertion: str) -> str:
+    if text.count(token) != 1:
+        raise ValueError(f"expected exactly one report-line token {token!r}")
+    token_pos = text.index(token)
+    line_start = text.rfind("\n", 0, token_pos) + 1
+    line_end = text.find("\n", token_pos)
+    if line_end < 0:
+        raise ValueError(f"report-line token {token!r} has no LF terminator")
+    line_end += 1
+    line = text[line_start:line_end]
+    if '<< "  ' not in line or "false" not in line:
+        raise ValueError(f"unexpected source form around report token {token!r}: {line!r}")
+    return text[:line_end] + insertion + text[line_end:]
+
+
 def render(source: str) -> str:
     out = b2.render(source)
     out = replace_exact(
@@ -259,18 +274,17 @@ def render(source: str) -> str:
     out = out[:begin] + LOOP + out[end:]
     out = replace_exact(
         out,
-        '\"jass.deep_sibling_teacher_extract.v1\"',
-        '\"jass.adaptive_sibling_b3_teacher_extract.v1\"',
+        "jass.deep_sibling_teacher_extract.v1",
+        "jass.adaptive_sibling_b3_teacher_extract.v1",
     )
-    out = replace_exact(
-        out,
-        '        << "  \"stable_pairs_selected\": false,\\n"\n',
-        '        << "  \"adaptive_policy_real\": true,\\n"\n'
-        '        << "  \"m5_cp\": 100,\\n"\n'
-        '        << "  \"m50_cp\": 60,\\n"\n'
-        '        << "  \"minimum_survivors\": 2,\\n"\n'
-        '        << "  \"full_ladder_executed\": false,\\n"\n',
-    )
+    report_insertion = "\n".join([
+        r'        << "  \"adaptive_policy_real\": true,\n"',
+        r'        << "  \"m5_cp\": 100,\n"',
+        r'        << "  \"m50_cp\": 60,\n"',
+        r'        << "  \"minimum_survivors\": 2,\n"',
+        r'        << "  \"full_ladder_executed\": false,\n"',
+    ]) + "\n"
+    out = insert_after_unique_line(out, "stable_pairs_selected", report_insertion)
     forbidden = (
         "const SearchObs s5 = run_fresh_search",
         "const SearchObs s50 = run_fresh_search",
