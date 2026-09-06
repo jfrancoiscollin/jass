@@ -3,7 +3,9 @@ on:
   pull_request:
     paths:
       - 'jobs/tools/adaptive_sibling_b3_exclusion_prepare.py'
+      - 'jobs/tools/adaptive_sibling_b3_exclusion_prepare_v2.py'
       - 'jobs/tests/test_adaptive_sibling_b3_exclusion_prepare.py'
+      - 'jobs/tests/test_adaptive_sibling_b3_exclusion_prepare_v2.py'
       - '.github/workflows/b3-fresh-exclusion-prep.yml'
 jobs:
   contract:
@@ -14,8 +16,16 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile preflight
-        run: python -m py_compile jobs/tools/adaptive_sibling_b3_exclusion_prepare.py
-      - name: Exercise real CLI entrypoint
-        run: python jobs/tools/adaptive_sibling_b3_exclusion_prepare.py --help >/dev/null
+        run: |
+          python -m py_compile \
+            jobs/tools/adaptive_sibling_b3_exclusion_prepare.py \
+            jobs/tools/adaptive_sibling_b3_exclusion_prepare_v2.py
+      - name: Exercise real CLI entrypoints
+        run: |
+          python jobs/tools/adaptive_sibling_b3_exclusion_prepare.py --help >/dev/null
+          python jobs/tools/adaptive_sibling_b3_exclusion_prepare_v2.py --help >/dev/null
       - name: Run exclusion contract tests
-        run: python -m unittest -v jobs.tests.test_adaptive_sibling_b3_exclusion_prepare
+        run: |
+          python -m unittest -v \
+            jobs.tests.test_adaptive_sibling_b3_exclusion_prepare \
+            jobs.tests.test_adaptive_sibling_b3_exclusion_prepare_v2
