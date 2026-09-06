@@ -12,34 +12,49 @@ from jobs.tools import adaptive_sibling_b3_fresh_source_runtime as source_runtim
 
 
 class FreshB3TeacherTests(unittest.TestCase):
+    def _publication(self, root: Path) -> dict:
+        parents = root / "parents.jnnw"
+        parents.write_bytes(b"JNNW" + (4000).to_bytes(4, "little") + b"\0" * (4000 * 38))
+        tsv = root / "parents.tsv"
+        tsv.write_text("x\n" * 4000, encoding="utf-8")
+        identities = root / "ordered-identities.txt"
+        identities.write_text("x\n" * 4000, encoding="ascii")
+        return {
+            "schema": source_runtime.SUCCESS_SCHEMA,
+            "verdict": source_runtime.SUCCESS_VERDICT,
+            "selection": {
+                "parents": 4000,
+                "forbidden_overlap": 0,
+                "target_blind": True,
+                "cells": {f"c{i}": 500 for i in range(8)},
+                "parents_jnnw": subject.descriptor(parents, records=4000, record_size_bytes=38),
+                "parents_tsv": subject.descriptor(tsv, rows=4000),
+                "ordered_identities": subject.descriptor(
+                    identities, rows=4000,
+                    serialization="canonical_fingerprint_ascii, one per line, LF terminated"),
+            },
+        }
+
     def test_source_publication_requires_balanced_target_blind_4000(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            parents = root / "parents.jnnw"
-            parents.write_bytes(b"JNNW" + (4000).to_bytes(4, "little") + b"\0" * (4000 * 38))
-            tsv = root / "parents.tsv"
-            tsv.write_text("x\n" * 4000, encoding="utf-8")
-            identities = root / "ordered-identities.txt"
-            identities.write_text("x\n" * 4000, encoding="ascii")
-            publication = {
-                "schema": source_runtime.SUCCESS_SCHEMA,
-                "verdict": source_runtime.SUCCESS_VERDICT,
-                "selection": {
-                    "selected": 4000,
-                    "cell_quota": 500,
-                    "forbidden_overlap": 0,
-                    "target_blind": True,
-                    "cells": {f"c{i}": 500 for i in range(8)},
-                    "parents_jnnw": subject.descriptor(parents, records=4000, record_size_bytes=38),
-                    "parents_tsv": subject.descriptor(tsv, rows=4000),
-                    "ordered_identities": subject.descriptor(
-                        identities, rows=4000,
-                        serialization="canonical_fingerprint_ascii, one per line, LF terminated"),
-                },
-            }
+            publication = self._publication(root)
             subject.verify_source_publication(publication, root)
             publication["selection"]["forbidden_overlap"] = 1
             with self.assertRaisesRegex(subject.StageError, "forbidden_overlap"):
+                subject.verify_source_publication(publication, root)
+
+    def test_source_publication_consumes_actual_publisher_population_schema(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            publication = self._publication(root)
+            self.assertNotIn("selected", publication["selection"])
+            self.assertNotIn("cell_quota", publication["selection"])
+            subject.verify_source_publication(publication, root)
+            publication["selection"].pop("parents")
+            publication["selection"]["selected"] = 4000
+            publication["selection"]["cell_quota"] = 500
+            with self.assertRaisesRegex(subject.StageError, "parents"):
                 subject.verify_source_publication(publication, root)
 
     def test_fetch_source_derives_publication_sha_after_authenticated_fetch(self) -> None:
@@ -48,32 +63,11 @@ class FreshB3TeacherTests(unittest.TestCase):
             work.mkdir()
             target = work / "source"
             publication = target / "source-selection-publication.json"
-            parents = target / "parents.jnnw"
-            tsv = target / "parents.tsv"
-            identities = target / "ordered-identities.txt"
 
             def fake_fetch(*_args, **kwargs):
                 out_dir = kwargs["out_dir"]
                 out_dir.mkdir()
-                parents.write_bytes(b"JNNW" + (4000).to_bytes(4, "little") + b"\0" * (4000 * 38))
-                tsv.write_text("x\n" * 4000, encoding="utf-8")
-                identities.write_text("x\n" * 4000, encoding="ascii")
-                payload = {
-                    "schema": source_runtime.SUCCESS_SCHEMA,
-                    "verdict": source_runtime.SUCCESS_VERDICT,
-                    "selection": {
-                        "selected": 4000,
-                        "cell_quota": 500,
-                        "forbidden_overlap": 0,
-                        "target_blind": True,
-                        "cells": {f"c{i}": 500 for i in range(8)},
-                        "parents_jnnw": subject.descriptor(parents, records=4000, record_size_bytes=38),
-                        "parents_tsv": subject.descriptor(tsv, rows=4000),
-                        "ordered_identities": subject.descriptor(
-                            identities, rows=4000,
-                            serialization="canonical_fingerprint_ascii, one per line, LF terminated"),
-                    },
-                }
+                payload = self._publication(out_dir)
                 publication.write_text(json.dumps(payload), encoding="utf-8")
 
             args = Namespace(
@@ -82,7 +76,7 @@ class FreshB3TeacherTests(unittest.TestCase):
             )
             with mock.patch.object(subject.parity_stage, "fetch_completed", side_effect=fake_fetch):
                 result_parents, result_publication, digest = subject.fetch_source(args, work)
-            self.assertEqual(result_parents, parents)
+            self.assertEqual(result_parents, target / "parents.jnnw")
             self.assertEqual(result_publication["verdict"], source_runtime.SUCCESS_VERDICT)
             self.assertEqual(digest, subject.parity_stage.sha_file(publication))
 
