@@ -5,6 +5,7 @@ on:
     paths:
       - 'jobs/templates/l3-d1-wdl-listwise-fit-v3-stage-env-recovery.sh'
       - 'jobs/tests/test_d1_stage_env_recovery.py'
+      - 'jobs/tests/test_d1_stage_env_recovery_contract.py'
       - '.github/workflows/d1-stage-env-recovery.yml'
 
 jobs:
@@ -18,7 +19,10 @@ jobs:
       - name: Shell syntax
         run: bash -n jobs/templates/l3-d1-wdl-listwise-fit-v3-stage-env-recovery.sh
       - name: Stage env regression
-        run: python -m unittest jobs.tests.test_d1_stage_env_recovery -v
+        run: |
+          python -m unittest \
+            jobs.tests.test_d1_stage_env_recovery \
+            jobs.tests.test_d1_stage_env_recovery_contract -v
       - name: Preserve D1 historical split science
         run: |
           grep -q 'HOLDOUT=199204; TRAIN_EXPECTED=1800796; RECORDS_EXPECTED=2000000' jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh
