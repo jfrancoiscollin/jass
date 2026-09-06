@@ -85,4 +85,30 @@ jass-control PR #529 queued a new immutable rerun rather than overwriting the fa
 - spec: `specs/b3-real-adaptive-parity-rerun-v1.json`
 - stage-spec SHA256: `ff804adfc9c178c8255a97967ee373076822d4272212a9f9e0477ca963515380`
 
-The rerun preserves the same authenticated scientific inputs and zero scientific side effects. TI-011 remains open/mitigated until job 1833 provides terminal runtime proof of the corrected invariant.
+## Terminal runtime proof
+
+Job 1833 completed successfully on CPX62:
+
+- attempt: `20260906T124918Z-7756fac9`
+- terminal state: `completed`
+- exit code: `0`
+- verdict: `B3_REAL_ADAPTIVE_TEACHER_PARITY_ESTABLISHED_V1`
+- parents replayed: `4000`
+- emitted sibling rows: `37811`
+- q5 searches: `37789`
+- q50 searches: `25854`
+- q200 searches: `21420`
+- engine constructions: `85063`
+- parity mismatches: `0`
+- total nodes: `5648041210`
+- next stage: `B3_FRESH_ADAPTIVE_CORPUS_PREREGISTRATION`
+- fresh B3 generation authorized: `true`
+
+The runtime counts satisfy the corrected nested invariant:
+
+```text
+21420 <= 25854 <= 37789 <= 37811
+85063 == 37789 + 25854 + 21420
+```
+
+The rerun preserved zero fits, zero strength games, zero promotions and zero bakes. TI-011 is therefore **CLOSED**.
