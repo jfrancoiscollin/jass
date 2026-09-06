@@ -259,17 +259,17 @@ def render(source: str) -> str:
     out = out[:begin] + LOOP + out[end:]
     out = replace_exact(
         out,
-        '"jass.deep_sibling_teacher_extract.v1"',
-        '"jass.adaptive_sibling_b3_teacher_extract.v1"',
+        '\"jass.deep_sibling_teacher_extract.v1\"',
+        '\"jass.adaptive_sibling_b3_teacher_extract.v1\"',
     )
     out = replace_exact(
         out,
-        '        << "  \\"stable_pairs_selected\\": false,\\n"\n',
-        '        << "  \\"adaptive_policy_real\\": true,\\n"\n'
-        '        << "  \\"m5_cp\\": 100,\\n"\n'
-        '        << "  \\"m50_cp\\": 60,\\n"\n'
-        '        << "  \\"minimum_survivors\\": 2,\\n"\n'
-        '        << "  \\"full_ladder_executed\\": false,\\n"\n',
+        '        << "  \"stable_pairs_selected\": false,\\n"\n',
+        '        << "  \"adaptive_policy_real\": true,\\n"\n'
+        '        << "  \"m5_cp\": 100,\\n"\n'
+        '        << "  \"m50_cp\": 60,\\n"\n'
+        '        << "  \"minimum_survivors\": 2,\\n"\n'
+        '        << "  \"full_ladder_executed\": false,\\n"\n',
     )
     forbidden = (
         "const SearchObs s5 = run_fresh_search",
