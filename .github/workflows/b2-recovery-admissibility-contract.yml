@@ -1,0 +1,34 @@
+name: b2-recovery-admissibility-contract
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b2_recovery_admissibility_preflight.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_recovery_admissibility_preflight.py'
+      - 'docs/operations/JASS_TARGET_DATA_PREFLIGHT_STANDARD_V1_20260906.md'
+      - '.github/workflows/b2-recovery-admissibility-contract.yml'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'jobs/tools/adaptive_sibling_b2_recovery_admissibility_preflight.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_recovery_admissibility_preflight.py'
+      - 'docs/operations/JASS_TARGET_DATA_PREFLIGHT_STANDARD_V1_20260906.md'
+      - '.github/workflows/b2-recovery-admissibility-contract.yml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile preflight
+        run: python -m py_compile jobs/tools/adaptive_sibling_b2_recovery_admissibility_preflight.py jobs/tests/test_adaptive_sibling_b2_recovery_admissibility_preflight.py
+      - name: Run admissibility contract tests
+        run: python -m unittest -v jobs.tests.test_adaptive_sibling_b2_recovery_admissibility_preflight
