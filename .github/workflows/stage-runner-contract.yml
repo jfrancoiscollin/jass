@@ -5,8 +5,10 @@ on:
     paths:
       - 'jobs/tools/run_experiment_stage.py'
       - 'jobs/tests/test_run_experiment_stage.py'
+      - 'jobs/tests/test_run_experiment_stage_object_store.py'
       - 'jobs/specs/stage_spec_v1.schema.json'
       - 'docs/operations/JASS_EXPERIMENT_EXECUTION_STANDARD_V1_20260905.md'
+      - 'docs/operations/STAGE_OBJECT_STORE_CAPABILITY_INCIDENT_1825_20260906.md'
       - '.github/workflows/stage-runner-contract.yml'
   push:
     branches:
@@ -14,8 +16,10 @@ on:
     paths:
       - 'jobs/tools/run_experiment_stage.py'
       - 'jobs/tests/test_run_experiment_stage.py'
+      - 'jobs/tests/test_run_experiment_stage_object_store.py'
       - 'jobs/specs/stage_spec_v1.schema.json'
       - 'docs/operations/JASS_EXPERIMENT_EXECUTION_STANDARD_V1_20260905.md'
+      - 'docs/operations/STAGE_OBJECT_STORE_CAPABILITY_INCIDENT_1825_20260906.md'
       - '.github/workflows/stage-runner-contract.yml'
   workflow_dispatch:
 
@@ -33,7 +37,14 @@ jobs:
           python-version: "3.12"
 
       - name: Compile runner
-        run: python -m py_compile jobs/tools/run_experiment_stage.py jobs/tests/test_run_experiment_stage.py
+        run: >-
+          python -m py_compile
+          jobs/tools/run_experiment_stage.py
+          jobs/tests/test_run_experiment_stage.py
+          jobs/tests/test_run_experiment_stage_object_store.py
 
       - name: Run stage-runner contract tests
-        run: python -m unittest -v jobs.tests.test_run_experiment_stage
+        run: >-
+          python -m unittest -v
+          jobs.tests.test_run_experiment_stage
+          jobs.tests.test_run_experiment_stage_object_store
