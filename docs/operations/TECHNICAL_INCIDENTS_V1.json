@@ -118,8 +118,8 @@
       "symptom": "stage exit 2 after authenticated upstream fetches, before exclusion artefacts",
       "root_cause": "the B3 exclusion consumer parsed the generic `fetch_result_files.py --report` output with `read_canonical_json()`, but the fetcher intentionally serializes its semantic report as indented JSON",
       "invariant": "generic authenticated fetch reports are validated semantically by identity/state fields; compact canonical-byte equality is required only for artefacts whose contract explicitly declares canonical serialization",
-      "evidence": "`B3_EXCLUSION_FETCH_RECEIPT_JSON_INCIDENT_1834_20260906.md`, Jass #815, failed attempt `20260906T132605Z-e2762791`; corrected rerun 1835; PR #816",
-      "status": "MITIGATED — 1835 PENDING"
+      "evidence": "`B3_EXCLUSION_FETCH_RECEIPT_JSON_INCIDENT_1834_20260906.md`, Jass #815; rerun 1835 attempt `20260906T134208Z-c553a572` PASS exit 0, combined_count=227317, component_overlap=0, union `b553939e8ded3ab31d121e40b2be9cfa1012168bf01835f692b59a60815d9ecb`, manifest `f734de99761b7a3ee7ddb107de3d678fa29eb7e39a11708b6a8c8bbbe700cc0c`; PR #820",
+      "status": "CLOSED"
     }
   ]
 }
