@@ -1,0 +1,23 @@
+name: b3-fresh-full-ladder-audit
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b3_fresh_full_ladder_audit.py'
+      - 'jobs/tests/test_adaptive_sibling_b3_fresh_full_ladder_audit.py'
+      - '.github/workflows/b3-fresh-full-ladder-audit.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile full-ladder audit entrypoint
+        run: python -m py_compile jobs/tools/adaptive_sibling_b3_fresh_full_ladder_audit.py
+      - name: Run full-ladder audit contract tests
+        run: python -m unittest jobs.tests.test_adaptive_sibling_b3_fresh_full_ladder_audit
+      - name: Exercise audit CLI parser boundary
+        run: python jobs/tools/adaptive_sibling_b3_fresh_full_ladder_audit.py --help >/dev/null

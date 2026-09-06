@@ -82,14 +82,23 @@ fit/game/promotion/bake authorization
 
 ## Diagnostic side note
 
-The first read-only failure-log diagnostic, job 1839, was rejected at the generic wrapper with exit 64 because its manually supplied stage-spec SHA256 did not match the actual spec bytes. It never executed the diagnostic stage and did not read teacher/scientific data. The corrected spec SHA was computed from the actual repository bytes before any retry.
+The first read-only failure-log diagnostic, job 1839, was rejected at the generic wrapper with exit 64 because its manually supplied stage-spec SHA256 did not match the actual spec bytes. It never executed the diagnostic stage and did not read teacher/scientific data. A second diagnostic, 1840, was also rejected at wrapper/pre-execution level with exit 64 and likewise produced no scientific read or verdict. Neither diagnostic is used as evidence for the root cause above, which is established directly from the sealed producer contract and the failing consumer implementation.
 
-## Closure condition
+## Closure evidence
 
-This incident remains **MITIGATED** until a new immutable fresh-teacher job on the repaired code authenticates the exact 1837 source and terminates with:
+The repaired immutable rerun completed successfully:
 
 ```text
-B3_FRESH_ADAPTIVE_TEACHER_COMPLETE_V1
+job      cpx62-1841-l3-decision-math-b3-fresh-adaptive-teacher-rerun-v1
+attempt  20260906T154029Z-299779c0
+code     299779c03c89084ff65c672f23ccae24be16d2b5
+exit     0
+verdict  B3_FRESH_ADAPTIVE_TEACHER_COMPLETE_V1
+parents  4000
+rows     38053
 ```
 
-Only that terminal proof closes the incident and authorizes the preregistered audit-subset seal.
+The rerun authenticated the exact 1837 source bytes, retained the parity-established rendered teacher SHA256
+`a5f77f92abc7e77a8488c2c4751d71608d90cba04829a44f7c434138cb766d8f`, reported `reference_audit_reads=0`, `full_ladder_backfill=false`, and kept fits/strength games/promotions/bakes at zero.
+
+**TI-013 is CLOSED.** The terminal proof authorizes only the already-preregistered B3 audit-subset seal; it does not authorize fitting, promotion, baking or strength play.
