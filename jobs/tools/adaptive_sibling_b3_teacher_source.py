@@ -292,7 +292,7 @@ def render(source: str) -> str:
     )
     if any(token in out for token in forbidden):
         raise ValueError("unconditional full-ladder search survived B3 render")
-    if out.count("run_fresh_search(tt_mb, c.engine_constructions") != 3:
+    if out.count("= run_fresh_search(") != 3:
         raise ValueError("B3 rendered source must contain exactly three staged search call sites")
     for token in (
         "B3_M5_CP = 100", "B3_M50_CP = 60", "B3_MIN_SURVIVORS = 2",
