@@ -1,0 +1,25 @@
+name: b3-fresh-transfer-readout
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b3_fresh_transfer_readout.py'
+      - 'jobs/tests/test_adaptive_sibling_b3_fresh_transfer_readout.py'
+      - '.github/workflows/b3-fresh-transfer-readout.yml'
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile readout entrypoint
+        run: python -m py_compile jobs/tools/adaptive_sibling_b3_fresh_transfer_readout.py
+      - name: Run transfer readout tests
+        run: python -m unittest jobs.tests.test_adaptive_sibling_b3_fresh_transfer_readout -v
+      - name: Exercise CLI parser boundary
+        run: |
+          python jobs/tools/adaptive_sibling_b3_fresh_transfer_readout.py --help >/dev/null
