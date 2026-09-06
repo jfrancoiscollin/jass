@@ -8,7 +8,7 @@ legitimately have full_nodes == shadow_nodes == 0 even though the final B2
 preregistration only requires non-zero node support after aggregation by cell.
 
 The shim is intentionally fail-closed:
-- the frozen X readout/statistics files must be byte-unchanged relative to X;
+- the frozen X readout/statistics files must be byte-identical to X;
 - only readout sums labelled exactly ``full total`` may be zero;
 - only statistics fields labelled exactly ``full_nodes`` may lower min 1 -> 0;
 - a zero full-node parent must also have zero shadow nodes;
@@ -27,10 +27,12 @@ from jobs.tools import adaptive_sibling_b2_statistics as statistics
 
 X = "d3657332c3a5609a5501a9ff130f5d5c19488c7f"
 ROOT = Path(__file__).resolve().parents[2]
-FROZEN_PATHS = (
-    "jobs/tools/adaptive_sibling_b2_readout.py",
-    "jobs/tools/adaptive_sibling_b2_statistics.py",
-)
+FROZEN_GIT_BLOBS = {
+    "jobs/tools/adaptive_sibling_b2_readout.py":
+        "e336b20a1c7b5ff11de50df28792b2b0f2230ef1",
+    "jobs/tools/adaptive_sibling_b2_statistics.py":
+        "ee3e284ff049a6f44473ddd63328199f3f9d4b9c",
+}
 
 
 class ExactZeroCostCompatError(RuntimeError):
@@ -52,21 +54,33 @@ _ORIGINAL_REQUIRE_INT: Callable[..., int] | None = None
 _ORIGINAL_VALIDATE_SEMANTICS: Callable[..., None] | None = None
 
 
+def _git_blob(path: str) -> str:
+    try:
+        value = subprocess.check_output(
+            ["git", "hash-object", "--", path], cwd=ROOT, text=True,
+            stderr=subprocess.STDOUT,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ExactZeroCostCompatError(f"cannot hash frozen path {path}: {exc}") from exc
+    if len(value) != 40 or any(char not in "0123456789abcdef" for char in value):
+        raise ExactZeroCostCompatError(f"invalid git blob identity for {path}: {value!r}")
+    return value
+
+
 def _assert_frozen_blobs_unchanged() -> None:
-    completed = subprocess.run(
-        ["git", "diff", "--quiet", X, "--", *FROZEN_PATHS],
-        cwd=ROOT,
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    if completed.returncode != 0:
-        detail = completed.stderr.strip()
-        raise ExactZeroCostCompatError(
-            "frozen X readout/statistics blobs changed"
-            + (f": {detail}" if detail else "")
-        )
+    """Authenticate frozen X bytes without requiring X commit history locally.
+
+    GitHub Actions PR checkouts are intentionally shallow.  Comparing the
+    current file Git-blob identities against blob identities read directly from
+    immutable X proves byte equality while remaining valid in shallow CI and on
+    the CPX worktree.
+    """
+    for path, expected in FROZEN_GIT_BLOBS.items():
+        actual = _git_blob(path)
+        if actual != expected:
+            raise ExactZeroCostCompatError(
+                f"frozen X blob changed for {path}: expected {expected}, got {actual}"
+            )
 
 
 def install() -> CompatReceipt:
