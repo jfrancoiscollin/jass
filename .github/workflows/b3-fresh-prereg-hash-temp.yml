@@ -1,0 +1,29 @@
+name: b3-fresh-prereg-hash-temp
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_ADAPTIVE_TEACHER_B3_FRESH_CORPUS_V1_20260906.md'
+      - '.github/workflows/b3-fresh-prereg-hash-temp.yml'
+
+jobs:
+  derive:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Print frozen derived contract SHA
+        run: |
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          from jobs.tools.adaptive_sibling_b3_fresh_source_stage import extract_config
+          from jobs.tools.adaptive_sibling_b3_fresh_source_runtime import derive_selection_contract
+          from jobs.tools.adaptive_sibling_b2_exclusions import canonical_json_bytes
+          path = Path('docs/experiments/L3_ADAPTIVE_TEACHER_B3_FRESH_CORPUS_V1_20260906.md')
+          config = extract_config(path.read_bytes())
+          contract = derive_selection_contract(config)
+          print('B3_DERIVED_SELECTION_CONTRACT_SHA256=' + hashlib.sha256(canonical_json_bytes(contract)).hexdigest())
+          PY
