@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -214,6 +215,32 @@ class ExperimentStageRunnerTests(unittest.TestCase):
             self.assertEqual(
                 (result / "out.txt").read_text(encoding="ascii"),
                 "cpx62-test-stage\nattempt-123\n",
+            )
+
+    def test_sanitized_stage_keeps_system_path_and_runner_tmpdir(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            repo, head = self.make_repo(base)
+            spec = self.base_spec(repo, head)
+            spec["environment"]["inherit"] = []
+            spec["command"] = [
+                sys.executable,
+                "-c",
+                "import os; from pathlib import Path; Path(r'{result_dir}/out.txt').write_text(os.environ['PATH']+'\\n'+os.environ['TMPDIR']+'\\n'+str('UNRELATED_SECRET' in os.environ)+'\\n', encoding='ascii')",
+            ]
+            runner_tmp = base / "runner-tmp"
+            runner_tmp.mkdir()
+            with mock.patch.dict(
+                os.environ,
+                {"TMPDIR": str(runner_tmp), "UNRELATED_SECRET": "must-not-leak"},
+                clear=False,
+            ):
+                rc, receipt, result, _artifact = self.invoke(base, spec)
+            self.assertEqual(rc, 0)
+            self.assertEqual(receipt["state"], "completed")
+            self.assertEqual(
+                (result / "out.txt").read_text(encoding="ascii").splitlines(),
+                [os.defpath, str(runner_tmp), "False"],
             )
 
     def test_jass_environment_inheritance_is_rejected(self):
