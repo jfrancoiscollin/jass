@@ -110,6 +110,16 @@
       "invariant": "B3 impose `q200<=q50<=q5<=emitted_siblings` et `engine_constructions=q5+q50+q200`; le renderer fail-closed si le contrat full-ladder B2 survit",
       "evidence": "`B3_ADAPTIVE_COUNTER_CONTRACT_INCIDENT_1832_20260906.md`, Jass #808, workflow B3 vert, control #529, rerun 1833 PASS exit 0, 4000 parents, mismatch_count=0, verdict `B3_REAL_ADAPTIVE_TEACHER_PARITY_ESTABLISHED_V1`; PR #812",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-012",
+      "dedupe_key": "job:cpx62-1834-l3-decision-math-b3-fresh-exclusion-prep-v1",
+      "context": "1834, B3 fresh exclusion preparation",
+      "symptom": "stage exit 2 after authenticated upstream fetches, before exclusion artefacts",
+      "root_cause": "the B3 exclusion consumer parsed the generic `fetch_result_files.py --report` output with `read_canonical_json()`, but the fetcher intentionally serializes its semantic report as indented JSON",
+      "invariant": "generic authenticated fetch reports are validated semantically by identity/state fields; compact canonical-byte equality is required only for artefacts whose contract explicitly declares canonical serialization",
+      "evidence": "`B3_EXCLUSION_FETCH_RECEIPT_JSON_INCIDENT_1834_20260906.md`, Jass #815, failed attempt `20260906T132605Z-e2762791`; corrected rerun 1835; PR #816",
+      "status": "MITIGATED — 1835 PENDING"
     }
   ]
 }
