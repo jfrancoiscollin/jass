@@ -26,4 +26,17 @@ Serialization requirements are ownership-specific:
 
 Jass PR #815 added `adaptive_sibling_b3_fresh_exclusion.py`, whose fetch boundary parses the generic fetch report semantically and then validates `state`, `result_state`, `exit_code`, `job_id`, `attempt_id`, `code_sha` and `prefix` explicitly. The scientific inputs and exclusion semantics remain unchanged.
 
-The failed 1834 history is preserved. The corrected execution is requeued under a new job identity on the merged #815 code SHA.
+The failed 1834 history is preserved. The corrected execution ran as `cpx62-1835-l3-decision-math-b3-fresh-exclusion-prep-rerun-v1`, attempt `20260906T134208Z-c553a572`, and completed with exit code 0.
+
+Terminal proof:
+
+- verdict: `B3_FRESH_EXCLUSION_PREPARATION_COMPLETE`;
+- historical identities: 223,317;
+- B2 confirmation identities: 4,000;
+- cross-component overlap: 0;
+- combined identities: 227,317;
+- union SHA256: `b553939e8ded3ab31d121e40b2be9cfa1012168bf01835f692b59a60815d9ecb`;
+- manifest SHA256: `f734de99761b7a3ee7ddb107de3d678fa29eb7e39a11708b6a8c8bbbe700cc0c`;
+- fresh B3 parents, teacher searches, fits, strength games, promotions and bakes: 0.
+
+The serialization-boundary correction is therefore runtime-proven and this incident is closed.
