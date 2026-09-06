@@ -31,6 +31,11 @@ ALLOWED_SCOPES = {"repo", "result", "artifact"}
 ALLOWED_OUTPUT_KINDS = {"file", "directory"}
 ARTIFACT_CONTRACT = "empty_or_runner_launch"
 SAFE_RUNNER_JASS_ENV = ("JASS_JOB_ID", "JASS_ATTEMPT_ID")
+SAFE_RUNNER_RCLONE_ENV = frozenset({
+    "RCLONE_BIN",
+    "RCLONE_CONF_B64",
+    "RCLONE_CONFIG",
+})
 
 ROOT_KEYS = {
     "schema", "campaign", "stage", "code_sha", "command", "working_directory",
@@ -179,7 +184,7 @@ def validate_spec(spec: Mapping[str, Any]) -> None:
     for index, item in enumerate(outputs):
         obj = _strict_object(item, OUTPUT_KEYS, f"outputs[{index}]")
         if obj["scope"] not in ALLOWED_SCOPES:
-            raise StageSpecError(f"outputs[{index}].scope invalid")
+            raise StageSpecError(f"inputs[{index}].scope invalid")
         path = _relative_path(obj["path"], f"outputs[{index}].path")
         if obj["kind"] not in ALLOWED_OUTPUT_KINDS:
             raise StageSpecError(f"outputs[{index}].kind invalid")
@@ -373,9 +378,14 @@ def build_command(
 
     # Stages run under a deliberately sanitized environment, but removing PATH
     # makes standard native build tools unusable and removing the outer runner's
-    # TMPDIR breaks detached jobs under systemd PrivateTmp. Supply a deterministic
-    # system PATH and preserve only the runner-owned durable TMPDIR automatically.
+    # TMPDIR breaks detached jobs under systemd PrivateTmp. The rclone envelope
+    # is also runner-owned transport state: preserve only its existing allowlist
+    # and native RCLONE_CONFIG_* variables so authenticated R2 fetch/publish tools
+    # work without inheriting arbitrary ambient secrets.
     env: dict[str, str] = {"PATH": os.defpath}
+    for name, value in os.environ.items():
+        if name in SAFE_RUNNER_RCLONE_ENV or name.startswith("RCLONE_CONFIG_"):
+            env[name] = value
     for name in spec["environment"]["inherit"]:
         if name in os.environ:
             env[name] = os.environ[name]
