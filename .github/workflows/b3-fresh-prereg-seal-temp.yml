@@ -1,0 +1,30 @@
+name: b3-fresh-prereg-seal-temp
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_ADAPTIVE_TEACHER_B3_FRESH_CORPUS_V1_20260906.md'
+      - '.github/workflows/b3-fresh-prereg-seal-temp.yml'
+
+jobs:
+  seal:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate and print prereg SHA
+        run: |
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          from jobs.tools.adaptive_sibling_b3_fresh_source_stage import extract_config, validate_config
+          from jobs.tools.adaptive_sibling_b3_fresh_source_runtime import derive_selection_contract
+          p = Path('docs/experiments/L3_ADAPTIVE_TEACHER_B3_FRESH_CORPUS_V1_20260906.md')
+          raw = p.read_bytes()
+          cfg = extract_config(raw)
+          contract = derive_selection_contract(cfg)
+          validate_config(cfg, contract)
+          print('B3_PREREG_SHA256=' + hashlib.sha256(raw).hexdigest())
+          PY
