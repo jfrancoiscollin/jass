@@ -30,9 +30,9 @@ jobs:
         run: python -m unittest jobs.tests.test_d1_listwise -v
       - name: Exercise CLI boundaries
         run: |
-          python jobs/tools/d1_decision_prepare.py --help >/dev/null
-          python jobs/tools/d1_listwise_fit.py --help >/dev/null
-          python jobs/tools/d1_postfit_readout.py --help >/dev/null
+          PYTHONPATH=. python jobs/tools/d1_decision_prepare.py --help >/dev/null
+          PYTHONPATH=. python jobs/tools/d1_listwise_fit.py --help >/dev/null
+          PYTHONPATH=. python jobs/tools/d1_postfit_readout.py --help >/dev/null
       - name: Prove frozen science guards
         run: |
           grep -q 'LAMBDA = {ARM_CONTROL: 0.0, ARM_LISTWISE: 1.0}' jobs/tools/d1_listwise_fit.py
