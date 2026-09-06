@@ -104,8 +104,9 @@ class SiblingDatasetV2Tests(unittest.TestCase):
         # Regression for Python precedence in the production guard.
         cases = [
             (True, False, False, True),
-            (False, True, False, True),
+            (False, True, False, False),
             (True, True, True, False),
+            (False, False, True, True),
             (False, False, False, False),
         ]
         for searched50, searched5, searched200, invalid_expected in cases:
