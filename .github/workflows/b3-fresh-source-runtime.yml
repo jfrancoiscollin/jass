@@ -1,0 +1,31 @@
+name: b3-fresh-source-runtime
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b3_fresh_source_runtime.py'
+      - 'jobs/tools/adaptive_sibling_b3_fresh_source_stage.py'
+      - 'jobs/tests/test_adaptive_sibling_b3_fresh_source_runtime.py'
+      - 'jobs/tools/adaptive_sibling_b2_select.py'
+      - 'jobs/tools/adaptive_sibling_b2_source_launcher.py'
+      - 'jobs/tools/adaptive_sibling_b2_source_publish.py'
+      - 'jobs/manifests/adaptive_sibling_b2_selection_contract_v1.json'
+      - '.github/workflows/b3-fresh-source-runtime.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile B3 fresh source entrypoints
+        run: |
+          python -m py_compile \
+            jobs/tools/adaptive_sibling_b3_fresh_source_runtime.py \
+            jobs/tools/adaptive_sibling_b3_fresh_source_stage.py
+      - name: Run B3 fresh source runtime tests
+        run: python -m unittest -v jobs.tests.test_adaptive_sibling_b3_fresh_source_runtime
+      - name: Exercise stage CLI parser boundary
+        run: python jobs/tools/adaptive_sibling_b3_fresh_source_stage.py --help >/dev/null
