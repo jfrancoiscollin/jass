@@ -28,7 +28,7 @@ class B3TeacherSourceTests(unittest.TestCase):
         self.assertIn("survived50", rendered)
         self.assertIn("selected", rendered)
         self.assertIn("SOLE_UNRESOLVED_BEFORE_Q200", rendered)
-        self.assertEqual(rendered.count("run_fresh_search(tt_mb, c.engine_constructions"), 3)
+        self.assertEqual(rendered.count("= run_fresh_search("), 3)
         self.assertNotIn("const SearchObs s5 = run_fresh_search", rendered)
         self.assertNotIn("const SearchObs s50 = run_fresh_search", rendered)
         self.assertNotIn("const SearchObs s200 = run_fresh_search", rendered)
