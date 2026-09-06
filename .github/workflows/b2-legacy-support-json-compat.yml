@@ -1,0 +1,39 @@
+name: b2-legacy-support-json-compat
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b2_legacy_support_json_compat.py'
+      - 'jobs/tools/adaptive_sibling_b2_statistical_completion_recovery_v3.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_legacy_support_json_compat.py'
+      - 'docs/operations/B2_LEGACY_SUPPORT_JSON_COMPAT_INCIDENT_1829_20260906.md'
+      - '.github/workflows/b2-legacy-support-json-compat.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'jobs/tools/adaptive_sibling_b2_legacy_support_json_compat.py'
+      - 'jobs/tools/adaptive_sibling_b2_statistical_completion_recovery_v3.py'
+      - 'jobs/tests/test_adaptive_sibling_b2_legacy_support_json_compat.py'
+      - 'docs/operations/B2_LEGACY_SUPPORT_JSON_COMPAT_INCIDENT_1829_20260906.md'
+      - '.github/workflows/b2-legacy-support-json-compat.yml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile compatibility entrypoints
+        run: >-
+          python -m py_compile
+          jobs/tools/adaptive_sibling_b2_legacy_support_json_compat.py
+          jobs/tools/adaptive_sibling_b2_statistical_completion_recovery_v3.py
+          jobs/tests/test_adaptive_sibling_b2_legacy_support_json_compat.py
+      - name: Run compatibility contract tests
+        run: python -m unittest -v jobs.tests.test_adaptive_sibling_b2_legacy_support_json_compat
