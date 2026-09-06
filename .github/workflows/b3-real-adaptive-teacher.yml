@@ -23,6 +23,8 @@ jobs:
             jobs/tools/adaptive_sibling_b3_teacher_source.py \
             jobs/tools/adaptive_sibling_b3_parity.py \
             jobs/tools/adaptive_sibling_b3_parity_stage.py
+      - name: Exercise B3 stage entrypoint as real CLI
+        run: python jobs/tools/adaptive_sibling_b3_parity_stage.py --help >/dev/null
       - name: Run B3 renderer and parity contract tests
         run: python -m unittest -v jobs.tests.test_adaptive_sibling_b3_teacher_source jobs.tests.test_adaptive_sibling_b3_parity
       - name: Exercise B3 source renderer as real CLI
