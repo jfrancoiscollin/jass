@@ -371,11 +371,17 @@ def build_command(
     if not working.is_dir():
         raise StageSpecError("working_directory missing")
 
-    env: dict[str, str] = {}
+    # Stages run under a deliberately sanitized environment, but removing PATH
+    # makes standard native build tools unusable and removing the outer runner's
+    # TMPDIR breaks detached jobs under systemd PrivateTmp. Supply a deterministic
+    # system PATH and preserve only the runner-owned durable TMPDIR automatically.
+    env: dict[str, str] = {"PATH": os.defpath}
     for name in spec["environment"]["inherit"]:
         if name in os.environ:
             env[name] = os.environ[name]
     env.update(spec["environment"]["set"])
+    if "TMPDIR" in os.environ:
+        env["TMPDIR"] = os.environ["TMPDIR"]
     env.update({
         "JASS_CODE_DIR": str(repo),
         "JASS_RESULT_DIR": str(result),
