@@ -1,0 +1,51 @@
+name: c-sibling-dataset-v2
+
+on:
+  pull_request:
+    paths:
+      - 'src/sibling_dataset_v2_semantic_verify.cpp'
+      - 'jobs/tools/sibling_dataset_v2_stage.py'
+      - 'jobs/tests/test_sibling_dataset_v2_stage.py'
+      - '.github/workflows/c-sibling-dataset-v2.yml'
+      - 'docs/experiments/L3_SIBLING_DATASET_V2_PREREGISTRATION_V1_20260906.md'
+
+jobs:
+  python-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile entrypoint
+        run: python -m py_compile jobs/tools/sibling_dataset_v2_stage.py
+      - name: Run C unit tests
+        run: python -m unittest jobs.tests.test_sibling_dataset_v2_stage -v
+      - name: Exercise CLI boundary
+        run: python jobs/tools/sibling_dataset_v2_stage.py --help >/dev/null
+      - name: Prove reference barrier in source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          t = Path('jobs/tools/sibling_dataset_v2_stage.py').read_text()
+          assert 'FORBIDDEN_REFERENCE_JOB' in t
+          assert 'full_ladder_reference_reads": 0' in t
+          assert 'reference_backfill": False' in t
+          PY
+
+  native-movegen-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure native library
+        run: cmake -S . -B build-c -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=OFF
+      - name: Build engine library
+        run: cmake --build build-c --target jass_lib -j 2
+      - name: Compile C semantic verifier
+        run: |
+          c++ -std=c++20 -O2 -Isrc -Ipattern_jass/src \
+            src/sibling_dataset_v2_semantic_verify.cpp \
+            -o /tmp/sibling_dataset_v2_semantic_verify \
+            build-c/libjass_lib.a -pthread
+      - name: Run native selftest
+        run: /tmp/sibling_dataset_v2_semantic_verify selftest
