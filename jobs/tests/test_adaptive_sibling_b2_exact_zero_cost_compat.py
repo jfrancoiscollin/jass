@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 import importlib
+import os
+from pathlib import Path
+import subprocess
+import sys
 import unittest
 
 from jobs.tools import adaptive_sibling_b2_exact_zero_cost_compat as compat
 from jobs.tools import adaptive_sibling_b2_readout as readout
 from jobs.tools import adaptive_sibling_b2_statistics as statistics
+
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def mapping(parent_id: int = 0, *, full_nodes: int = 0, shadow_nodes: int = 0,
@@ -87,6 +94,26 @@ class ExactZeroCostCompatTests(unittest.TestCase):
         report = statistics._support_report(global_counts, cell_counts)
         self.assertTrue(any("node support is zero" in reason
                             for reason in report["reasons"]))
+
+    def test_v2_script_entrypoint_resolves_repo_package_without_pythonpath(self):
+        env = dict(os.environ)
+        env.pop("PYTHONPATH", None)
+        proc = subprocess.run(
+            [
+                sys.executable,
+                "jobs/tools/adaptive_sibling_b2_recovery_admissibility_preflight_v2.py",
+                "--help",
+            ],
+            cwd=ROOT,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("--work-dir", proc.stdout)
+        self.assertIn("--artifact-dir", proc.stdout)
 
     def test_z_all_parent_no_divergence_is_preflight_pass(self):
         # Importing the v2 entrypoint deliberately installs compat; keep this
