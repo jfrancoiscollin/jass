@@ -1,0 +1,42 @@
+name: d-wdl-listwise-prereg
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_WDL_LISTWISE_D1_PREREGISTRATION_V1_20260906.md'
+      - '.github/workflows/d-wdl-listwise-prereg.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate D1 frozen contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('docs/experiments/L3_WDL_LISTWISE_D1_PREREGISTRATION_V1_20260906.md')
+          t=p.read_text(encoding='utf-8')
+          required=[
+            'C_SIBLING_DATASET_V2_AUTHENTICATED_V1',
+            'lambda_decision = 1.0',
+            'WDL_CONTROL',
+            'WDL_LISTWISE',
+            'search_bounds       = null',
+            'certified_relations = null',
+            'q200 softmax targets',
+            'C train = 3200 parents',
+            'C test  =  400 parents',
+            '2026110901',
+            'delta_wdl <= 0.002000',
+            'D1_DECISION_TRANSFER_ESTABLISHED_V1',
+            'D1_DECISION_TRANSFER_NOT_ESTABLISHED_V1',
+            'exactly two frozen fits A/B',
+            'Fisher/JFI anchoring',
+          ]
+          for token in required:
+            assert token in t, token
+          assert 'No C valid/test parent contributes gradient' in t
+          assert 'No other treatment difference is allowed.' in t
+          assert 'equal-node games' in t and 'promotion' in t and 'bake' in t
+          PY
