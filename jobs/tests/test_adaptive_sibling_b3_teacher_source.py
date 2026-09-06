@@ -33,6 +33,18 @@ class B3TeacherSourceTests(unittest.TestCase):
         self.assertNotIn("const SearchObs s50 = run_fresh_search", rendered)
         self.assertNotIn("const SearchObs s200 = run_fresh_search", rendered)
 
+    def test_render_replaces_b2_full_ladder_counter_contract(self):
+        rendered = subject.render(BASE.read_text(encoding="utf-8"))
+        self.assertNotIn("B2 teacher counter contract mismatch", rendered)
+        self.assertIn("B3 teacher counter contract mismatch", rendered)
+        self.assertIn("c.cheap_searches > c.emitted_siblings", rendered)
+        self.assertIn("c.screen_searches > c.cheap_searches", rendered)
+        self.assertIn("c.teacher_searches > c.screen_searches", rendered)
+        self.assertIn(
+            "c.engine_constructions != c.cheap_searches + c.screen_searches + c.teacher_searches",
+            rendered,
+        )
+
     def test_q200_search_is_structurally_after_s50_seal(self):
         rendered = subject.render(BASE.read_text(encoding="utf-8"))
         seal = rendered.index("const auto s50 = top_with_margin")

@@ -37,6 +37,20 @@ HEADER_B3 = (
     '              "searched200\\tsurvived5\\tsurvived50\\tselected\\texact_shortcut_reason\\t"\n'
     '              "sole_survivor_reason\\tuncertified\\n";'
 )
+B2_COUNTER_CONTRACT = '''    if (c.cheap_searches != c.emitted_siblings
+        || c.screen_searches != c.emitted_siblings
+        || c.teacher_searches != c.emitted_siblings
+        || c.engine_constructions != c.cheap_searches + c.screen_searches + c.teacher_searches) {
+        throw std::runtime_error("B2 teacher counter contract mismatch");
+    }
+'''
+B3_COUNTER_CONTRACT = '''    if (c.cheap_searches > c.emitted_siblings
+        || c.screen_searches > c.cheap_searches
+        || c.teacher_searches > c.screen_searches
+        || c.engine_constructions != c.cheap_searches + c.screen_searches + c.teacher_searches) {
+        throw std::runtime_error("B3 teacher counter contract mismatch");
+    }
+'''
 
 LOOP = r'''        const std::string fingerprint = parent_fingerprint(row);
         struct AdaptiveAction {
@@ -258,6 +272,7 @@ def insert_after_unique_line(text: str, token: str, insertion: str) -> str:
 
 def render(source: str) -> str:
     out = b2.render(source)
+    out = replace_exact(out, B2_COUNTER_CONTRACT, B3_COUNTER_CONTRACT)
     out = replace_exact(
         out,
         "constexpr std::size_t DEFAULT_TT_MB = 16;\n",
@@ -298,9 +313,12 @@ def render(source: str) -> str:
         "B3_M5_CP = 100", "B3_M50_CP = 60", "B3_MIN_SURVIVORS = 2",
         "action.searched50 = true", "action.searched200 = true",
         "SOLE_UNRESOLVED_BEFORE_Q200", "adaptive_policy_real",
+        "B3 teacher counter contract mismatch",
     ):
         if token not in out:
             raise ValueError(f"B3 rendered source lost required token {token!r}")
+    if "B2 teacher counter contract mismatch" in out:
+        raise ValueError("B2 full-ladder counter contract survived B3 render")
     return out
 
 
