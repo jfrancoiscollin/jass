@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 P = ROOT / "jobs" / "tools" / "joint_td_q1_readout.py"
 spec = importlib.util.spec_from_file_location("q1", P)
 q1 = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
+# dataclasses resolves postponed annotations through sys.modules while the
+# module body executes; register this synthetic test import exactly like a
+# normal Python import.
+sys.modules[spec.name] = q1
 spec.loader.exec_module(q1)
 
 
