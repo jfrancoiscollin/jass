@@ -1,0 +1,35 @@
+name: b3-real-adaptive-teacher
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b3_teacher_source.py'
+      - 'jobs/tools/adaptive_sibling_b3_parity.py'
+      - 'jobs/tests/test_adaptive_sibling_b3_teacher_source.py'
+      - 'jobs/tests/test_adaptive_sibling_b3_parity.py'
+      - 'docs/experiments/L3_ADAPTIVE_TEACHER_B3_REAL_PARITY_V1_20260906.md'
+      - '.github/workflows/b3-real-adaptive-teacher.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile B3 Python entrypoints
+        run: python -m py_compile jobs/tools/adaptive_sibling_b3_teacher_source.py jobs/tools/adaptive_sibling_b3_parity.py
+      - name: Run B3 renderer and parity contract tests
+        run: python -m unittest -v jobs.tests.test_adaptive_sibling_b3_teacher_source jobs.tests.test_adaptive_sibling_b3_parity
+      - name: Exercise B3 source renderer as real CLI
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          python jobs/tools/adaptive_sibling_b3_teacher_source.py render \
+            --source src/deep_sibling_teacher.cpp \
+            --output "$tmp/b3.cpp" \
+            --receipt "$tmp/receipt.json"
+          test -s "$tmp/b3.cpp"
+          test -s "$tmp/receipt.json"
+          grep -Fq 'B3_M5_CP = 100' "$tmp/b3.cpp"
+          grep -Fq 'B3_M50_CP = 60' "$tmp/b3.cpp"
+          grep -Fq 'action.s200 = run_fresh_search' "$tmp/b3.cpp"
