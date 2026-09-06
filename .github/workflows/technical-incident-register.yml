@@ -1,0 +1,23 @@
+name: technical-incident-register
+on:
+  pull_request:
+    paths:
+      - 'docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md'
+      - 'docs/operations/README.md'
+      - 'docs/experiments/L3_ADAPTIVE_SHADOW_B2_TERMINAL_RESULTS_20260906.md'
+      - '.github/workflows/technical-incident-register.yml'
+jobs:
+  register:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate incident register and B2 terminal receipt
+        run: |
+          set -euo pipefail
+          grep -Fq 'TI-004' docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
+          grep -Fq 'TI-005' docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
+          grep -Fq 'TI-006' docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
+          grep -Fq 'TI-007' docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
+          grep -Fq 'B2_ADAPTIVE_SHADOW_POLICY_CONFIRMED_V1' docs/experiments/L3_ADAPTIVE_SHADOW_B2_TERMINAL_RESULTS_20260906.md
+          grep -Fq '200000' docs/experiments/L3_ADAPTIVE_SHADOW_B2_TERMINAL_RESULTS_20260906.md
+          grep -Fq '2026110717' docs/experiments/L3_ADAPTIVE_SHADOW_B2_TERMINAL_RESULTS_20260906.md
