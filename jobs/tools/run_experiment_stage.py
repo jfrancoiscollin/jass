@@ -184,7 +184,7 @@ def validate_spec(spec: Mapping[str, Any]) -> None:
     for index, item in enumerate(outputs):
         obj = _strict_object(item, OUTPUT_KEYS, f"outputs[{index}]")
         if obj["scope"] not in ALLOWED_SCOPES:
-            raise StageSpecError(f"inputs[{index}].scope invalid")
+            raise StageSpecError(f"outputs[{index}].scope invalid")
         path = _relative_path(obj["path"], f"outputs[{index}].path")
         if obj["kind"] not in ALLOWED_OUTPUT_KINDS:
             raise StageSpecError(f"outputs[{index}].kind invalid")
@@ -240,7 +240,7 @@ def validate_spec(spec: Mapping[str, Any]) -> None:
     success = _strict_object(spec["success"], SUCCESS_KEYS, "success")
     _strict_int(success["required_exit_code"], "success.required_exit_code", 0, 255)
     if success["next_stage"] is not None and (
-        type(success["next_stage"]) is not str or not success["next_stage"]
+        type(success["next_stage"]) is not str or not spec["success"]["next_stage"]
     ):
         raise StageSpecError("success.next_stage must be null or non-empty string")
 
