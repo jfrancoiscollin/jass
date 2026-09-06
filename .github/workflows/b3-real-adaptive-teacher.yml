@@ -4,6 +4,7 @@ on:
     paths:
       - 'jobs/tools/adaptive_sibling_b3_teacher_source.py'
       - 'jobs/tools/adaptive_sibling_b3_parity.py'
+      - 'jobs/tools/adaptive_sibling_b3_parity_stage.py'
       - 'jobs/tests/test_adaptive_sibling_b3_teacher_source.py'
       - 'jobs/tests/test_adaptive_sibling_b3_parity.py'
       - 'docs/experiments/L3_ADAPTIVE_TEACHER_B3_REAL_PARITY_V1_20260906.md'
@@ -17,7 +18,11 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile B3 Python entrypoints
-        run: python -m py_compile jobs/tools/adaptive_sibling_b3_teacher_source.py jobs/tools/adaptive_sibling_b3_parity.py
+        run: |
+          python -m py_compile \
+            jobs/tools/adaptive_sibling_b3_teacher_source.py \
+            jobs/tools/adaptive_sibling_b3_parity.py \
+            jobs/tools/adaptive_sibling_b3_parity_stage.py
       - name: Run B3 renderer and parity contract tests
         run: python -m unittest -v jobs.tests.test_adaptive_sibling_b3_teacher_source jobs.tests.test_adaptive_sibling_b3_parity
       - name: Exercise B3 source renderer as real CLI
