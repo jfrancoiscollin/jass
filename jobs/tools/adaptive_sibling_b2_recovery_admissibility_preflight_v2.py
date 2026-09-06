@@ -2,10 +2,16 @@
 """Run target-data B2 admissibility with the exact-zero-cost compatibility shim."""
 from __future__ import annotations
 
+from pathlib import Path
 import sys
 from typing import Any, Mapping
 
-from jobs.tools import adaptive_sibling_b2_exact_zero_cost_compat as compat
+if __package__ in (None, ""):
+    ROOT = Path(__file__).resolve().parents[2]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+
+from jobs.tools import adaptive_sibling_b2_exact_zero_cost_compat as compat  # noqa: E402
 
 compat.install()
 
