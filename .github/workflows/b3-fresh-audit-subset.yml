@@ -1,0 +1,23 @@
+name: b3-fresh-audit-subset
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b3_fresh_audit_subset.py'
+      - 'jobs/tests/test_adaptive_sibling_b3_fresh_audit_subset.py'
+      - '.github/workflows/b3-fresh-audit-subset.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile audit subset entrypoint
+        run: python -m py_compile jobs/tools/adaptive_sibling_b3_fresh_audit_subset.py
+      - name: Run audit subset tests
+        run: python -m unittest jobs.tests.test_adaptive_sibling_b3_fresh_audit_subset
+      - name: Exercise CLI parser boundary
+        run: python jobs/tools/adaptive_sibling_b3_fresh_audit_subset.py --help >/dev/null
