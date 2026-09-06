@@ -90,9 +90,11 @@ def verify_source_publication(publication: Mapping[str, Any], root: Path) -> Non
     selection = publication.get("selection")
     if not isinstance(selection, Mapping):
         raise StageError("fresh source selection receipt missing")
+    # Consume the actual sealed B2-derived publisher schema.  Population is
+    # published as selection.parents; per-cell quota is represented by the
+    # eight exact cell counts, not by invented selected/cell_quota aliases.
     checks = {
-        "selected": 4000,
-        "cell_quota": 500,
+        "parents": 4000,
         "forbidden_overlap": 0,
         "target_blind": True,
     }

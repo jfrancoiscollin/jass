@@ -120,6 +120,16 @@
       "invariant": "generic authenticated fetch reports are validated semantically by identity/state fields; compact canonical-byte equality is required only for artefacts whose contract explicitly declares canonical serialization",
       "evidence": "`B3_EXCLUSION_FETCH_RECEIPT_JSON_INCIDENT_1834_20260906.md`, Jass #815; rerun 1835 attempt `20260906T134208Z-c553a572` PASS exit 0, combined_count=227317, component_overlap=0, union `b553939e8ded3ab31d121e40b2be9cfa1012168bf01835f692b59a60815d9ecb`, manifest `f734de99761b7a3ee7ddb107de3d678fa29eb7e39a11708b6a8c8bbbe700cc0c`; PR #820",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-013",
+      "dedupe_key": "job:cpx62-1838-l3-decision-math-b3-fresh-adaptive-teacher-v1",
+      "context": "1838, B3 fresh adaptive teacher",
+      "symptom": "fresh teacher stage exit 2 after authenticated 1837 source retrieval, before required teacher outputs and without a scientific verdict",
+      "root_cause": "the fresh-teacher consumer required undeclared `selection.selected` and `selection.cell_quota` fields, while the sealed B2-derived source publication contract exposes total population as `selection.parents` and the frozen quota through the exact eight `selection.cells` counts",
+      "invariant": "fresh-teacher source authentication must consume the actual sealed publication schema: `selection.parents==4000`, exactly eight cell counts all equal to 500, `forbidden_overlap==0`, and `target_blind==true`; no undeclared alias field may be invented by a consumer or its test fixture",
+      "evidence": "`B3_FRESH_TEACHER_PUBLICATION_CONTRACT_INCIDENT_1838_20260906.md`; failed 1838 attempt `20260906T151340Z-0f6dd960`; producer contract in `adaptive_sibling_b2_source_publish.py`; regression in `test_adaptive_sibling_b3_fresh_teacher_stage.py`; PR #825",
+      "status": "MITIGATED — RERUN PENDING"
     }
   ]
 }
