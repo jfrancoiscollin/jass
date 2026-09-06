@@ -1,0 +1,35 @@
+name: d1-historical-split-recovery
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/d1_listwise_fit_historical_split.py'
+      - 'jobs/tools/d1_postfit_readout_historical_split.py'
+      - 'jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh'
+      - 'jobs/tests/test_d1_historical_split.py'
+      - '.github/workflows/d1-historical-split-recovery.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install numeric dependencies
+        run: python -m pip install --disable-pip-version-check numpy scipy
+      - name: Compile compatibility entrypoints
+        run: |
+          python -m py_compile \
+            jobs/tools/d1_listwise_fit_historical_split.py \
+            jobs/tools/d1_postfit_readout_historical_split.py
+      - name: Run historical split regression
+        run: python -m unittest jobs.tests.test_d1_historical_split -v
+      - name: Validate recovery template
+        run: |
+          bash -n jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh
+          grep -q 'HOLDOUT=199204; TRAIN_EXPECTED=1800796; RECORDS_EXPECTED=2000000' jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh
+          grep -q 'd1_listwise_fit_historical_split.py' jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh
+          grep -q 'd1_postfit_readout_historical_split.py' jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh
+          ! grep -q 'HOLDOUT=200000' jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh
