@@ -1,0 +1,26 @@
+name: d1-stage-env-recovery
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/templates/l3-d1-wdl-listwise-fit-v3-stage-env-recovery.sh'
+      - 'jobs/tests/test_d1_stage_env_recovery.py'
+      - '.github/workflows/d1-stage-env-recovery.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Shell syntax
+        run: bash -n jobs/templates/l3-d1-wdl-listwise-fit-v3-stage-env-recovery.sh
+      - name: Stage env regression
+        run: python -m unittest jobs.tests.test_d1_stage_env_recovery -v
+      - name: Preserve D1 historical split science
+        run: |
+          grep -q 'HOLDOUT=199204; TRAIN_EXPECTED=1800796; RECORDS_EXPECTED=2000000' jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh
+          grep -q 'jobs/templates/l3-d1-wdl-listwise-fit-v2-historical-split.sh' jobs/templates/l3-d1-wdl-listwise-fit-v3-stage-env-recovery.sh
+          grep -q 'export EXPECTED_CODE_SHA="$SPEC_CODE_SHA"' jobs/templates/l3-d1-wdl-listwise-fit-v3-stage-env-recovery.sh
