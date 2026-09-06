@@ -21,6 +21,9 @@ Pour tout incident terminal ou quasi-terminal :
 
 ## Registre
 
+> Cette table est générée depuis `TECHNICAL_INCIDENTS_V1.json`. Ne pas l'éditer à la main.
+
+<!-- GENERATED_TECHNICAL_INCIDENT_TABLE_START -->
 | ID | Job / contexte | Symptôme | Cause racine | Invariant / garde-fou durable | Preuve / couverture | Statut |
 |---|---|---|---|---|---|---|
 | TI-001 | 1806, dispatcher Level-3 | `exit 126` avant stage | le dispatcher exécutait directement un shell non exécutable | les stages shell sont invoqués explicitement par `/usr/bin/bash`, jamais par permission implicite | correction control #515 + rehearsal ultérieure verte | CLOSED |
@@ -34,6 +37,7 @@ Pour tout incident terminal ou quasi-terminal :
 | TI-009 | 1800/1801, publisher B2 | publisher exigeait artifact-dir vide mais wrapper y écrivait son reçu mécanique avant publication | collision ownership wrapper/publisher | `artifact_directory_contract=empty_or_runner_launch`; diagnostics mécaniques pré-publication vont dans result-dir, artefacts scientifiques restent owner du stage | 1801 PASS + contrat stage v1 | CLOSED |
 | TI-010 | PR #807, B3 renderer pre-CPX | le renderer échoue avant génération sur l'anchor de schema C++ | l'adapter cherchait une chaîne JSON non échappée alors que le source C++ contient `\"...\"` dans un string literal | tout renderer source-to-source doit exercer le vrai CLI en CI et matcher les bytes/échappements exacts des anchors ; aucun fallback fuzzy/sed opportuniste | workflow `b3-real-adaptive-teacher`, tests renderer + direct CLI ; détecté avant CPX | CLOSED |
 | TI-011 | 1832, B3 real adaptive parity | shard 11 abort `rc=-6`: `B2 teacher counter contract mismatch` avant tout verdict de parity | le renderer B3 remplaçait la boucle full-ladder B2 par la politique adaptative 100/60/2 mais conservait l'assertion B2 `q5=q50=q200=emitted` | B3 impose `q200<=q50<=q5<=emitted_siblings` et `engine_constructions=q5+q50+q200`; le renderer fail-closed si le contrat full-ladder B2 survit | `B3_ADAPTIVE_COUNTER_CONTRACT_INCIDENT_1832_20260906.md`, Jass #808, workflow B3 vert, control #529, rerun 1833 | MITIGATED — 1833 PENDING |
+<!-- GENERATED_TECHNICAL_INCIDENT_TABLE_END -->
 
 ## Invariants transverses actifs
 
@@ -76,4 +80,4 @@ CI contract
   -> stage scientifique
 ```
 
-Les incidents futurs sont ajoutés à ce fichier dans la même PR que leur correction ou dans la PR immédiatement suivante si la correction d'urgence doit rester minimale.
+Les incidents futurs sont enregistrés via `jobs/tools/technical_incident_register.py` ou via le bloc PR `JASS_TECHNICAL_INCIDENT`. La source canonique est `TECHNICAL_INCIDENTS_V1.json`; la table ci-dessus est régénérée automatiquement et la CI bloque toute dérive.

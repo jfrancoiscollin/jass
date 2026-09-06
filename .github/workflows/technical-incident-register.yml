@@ -1,23 +1,70 @@
 name: technical-incident-register
+
 on:
   pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  push:
+    branches: [develop]
     paths:
+      - 'docs/operations/TECHNICAL_INCIDENTS_V1.json'
       - 'docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md'
-      - 'docs/operations/README.md'
-      - 'docs/experiments/L3_ADAPTIVE_SHADOW_B2_TERMINAL_RESULTS_20260906.md'
+      - 'jobs/tools/technical_incident_register.py'
+      - 'jobs/tests/test_technical_incident_register.py'
       - '.github/workflows/technical-incident-register.yml'
+      - '.github/instructions/technical-incidents.instructions.md'
+
+permissions:
+  contents: write
+
 jobs:
-  register:
-    runs-on: ubuntu-24.04
+  autofeed-pr:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate incident register and B2 terminal receipt
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile incident tooling
+        run: python -m py_compile jobs/tools/technical_incident_register.py jobs/tests/test_technical_incident_register.py
+      - name: Test incident tooling
+        run: python -m unittest -v jobs.tests.test_technical_incident_register
+      - name: Synchronize PR incident block into canonical ledger
+        run: python jobs/tools/technical_incident_register.py sync-pr --event "$GITHUB_EVENT_PATH"
+      - name: Verify generated register
+        run: python jobs/tools/technical_incident_register.py check
+      - name: Commit automatic register update
+        shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'TI-004' docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
-          grep -Fq 'TI-005' docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
-          grep -Fq 'TI-006' docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
-          grep -Fq 'TI-007' docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
-          grep -Fq 'B2_ADAPTIVE_SHADOW_POLICY_CONFIRMED_V1' docs/experiments/L3_ADAPTIVE_SHADOW_B2_TERMINAL_RESULTS_20260906.md
-          grep -Fq '200000' docs/experiments/L3_ADAPTIVE_SHADOW_B2_TERMINAL_RESULTS_20260906.md
-          grep -Fq '2026110717' docs/experiments/L3_ADAPTIVE_SHADOW_B2_TERMINAL_RESULTS_20260906.md
+          if git diff --quiet -- docs/operations/TECHNICAL_INCIDENTS_V1.json docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md; then
+            echo "incident register already synchronized"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/operations/TECHNICAL_INCIDENTS_V1.json docs/operations/TECHNICAL_INCIDENT_REGISTER_V1_20260906.md
+          git commit -m "docs: auto-sync technical incident register"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+  validate-develop:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile incident tooling
+        run: python -m py_compile jobs/tools/technical_incident_register.py jobs/tests/test_technical_incident_register.py
+      - name: Test incident tooling
+        run: python -m unittest -v jobs.tests.test_technical_incident_register
+      - name: Verify canonical ledger/register parity
+        run: python jobs/tools/technical_incident_register.py check
