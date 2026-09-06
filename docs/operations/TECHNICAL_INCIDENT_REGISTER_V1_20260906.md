@@ -33,6 +33,7 @@ Pour tout incident terminal ou quasi-terminal :
 | TI-008 | 1797/1799, merge teacher B2 | king move rejeté avec `moving_king=1,promotes=1` | `Move.promotes` est un flag destination-rank, y compris pour un roi, tandis qu'un guard Python supposait l'inverse | nouveaux stages ne doivent pas reconstruire la sémantique de `promotes`; catalogue natif fait autorité ; compat legacy isolée et testée | `adaptive_sibling_b2_legacy_contract_compat.py` + tests | CLOSED |
 | TI-009 | 1800/1801, publisher B2 | publisher exigeait artifact-dir vide mais wrapper y écrivait son reçu mécanique avant publication | collision ownership wrapper/publisher | `artifact_directory_contract=empty_or_runner_launch`; diagnostics mécaniques pré-publication vont dans result-dir, artefacts scientifiques restent owner du stage | 1801 PASS + contrat stage v1 | CLOSED |
 | TI-010 | PR #807, B3 renderer pre-CPX | le renderer échoue avant génération sur l'anchor de schema C++ | l'adapter cherchait une chaîne JSON non échappée alors que le source C++ contient `\"...\"` dans un string literal | tout renderer source-to-source doit exercer le vrai CLI en CI et matcher les bytes/échappements exacts des anchors ; aucun fallback fuzzy/sed opportuniste | workflow `b3-real-adaptive-teacher`, tests renderer + direct CLI ; détecté avant CPX | CLOSED |
+| TI-011 | 1832, B3 real-adaptive parity | shard 11 abort `B2 teacher counter contract mismatch` après exécution adaptive | le renderer B3 avait remplacé la boucle full-ladder mais conservé l'assertion mécanique B2 du `write_report`, qui exigeait `cheap=screen=teacher=emitted` et contredisait donc volontairement les recherches sautées par la policy adaptive | tout adapter qui remplace un producteur doit remplacer aussi ses invariants mécaniques devenus faux ; pour B3 les compteurs vérifient `teacher<=screen<=cheap<=emitted` et `engine_constructions=cheap+screen+teacher`, sans toucher aux décisions, budgets ou appels de recherche | Jass #808 / merge `7756fac99ed5d4767aa4bc5d6beff402884008a6`; regression renderer fail-closed ; retry parity requis | OPEN_PENDING_PARITY |
 
 ## Invariants transverses actifs
 
@@ -54,7 +55,8 @@ Pour tout incident terminal ou quasi-terminal :
 - tests synthétiques -> preflight target-data/runtime -> compute scientifique ;
 - producer et consumer doivent être testés ensemble sur les vraies formes de données avant une étape coûteuse ;
 - une incompatibilité de sérialisation ne peut pas être reclassée en résultat scientifique ;
-- les compatibilités legacy sont isolées, byte-authenticated et interdites aux nouveaux contrats natifs.
+- les compatibilités legacy sont isolées, byte-authenticated et interdites aux nouveaux contrats natifs ;
+- un renderer source-to-source qui remplace une boucle de production doit ré-auditer les assertions et compteurs hérités en aval, même si les appels de recherche eux-mêmes sont corrects.
 
 ### D. Publication / observabilité
 
