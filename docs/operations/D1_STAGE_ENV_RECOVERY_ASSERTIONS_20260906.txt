@@ -1,0 +1,3 @@
+Primary runtime blocker: sanitized stage environment omitted EXPECTED_CODE_SHA.
+Secondary latent issue already corrected: CURRENT_2M historical split is 1800796 train / 199204 holdout.
+D1 science unchanged: WDL_CONTROL vs WDL_LISTWISE, lambda_decision 0 vs 1, bootstrap 200000 seed 2026110901, no strength games/promotion/bake.
