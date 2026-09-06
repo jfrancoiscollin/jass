@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import unittest
 
 from jobs.tools import adaptive_sibling_b2_exact_zero_cost_compat as compat
@@ -86,6 +87,30 @@ class ExactZeroCostCompatTests(unittest.TestCase):
         report = statistics._support_report(global_counts, cell_counts)
         self.assertTrue(any("node support is zero" in reason
                             for reason in report["reasons"]))
+
+    def test_z_all_parent_no_divergence_is_preflight_pass(self):
+        # Importing the v2 entrypoint deliberately installs compat; keep this
+        # last alphabetically so the exact-X rejection test runs first.
+        module = importlib.import_module(
+            "jobs.tools.adaptive_sibling_b2_recovery_admissibility_preflight_v2")
+        value = module.normalize_diagnostic({
+            "parents_checked": 4000,
+            "first_divergence": None,
+            "admissible": False,
+            "classification": "SOURCE_FAILURE_DID_NOT_REPRODUCE",
+        })
+        self.assertTrue(value["admissible"])
+        self.assertEqual(
+            value["classification"], "EXACT_ZERO_COST_COMPATIBLE_ALL_PARENTS")
+        blocked = module.normalize_diagnostic({
+            "parents_checked": 1217,
+            "first_divergence": {"parent_id": 1216},
+            "admissible": False,
+            "classification": "PRODUCER_CONSUMER_CONTRACT_MISMATCH",
+        })
+        self.assertFalse(blocked["admissible"])
+        self.assertEqual(blocked["classification"],
+                         "PRODUCER_CONSUMER_CONTRACT_MISMATCH")
 
 
 if __name__ == "__main__":
