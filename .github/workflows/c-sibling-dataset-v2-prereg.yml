@@ -1,0 +1,34 @@
+name: c-sibling-dataset-v2-prereg
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_SIBLING_DATASET_V2_PREREGISTRATION_V1_20260906.md'
+      - '.github/workflows/c-sibling-dataset-v2-prereg.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate C prereg contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('docs/experiments/L3_SIBLING_DATASET_V2_PREREGISTRATION_V1_20260906.md')
+          t = p.read_text(encoding='utf-8')
+          required = [
+              'C_SIBLING_DATASET_V2_AUTHENTICATED_V1',
+              'C_SIBLING_DATASET_V2_INVALID_V1',
+              'train = 400 parents per cell = 3200 total',
+              'valid =  50 parents per cell =  400 total',
+              'test  =  50 parents per cell =  400 total',
+              '1843 b3-fresh-full-ladder-audit-groups.tsv',
+              'Structural missingness is never encoded as numeric zero',
+              'fits/model_search/strength/promotion/bake authorized = false',
+          ]
+          for token in required:
+              assert token in t, token
+          assert 'No reference value may fill an unsearched adaptive horizon' in t
+          assert 'Only after terminal C authentication may D be preregistered.' in t
+          PY
