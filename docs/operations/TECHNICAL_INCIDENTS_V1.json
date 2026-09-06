@@ -130,6 +130,16 @@
       "invariant": "fresh-teacher source authentication must consume the actual sealed publication schema: `selection.parents==4000`, exactly eight cell counts all equal to 500, `forbidden_overlap==0`, and `target_blind==true`; no undeclared alias field may be invented by a consumer or its test fixture",
       "evidence": "`B3_FRESH_TEACHER_PUBLICATION_CONTRACT_INCIDENT_1838_20260906.md`; Jass #825; rerun 1841 attempt `20260906T154029Z-299779c0` PASS exit 0, 4000 parents, 38053 rows, verdict `B3_FRESH_ADAPTIVE_TEACHER_COMPLETE_V1`, renderer `a5f77f92abc7e77a8488c2c4751d71608d90cba04829a44f7c434138cb766d8f`, reference_audit_reads=0, full_ladder_backfill=false; PR #826",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-014",
+      "dedupe_key": "job:cpx62-1846-l3-decision-math-d1-wdl-listwise-fit-v1",
+      "context": "1846, D1 WDL+listwise first runtime",
+      "symptom": "stage exited 1 after about five minutes with inputs_authenticated=true, outputs_authenticated=false and no scientific verdict",
+      "root_cause": "D1 implementation guessed an exact 200000-row CURRENT_2M holdout, but the immutable game-level CURRENT split at seed 577215 / holdout-mod 10 has exactly 199204 holdout rows and 1800796 train rows",
+      "invariant": "D1 must consume the exact archived CURRENT_2M split manifest; bootstrap repetitions (200000) must never be confused with holdout row cardinality",
+      "evidence": "failed 1846 attempt 20260906T204702Z-2da8293b; historical jobs/templates/l3-context2-phase-tactical-fit-v1.sh freezes EXPECTED_HOLDOUT=199204 under the same split seed/mod; recovery regression test_d1_historical_split.py; PR #832",
+      "status": "MITIGATED — RERUN PENDING"
     }
   ]
 }
