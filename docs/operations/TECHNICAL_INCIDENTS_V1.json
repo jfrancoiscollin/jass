@@ -128,8 +128,8 @@
       "symptom": "fresh teacher stage exit 2 after authenticated 1837 source retrieval, before required teacher outputs and without a scientific verdict",
       "root_cause": "the fresh-teacher consumer required undeclared `selection.selected` and `selection.cell_quota` fields, while the sealed B2-derived source publication contract exposes total population as `selection.parents` and the frozen quota through the exact eight `selection.cells` counts",
       "invariant": "fresh-teacher source authentication must consume the actual sealed publication schema: `selection.parents==4000`, exactly eight cell counts all equal to 500, `forbidden_overlap==0`, and `target_blind==true`; no undeclared alias field may be invented by a consumer or its test fixture",
-      "evidence": "`B3_FRESH_TEACHER_PUBLICATION_CONTRACT_INCIDENT_1838_20260906.md`; failed 1838 attempt `20260906T151340Z-0f6dd960`; producer contract in `adaptive_sibling_b2_source_publish.py`; regression in `test_adaptive_sibling_b3_fresh_teacher_stage.py`; PR #825",
-      "status": "MITIGATED — RERUN PENDING"
+      "evidence": "`B3_FRESH_TEACHER_PUBLICATION_CONTRACT_INCIDENT_1838_20260906.md`; Jass #825; rerun 1841 attempt `20260906T154029Z-299779c0` PASS exit 0, 4000 parents, 38053 rows, verdict `B3_FRESH_ADAPTIVE_TEACHER_COMPLETE_V1`, renderer `a5f77f92abc7e77a8488c2c4751d71608d90cba04829a44f7c434138cb766d8f`, reference_audit_reads=0, full_ladder_backfill=false; PR #826",
+      "status": "CLOSED"
     }
   ]
 }
