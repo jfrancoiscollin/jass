@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Run the parity-established real B3 adaptive teacher on a sealed fresh cohort.
 
-The fresh source cohort is authenticated from its publication receipt. This
-stage reuses the exact B3 teacher renderer/runtime proven by job 1833 and does
-not read or execute any full-ladder audit reference. No fit, game, promotion or
-bake is reachable here.
+The fresh source cohort is authenticated from its completed runner-v3 result.
+This stage reuses the exact B3 teacher renderer/runtime proven by job 1833 and
+does not read or execute any full-ladder audit reference. No fit, game,
+promotion or bake is reachable here.
 """
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ def descriptor(path: Path, **extra: object) -> dict[str, object]:
             "size_bytes": path.stat().st_size, **extra}
 
 
-def fetch_source(args: argparse.Namespace, work: Path) -> tuple[Path, dict[str, Any]]:
+def fetch_source(args: argparse.Namespace, work: Path) -> tuple[Path, dict[str, Any], str]:
     target = work / "source"
     mappings = [
         ("artefacts/source-selection-publication.json", "source-selection-publication.json"),
@@ -62,15 +62,18 @@ def fetch_source(args: argparse.Namespace, work: Path) -> tuple[Path, dict[str, 
         expected_code=args.source_code_sha, mappings=mappings,
         out_dir=target, report=work / "source-fetch.json",
     )
+    # fetch_completed authenticates the completed result manifest, inventory and
+    # checksums before accepting these bytes.  The publication SHA is therefore
+    # derived from the authenticated payload itself rather than duplicated as a
+    # separately hand-copied queue parameter.
     publication_path = target / "source-selection-publication.json"
-    if parity_stage.sha_file(publication_path) != args.source_publication_sha256:
-        raise StageError("source publication SHA mismatch")
+    publication_sha256 = parity_stage.sha_file(publication_path)
     try:
         publication = json.loads(publication_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise StageError("invalid source publication JSON") from exc
     verify_source_publication(publication, target)
-    return target / "parents.jnnw", publication
+    return target / "parents.jnnw", publication, publication_sha256
 
 
 def _matches_descriptor(value: object, path: Path, **extras: object) -> bool:
@@ -120,7 +123,7 @@ def run_stage(args: argparse.Namespace) -> dict[str, object]:
     work.mkdir(parents=True)
     artifacts.mkdir(parents=True, exist_ok=True)
 
-    parents, source_publication = fetch_source(args, work)
+    parents, source_publication, source_publication_sha256 = fetch_source(args, work)
     curriculum = parity_stage.fetch_curriculum(work)
     exe, render_receipt = parity_stage.build_teacher(work)
     if render_receipt.get("rendered_source_sha256") != PARITY_RENDERED_SHA256:
@@ -145,7 +148,7 @@ def run_stage(args: argparse.Namespace) -> dict[str, object]:
         "attempt_id": args.source_attempt,
         "code_sha": args.source_code_sha,
         "prefix": args.source_prefix,
-        "publication_sha256": args.source_publication_sha256,
+        "publication_sha256": source_publication_sha256,
         "parents_jnnw": source_publication["selection"]["parents_jnnw"],
         "ordered_identities": source_publication["selection"]["ordered_identities"],
     }
@@ -186,7 +189,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--source-attempt", required=True)
     parser.add_argument("--source-code-sha", required=True)
     parser.add_argument("--source-prefix", required=True)
-    parser.add_argument("--source-publication-sha256", required=True)
     return parser.parse_args(argv)
 
 
