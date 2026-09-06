@@ -1,0 +1,21 @@
+name: b3-fresh-exclusion-prep
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/adaptive_sibling_b3_exclusion_prepare.py'
+      - 'jobs/tests/test_adaptive_sibling_b3_exclusion_prepare.py'
+      - '.github/workflows/b3-fresh-exclusion-prep.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile preflight
+        run: python -m py_compile jobs/tools/adaptive_sibling_b3_exclusion_prepare.py
+      - name: Exercise real CLI entrypoint
+        run: python jobs/tools/adaptive_sibling_b3_exclusion_prepare.py --help >/dev/null
+      - name: Run exclusion contract tests
+        run: python -m unittest -v jobs.tests.test_adaptive_sibling_b3_exclusion_prepare
