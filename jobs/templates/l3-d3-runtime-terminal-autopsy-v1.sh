@@ -33,7 +33,7 @@ say "D3 runtime terminal autopsy start job=$JASS_JOB_ID code=$SPEC_CODE games=0 
 FETCH=(--prefix "$SOURCE_ROOT" --expected-state completed
   --file artefacts/scientific-summary.json=source-summary.json
   --file artefacts/d3-equal-node-pool-provenance.json=pool-provenance.json)
-for s in $(seq -w 0 7); do
+for s in 00 01 02 03 04 05 06 07; do
   FETCH+=(--file "artefacts/shards/s${s}/primary-games.jsonl=primary-s${s}.jsonl")
   FETCH+=(--file "artefacts/shards/s${s}/harness-games.jsonl=harness-s${s}.jsonl")
 done
@@ -54,7 +54,7 @@ PY
 
 python3 -m unittest jobs.tests.test_d3_runtime_terminal_autopsy >"$W/unit-tests.log" 2>&1
 ARGS=(--source-summary "$IN/source-summary.json" --pool-provenance "$IN/pool-provenance.json" --out "$ART/D3_RUNTIME_TERMINAL_AUTOPSY.json")
-for s in $(seq -w 0 7); do
+for s in 00 01 02 03 04 05 06 07; do
   ARGS+=(--primary "$IN/primary-s${s}.jsonl" --harness "$IN/harness-s${s}.jsonl")
 done
 python3 jobs/tools/d3_runtime_terminal_autopsy.py "${ARGS[@]}" >"$W/autopsy.log" 2>&1
