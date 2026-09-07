@@ -266,7 +266,7 @@ def prepare(args: argparse.Namespace) -> int:
             "SELECT COUNT(*) FROM keys WHERE mask NOT IN (1,2,4)"
         ).fetchone()[0])
 
-        heaps: dict[str, list[tuple[bytes, bytes, bytes]]] = {
+        heaps: dict[str, list[tuple[bytes, int, int, bytes]]] = {
             split: [] for split in EXACT_COUNTS
         }
         eligible = {split: 0 for split in EXACT_COUNTS}
@@ -281,10 +281,10 @@ def prepare(args: argparse.Namespace) -> int:
                 continue
             eligible[split] += 1
             primary = hashlib.sha256((EXAMPLE_PREFIX + key).encode()).digest()
-            tie_text = f"{int(event['root_index'])}:{int(event['event_index'])}:{key}"
-            tie = hashlib.sha256(tie_text.encode()).digest()
+            root_index = int(event["root_index"])
+            event_index = int(event["event_index"])
             payload = canonical_line(selected_payload(event, key, split))
-            item = (invert_digest(primary), invert_digest(tie), payload)
+            item = (invert_digest(primary), -root_index, -event_index, payload)
             heap = heaps[split]
             limit = EXACT_COUNTS[split]
             if len(heap) < limit:
@@ -299,17 +299,16 @@ def prepare(args: argparse.Namespace) -> int:
         if support_ok:
             for split, out_path in outputs.items():
                 rows = []
-                for inv_primary, inv_tie, payload in heaps[split]:
+                for inv_primary, neg_root, neg_event, payload in heaps[split]:
                     primary = invert_digest(inv_primary)
-                    tie = invert_digest(inv_tie)
-                    rows.append((primary, tie, payload))
-                rows.sort(key=lambda row: (row[0], row[1]))
+                    rows.append((primary, -neg_root, -neg_event, payload))
+                rows.sort(key=lambda row: (row[0], row[1], row[2]))
                 path = Path(out_path)
                 if path.exists() or path.is_symlink():
                     raise D4Error(f"refusing existing selected output {path}")
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with path.open("wb") as out:
-                    for _, _, payload in rows:
+                    for _, _, _, payload in rows:
                         out.write(payload)
                         if split == "test":
                             event = json.loads(payload)
