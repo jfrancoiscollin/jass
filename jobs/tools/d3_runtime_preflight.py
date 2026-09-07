@@ -20,7 +20,9 @@ SCHEMA = "jass.d3.runtime_move_ordering_preflight.v1"
 VERDICT = "D3_RUNTIME_MOVE_ORDERING_PREFLIGHT_COMPLETE_V1"
 SEED = 2026111299
 POSITIONS = 128
-DEPTH = 7
+IDENTITY_DEPTH = 7
+ON_DEPTH = 2
+BELOW_SUPPORT_FEN = "W:WK46,K47,K48:BK3,K4,K5"
 
 
 def sha(path: Path) -> str:
@@ -58,14 +60,14 @@ def parse_last(lines: list[str]) -> dict[str, Any]:
     }
 
 
-def search_rows(binary: Path, model: Path, positions: list[str], env: dict[str, str | None]) -> list[dict[str, Any]]:
+def search_rows(binary: Path, model: Path, positions: list[str], env: dict[str, str | None], *, depth: int) -> list[dict[str, Any]]:
     eng = cvs.JassEngine(str(binary), pattern_path=str(model), no_book=True,
                          enforce_no_book=True, threads=1, env_overrides=env)
     rows: list[dict[str, Any]] = []
     try:
         for fen in positions:
             eng.set_position_fen(fen)
-            _move, lines = eng.go_verbose(depth=DEPTH)
+            _move, lines = eng.go_verbose(depth=depth)
             rows.append(parse_last(lines))
     finally:
         eng.close()
@@ -113,8 +115,8 @@ def main() -> int:
     positions = fens(a.fixtures)
     off_env = {"JASS_D3_RUNTIME_ADAPTER": None, "JASS_D3_RUNTIME_BASE_MODEL": None,
                "JASS_DSSD_MOVE_ORDER_POLICY": None, "JASS_TB_MOVE_ORDER_POLICY": None}
-    control = search_rows(a.control, a.model, positions, off_env)
-    candidate_off = search_rows(a.candidate, a.model, positions, off_env)
+    control = search_rows(a.control, a.model, positions, off_env, depth=IDENTITY_DEPTH)
+    candidate_off = search_rows(a.candidate, a.model, positions, off_env, depth=IDENTITY_DEPTH)
     mismatches = [i for i, (x, y) in enumerate(zip(control, candidate_off)) if x != y]
     if mismatches:
         raise SystemExit(f"D3_RUNTIME_PREFLIGHT_INVALID: OFF identity mismatches={mismatches[:8]}")
@@ -122,9 +124,14 @@ def main() -> int:
     on_env = {"JASS_D3_RUNTIME_ADAPTER": str(a.adapter),
               "JASS_D3_RUNTIME_BASE_MODEL": str(a.model),
               "JASS_DSSD_MOVE_ORDER_POLICY": None, "JASS_TB_MOVE_ORDER_POLICY": None}
-    candidate_on = search_rows(a.candidate, a.model, positions, on_env)
+    candidate_on = search_rows(a.candidate, a.model, positions, on_env, depth=ON_DEPTH)
     if len(candidate_on) != POSITIONS or any(r["bestmove"] == "0-0" for r in candidate_on):
         raise SystemExit("D3_RUNTIME_PREFLIGHT_INVALID: treatment activation search failure")
+
+    below_control = search_rows(a.control, a.model, [BELOW_SUPPORT_FEN], off_env, depth=IDENTITY_DEPTH)[0]
+    below_on = search_rows(a.candidate, a.model, [BELOW_SUPPORT_FEN], on_env, depth=IDENTITY_DEPTH)[0]
+    if below_control != below_on:
+        raise SystemExit("D3_RUNTIME_PREFLIGHT_INVALID: below-9 treatment not dormant")
 
     bad = a.out.with_suffix(".bad.npy")
     bad.write_bytes(b"not-a-valid-npy")
@@ -138,16 +145,15 @@ def main() -> int:
         "verdict": VERDICT,
         "fixture_seed": SEED,
         "positions": POSITIONS,
-        "depth": DEPTH,
+        "identity_depth": IDENTITY_DEPTH,
+        "activation_depth": ON_DEPTH,
         "adapter_sha256": sha(a.adapter),
         "value_model_sha256": sha(a.model),
         "adapter_width": 632,
         "white_square_canonicalization": "51-sq",
-        "support": {"P0": [30, 40], "P1": [20, 29], "P2": [12, 19], "P3": [9, 11], "below9": "LEGACY"},
-        "control_candidate_off_identity": {
-            "bestmove_score_pv_nodes": True,
-            "mismatches": 0,
-        },
+        "support": {"P0": [30, 40], "P1": [20, 29], "P2": [12, 19], "P3": [9, 11],
+                    "below9": "LEGACY", "below9_runtime_identity": True},
+        "control_candidate_off_identity": {"bestmove_score_pv_nodes": True, "mismatches": 0},
         "candidate_on_searches": POSITIONS,
         "malformed_adapter_fail_closed": True,
         "root_pv_priority_unchanged": True,
