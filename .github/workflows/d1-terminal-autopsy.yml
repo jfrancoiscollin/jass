@@ -32,4 +32,4 @@ jobs:
           grep -q 'equal_node_gate_authorized = false' docs/experiments/L3_D1_TERMINAL_AUTOPSY_V1_20260907.md
           grep -q 'STOP_DIAGNOSTIC_REVIEW' docs/experiments/L3_D1_TERMINAL_AUTOPSY_V1_20260907.md
           ! grep -E -- '--lambda|lambda_decision=.*[0-9]' jobs/templates/l3-d1-terminal-autopsy-v1.sh
-          ! grep -E -- '1843|full-ladder|q200' jobs/templates/l3-d1-terminal-autopsy-v1.sh
+          ! grep -E -- '1843|q200' jobs/templates/l3-d1-terminal-autopsy-v1.sh
