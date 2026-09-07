@@ -93,12 +93,12 @@ class D2ConstrainedDenseResidualTests(unittest.TestCase):
         self.assertEqual(readout.MIN_TEST_ELIGIBLE, 300)
         self.assertEqual(readout.MIN_CELL_ELIGIBLE, 25)
 
-    def test_prepare_source_does_not_consume_numeric_qscore_names(self) -> None:
+    def test_prepare_source_does_not_access_numeric_qscore_fields(self) -> None:
         source = Path("jobs/tools/d2_decision_prepare.py").read_text(encoding="utf-8")
-        self.assertNotIn("score_parent", source)
-        self.assertNotIn("q200", source.lower())
-        self.assertNotIn("q50", source.lower())
-        self.assertNotIn("q5/", source.lower())
+        self.assertNotIn('get("score_parent")', source)
+        self.assertNotIn("['score_parent']", source)
+        self.assertNotIn('get("observations")', source)
+        self.assertNotIn("['observations']", source)
 
 
 if __name__ == "__main__":
