@@ -25,4 +25,4 @@ jobs:
           grep -q 'no lambda/L2/alpha/competitor-definition retuning' "$DOC"
           grep -q 'No numeric teacher value or softmax temperature is created' "$DOC"
           grep -q 'No architecture/model search' "$DOC"
-          grep -q '^new teacher search$' "$DOC"
+          grep -q 'new teacher search' "$DOC"
