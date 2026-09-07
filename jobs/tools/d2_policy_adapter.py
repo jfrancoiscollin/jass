@@ -10,7 +10,6 @@ game, promotion, or bake is implemented here.
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict
 import hashlib
 import json
 import math
@@ -142,23 +141,33 @@ def _action_band(count: int) -> str:
 
 
 def build_phi_from_arrays(extras: np.ndarray, wmg: np.ndarray, weg: np.ndarray) -> tuple[np.ndarray, bool]:
-    extras = np.asarray(extras, dtype=np.float64)
-    wmg = np.asarray(wmg, dtype=np.float64)
-    weg = np.asarray(weg, dtype=np.float64)
-    if extras.ndim != 2 or extras.shape[1] != EXTRAS:
+    extras64 = np.asarray(extras, dtype=np.float64)
+    wmg64 = np.asarray(wmg, dtype=np.float64)
+    weg64 = np.asarray(weg, dtype=np.float64)
+    if extras64.ndim != 2 or extras64.shape[1] != EXTRAS:
         raise D2Error(f"D2 requires exactly {EXTRAS} production extras")
-    if wmg.shape != (extras.shape[0],) or weg.shape != (extras.shape[0],):
+    if wmg64.shape != (extras64.shape[0],) or weg64.shape != (extras64.shape[0],):
         raise D2Error("tempo vector shape drift")
-    if not np.array_equal(weg, 1.0 - wmg):
+    if not np.array_equal(weg64, 1.0 - wmg64):
         raise D2Error("tempo MG/EG complement drift")
-    production = train.build_extras_phased(extras, wmg, weg)
-    phi = np.asarray(production.toarray(), dtype=np.float64)
-    manual = np.empty((extras.shape[0], WIDTH), dtype=np.float64)
-    manual[:, :EXTRAS] = extras * wmg[:, None]
-    manual[:, EXTRAS:] = extras * weg[:, None]
-    replay_equal = bool(np.array_equal(phi, manual))
-    if phi.shape != (extras.shape[0], WIDTH) or not replay_equal:
+
+    # Production build_extras_phased materializes the phased features as
+    # float32 before sparse storage.  Replay that rounding exactly, prove the
+    # manual 120xMG + 120xEG construction is byte-identical at the production
+    # boundary, then promote those exact production values to float64 for the
+    # frozen optimizer.  This changes no feature definition or D2 science.
+    production32 = np.asarray(
+        train.build_extras_phased(extras64, wmg64, weg64).toarray(),
+        dtype=np.float32,
+    )
+    manual32 = np.hstack([
+        extras64 * wmg64[:, None],
+        extras64 * weg64[:, None],
+    ]).astype(np.float32)
+    replay_equal = bool(np.array_equal(production32, manual32))
+    if production32.shape != (extras64.shape[0], WIDTH) or not replay_equal:
         raise D2Error("production build_extras_phased replay mismatch")
+    phi = production32.astype(np.float64)
     return phi, replay_equal
 
 
