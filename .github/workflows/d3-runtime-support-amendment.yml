@@ -1,0 +1,21 @@
+name: d3-runtime-support-amendment
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_D3_RUNTIME_MOVE_ORDERING_SUPPORT_AMENDMENT_V1_20260907.md'
+      - '.github/workflows/d3-runtime-support-amendment.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen support boundary
+        run: |
+          DOC=docs/experiments/L3_D3_RUNTIME_MOVE_ORDERING_SUPPORT_AMENDMENT_V1_20260907.md
+          grep -q 'parent pieces 9..40' "$DOC"
+          grep -q 'parent pieces 0..8' "$DOC"
+          grep -q 'phase(8)=UNSUPPORTED' "$DOC"
+          grep -q 'No P0/P1/P2/P3 enable/disable is allowed' "$DOC"
+          grep -q 'No game has been authorized or run' "$DOC"
