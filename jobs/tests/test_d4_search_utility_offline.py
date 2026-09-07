@@ -14,6 +14,7 @@ from jobs.tools import d4_search_utility_trace_render as render
 
 ROOT = Path(__file__).resolve().parents[2]
 PREREG = ROOT / "docs/experiments/L3_D4_SEARCH_UTILITY_ORDERING_PREREGISTRATION_V1_20260907.json"
+TIE_AMENDMENT = ROOT / "docs/experiments/L3_D4_SEARCH_UTILITY_EXAMPLE_TIE_AMENDMENT_V1_20260907.md"
 
 
 class D4SearchUtilityOfflineTests(unittest.TestCase):
@@ -70,6 +71,14 @@ class D4SearchUtilityOfflineTests(unittest.TestCase):
         score = d4.logits(np.zeros(d4.WIDTH), x, mask, phase)
         self.assertTrue(np.array_equal(np.argmax(score, axis=1), np.zeros(4, dtype=int)))
         self.assertTrue(np.array_equal(score[0], np.asarray([0.0, -1.0, -2.0, -3.0])))
+
+    def test_same_key_occurrence_tie_rule_matches_preexecution_amendment(self) -> None:
+        amendment = TIE_AMENDMENT.read_text(encoding="utf-8")
+        source = (ROOT / "jobs/tools/d4_search_utility_offline.py").read_text(encoding="utf-8")
+        self.assertIn("ascending integer `(root_index, event_index)`", amendment)
+        self.assertIn("item = (invert_digest(primary), -root_index, -event_index, payload)", source)
+        self.assertIn("rows.sort(key=lambda row: (row[0], row[1], row[2]))", source)
+        self.assertNotIn("tie_text = f\"{int(event['root_index'])}:{int(event['event_index'])}:{key}\"", source)
 
     def test_trace_renderer_is_isolated_exact_and_fail_closed(self) -> None:
         render.self_test()
