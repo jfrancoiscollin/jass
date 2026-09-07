@@ -1,0 +1,22 @@
+name: d3-square-canonicalization-amendment
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_D3_RELATIONAL_ACTION_RESIDUAL_PREREGISTRATION_AMENDMENT_V1_20260907.md'
+      - '.github/workflows/d3-square-canonicalization-amendment.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen amendment contract
+        run: |
+          DOC=docs/experiments/L3_D3_RELATIONAL_ACTION_RESIDUAL_PREREGISTRATION_AMENDMENT_V1_20260907.md
+          grep -q 'if parent_stm == white: sq_canon = 51 - sq' "$DOC"
+          grep -q 'base action vector width = 158' "$DOC"
+          grep -q 'trainable width          = 632' "$DOC"
+          grep -q 'WDL_CONTROL coefficient  = 1.0 fixed' "$DOC"
+          grep -q 'bootstrap seed            = 2026111201' "$DOC"
+          grep -q 'No other scientific choice is reopened' "$DOC"
