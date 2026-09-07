@@ -78,7 +78,7 @@ bool exact_budget_ok(const SearchResult& r, std::uint64_t budget) {
         && !r.aborted_iteration;
 }
 
-struct Counters {
+struct Gate0VariantCounters {
     std::uint64_t source_rows{0}, selected_rows{0}, processed_rows{0};
     std::uint64_t nodes{0}, eval_calls{0}, wall_us{0};
     std::uint64_t scan_verify_probes{0}, scan_verify_cutoffs{0};
@@ -89,7 +89,7 @@ struct Counters {
 };
 
 void write_report(const std::string& path, const std::string& arm,
-                  std::uint64_t budget, const Counters& c) {
+                  std::uint64_t budget, const Gate0VariantCounters& c) {
     std::ofstream out(path);
     if (!out) throw std::runtime_error("cannot write Gate-0 variant report");
     out << "{\n"
@@ -125,7 +125,7 @@ void write_report(const std::string& path, const std::string& arm,
         << "}\n";
 }
 
-void assert_activation(const std::string& arm, const Counters& c) {
+void assert_activation(const std::string& arm, const Gate0VariantCounters& c) {
     if (arm == "J1_SCAN_VERIFY" && c.scan_verify_probes == 0)
         throw std::runtime_error("J1 activation sentinel absent");
     if (arm == "J2_SCAN_THREAT_REENTRY" && c.scan_threat_reentries == 0)
@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
         out << "parent_id\tfrom\tto\tcaptured_hex\tpromotes\tsearch_score\tnodes\t"
                "completed_depth\teffective_depth\teval_calls\tcutoffs\twall_us\n";
 
-        Counters c{};
+        Gate0VariantCounters c{};
         DiskRow row{};
         for (std::uint32_t idx = 0; idx < declared; ++idx) {
             if (!read_row(in, row)) throw std::runtime_error("truncated parents JNNW");
