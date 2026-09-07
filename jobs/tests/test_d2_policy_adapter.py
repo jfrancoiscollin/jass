@@ -30,8 +30,12 @@ class D2PolicyAdapterTests(unittest.TestCase):
         phi, equal = d2.build_phi_from_arrays(extras, wmg, weg)
         self.assertTrue(equal)
         self.assertEqual(phi.shape, (4, d2.WIDTH))
-        np.testing.assert_array_equal(phi[:, : d2.EXTRAS], extras * wmg[:, None])
-        np.testing.assert_array_equal(phi[:, d2.EXTRAS :], extras * weg[:, None])
+        expected = np.hstack([
+            extras * wmg[:, None],
+            extras * weg[:, None],
+        ]).astype(np.float32).astype(np.float64)
+        self.assertEqual(phi.dtype, np.dtype(np.float64))
+        np.testing.assert_array_equal(phi, expected)
 
     def test_listwise_gradient_matches_finite_difference(self) -> None:
         phi = np.array([
