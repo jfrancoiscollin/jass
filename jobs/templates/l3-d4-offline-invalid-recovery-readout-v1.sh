@@ -34,19 +34,26 @@ MODEL_SHA="e4d510fbb9b81cbe74574d92da48e8de6f61d8f98de6472eeb409713785f0de0"
 
 say "D4 invalid recovery readout start source=$SRC_JOB/$SRC_ATTEMPT searches=0 fits=0 games=0"
 python3 jobs/tools/fetch_result_files.py --prefix "$SRC_ROOT" --expected-state failed \
+  --file artefacts/attempt-diagnostic.json=attempt-diagnostic.json \
   --file artefacts/d4-example-prepare.json=d4-example-prepare.json \
   --file artefacts/d4-teacher-aggregate.json=d4-teacher-aggregate.json \
   --file artefacts/d4-root-pool-provenance.json=d4-root-pool-provenance.json \
   --out-dir "$IN" --report "$ART/verified-1862.json" >"$W/fetch.log" 2>&1
 
-"$PY" - "$ART/verified-1862.json" "$IN/d4-example-prepare.json" "$IN/d4-teacher-aggregate.json" \
+"$PY" - "$ART/verified-1862.json" "$IN/attempt-diagnostic.json" "$IN/d4-example-prepare.json" "$IN/d4-teacher-aggregate.json" \
  "$IN/d4-root-pool-provenance.json" "$SRC_JOB" "$SRC_ATTEMPT" "$SRC_CODE" "$SPEC_CODE" "$MODEL_SHA" "$ART/scientific-summary.json" <<'PY'
 import json,sys
-verified=json.load(open(sys.argv[1])); prepare=json.load(open(sys.argv[2])); teacher=json.load(open(sys.argv[3])); roots=json.load(open(sys.argv[4]))
-src_job,src_attempt,src_code,out_code,model_sha,out_path=sys.argv[5:]
-got=(verified.get('job_id'),verified.get('attempt_id'),verified.get('code_sha'),verified.get('result_state'),verified.get('exit_code'))
-if got != (src_job,src_attempt,src_code,'failed',4):
-    raise SystemExit(f'1862 source identity/exit drift: {got}')
+verified=json.load(open(sys.argv[1])); diagnostic=json.load(open(sys.argv[2])); prepare=json.load(open(sys.argv[3])); teacher=json.load(open(sys.argv[4])); roots=json.load(open(sys.argv[5]))
+src_job,src_attempt,src_code,out_code,model_sha,out_path=sys.argv[6:]
+got=(verified.get('job_id'),verified.get('attempt_id'),verified.get('code_sha'),verified.get('result_state'))
+if got != (src_job,src_attempt,src_code,'failed'):
+    raise SystemExit(f'1862 source identity/state drift: {got}')
+if not isinstance(verified.get('exit_code'),int) or verified.get('exit_code') == 0:
+    raise SystemExit('1862 failed manifest exit-code drift')
+if diagnostic.get('schema')!='jass.stage_failure_diagnostic.v1' or diagnostic.get('state')!='failed':
+    raise SystemExit('1862 attempt diagnostic schema/state drift')
+if diagnostic.get('exit_code')!=4 or diagnostic.get('failure_class')!='STAGE_EXIT_CODE' or diagnostic.get('failure_stage')!='EXECUTE':
+    raise SystemExit(f"1862 stage exit drift: {diagnostic.get('exit_code')} {diagnostic.get('failure_class')} {diagnostic.get('failure_stage')}")
 if prepare.get('schema')!='jass.d4.search_utility_prepare.v1' or prepare.get('verdict')!='D4_SEARCH_UTILITY_OFFLINE_INVALID_V1':
     raise SystemExit('prepare report is not frozen support INVALID')
 if prepare.get('fits')!=0 or prepare.get('strength_games')!=0 or prepare.get('promotions')!=0 or prepare.get('bakes')!=0:
@@ -75,7 +82,7 @@ out={
  'equal_node_authorized':False,'next_stage':'STOP_D4_OFFLINE',
  'game_outcome_reads':0,'qscore_reads':0,'search_decision_trace_reads':0,
  'full_ladder_1843_reads':0,'d3_score_reads':0,
- 'recovery':{'source_state':'failed','source_exit_code':4,'new_searches':0,'new_fits':0,'new_games':0}
+ 'recovery':{'source_state':'failed','runner_exit_code':verified['exit_code'],'source_stage_exit_code':diagnostic['exit_code'],'new_searches':0,'new_fits':0,'new_games':0}
 }
 open(out_path,'w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
 PY
