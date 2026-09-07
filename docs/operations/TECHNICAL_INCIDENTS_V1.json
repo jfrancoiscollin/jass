@@ -148,8 +148,8 @@
       "symptom": "stage exited 1 before the D3 equal-node start marker, with inputs authenticated, outputs unauthenticated and no scientific verdict",
       "root_cause": "the stage preregistration guard searched for the non-existent literal `20,000`, while the frozen merged preregistration states the equal-node budget as `20000 nodes per move each arm`",
       "invariant": "runtime preregistration guards must match the exact merged preregistration bytes; recovery may correct only the guard/assertion plumbing, must fail closed on anchor drift, and may never edit frozen scientific constants or the preregistration",
-      "evidence": "failed 1856 attempt `20260907T153211Z-9562f7e0`; exact 127-byte RESULTS signature for the failing grep; positive and fail-closed recovery regression in `test_d3_runtime_equal_node.py`; PR #848",
-      "status": "MITIGATED"
+      "evidence": "failed 1856 attempt `20260907T153211Z-9562f7e0`; PR #848; repaired rerun 1857 attempt `20260907T155344Z-fcdcd217` PASS exit 0 with authenticated outputs and full frozen equal-node execution; terminal scientific verdict `D3_RUNTIME_EQUAL_NODE_NOT_ESTABLISHED_V1`; PR #849",
+      "status": "CLOSED"
     }
   ]
 }
