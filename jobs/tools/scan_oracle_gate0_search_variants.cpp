@@ -15,6 +15,7 @@
 #include <bit>
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
