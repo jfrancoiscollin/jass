@@ -30,9 +30,12 @@ class D2PolicyAdapterTests(unittest.TestCase):
         phi, equal = d2.build_phi_from_arrays(extras, wmg, weg)
         self.assertTrue(equal)
         self.assertEqual(phi.shape, (4, d2.WIDTH))
+        ex32 = extras.astype(np.float32)
+        wmg32 = wmg.astype(np.float32)
+        weg32 = weg.astype(np.float32)
         expected = np.hstack([
-            extras * wmg[:, None],
-            extras * weg[:, None],
+            ex32 * wmg32[:, None],
+            ex32 * weg32[:, None],
         ]).astype(np.float32).astype(np.float64)
         self.assertEqual(phi.dtype, np.dtype(np.float64))
         np.testing.assert_array_equal(phi, expected)
