@@ -140,6 +140,16 @@
       "invariant": "stage templates must consume only runner-owned stage variables or reconstruct defense-in-depth provenance from JASS_STAGE_SPEC; D1 must also retain the exact historical CURRENT_2M split 1800796/199204 and must never confuse bootstrap replication count 200000 with holdout rows",
       "evidence": "failed 1846 attempt 20260906T204702Z-2da8293b and 1847 attempt 20260906T211833Z-91414e25; run_experiment_stage.py build_command sanitized env; D1 v3 entrypoint + test_d1_stage_env_recovery.py; D1_STAGE_ENV_RECOVERY_1846_1847_20260906.md; PR #833; rerun 1849 attempt `20260906T222203Z-08fd187a` PASS exit 0 with authenticated outputs and terminal scientific readout",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-015",
+      "dedupe_key": "job:cpx62-1856-l3-decision-math-d3-runtime-equal-node-v1",
+      "context": "1856, D3 runtime equal-node gate",
+      "symptom": "stage exited 1 before the D3 equal-node start marker, with inputs authenticated, outputs unauthenticated and no scientific verdict",
+      "root_cause": "the stage preregistration guard searched for the non-existent literal `20,000`, while the frozen merged preregistration states the equal-node budget as `20000 nodes per move each arm`",
+      "invariant": "runtime preregistration guards must match the exact merged preregistration bytes; recovery may correct only the guard/assertion plumbing, must fail closed on anchor drift, and may never edit frozen scientific constants or the preregistration",
+      "evidence": "failed 1856 attempt `20260907T153211Z-9562f7e0`; exact 127-byte RESULTS signature for the failing grep; positive and fail-closed recovery regression in `test_d3_runtime_equal_node.py`; PR #848",
+      "status": "MITIGATED"
     }
   ]
 }

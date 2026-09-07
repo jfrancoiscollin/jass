@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 import unittest
 
 from jobs.tools import d3_runtime_equal_node_pool as pool
@@ -49,6 +50,20 @@ class D3RuntimeEqualNodeTests(unittest.TestCase):
         self.assertIn("FEATURE_CALLS.fetch_add(1, std::memory_order_relaxed);", rendered)
         self.assertIn("reset_feature_calls()", rendered)
         self.assertIn("return parent_value + residual(rt, parent, move, child);", rendered)
+
+    def test_prereg_recovery_is_exact_and_fails_closed(self):
+        recovery = ROOT / "jobs/templates/l3-d3-runtime-equal-node-prereg-recovery-v1.sh"
+        subprocess.run(
+            ["/usr/bin/bash", str(recovery), "--self-test"],
+            cwd=ROOT,
+            check=True,
+        )
+        text = recovery.read_text(encoding="utf-8")
+        self.assertIn("grep -Fq '20,000'", text)
+        self.assertIn("grep -Fq '20000 nodes per move each arm'", text)
+        prereg = (ROOT / "docs/experiments/L3_D3_RUNTIME_MOVE_ORDERING_PREREGISTRATION_V1_20260907.md").read_text(encoding="utf-8")
+        self.assertIn("node budget           = 20000 nodes per move each arm", prereg)
+        self.assertNotIn("20,000", prereg)
 
     def test_elo_direction(self):
         self.assertGreater(readout.elo(0.51), 0.0)
