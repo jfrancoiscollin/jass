@@ -26,6 +26,8 @@
 
 namespace {
 
+using namespace jass;
+
 std::set<std::uint32_t> load_ids(const std::string& path) {
     std::ifstream in(path);
     if (!in) throw std::runtime_error("cannot open parent ids");
@@ -40,25 +42,25 @@ std::set<std::uint32_t> load_ids(const std::string& path) {
     return ids;
 }
 
-std::string bitboard_hex(jass::Bitboard value) {
+std::string bitboard_hex(Bitboard value) {
     std::ostringstream out;
     out << std::hex << std::setfill('0') << std::setw(13)
         << static_cast<std::uint64_t>(value);
     return out.str();
 }
 
-bool exact_budget_ok(const jass::SearchResult& r, std::uint64_t budget) {
+bool exact_budget_ok(const SearchResult& r, std::uint64_t budget) {
     if (r.nodes == budget
-        && r.stop_reason == jass::SearchStopReason::Nodes
+        && r.stop_reason == SearchStopReason::Nodes
         && r.aborted_iteration) return true;
     return r.nodes > 0 && r.nodes < budget
-        && r.stop_reason == jass::SearchStopReason::None
-        && r.completed_depth == jass::MAX_PLY
-        && r.effective_depth == jass::MAX_PLY
+        && r.stop_reason == SearchStopReason::None
+        && r.completed_depth == MAX_PLY
+        && r.effective_depth == MAX_PLY
         && !r.aborted_iteration;
 }
 
-struct Counters {
+struct Gate0Counters {
     std::uint64_t source_rows{0};
     std::uint64_t selected_rows{0};
     std::uint64_t processed_rows{0};
@@ -72,7 +74,7 @@ struct Counters {
 
 void write_report(const std::string& path, const std::string& arm,
                   std::uint64_t budget, int shard, int nshards,
-                  std::size_t tt_mb, int tb_cap, const Counters& c) {
+                  std::size_t tt_mb, int tb_cap, const Gate0Counters& c) {
     std::ofstream out(path);
     if (!out) throw std::runtime_error("cannot write Gate-0 report");
     out << "{\n"
@@ -168,7 +170,7 @@ int main(int argc, char** argv) {
         out << "parent_id\tfrom\tto\tcaptured_hex\tpromotes\tsearch_score\tnodes\t"
                "completed_depth\teffective_depth\teval_calls\tcutoffs\td3_feature_calls\twall_us\n";
 
-        Counters c{};
+        Gate0Counters c{};
         DiskRow row{};
         for (std::uint32_t idx = 0; idx < declared; ++idx) {
             if (!read_row(in, row)) throw std::runtime_error("truncated parents JNNW");
@@ -214,11 +216,8 @@ int main(int argc, char** argv) {
         }
         char trailing = 0;
         if (in.read(&trailing, 1)) throw std::runtime_error("parents JNNW trailing bytes");
-        const std::size_t expected = static_cast<std::size_t>(512 / nshards)
-            + (static_cast<std::size_t>(shard) < static_cast<std::size_t>(512 % nshards) ? 1U : 0U);
-        // Sharding is by parent id, not selection ordinal, so only global count is asserted here.
-        (void)expected;
-        if (c.selected_rows != 512 || c.invalid_rows != 0 || c.exact_budget_failures != 0)
+        if (c.selected_rows != 512 || c.processed_rows != 512 || c.invalid_rows != 0
+            || c.exact_budget_failures != 0)
             throw std::runtime_error("Gate-0 scorer count/integrity drift");
         write_report(report_path, arm, budget, shard, nshards, tt_mb, tb_cap, c);
         return 0;
