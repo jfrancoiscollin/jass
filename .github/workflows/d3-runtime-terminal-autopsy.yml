@@ -1,0 +1,35 @@
+name: D3 runtime terminal autopsy contract
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_D3_RUNTIME_TERMINAL_AUTOPSY_V1_20260907.md'
+      - 'jobs/tools/d3_runtime_terminal_autopsy.py'
+      - 'jobs/templates/l3-d3-runtime-terminal-autopsy-v1.sh'
+      - 'jobs/tests/test_d3_runtime_terminal_autopsy.py'
+      - '.github/workflows/d3-runtime-terminal-autopsy.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'docs/experiments/L3_D3_RUNTIME_TERMINAL_AUTOPSY_V1_20260907.md'
+      - 'jobs/tools/d3_runtime_terminal_autopsy.py'
+      - 'jobs/templates/l3-d3-runtime-terminal-autopsy-v1.sh'
+      - 'jobs/tests/test_d3_runtime_terminal_autopsy.py'
+      - '.github/workflows/d3-runtime-terminal-autopsy.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest jobs.tests.test_d3_runtime_terminal_autopsy
+      - run: python -m py_compile jobs/tools/d3_runtime_terminal_autopsy.py
+      - run: bash -n jobs/templates/l3-d3-runtime-terminal-autopsy-v1.sh
+      - name: enforce diagnostic-only scope
+        run: |
+          grep -Fq 'strength_games = 0' docs/experiments/L3_D3_RUNTIME_TERMINAL_AUTOPSY_V1_20260907.md
+          grep -Fq 'equal_time_authorized = false' docs/experiments/L3_D3_RUNTIME_TERMINAL_AUTOPSY_V1_20260907.md
+          ! grep -E -- '--qscore|SearchDecisionTrace|cpx62-1843|--teacher|--model-search' jobs/templates/l3-d3-runtime-terminal-autopsy-v1.sh jobs/tools/d3_runtime_terminal_autopsy.py
