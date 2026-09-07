@@ -33,7 +33,7 @@ def load_groups(path: Path, ids: set[int]):
     phase: dict[int, str] = {}
     with open_text(path) as stream:
         reader = csv.DictReader(stream, delimiter="\t")
-        req = {"row_index","parent_id","from","to","captured_hex","promotes","parent_phase"}
+        req = {"row_index", "parent_id", "from", "to", "captured_hex", "promotes", "parent_phase"}
         if reader.fieldnames is None or not req.issubset(reader.fieldnames):
             raise ValueError("group fields drift")
         for row in reader:
@@ -59,7 +59,7 @@ def load_scan(paths: list[Path], wanted_rows: set[int]) -> dict[int, float]:
     for path in paths:
         with open_text(path) as stream:
             reader = csv.DictReader(stream, delimiter="\t")
-            req = {"row_index","budget_nodes","parent_score_centi"}
+            req = {"row_index", "budget_nodes", "parent_score_centi"}
             if reader.fieldnames is None or not req.issubset(reader.fieldnames):
                 raise ValueError(f"{path}: Scan fields drift")
             for row in reader:
@@ -83,7 +83,7 @@ def load_arm(path: Path, ids: set[int]):
     out = {}
     with path.open("r", encoding="utf-8", newline="") as stream:
         reader = csv.DictReader(stream, delimiter="\t")
-        req = {"parent_id","from","to","captured_hex","promotes","nodes","completed_depth","eval_calls","wall_us","d3_feature_calls"}
+        req = {"parent_id", "from", "to", "captured_hex", "promotes", "nodes", "completed_depth", "eval_calls", "wall_us"}
         if reader.fieldnames is None or not req.issubset(reader.fieldnames):
             raise ValueError("arm fields drift")
         for row in reader:
@@ -91,10 +91,11 @@ def load_arm(path: Path, ids: set[int]):
             if pid not in ids or pid in out:
                 raise ValueError("arm parent coverage/duplicate drift")
             out[pid] = {
-                "key": (pid,int(row["from"]),int(row["to"]),row["captured_hex"].lower(),int(row["promotes"])),
-                "nodes": int(row["nodes"]), "depth": float(row["completed_depth"]),
-                "eval_calls": float(row["eval_calls"]), "wall_us": float(row["wall_us"]),
-                "d3_feature_calls": int(row["d3_feature_calls"]),
+                "key": (pid, int(row["from"]), int(row["to"]), row["captured_hex"].lower(), int(row["promotes"])),
+                "nodes": int(row["nodes"]),
+                "depth": float(row["completed_depth"]),
+                "eval_calls": float(row["eval_calls"]),
+                "wall_us": float(row["wall_us"]),
             }
     if set(out) != ids:
         raise ValueError(f"arm coverage drift rows={len(out)}")
@@ -116,65 +117,101 @@ def main() -> int:
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
 
-    ordered = selected_ids(args.ids); ids = set(ordered)
+    ordered = selected_ids(args.ids)
+    ids = set(ordered)
     by_parent, semantic, phase = load_groups(args.groups, ids)
     wanted_rows = {rid for pid in ids for rid in by_parent[pid]}
     scan = load_scan(args.scan_score, wanted_rows)
-    control = load_arm(args.control, ids); candidate = load_arm(args.candidate, ids)
+    control = load_arm(args.control, ids)
+    candidate = load_arm(args.candidate, ids)
 
-    rc=[]; rd=[]; hc=[]; hd=[]; depth_delta=[]; eval_delta=[]; wall_ratio=[]
-    rows=[]
+    rc = []
+    rd = []
+    hc = []
+    hd = []
+    depth_delta = []
+    eval_delta = []
+    wall_ratio = []
     for pid in ordered:
         best = max(scan[rid] for rid in by_parent[pid])
-        ck = control[pid]["key"]; dk = candidate[pid]["key"]
+        ck = control[pid]["key"]
+        dk = candidate[pid]["key"]
         if ck not in semantic or dk not in semantic:
             raise ValueError(f"selected move not found among frozen siblings parent={pid}")
-        cr = best - scan[semantic[ck]]; dr = best - scan[semantic[dk]]
+        cr = best - scan[semantic[ck]]
+        dr = best - scan[semantic[dk]]
         if cr < -1e-9 or dr < -1e-9:
             raise ValueError("negative Scan regret")
-        rc.append(cr); rd.append(dr); hc.append(cr == 0.0); hd.append(dr == 0.0)
-        depth_delta.append(candidate[pid]["depth"]-control[pid]["depth"])
-        eval_delta.append(candidate[pid]["eval_calls"]-control[pid]["eval_calls"])
+        rc.append(cr)
+        rd.append(dr)
+        hc.append(cr == 0.0)
+        hd.append(dr == 0.0)
+        depth_delta.append(candidate[pid]["depth"] - control[pid]["depth"])
+        eval_delta.append(candidate[pid]["eval_calls"] - control[pid]["eval_calls"])
         if control[pid]["wall_us"] <= 0 or candidate[pid]["wall_us"] <= 0:
             raise ValueError("nonpositive wall timing")
-        wall_ratio.append(candidate[pid]["wall_us"]/control[pid]["wall_us"])
-        rows.append({"parent_id":pid,"phase":phase[pid],"control_regret":cr,"candidate_regret":dr})
+        wall_ratio.append(candidate[pid]["wall_us"] / control[pid]["wall_us"])
 
-    rc=np.asarray(rc); rd=np.asarray(rd); improvement=rc-rd
-    rng=np.random.default_rng(SEED)
-    boots=np.empty(BOOTSTRAPS,dtype=np.float64)
-    n=len(ordered)
+    rc = np.asarray(rc)
+    rd = np.asarray(rd)
+    improvement = rc - rd
+    rng = np.random.default_rng(SEED)
+    boots = np.empty(BOOTSTRAPS, dtype=np.float64)
+    n = len(ordered)
     for i in range(BOOTSTRAPS):
-        idx=rng.integers(0,n,size=n)
-        boots[i]=float(np.mean(improvement[idx]))
-    lo,hi=np.percentile(boots,[2.5,97.5])
-    wr=np.asarray(wall_ratio); dd=np.asarray(depth_delta); ed=np.asarray(eval_delta)
-    control_top=float(np.mean(hc)); candidate_top=float(np.mean(hd))
-    mean_imp=float(np.mean(improvement)); median_wall=float(np.median(wr))
+        idx = rng.integers(0, n, size=n)
+        boots[i] = float(np.mean(improvement[idx]))
+    lo, hi = np.percentile(boots, [2.5, 97.5])
+    wr = np.asarray(wall_ratio)
+    dd = np.asarray(depth_delta)
+    ed = np.asarray(eval_delta)
+    control_top = float(np.mean(hc))
+    candidate_top = float(np.mean(hd))
+    mean_imp = float(np.mean(improvement))
+    median_wall = float(np.median(wr))
     supported = mean_imp > 0 and float(lo) > 0 and candidate_top >= control_top and median_wall <= 1.05
 
     def metrics(regret: np.ndarray, hit: list[bool]):
-        return {"mean_regret":float(np.mean(regret)),"median_regret":float(np.median(regret)),
-                "p95_regret":p95(regret),"top_hit":float(np.mean(hit)),
-                "catastrophic_regret_ge_50":float(np.mean(regret >= 50.0))}
+        return {
+            "mean_regret": float(np.mean(regret)),
+            "median_regret": float(np.median(regret)),
+            "p95_regret": p95(regret),
+            "top_hit": float(np.mean(hit)),
+            "catastrophic_regret_ge_50": float(np.mean(regret >= 50.0)),
+        }
 
-    payload={
-        "schema":"jass.scan_oracle_gate0_readout.v1","benchmark_only":True,
-        "parents":n,"scan_reference_nodes":SCAN_BUDGET,
-        "control":metrics(rc,hc),"candidate_name":args.candidate_name,"candidate":metrics(rd,hd),
-        "paired":{"mean_regret_improvement":mean_imp,"regret_improvement_ci95":[float(lo),float(hi)],
-                  "top_hit_delta":candidate_top-control_top,"mean_completed_depth_delta":float(np.mean(dd)),
-                  "mean_eval_calls_delta":float(np.mean(ed)),"median_wall_ratio":median_wall},
-        "gate":{"mean_regret_improvement_gt_0":mean_imp>0,"regret_lcb95_gt_0":float(lo)>0,
-                "top_hit_not_worse":candidate_top>=control_top,"median_wall_ratio_le_1p05":median_wall<=1.05,
-                "verdict":"GATE0_SUPPORTED" if supported else "GATE0_NOT_SUPPORTED"},
-        "retrospective_d3_would_have_been_rejected": (not supported) if args.candidate_name=="D3" else None,
-        "bootstrap":{"repetitions":BOOTSTRAPS,"seed":SEED},
-        "guards":{"scan_searches":0,"fits":0,"strength_games":0,"selfplay_games":0,"promotions":0,"bakes":0},
+    payload = {
+        "schema": "jass.scan_oracle_gate0_readout.v1",
+        "benchmark_only": True,
+        "parents": n,
+        "scan_reference_nodes": SCAN_BUDGET,
+        "control": metrics(rc, hc),
+        "candidate_name": args.candidate_name,
+        "candidate": metrics(rd, hd),
+        "paired": {
+            "mean_regret_improvement": mean_imp,
+            "regret_improvement_ci95": [float(lo), float(hi)],
+            "top_hit_delta": candidate_top - control_top,
+            "mean_completed_depth_delta": float(np.mean(dd)),
+            "mean_eval_calls_delta": float(np.mean(ed)),
+            "median_wall_ratio": median_wall,
+        },
+        "gate": {
+            "mean_regret_improvement_gt_0": mean_imp > 0,
+            "regret_lcb95_gt_0": float(lo) > 0,
+            "top_hit_not_worse": candidate_top >= control_top,
+            "median_wall_ratio_le_1p05": median_wall <= 1.05,
+            "verdict": "GATE0_SUPPORTED" if supported else "GATE0_NOT_SUPPORTED",
+        },
+        "retrospective_d3_would_have_been_rejected": (not supported) if args.candidate_name == "D3" else None,
+        "bootstrap": {"repetitions": BOOTSTRAPS, "seed": SEED},
+        "guards": {"scan_searches": 0, "fits": 0, "strength_games": 0, "selfplay_games": 0, "promotions": 0, "bakes": 0},
     }
-    args.out.parent.mkdir(parents=True,exist_ok=True)
-    args.out.write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n",encoding="utf-8")
-    print(json.dumps(payload,sort_keys=True))
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps(payload, sort_keys=True))
     return 0
 
-if __name__ == "__main__": raise SystemExit(main())
+
+if __name__ == "__main__":
+    raise SystemExit(main())
