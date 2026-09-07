@@ -1,0 +1,52 @@
+name: d3-runtime-move-order
+
+on:
+  pull_request:
+    paths:
+      - 'src/d3_runtime_move_order.hpp'
+      - 'jobs/tools/d3_runtime_render.py'
+      - 'jobs/tools/d3_runtime_preflight.py'
+      - 'jobs/tests/test_d3_runtime_render.py'
+      - 'jobs/templates/l3-d3-runtime-preflight-v1.sh'
+      - '.github/workflows/d3-runtime-move-order.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python and shell contracts
+        run: |
+          python -m py_compile jobs/tools/d3_runtime_render.py jobs/tools/d3_runtime_preflight.py jobs/tests/test_d3_runtime_render.py
+          python -m unittest jobs.tests.test_d3_runtime_render -v
+          bash -n jobs/templates/l3-d3-runtime-preflight-v1.sh
+      - name: Render exact current search source
+        run: |
+          python jobs/tools/d3_runtime_render.py --src src/search.cpp --out /tmp/search.cpp
+          cp /tmp/search.cpp src/search.cpp
+          grep -q 'd3_runtime_order::score(d3, parent, moves\[i\])' src/search.cpp
+          grep -q 'order_moves(root_moves, s, pos, 0, Move{}, false, Move{});' src/search.cpp
+      - name: Build rendered production architecture
+        run: |
+          cmake -S . -B /tmp/d3-build -DCMAKE_BUILD_TYPE=Release \
+            -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON \
+            -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/d3-build -j2 --target jass jass_tests
+      - name: OFF-path regression
+        run: /tmp/d3-build/jass_tests
+      - name: Frozen runtime guards
+        run: |
+          grep -q 'WIDTH = BASE_WIDTH \* PHASES' src/d3_runtime_move_order.hpp
+          grep -q 'return parent_stm == Color::Black ? value : 51 - value;' src/d3_runtime_move_order.hpp
+          grep -q 'pieces >= 9  && pieces <= 11' src/d3_runtime_move_order.hpp
+          grep -q 'return -1;  // frozen support amendment' src/d3_runtime_move_order.hpp
+          grep -q 'parent_value + residual' src/d3_runtime_move_order.hpp
+          grep -q 'JASS_D3_RUNTIME_ADAPTER' src/d3_runtime_move_order.hpp
+          grep -q 'JASS_D3_RUNTIME_BASE_MODEL' src/d3_runtime_move_order.hpp
+          ! grep -E 'temperature|softmax|qscore|SearchDecisionTrace|full_ladder_1843' src/d3_runtime_move_order.hpp
+          ! grep -E 'JASS_D3_RUNTIME' src/movegen.cpp
+          grep -q 'FULL_FITS__0' jobs/templates/l3-d3-runtime-preflight-v1.sh
+          grep -q 'STRENGTH_GAMES__0' jobs/templates/l3-d3-runtime-preflight-v1.sh
