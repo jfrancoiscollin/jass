@@ -160,6 +160,16 @@
       "invariant": "consumers of sealed sharded publications must use the producer's exact shard identifiers; the D3 autopsy stage must use literal `00 01 02 03 04 05 06 07` for both fetch and analysis loops and must fail regression coverage if width-sensitive generation returns",
       "evidence": "failed attempt `20260907T162007Z-e42764d6`; PR #851; immutable recovery `cpx62-1860-l3-decision-math-d3-runtime-terminal-autopsy-recovery-requeue-v1` attempt `20260907T164613Z-0beb8796` PASS exit 0 with authenticated terminal autopsy publication; `D3_RUNTIME_TERMINAL_AUTOPSY_COMPLETE_V1`; classification `BROAD_EQUAL_NODE_SEARCH_EFFICIENCY_DEGRADATION`; PR #853",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-017",
+      "dedupe_key": "job:cpx62-1861-l3-decision-math-d4-search-utility-offline-v1",
+      "context": "D4 search-utility offline attempt 1861",
+      "symptom": "stage aborted during fresh-root-generation after authenticated inputs, before D4 root selection/teacher/fit, with no scientific verdict",
+      "root_cause": "`--gen-opening-pool` writes a `# count=...` metadata header plus exactly 30000 FEN payload rows, while the stage cardinality guard used `grep -cve '^[[:space:]]*$'` and therefore counted 30001 non-empty lines",
+      "invariant": "cardinality checks on generated FEN pools must count payload rows only and ignore blank/comment metadata lines; recovery patching must apply exactly once and fail closed on source drift",
+      "evidence": "failed attempt `20260907T175103Z-55416934`; generator source emits `# count=` header; recovery wrapper uses comment-aware `grep -cvE '^[[:space:]]*(#|$)'`; regression test `jobs/tests/test_d4_root_cardinality_recovery.py`; PR #857",
+      "status": "MITIGATED — terminal recovery proof pending"
     }
   ]
 }
