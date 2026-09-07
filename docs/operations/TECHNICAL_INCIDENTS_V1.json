@@ -180,6 +180,16 @@
       "invariant": "expected nonzero scientific/status return codes must be captured in an `if command; then ...; else rc=$?; fi` conditional or with ERR trap explicitly disabled; `set +e` alone is not a safe ERR-trap suppression mechanism",
       "evidence": "attempt `20260907T182914Z-1c779cc8` exit 4; artifacts include all 16 teacher reports, `d4-teacher-aggregate.json`, and `d4-example-prepare.json`; source prepare CLI returns 4 iff support is insufficient; recovery stage authenticates failed source and performs no new science; PR #859",
       "status": "MITIGATED — terminal recovery readout pending"
+    },
+    {
+      "id": "TI-019",
+      "dedupe_key": "job:cpx62-1865-l3-scan-oracle-gate0-search-variants-v1",
+      "context": "Scan-oracle Gate0 exploratory J1-J6 screen",
+      "symptom": "stage exited 1 after J1/J2 completed and J3 emitted its 512-row TSV but before J3 report/readout",
+      "root_cause": "the scorer treated zero observed arm activation as a process-fatal condition; J3 had no single-reply extension event on the frozen 512-parent cohort",
+      "invariant": "absence of treatment activation on a screening cohort is a scientific/support result and must not abort unrelated arms; it should be reported as not exercised/non-survivor",
+      "evidence": "1865 sealed artefacts contain J1/J2 TSV+report+readout and J3 TSV only; scorer calls assert_activation after all 512 searches and before report write; PR #863",
+      "status": "MITIGATED — partial recovery reuses J1/J2 and reruns J3-J6 with nonfatal activation accounting"
     }
   ]
 }
