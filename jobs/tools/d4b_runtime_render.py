@@ -4,6 +4,12 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from jobs.tools import d3_runtime_render as d3
 
 INCLUDE_REPLACEMENT = d3.INCLUDE_ANCHOR + '#include "d4b_runtime_move_order.hpp"\n'
