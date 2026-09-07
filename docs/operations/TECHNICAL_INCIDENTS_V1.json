@@ -138,8 +138,8 @@
       "symptom": "both stages exited 1 after about five minutes with inputs_authenticated=true, outputs_authenticated=false, no template RESULTS/logs and no scientific verdict",
       "root_cause": "run_experiment_stage.py intentionally sanitizes the stage environment and does not propagate outer EXPECTED_CODE_SHA; D1 v1/v2 required ${EXPECTED_CODE_SHA:?} before installing traps, so the shell exited immediately on entry to EXECUTE",
       "invariant": "stage templates must consume only runner-owned stage variables or reconstruct defense-in-depth provenance from JASS_STAGE_SPEC; D1 must also retain the exact historical CURRENT_2M split 1800796/199204 and must never confuse bootstrap replication count 200000 with holdout rows",
-      "evidence": "failed 1846 attempt 20260906T204702Z-2da8293b and 1847 attempt 20260906T211833Z-91414e25; run_experiment_stage.py build_command sanitized env; D1 v3 entrypoint + test_d1_stage_env_recovery.py; D1_STAGE_ENV_RECOVERY_1846_1847_20260906.md; PR #833",
-      "status": "MITIGATED — RERUN PENDING"
+      "evidence": "failed 1846 attempt 20260906T204702Z-2da8293b and 1847 attempt 20260906T211833Z-91414e25; run_experiment_stage.py build_command sanitized env; D1 v3 entrypoint + test_d1_stage_env_recovery.py; D1_STAGE_ENV_RECOVERY_1846_1847_20260906.md; PR #833; rerun 1849 attempt `20260906T222203Z-08fd187a` PASS exit 0 with authenticated outputs and terminal scientific readout",
+      "status": "CLOSED"
     }
   ]
 }
