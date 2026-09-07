@@ -1,0 +1,45 @@
+name: D3 runtime equal-node contract
+
+on:
+  pull_request:
+    paths:
+      - "jobs/tools/d3_runtime_equal_node*.py"
+      - "jobs/templates/l3-d3-runtime-equal-node-v1.sh"
+      - "jobs/tests/test_d3_runtime_equal_node.py"
+      - ".github/workflows/d3-runtime-equal-node.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "jobs/tools/d3_runtime_equal_node*.py"
+      - "jobs/templates/l3-d3-runtime-equal-node-v1.sh"
+      - "jobs/tests/test_d3_runtime_equal_node.py"
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --disable-pip-version-check numpy
+      - name: Syntax and unit contract
+        run: |
+          python -m py_compile \
+            jobs/tools/d3_runtime_equal_node_render.py \
+            jobs/tools/d3_runtime_equal_node_pool.py \
+            jobs/tools/d3_runtime_equal_node.py \
+            jobs/tools/d3_runtime_equal_node_readout.py
+          bash -n jobs/templates/l3-d3-runtime-equal-node-v1.sh
+          python -m unittest jobs.tests.test_d3_runtime_equal_node
+      - name: Frozen science barriers
+        run: |
+          grep -Fq 'NODE_BUDGET = 20000' jobs/tools/d3_runtime_equal_node.py
+          grep -Fq 'PRIMARY = 750' jobs/tools/d3_runtime_equal_node_pool.py
+          grep -Fq 'HARNESS = 100' jobs/tools/d3_runtime_equal_node_pool.py
+          grep -Fq 'BOOTSTRAP_SEED = 2026111303' jobs/tools/d3_runtime_equal_node_readout.py
+          grep -Fq 'strength_games=1700' jobs/templates/l3-d3-runtime-equal-node-v1.sh
+          ! grep -E -- '--qscore|SearchDecisionTrace|cpx62-1843|--teacher|--model-search' \
+            jobs/tools/d3_runtime_equal_node.py \
+            jobs/tools/d3_runtime_equal_node_pool.py \
+            jobs/tools/d3_runtime_equal_node_readout.py
