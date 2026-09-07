@@ -68,7 +68,6 @@ struct Gate0Counters {
     std::uint64_t exact_budget_failures{0};
     std::uint64_t nodes{0};
     std::uint64_t eval_calls{0};
-    std::uint64_t d3_feature_calls{0};
     std::uint64_t wall_us{0};
 };
 
@@ -97,7 +96,6 @@ void write_report(const std::string& path, const std::string& arm,
         << "  \"exact_budget_failures\": " << c.exact_budget_failures << ",\n"
         << "  \"nodes\": " << c.nodes << ",\n"
         << "  \"eval_calls\": " << c.eval_calls << ",\n"
-        << "  \"d3_feature_calls\": " << c.d3_feature_calls << ",\n"
         << "  \"wall_us\": " << c.wall_us << ",\n"
         << "  \"scan_searches\": 0,\n"
         << "  \"fits\": 0,\n"
@@ -168,7 +166,7 @@ int main(int argc, char** argv) {
         std::ofstream out(scores_path);
         if (!out) throw std::runtime_error("cannot write Gate-0 scores");
         out << "parent_id\tfrom\tto\tcaptured_hex\tpromotes\tsearch_score\tnodes\t"
-               "completed_depth\teffective_depth\teval_calls\tcutoffs\td3_feature_calls\twall_us\n";
+               "completed_depth\teffective_depth\teval_calls\tcutoffs\twall_us\n";
 
         Gate0Counters c{};
         DiskRow row{};
@@ -205,14 +203,12 @@ int main(int argc, char** argv) {
             }
             c.nodes += r.nodes;
             c.eval_calls += r.eval_calls;
-            c.d3_feature_calls += r.d3_feature_calls;
             c.wall_us += static_cast<std::uint64_t>(std::max<std::int64_t>(0, elapsed));
             out << idx << '\t' << static_cast<int>(r.best_move.from) << '\t'
                 << static_cast<int>(r.best_move.to) << '\t' << bitboard_hex(r.best_move.captured)
                 << '\t' << (r.best_move.promotes ? 1 : 0) << '\t' << r.score << '\t'
                 << r.nodes << '\t' << r.completed_depth << '\t' << r.effective_depth << '\t'
-                << r.eval_calls << '\t' << r.cutoffs << '\t' << r.d3_feature_calls << '\t'
-                << elapsed << '\n';
+                << r.eval_calls << '\t' << r.cutoffs << '\t' << elapsed << '\n';
         }
         char trailing = 0;
         if (in.read(&trailing, 1)) throw std::runtime_error("parents JNNW trailing bytes");
