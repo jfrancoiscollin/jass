@@ -1,0 +1,43 @@
+name: Scan oracle Gate0 contract
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_SCAN_ORACLE_GATE0_V1_20260907.md'
+      - 'jobs/tools/scan_oracle_gate0_*'
+      - 'jobs/templates/l3-scan-oracle-gate0-*'
+      - 'jobs/tests/test_scan_oracle_gate0.py'
+      - '.github/workflows/scan-oracle-gate0.yml'
+  workflow_dispatch:
+
+jobs:
+  gate0-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python and shell contract tests
+        run: |
+          python -m unittest jobs.tests.test_scan_oracle_gate0 -v
+          python -m py_compile jobs/tools/scan_oracle_gate0_select.py jobs/tools/scan_oracle_gate0_readout.py jobs/tools/scan_oracle_gate0_render.py
+          bash -n jobs/templates/l3-scan-oracle-gate0-d3-retrospective-v1.sh
+      - name: Build isolated CONTROL scorer
+        run: |
+          rm -rf /tmp/gate0-control
+          mkdir -p /tmp/gate0-control
+          git archive HEAD | tar -x -C /tmp/gate0-control
+          python /tmp/gate0-control/jobs/tools/scan_oracle_gate0_render.py --cmake /tmp/gate0-control/CMakeLists.txt
+          cmake -S /tmp/gate0-control -B /tmp/gate0-control/build -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/gate0-control/build -j2 --target jass_scan_oracle_gate0_runtime
+      - name: Build isolated D3 scorer
+        run: |
+          rm -rf /tmp/gate0-d3
+          mkdir -p /tmp/gate0-d3
+          git archive HEAD | tar -x -C /tmp/gate0-d3
+          python /tmp/gate0-d3/jobs/tools/scan_oracle_gate0_render.py --cmake /tmp/gate0-d3/CMakeLists.txt
+          python /tmp/gate0-d3/jobs/tools/d3_runtime_render.py --src /tmp/gate0-d3/src/search.cpp --out /tmp/gate0-d3/search.cpp
+          mv /tmp/gate0-d3/search.cpp /tmp/gate0-d3/src/search.cpp
+          cmake -S /tmp/gate0-d3 -B /tmp/gate0-d3/build -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/gate0-d3/build -j2 --target jass_scan_oracle_gate0_runtime
