@@ -1,0 +1,106 @@
+{
+  "schema": "jass.d4b.search_utility_micro_screen.v1",
+  "date": "2026-09-07",
+  "status": "frozen_before_execution",
+  "purpose": "cheap exploratory screen of the D4 beta-cutoff ordering hypothesis before any Elo/self-play scale-up",
+  "source": {
+    "d4_roots_job": "cpx62-1862-l3-decision-math-d4-search-utility-offline-cardinality-recovery-requeue-v1",
+    "d4_roots_attempt": "20260907T182914Z-1c779cc8",
+    "reuse": ["d4-search-utility-roots.tsv"],
+    "reuse_teacher_labels": false,
+    "value_model_sha256": "e4d510fbb9b81cbe74574d92da48e8de6f61d8f98de6472eeb409713785f0de0"
+  },
+  "roots": {
+    "selector_prefix": "D4B-ROOT-2026090701:",
+    "total": 512,
+    "by_original_split": {"train": 384, "valid": 64, "test": 64},
+    "target_blind": true
+  },
+  "teacher": {
+    "exact_nodes_per_root": 20000,
+    "threads": 1,
+    "book": false,
+    "tt_reset_per_root": true,
+    "shards": 8,
+    "planned_searches": 512,
+    "planned_nodes": 10240000,
+    "target": "observed_beta_cutoff_causing_move_within_legacy_top4_non_tt",
+    "eligibility_identical_to_d4": true
+  },
+  "examples": {
+    "selector_prefix": "D4B-EXAMPLE-2026090702:",
+    "exact_counts": {"train": 8000, "valid": 1000, "test": 1000},
+    "canonical_cross_split_leakage_removed": true,
+    "phase_quota_gate": false,
+    "phase_metrics_diagnostic_only": true
+  },
+  "model": {
+    "features": 24,
+    "phase_blocks": 4,
+    "trainable_parameters": 96,
+    "baseline_logit": "-(legacy_rank_1_based-1)",
+    "fits": 1,
+    "l2": 0.001,
+    "optimizer": "L-BFGS-B",
+    "max_iter": 500,
+    "maxcor": 10,
+    "gtol": 0.000001,
+    "initialization": "zeros",
+    "model_searches": 0,
+    "temperature_searches": 0,
+    "runtime_scale_searches": 0
+  },
+  "offline_gate": {
+    "bootstrap_repetitions": 20000,
+    "bootstrap_seed": 2026090703,
+    "requires": [
+      "VALID mean CE gain > 0",
+      "TEST mean CE gain > 0",
+      "TEST bootstrap 95% LCB CE gain > 0",
+      "TEST top1 > legacy baseline top1"
+    ],
+    "phase_nonnegative_not_required": true,
+    "on_fail": "STOP_D4B_MICRO",
+    "on_invalid_support": "STOP_D4B_MICRO_INVALID"
+  },
+  "runtime": {
+    "scope": "internal nodes only: ply>=1, 9..40 pieces, remaining depth>=3, legal moves 2..16, first up-to-4 legacy non-TT siblings",
+    "tt_priority": "absolute",
+    "root_ordering": "unchanged legacy; iterative-deepening previous-best/PV remains authoritative",
+    "intervention": "stable-hoist only the highest D4b logit candidate to first non-TT candidate position; preserve every other sibling relative order",
+    "model_io": "sealed float64 npy width 96",
+    "off_identity_required": true
+  },
+  "scan_gate0": {
+    "conditional_on_offline_supported": true,
+    "source": "cpx62-1864-l3-scan-oracle-gate0-d3-retrospective-v1",
+    "parents": 512,
+    "scan_reference_nodes": 200000,
+    "candidate_nodes_per_parent": 20000,
+    "reuse_control": true,
+    "new_scan_searches": 0,
+    "requires": [
+      "paired mean Scan-regret improvement > 0",
+      "paired bootstrap 95% LCB Scan-regret improvement > 0",
+      "Scan top-hit not worse than CONTROL",
+      "median candidate/control wall ratio <= 1.05",
+      "runtime eligible-node count > 0"
+    ]
+  },
+  "authorization": {
+    "strength_games": 0,
+    "selfplay_games": 0,
+    "promotion": false,
+    "bake": false,
+    "gate0_supported_means": "survivor_only_fresh_confirmation_required_before_strength"
+  },
+  "forbidden": [
+    "D3 outcomes or scores as labels/weights/model selection",
+    "1862/1866 game outcomes",
+    "qscore",
+    "SearchDecisionTrace selected-action labels",
+    "deep value teacher substitution",
+    "post-hoc parameter/threshold/seed/model search",
+    "automatic Elo or self-play continuation"
+  ]
+}
