@@ -13,7 +13,15 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from jobs.tools import d1_listwise_fit as dfit
-from jobs.tools import d1_postfit_readout as readout
+from jobs.tools.d1_listwise_fit_historical_split import HISTORICAL_HOLDOUT, HISTORICAL_TRAIN
+
+# The terminal D1 fit used the immutable historical CURRENT split. Patch the
+# compatibility counts before importing the terminal readout validator, exactly
+# as d1_postfit_readout_historical_split.py does.
+dfit.HOLDOUT = HISTORICAL_HOLDOUT
+dfit.TRAIN = HISTORICAL_TRAIN
+
+from jobs.tools import d1_postfit_readout as readout  # noqa: E402
 
 SCHEMA = "jass.d1.terminal_autopsy.v1"
 VERDICT = "D1_TERMINAL_AUTOPSY_COMPLETE_V1"
