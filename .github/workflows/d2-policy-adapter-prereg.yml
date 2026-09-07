@@ -1,0 +1,60 @@
+name: d2-policy-adapter-prereg
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_DECISION_D2_POLICY_ADAPTER_PREREGISTRATION_V1_20260907.md'
+      - '.github/workflows/d2-policy-adapter-prereg.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Frozen preregistration contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('docs/experiments/L3_DECISION_D2_POLICY_ADAPTER_PREREGISTRATION_V1_20260907.md')
+          t = p.read_text(encoding='utf-8')
+          required = [
+              'D1_DECISION_TRANSFER_NOT_ESTABLISHED_V1',
+              'D1_TERMINAL_AUTOPSY_COMPLETE_V1',
+              'TRAIN_FIT_WITH_HELDOUT_REVERSAL_AND_WDL_CONFLICT',
+              'artifact    WDL_CONTROL.pjtw.gz',
+              'width      = 240',
+              '0.5 * 1e-3 * ||beta||^2',
+              'max_iter      = 500',
+              'gtol          = 1e-6',
+              'replications = 200000',
+              'seed         = 2026111001',
+              'valid point delta_decision > 0',
+              'C-test bootstrap LCB95(delta_decision) > 0',
+              'D2_POLICY_TRANSFER_ESTABLISHED_V1',
+              'D2_POLICY_TRANSFER_NOT_ESTABLISHED_V1',
+              'D2_POLICY_TRANSFER_INVALID_V1',
+              'value/policy blending',
+              'runtime scale tuning',
+              'strength games',
+              'No implementation or fit is authorized by this document until the preregistration itself is merged/frozen.',
+          ]
+          missing = [s for s in required if s not in t]
+          if missing:
+              raise SystemExit(f'missing frozen prereg fields: {missing}')
+          forbidden = [
+              'lambda sweep = 1',
+              'temperature sweep = 1',
+              'equal-node games = 1',
+              'promotion = true',
+              'bake = true',
+              '32-step deterministic bisection',
+              'candidate amplitude selected',
+          ]
+          hits = [s for s in forbidden if s in t]
+          if hits:
+              raise SystemExit(f'forbidden authorization drift: {hits}')
+          print('D2 preregistration contract frozen')
+          PY
