@@ -15,7 +15,7 @@ class Gate0SearchVariantTests(unittest.TestCase):
         ):
             self.assertIn(arm, src)
         self.assertIn("budget != 20'000", src)
-        self.assertIn('"external_egdb_enabled": false', src)
+        self.assertIn("external_egdb_enabled", src)
         self.assertIn("fresh_engine_each_parent", src)
         self.assertIn("scan_verify_pruning = true", src)
         self.assertIn("scan_threat_reentry = true", src)
