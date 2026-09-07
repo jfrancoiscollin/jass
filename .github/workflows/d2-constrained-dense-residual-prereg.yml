@@ -23,4 +23,6 @@ jobs:
           grep -q 'D2_CONSTRAINED_DENSE_RESIDUAL_NOT_ESTABLISHED_V1' "$DOC"
           grep -q 'D2_CONSTRAINED_DENSE_RESIDUAL_INVALID_V1' "$DOC"
           grep -q 'no lambda/L2/alpha/competitor-definition retuning' "$DOC"
-          ! grep -E 'q200.*(target|softmax)|temperature sweep|strength games.*[1-9]' "$DOC"
+          grep -q 'No numeric teacher value or softmax temperature is created' "$DOC"
+          grep -q 'No architecture/model search' "$DOC"
+          grep -q 'No new teacher search' "$DOC"
