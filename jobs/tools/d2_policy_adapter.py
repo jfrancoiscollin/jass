@@ -151,19 +151,21 @@ def build_phi_from_arrays(extras: np.ndarray, wmg: np.ndarray, weg: np.ndarray) 
     if not np.array_equal(weg64, 1.0 - wmg64):
         raise D2Error("tempo MG/EG complement drift")
 
-    # Production build_extras_phased materializes the phased features as
-    # float32 before sparse storage.  Replay that rounding exactly, prove the
-    # manual 120xMG + 120xEG construction is byte-identical at the production
-    # boundary, then promote those exact production values to float64 for the
-    # frozen optimizer.  This changes no feature definition or D2 science.
+    # Production build_extras_phased casts the raw extras and each phase weight
+    # to float32 before multiplication. Replay that boundary operation exactly,
+    # prove the manual 120xMG + 120xEG construction is byte-identical, then
+    # promote those exact production values to float64 for the frozen optimizer.
     production32 = np.asarray(
         train.build_extras_phased(extras64, wmg64, weg64).toarray(),
         dtype=np.float32,
     )
+    ex32 = extras64.astype(np.float32, copy=False)
+    wmg32 = wmg64.astype(np.float32)
+    weg32 = weg64.astype(np.float32)
     manual32 = np.hstack([
-        extras64 * wmg64[:, None],
-        extras64 * weg64[:, None],
-    ]).astype(np.float32)
+        ex32 * wmg32[:, None],
+        ex32 * weg32[:, None],
+    ]).astype(np.float32, copy=False)
     replay_equal = bool(np.array_equal(production32, manual32))
     if production32.shape != (extras64.shape[0], WIDTH) or not replay_equal:
         raise D2Error("production build_extras_phased replay mismatch")
