@@ -158,8 +158,8 @@
       "symptom": "read-only autopsy exited technically during authenticated source retrieval, before any scientific readout, with 0 games / 0 searches / 0 fits",
       "root_cause": "the consumer generated shard ids with `seq -w 0 7`, which emits `0..7` for this range, while the sealed producer contract publishes exact directories `s00..s07`",
       "invariant": "consumers of sealed sharded publications must use the producer's exact shard identifiers; the D3 autopsy stage must use literal `00 01 02 03 04 05 06 07` for both fetch and analysis loops and must fail regression coverage if width-sensitive generation returns",
-      "evidence": "failed attempt `20260907T162007Z-e42764d6`; `D3_RUNTIME_AUTOPSY_SHARD_PADDING_INCIDENT_1858_20260907.md`; regression `test_stage_uses_exact_two_digit_shard_ids`; repaired immutable rerun pending; PR #851",
-      "status": "MITIGATED — terminal recovery proof pending"
+      "evidence": "failed attempt `20260907T162007Z-e42764d6`; PR #851; immutable recovery `cpx62-1860-l3-decision-math-d3-runtime-terminal-autopsy-recovery-requeue-v1` attempt `20260907T164613Z-0beb8796` PASS exit 0 with authenticated terminal autopsy publication; `D3_RUNTIME_TERMINAL_AUTOPSY_COMPLETE_V1`; classification `BROAD_EQUAL_NODE_SEARCH_EFFICIENCY_DEGRADATION`; PR #853",
+      "status": "CLOSED"
     }
   ]
 }
