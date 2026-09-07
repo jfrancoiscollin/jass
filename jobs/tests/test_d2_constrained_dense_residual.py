@@ -45,7 +45,9 @@ class D2ConstrainedDenseResidualTests(unittest.TestCase):
         b = fit.pairwise_loss_grad(np.zeros(fit.RESIDUAL_COLS), x, base, [g1r, g2])[0]
         self.assertAlmostEqual(a, b, places=14)
         l1 = np.mean(np.logaddexp(0.0, -np.asarray([2.0, 1.0])))
-        l2 = np.logaddexp(0.0, -(0.5 - (-0.5)))
+        # Parent 2 selected score is -1.0 and its sole competitor is +0.5,
+        # hence the selected-minus-competitor margin is -1.5.
+        l2 = np.logaddexp(0.0, 1.5)
         self.assertAlmostEqual(a, (float(l1) + float(l2)) / 2.0, places=14)
 
     def test_parent_pov_sign_symmetry(self) -> None:
