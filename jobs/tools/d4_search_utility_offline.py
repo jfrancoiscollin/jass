@@ -445,6 +445,7 @@ def metrics(beta: np.ndarray, rows: Sequence[Mapping[str, Any]]) -> dict[str, An
         "phase": phase,
         "labels": labels,
         "ranks": ranks,
+        "top_index": np.argmax(score, axis=1),
     }
 
 
@@ -642,6 +643,15 @@ def readout(args: argparse.Namespace) -> int:
             "d4_top1": td["top1"],
             "baseline_mrr": tb["mrr"],
             "d4_mrr": td["mrr"],
+            "legacy_first_preserved_fraction": float(
+                np.mean(np.asarray(td["top_index"]) == 0)
+            ),
+            "legacy_nonfirst_cutoff_label_promoted_to_rank1_fraction": float(
+                np.mean(
+                    np.asarray(td["top_index"])[np.asarray(tb["labels"]) > 0]
+                    == np.asarray(tb["labels"])[np.asarray(tb["labels"]) > 0]
+                )
+            ) if np.any(np.asarray(tb["labels"]) > 0) else 0.0,
             "bootstrap_ce_gain": bootstrap,
             "by_phase": phase_metrics,
         },
