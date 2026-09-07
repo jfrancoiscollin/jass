@@ -1,6 +1,10 @@
+import pathlib
 import unittest
 
 from jobs.tools import d3_runtime_terminal_autopsy as subject
+
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 def telemetry(depth: int, *, d3: bool) -> dict:
@@ -52,6 +56,18 @@ class D3RuntimeTerminalAutopsyTests(unittest.TestCase):
     def test_spearman_direction(self):
         self.assertAlmostEqual(subject.spearman([0, 1, 2], [0, 2, 4]), 1.0)
         self.assertAlmostEqual(subject.spearman([0, 1, 2], [4, 2, 0]), -1.0)
+
+    def test_stage_uses_exact_two_digit_shard_ids(self):
+        stage = (REPO_ROOT / "jobs/templates/l3-d3-runtime-terminal-autopsy-v1.sh").read_text(
+            encoding="utf-8"
+        )
+        exact_loop = "for s in 00 01 02 03 04 05 06 07; do"
+        self.assertEqual(stage.count(exact_loop), 2)
+        self.assertNotIn("seq -w 0 7", stage)
+        for shard in ("s00", "s07"):
+            self.assertIn('shards/s${s}/primary-games.jsonl', stage)
+            self.assertIn('shards/s${s}/harness-games.jsonl', stage)
+            self.assertTrue(shard.startswith("s") and len(shard) == 3)
 
     def test_frozen_terminal_autopsy_is_diagnostic_only(self):
         primary = [primary_pair(i) for i in range(subject.PRIMARY_PAIRS)]
