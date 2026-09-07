@@ -88,6 +88,7 @@ void write_report(const std::string& path, const std::string& arm,
         << "  \"shard\": " << shard << ",\n"
         << "  \"nshards\": " << nshards << ",\n"
         << "  \"tt_mb\": " << tt_mb << ",\n"
+        << "  \"external_egdb_enabled\": " << (tb_cap > 0 ? "true" : "false") << ",\n"
         << "  \"egdb_max_pieces\": " << tb_cap << ",\n"
         << "  \"source_rows\": " << c.source_rows << ",\n"
         << "  \"selected_rows\": " << c.selected_rows << ",\n"
@@ -112,7 +113,7 @@ int main(int argc, char** argv) {
     try {
         if (argc < 9 || argc > 13) {
             std::cerr << "usage: jass_scan_oracle_gate0_runtime <parents.jnnw> <parent_ids.txt> "
-                         "<scores.tsv> <report.json> <wdl_control.pjtw> <egdb_dir> "
+                         "<scores.tsv> <report.json> <wdl_control.pjtw> <egdb_dir|-> "
                          "<budget_nodes> <arm> [shard=0] [nshards=1] [tt_mb=16] "
                          "[egdb_cache_mb=256]\n";
             return 2;
@@ -148,10 +149,13 @@ int main(int argc, char** argv) {
         std::string network_error;
         auto network = load_eval_network(model_path, &network_error);
         if (!network) throw std::runtime_error("cannot load WDL_CONTROL: " + network_error);
-        if (!egdb::init(egdb_dir, egdb_cache_mb) || !egdb::available())
-            throw std::runtime_error("real EGDB unavailable");
-        const int tb_cap = egdb::max_pieces();
-        if (tb_cap <= 0) throw std::runtime_error("invalid EGDB cap");
+        int tb_cap = 0;
+        if (egdb_dir != "-") {
+            if (!egdb::init(egdb_dir, egdb_cache_mb) || !egdb::available())
+                throw std::runtime_error("real EGDB unavailable");
+            tb_cap = egdb::max_pieces();
+            if (tb_cap <= 0) throw std::runtime_error("invalid EGDB cap");
+        }
         const auto ids = load_ids(ids_path);
 
         std::ifstream in(input_path, std::ios::binary);
