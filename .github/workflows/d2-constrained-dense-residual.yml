@@ -38,4 +38,6 @@ jobs:
           grep -q 'hard_competitor_local_action_indices' jobs/tools/d2_decision_prepare.py
           grep -q 'changed_pattern_slots' jobs/tools/d2_constrained_dense_residual_readout.py
           grep -q 'D2_CONSTRAINED_DENSE_RESIDUAL_ESTABLISHED_V1' jobs/tools/d2_constrained_dense_residual_readout.py
-          ! grep -E -- '--lambda|--temperature|1843|full-ladder.*fetch' jobs/templates/l3-d2-constrained-dense-residual-v1.sh
+          grep -q 'C_JOB="cpx62-1845-l3-decision-math-c-sibling-dataset-v2-v1"' jobs/templates/l3-d2-constrained-dense-residual-v1.sh
+          grep -q 'D1_JOB="cpx62-1849-l3-decision-math-d1-wdl-listwise-fit-stage-env-recovery-requeue-v1"' jobs/templates/l3-d2-constrained-dense-residual-v1.sh
+          ! grep -E -- '--lambda|--temperature|cpx62-1843' jobs/templates/l3-d2-constrained-dense-residual-v1.sh
