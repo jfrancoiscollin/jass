@@ -1,0 +1,39 @@
+name: D4b search-utility micro
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_D4B_SEARCH_UTILITY_MICRO_SCREEN_V1_20260907.*'
+      - 'jobs/tools/d4b_*'
+      - 'jobs/templates/l3-d4b-search-utility-micro-screen-v1.sh'
+      - 'jobs/tests/test_d4b_search_utility_micro.py'
+      - 'src/d4b_runtime_move_order.hpp'
+      - '.github/workflows/d4b-search-utility-micro.yml'
+
+jobs:
+  d4b-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Contract tests
+        run: |
+          python -m unittest jobs.tests.test_d4b_search_utility_micro -v
+          python -m py_compile jobs/tools/d4b_search_utility_micro.py jobs/tools/d4b_search_utility_trace_render.py jobs/tools/d4b_runtime_render.py jobs/tools/d4b_gate0_render.py
+          bash -n jobs/templates/l3-d4b-search-utility-micro-screen-v1.sh
+      - name: Build isolated 20k teacher
+        run: |
+          mkdir -p /tmp/d4b-teacher
+          git archive HEAD | tar -x -C /tmp/d4b-teacher
+          python /tmp/d4b-teacher/jobs/tools/d4b_search_utility_trace_render.py --root /tmp/d4b-teacher
+          cmake -S /tmp/d4b-teacher -B /tmp/d4b-teacher/build -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/d4b-teacher/build -j2 --target d4_search_utility_trace_export
+      - name: Build isolated D4b Gate0 scorer
+        run: |
+          mkdir -p /tmp/d4b-gate0
+          git archive HEAD | tar -x -C /tmp/d4b-gate0
+          python /tmp/d4b-gate0/jobs/tools/d4b_gate0_render.py --root /tmp/d4b-gate0
+          cmake -S /tmp/d4b-gate0 -B /tmp/d4b-gate0/build -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/d4b-gate0/build -j2 --target jass_scan_oracle_gate0_runtime
