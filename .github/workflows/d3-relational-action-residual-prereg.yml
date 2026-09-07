@@ -1,0 +1,29 @@
+name: d3-relational-action-residual-prereg
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_D3_RELATIONAL_ACTION_RESIDUAL_PREREGISTRATION_V1_20260907.md'
+      - '.github/workflows/d3-relational-action-residual-prereg.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen D3 contract
+        run: |
+          DOC=docs/experiments/L3_D3_RELATIONAL_ACTION_RESIDUAL_PREREGISTRATION_V1_20260907.md
+          grep -q 'Base action vector — exactly 158 dimensions' "$DOC"
+          grep -q 'phi_rel width = 4 \* 158 = 632' "$DOC"
+          grep -q 'score_D3(s,a) = v_parent(s,a) + phi_rel(s,a) dot beta' "$DOC"
+          grep -q '0.5 \* 1e-3 \* ||beta||\^2' "$DOC"
+          grep -q 'max_iter      = 500' "$DOC"
+          grep -q 'maxcor        = 10' "$DOC"
+          grep -q 'gtol          = 1e-6' "$DOC"
+          grep -q 'seed         = 2026111201' "$DOC"
+          grep -q 'D3_RELATIONAL_ACTION_TRANSFER_ESTABLISHED_V1' "$DOC"
+          grep -q 'D3_RELATIONAL_ACTION_TRANSFER_NOT_ESTABLISHED_V1' "$DOC"
+          grep -q 'D3_RELATIONAL_ACTION_TRANSFER_INVALID_V1' "$DOC"
+          grep -q 'WDL_CONTROL remains the only value/leaf evaluator' "$DOC"
+          grep -q 'SearchDecisionTrace as fit input' "$DOC"
