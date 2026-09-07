@@ -47,7 +47,7 @@ jobs:
           [ "$(grep -c 'result = minimize(' jobs/tools/d2_policy_adapter.py)" -eq 1 ]
       - name: Prove information and side-effect barriers
         run: |
-          ! grep -E '1843|q5k_parent|q50_parent|q200_parent|--target-values|runtime.scale|temperature.sweep' \
+          ! grep -E -- '--q5|--q50|--q200|--full-ladder|--target-values|--runtime-scale|--temperature' \
             jobs/tools/d2_policy_adapter.py \
             jobs/templates/l3-d2-policy-adapter-preflight-v1.sh \
             jobs/templates/l3-d2-policy-adapter-fit-v1.sh
