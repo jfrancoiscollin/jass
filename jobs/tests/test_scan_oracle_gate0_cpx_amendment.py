@@ -20,7 +20,7 @@ class ScanOracleGate0CpxAmendmentTests(unittest.TestCase):
         self.assertIn("external_egdb=OFF mirror_d3_equal_node_runtime=1", wrapper)
         self.assertIn('"$W/WDL_CONTROL.pjtw" - 20000 CONTROL', wrapper)
         self.assertIn('"$W/WDL_CONTROL.pjtw" - 20000 D3', wrapper)
-        self.assertIn("expected exactly", wrapper.replace("count != 1", "expected exactly") if False else "expected exactly") if False else None
+        self.assertIn("if count != 1", wrapper)
         self.assertNotIn("SCAN_ORACLE_GATE0_GO=0", wrapper)
 
     def test_runtime_scorer_supports_explicit_external_egdb_off(self) -> None:
