@@ -1,0 +1,33 @@
+name: Scan oracle Gate0 search variants
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/scan_oracle_gate0_search_variants.cpp'
+      - 'jobs/tools/scan_oracle_gate0_render.py'
+      - 'jobs/templates/l3-scan-oracle-gate0-search-variants-v1.sh'
+      - 'jobs/tests/test_scan_oracle_gate0_search_variants.py'
+      - '.github/workflows/scan-oracle-gate0-search-variants.yml'
+
+jobs:
+  gate0-search-variants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Contract tests
+        run: |
+          python -m unittest jobs.tests.test_scan_oracle_gate0_search_variants -v
+          bash -n jobs/templates/l3-scan-oracle-gate0-search-variants-v1.sh
+          python -m py_compile jobs/tools/scan_oracle_gate0_render.py jobs/tools/scan_oracle_gate0_readout.py
+      - name: Build isolated variant scorer
+        run: |
+          mkdir -p /tmp/gate0-src
+          git archive HEAD | tar -x -C /tmp/gate0-src
+          python /tmp/gate0-src/jobs/tools/scan_oracle_gate0_render.py --cmake /tmp/gate0-src/CMakeLists.txt
+          cmake -S /tmp/gate0-src -B /tmp/gate0-build -DCMAKE_BUILD_TYPE=Release \
+            -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON \
+            -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/gate0-build -j2 --target jass_scan_oracle_gate0_search_variants
