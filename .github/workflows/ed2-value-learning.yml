@@ -4,6 +4,7 @@ on:
     paths:
       - 'jobs/tools/ed2_value_*'
       - 'jobs/tests/test_ed2_value_learning.py'
+      - 'jobs/tests/test_ed2_value_shutdown.py'
       - 'jobs/templates/l3-ed2-paired-value-fit-v1.sh'
       - 'docs/experiments/L3_ED2_PAIRED_VALUE_FIT_V1_20260908.md'
       - '.github/workflows/ed2-value-learning.yml'
@@ -34,7 +35,7 @@ jobs:
         env:
           ED2_VALUE_PROBE: /tmp/ed2-value-build/jass_ed2_value_probe
         run: |
-          python -m unittest jobs.tests.test_ed2_value_learning -v
-          python -m py_compile jobs/tools/ed2_value_math.py jobs/tools/ed2_value_pipeline.py
-          python jobs/tools/ed2_value_pipeline.py --help
+          python -m unittest jobs.tests.test_ed2_value_learning jobs.tests.test_ed2_value_shutdown -v
+          python -m py_compile jobs/tools/ed2_value_math.py jobs/tools/ed2_value_pipeline.py jobs/tools/ed2_value_entrypoint.py
+          python jobs/tools/ed2_value_entrypoint.py --help
           bash -n jobs/templates/l3-ed2-paired-value-fit-v1.sh
