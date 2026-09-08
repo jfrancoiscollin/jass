@@ -220,6 +220,16 @@
       "invariant": "Never increase limits or relax gates in the frozen P1 experiment. N1 explicitly versions the optimizer change, retains the exact convex objective/data/BASE/240 extras and all TEST/WDL gates, requires original-gradient convergence, and reuses authenticated complete TRAIN bytes without a regeneration fallback. TEST remains closed until both candidates are sealed.",
       "evidence": "Diagnostic jass-control/status/cpx62-1877-l3-ed2-1876-failure-diagnostic-v1.json completed exit 0; pipeline log SHA256 833fb7cf36eae30d4aa9e0efa20531cf75363e0e1a53114856ceecc1f9c8eecc; 9944 searches/273460000 requested nodes, no candidate/TEST artifacts. Eleven local numerical/reuse tests pass; full-repo native CI and CPX N1 terminal proof pending.; PR #875",
       "status": "MITIGATED — versioned numerical solver and sealed TRAIN reuse; CPX terminal proof pending"
+    },
+    {
+      "id": "TI-023",
+      "dedupe_key": "launch-rehearsal-not-enforced-ed2-v1",
+      "context": "ED2 launch process review after 1878; ED3 first adopter of executable launch admission",
+      "symptom": "Component CI success and a readable process document were treated as launch readiness without a machine-required full target-host publication rehearsal; original failure diagnostics required another job.",
+      "root_cause": "The existing stage spec and shared dispatcher validate code/resources but do not require a prior successful full-pipeline rehearsal. The incident ledger synchronizes narrative fields rather than enforcing per-launch regression execution.",
+      "invariant": "New production stage-spec jobs must authenticate the exact successful published rehearsal and re-read output bytes with matching code/profile/normalized spec/runtime. Run mandatory nonempty, non-skipped regression suites; publish bounded phase/type/source diagnostics in original status. Never let an audit receipt authorize a different learning pipeline or use consumed TEST for tuning.",
+      "evidence": "Existing execution standard JASS_EXPERIMENT_EXECUTION_STANDARD_V1_20260905.md compared with templates/run-stage-v1.sh. New jobs/tools/launch_gate_v2.py and launch_runtime_v2.py, test_launch_gate_v2.py, test_launch_gate_pipeline_v2.py, test_ed3_label_pressure.py; 19 local tests pass, complete-repo CI and target-host R2 proof pending. Technical and scientific changes are separate commits; original v1 runner unchanged.; PR #877",
+      "status": "MITIGATION IMPLEMENTED — CI, shared-dispatcher activation and target-host roundtrip proof pending"
     }
   ]
 }
