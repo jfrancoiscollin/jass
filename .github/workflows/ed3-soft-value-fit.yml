@@ -1,0 +1,41 @@
+name: ED3 soft value complete fit path
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/ed3_soft_value*.py'
+      - 'jobs/tests/test_ed3_soft*.py'
+      - 'jobs/tests/ed3_soft_native_contract.py'
+      - 'jobs/launch_profiles/ed3-soft-value-fit-v1.json'
+      - 'docs/experiments/L3_ED3_SOFT_VALUE_FIT_V1_20260908.md'
+      - '.github/workflows/ed3-soft-value-fit.yml'
+permissions:
+  contents: read
+jobs:
+  complete-fit-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy scipy
+      - name: Numeric derivatives, realistic scales, full fit and original publisher
+        run: |
+          python -m unittest jobs.tests.test_ed3_soft_value_math jobs.tests.test_ed3_soft_value_fit jobs.tests.test_ed3_soft_publication -v
+          python -m py_compile jobs/tools/ed3_soft_value_math.py jobs/tools/ed3_soft_value_fit.py
+      - name: Build unchanged production evaluator for actual native contract
+        run: |
+          python pattern_jass/tools/gen_patterns.py --emit --variant 8cf
+          printf '\nadd_executable(jass_ed3_probe jobs/tools/ed2_value_probe.cpp)\ntarget_link_libraries(jass_ed3_probe PRIVATE jass_lib)\n' >> CMakeLists.txt
+          cmake -S . -B /tmp/ed3-native -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/ed3-native -j2 --target jass_ed3_probe
+      - name: Full candidate fixture with actual native executable, no skip fallback
+        env:
+          ED3_NATIVE_PROBE: /tmp/ed3-native/jass_ed3_probe
+        run: python -m jobs.tests.ed3_soft_native_contract
