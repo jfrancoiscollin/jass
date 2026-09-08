@@ -6,6 +6,7 @@ on:
       - 'docs/experiments/L3_D4C_RANK_BREAKER_MICRO_V1_20260908.*'
       - 'jobs/tools/d4c_*'
       - 'jobs/templates/l3-d4c-rank-breaker-micro-screen-v1.sh'
+      - 'jobs/templates/l3-d4c-rank-breaker-micro-screen-wrapper-v1.sh'
       - 'jobs/tests/test_d4c_rank_breaker.py'
       - 'src/d4c_runtime_move_order.hpp'
       - '.github/workflows/d4c-rank-breaker-micro.yml'
@@ -23,6 +24,8 @@ jobs:
           python -m unittest jobs.tests.test_d4c_rank_breaker -v
           python -m py_compile jobs/tools/d4c_rank_breaker.py jobs/tools/d4c_runtime_render.py jobs/tools/d4c_gate0_render.py
           bash -n jobs/templates/l3-d4c-rank-breaker-micro-screen-v1.sh
+          bash -n jobs/templates/l3-d4c-rank-breaker-micro-screen-wrapper-v1.sh
+          grep -q 'export PYTHONPATH="$JASS_CODE_DIR' jobs/templates/l3-d4c-rank-breaker-micro-screen-wrapper-v1.sh
       - name: Build isolated 20k teacher
         run: |
           mkdir -p /tmp/d4c-teacher
