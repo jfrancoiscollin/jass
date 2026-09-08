@@ -124,15 +124,14 @@ if sel.get('overlap_with_prior_gate0')!=0 or sel.get('selected_parents')!=512: r
 verdict=r.get('verdict')
 if verdict not in ('J12_FACTORIAL_GATE0_SURVIVOR_V1','J12_FACTORIAL_GATE0_NOT_SUPPORTED_V1'): raise SystemExit('J12 verdict drift')
 survivor=verdict=='J12_FACTORIAL_GATE0_SURVIVOR_V1'
+node_total=int(r['control_runtime_report']['nodes']) + sum(int(r['arms'][a]['runtime_report']['nodes']) for a in ('J1_SCAN_VERIFY','J2_SCAN_THREAT_REENTRY','J12_SCAN_VERIFY_THREAT_REENTRY'))
 summary={
  'schema':'jass.j12_factorial_terminal.v1','verdict':verdict,'code_sha':code,
- 'selection':sel,'readout':r,'new_jass_nodes':sum(int(r['readout']['runtime_report']['nodes']) if False else 0 for _ in []),
+ 'selection':sel,'readout':r,'new_jass_nodes':node_total,
  'new_scan_searches':0,'fits':0,'strength_games':0,'selfplay_games':0,'promotions':0,'bakes':0,
  'strength_authorized':False,'fresh_disjoint_confirmation_required_before_strength':survivor,
  'next_stage':'J12_FRESH_DISJOINT_CONFIRMATION_PREREG' if survivor else 'STOP_J12_FACTORIAL'
 }
-# Runtime node total is derived from the four authenticated arm reports embedded in readout.
-summary['new_jass_nodes']=int(r['control_runtime_report']['nodes']) + sum(int(r['arms'][a]['runtime_report']['nodes']) for a in ('J1_SCAN_VERIFY','J2_SCAN_THREAT_REENTRY','J12_SCAN_VERIFY_THREAT_REENTRY'))
 open(out,'w').write(json.dumps(summary,indent=2,sort_keys=True)+'\n')
 print(verdict)
 PY
