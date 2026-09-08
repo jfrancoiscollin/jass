@@ -13,6 +13,9 @@ finalize(){
  cp "$RES" "$ART/RESULTS.txt"
  mkdir -p "$ART/execution-logs"
  find "$W" -maxdepth 1 -name '*.log' -type f -exec cp {} "$ART/execution-logs/" \;
+ python3 "$JASS_CODE_DIR/jobs/tools/ed2_cleanup_scratch.py" --work "$W" --artifact "$ART" >"$ART/execution-logs/scratch-cleanup.log" 2>&1
+ cleanup_rc=$?
+ if [ "$rc" -eq 0 ] && [ "$cleanup_rc" -ne 0 ]; then rc=$cleanup_rc; fi
  exit "$rc"
 }
 trap finalize EXIT
