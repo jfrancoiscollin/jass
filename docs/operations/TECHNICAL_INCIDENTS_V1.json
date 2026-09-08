@@ -204,12 +204,12 @@
     {
       "id": "TI-021",
       "dedupe_key": "ed2-p0-1875-missing-heartbeat-terminal-v1",
-      "context": "ED2-P0 1875 / 20260908T171140Z-bc30d685; paired continuation 1876 on 27c30b3f",
-      "symptom": "TECHNICAL observability gap: P0 initially exposed only a stale running record; subsequently resolved by completed READY/exit 0 terminal publication at 2026-09-08T18:10:26Z. Full source/build scratch publication exposure remains a separate confirmed code-level hazard.",
-      "root_cause": "Confirmed source-level exposure: original ED2 finalizers retain work/src and work/build while runner_v3_store copies/checks the whole run before terminal publication. Its contribution to P0 elapsed time is not established from host logs. P0 itself completed successfully, not a scientific failure.",
-      "invariant": "Preserve all scientific data/models/seals, source identities, thresholds, logs and native binary identities. Remove only reproducible source/build scratch in future ED2 finalizers. Reauthenticate P0 READY/source/cost before paired training. Never infer live process status from a stale running marker or rewrite a prior terminal verdict.",
-      "evidence": "jass-control/status/cpx62-1875-l3-ed2-data-teacher-preflight-v1.json blob 58be06659039bd97e94556c999fa74fdc549d9ba: completed exit 0, ED2_DATA_AND_TEACHER_PREFLIGHT_READY_V1, terminal 2026-09-08T18:10:26Z, source seal 31f763049fef50544bd1cbb240eeb4f51670728ae0697a77e982186df007152c. Jass #873 merged as 27c30b3f5b4bc4ee971bb4acfcf0a423e124f7da; cleanup preservation/path CI passed. Control #573 merged to queue 1876. Actual cleanup-enabled terminal proof is pending.; PR #874",
-      "status": "MITIGATED — P0 READY terminal authenticated; cleanup-enabled CPX runtime proof pending"
+      "context": "ED2-P0 1875 / 20260908T171140Z-bc30d685; cleanup-enabled 1876 / 20260908T182614Z-27c30b3f; authenticated diagnostic 1877 / 20260908T185207Z-e7b9320a",
+      "symptom": "P0's stale-running observation was resolved by its READY terminal. The follow-up required proof that ED2 finalizers remove reproducible source/build scratch before publishing results while preserving scientific evidence.",
+      "root_cause": "Confirmed source-level exposure: original ED2 wrappers kept the entire work/src and work/build in the run tree copied and checked by the publisher. Its exact contribution to P0 elapsed time was not established. PR #873 implemented narrowly guarded cleanup and retained binary/log evidence.",
+      "invariant": "Remove only the current attempt's reproducible source/build scratch, retain scientific data/models/seals/inputs/logs and native binary identities. Do not infer liveness from stale status, alter scientific gates or rewrite historical attempts. Numerical convergence failure is independent of cleanup correctness.",
+      "evidence": "1875 READY terminal already authenticated. Diagnostic 1877 completed exit 0 and authenticated original 1876 scratch-cleanup.json: source 39703 files/948400007 bytes and build 300 files/8114078 bytes removed, scientific_artifacts_modified=false, inputs_and_other_work_files_preserved=true. Native probe SHA256 b6f5ce3beceba1e121286ab3662447c53f2f7f062d5c6e023461dec2cfddc1f4, archive dc7ac01724b4fd6a15a02f1202ae5265b28867dab2432cbb5200fb6a90acf2c3. Central receipt docs/operations/ED2_1876_DIAGNOSTIC_RECEIPT_20260908.md.; PR #876",
+      "status": "CLOSED — P0 terminal and actual CPX narrow-cleanup proof authenticated by 1877"
     },
     {
       "id": "TI-022",
