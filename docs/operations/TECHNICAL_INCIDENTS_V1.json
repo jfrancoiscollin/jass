@@ -204,12 +204,12 @@
     {
       "id": "TI-021",
       "dedupe_key": "ed2-p0-1875-missing-heartbeat-terminal-v1",
-      "context": "ED2-P0 1875 / 20260908T171140Z-bc30d685 and preparation of ED2 paired learner",
-      "symptom": "TECHNICAL observability blocker: published 1875 record remains its initial running snapshot without recent phase/heartbeat/terminal evidence. Source inspection also identifies entire repository/build scratch included in result publication.",
-      "root_cause": "Confirmed code-level exposure: ED2 finalizers retain work/src and work/build, while runner_v3_store inventories and Rclone-copies/checks the entire run directory before the terminal marker; runner_v3 reaps/publishes terminal status only afterward. This can produce disproportionate publication work. Attribution of 1875's current delay to this mechanism remains unconfirmed; no current host phase/PID evidence was obtained.",
-      "invariant": "Retain scientific data, models, seals, inputs, logs and native binary hashes; remove only this attempt's reproducible source/build scratch using strict path guards before publication. Never alter the running pinned attempt or history. No training before authenticated P0 READY, exact source and measured cost gates; stale running is not live progress.",
-      "evidence": "P0 status blob 961a29fe227a80213ab2cbbbe53d0167c89f1c4b, attempt 20260908T171140Z-bc30d685. Source at bc30d685: jobs/templates/l3-ed2-data-teacher-preflight-v1.sh finalize, infra/runner_v3_store.py inventory_files/RcloneResultStore.publish, infra/runner_v3.py reap_finished_job. Three local cleanup preservation/path tests pass. P0 current phase and remote cleanup/terminal proof pending.; PR #873",
-      "status": "MITIGATED FOR FUTURE ED2 RUNS — P0 phase/terminal and remote cleanup proof pending"
+      "context": "ED2-P0 1875 / 20260908T171140Z-bc30d685; paired continuation 1876 on 27c30b3f",
+      "symptom": "TECHNICAL observability gap: P0 initially exposed only a stale running record; subsequently resolved by completed READY/exit 0 terminal publication at 2026-09-08T18:10:26Z. Full source/build scratch publication exposure remains a separate confirmed code-level hazard.",
+      "root_cause": "Confirmed source-level exposure: original ED2 finalizers retain work/src and work/build while runner_v3_store copies/checks the whole run before terminal publication. Its contribution to P0 elapsed time is not established from host logs. P0 itself completed successfully, not a scientific failure.",
+      "invariant": "Preserve all scientific data/models/seals, source identities, thresholds, logs and native binary identities. Remove only reproducible source/build scratch in future ED2 finalizers. Reauthenticate P0 READY/source/cost before paired training. Never infer live process status from a stale running marker or rewrite a prior terminal verdict.",
+      "evidence": "jass-control/status/cpx62-1875-l3-ed2-data-teacher-preflight-v1.json blob 58be06659039bd97e94556c999fa74fdc549d9ba: completed exit 0, ED2_DATA_AND_TEACHER_PREFLIGHT_READY_V1, terminal 2026-09-08T18:10:26Z, source seal 31f763049fef50544bd1cbb240eeb4f51670728ae0697a77e982186df007152c. Jass #873 merged as 27c30b3f5b4bc4ee971bb4acfcf0a423e124f7da; cleanup preservation/path CI passed. Control #573 merged to queue 1876. Actual cleanup-enabled terminal proof is pending.; PR #874",
+      "status": "MITIGATED — P0 READY terminal authenticated; cleanup-enabled CPX runtime proof pending"
     }
   ]
 }
