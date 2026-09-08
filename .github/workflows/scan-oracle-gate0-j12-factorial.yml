@@ -1,0 +1,35 @@
+name: J12 factorial Gate0
+
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/L3_J12_FACTORIAL_GATE0_V1_20260908.json'
+      - 'jobs/tools/scan_oracle_gate0_j12_*'
+      - 'jobs/templates/l3-scan-oracle-gate0-j12-factorial-*'
+      - 'jobs/tests/test_scan_oracle_gate0_j12_factorial.py'
+      - '.github/workflows/scan-oracle-gate0-j12-factorial.yml'
+
+jobs:
+  j12-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Contract tests
+        run: |
+          python -m unittest jobs.tests.test_scan_oracle_gate0_j12_factorial -v
+          python -m py_compile jobs/tools/scan_oracle_gate0_j12_select.py jobs/tools/scan_oracle_gate0_j12_readout.py jobs/tools/scan_oracle_gate0_j12_render.py
+          bash -n jobs/templates/l3-scan-oracle-gate0-j12-factorial-v1.sh
+          bash -n jobs/templates/l3-scan-oracle-gate0-j12-factorial-wrapper-v1.sh
+          grep -q 'export PYTHONPATH="$JASS_CODE_DIR' jobs/templates/l3-scan-oracle-gate0-j12-factorial-wrapper-v1.sh
+      - name: Build isolated J12 factorial scorer
+        run: |
+          mkdir -p /tmp/j12-src
+          git archive HEAD | tar -x -C /tmp/j12-src
+          python /tmp/j12-src/jobs/tools/scan_oracle_gate0_j12_render.py --cmake /tmp/j12-src/CMakeLists.txt
+          cmake -S /tmp/j12-src -B /tmp/j12-build -DCMAKE_BUILD_TYPE=Release \
+            -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON \
+            -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/j12-build -j2 --target jass_scan_oracle_gate0_j12_factorial
