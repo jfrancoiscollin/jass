@@ -1,0 +1,51 @@
+{
+  "campaign": "ed3-soft-preference",
+  "command": [
+    "/var/tmp/jass-l3-numeric-venv-current-v1/bin/python",
+    "jobs/tools/ed3_soft_value_fit.py"
+  ],
+  "evidence_outputs": [
+    "SOFT.pjtw",
+    "candidate-seal.json",
+    "fit-report.json",
+    "native-roundtrip.json",
+    "train-contract.json"
+  ],
+  "production_max_effects": {
+    "bakes": 0,
+    "fits": 1,
+    "new_jass_searches": 0,
+    "new_scan_searches": 0,
+    "promotions": 0,
+    "selfplay_games": 0,
+    "strength_games": 0,
+    "test_target_reads": 0
+  },
+  "regressions": [
+    "jobs.tests.test_launch_gate_v2",
+    "jobs.tests.test_launch_gate_pipeline_v2",
+    "jobs.tests.test_ed3_soft_value_math",
+    "jobs.tests.test_ed3_soft_value_fit",
+    "jobs.tests.test_ed3_soft_publication"
+  ],
+  "rehearsal_max_effects": {
+    "bakes": 0,
+    "fits": 1,
+    "new_jass_searches": 0,
+    "new_scan_searches": 0,
+    "promotions": 0,
+    "selfplay_games": 0,
+    "strength_games": 0,
+    "test_target_reads": 0
+  },
+  "required_phases": [
+    "authenticate",
+    "verify-inputs",
+    "native-base",
+    "fit-soft",
+    "serialize-and-reload",
+    "seal-and-publish"
+  ],
+  "schema": "jass.launch_profile.v2",
+  "stage": "ed3-soft-value-fit-v1"
+}
