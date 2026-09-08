@@ -1,0 +1,36 @@
+name: ED2 independent data preflight
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/ed2_source.cpp'
+      - 'jobs/tools/ed2_preflight.py'
+      - 'jobs/tests/test_ed2_preflight.py'
+      - 'jobs/templates/l3-ed2-data-teacher-preflight-v1.sh'
+      - 'docs/experiments/L3_ED2_INDEPENDENT_VALUE_LEARNING_PREFLIGHT_V1_20260908.md'
+      - '.github/workflows/ed2-data-preflight.yml'
+permissions:
+  contents: read
+jobs:
+  native-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build isolated native producer
+        run: |
+          printf '\nadd_executable(jass_ed2_source jobs/tools/ed2_source.cpp)\ntarget_link_libraries(jass_ed2_source PRIVATE jass_lib)\n' >> CMakeLists.txt
+          cmake -S . -B /tmp/ed2-build -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/ed2-build -j2 --target jass_ed2_source
+      - name: Actual producer-consumer and replay tests
+        env:
+          ED2_NATIVE_SOURCE: /tmp/ed2-build/jass_ed2_source
+        run: |
+          python -m unittest jobs.tests.test_ed2_preflight -v
+          python -m py_compile jobs/tools/ed2_preflight.py
+          bash -n jobs/templates/l3-ed2-data-teacher-preflight-v1.sh
