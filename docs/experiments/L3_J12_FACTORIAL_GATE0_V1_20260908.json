@@ -1,0 +1,96 @@
+{
+  "schema": "jass.j12_factorial_gate0_prereg.v1",
+  "date": "2026-09-08",
+  "status": "FROZEN_BEFORE_RUNTIME",
+  "hypothesis": "Combining Scan-style verification pruning (J1) with Scan threat re-entry (J2) can preserve the positive Scan-oracle decision signal seen separately while bringing runtime cost inside the Gate0 wall-time guard.",
+  "motivation_source": {
+    "job": "cpx62-1867-l3-scan-oracle-gate0-search-variants-recovery-v1",
+    "attempt": "20260907T204215Z-6f053f56",
+    "terminal_verdict": "GATE0_NO_VARIANT_SURVIVORS",
+    "j1_mean_regret_improvement": 33.6171875,
+    "j1_regret_ci95": [-2.931689453125, 88.007958984375],
+    "j1_top_hit_delta": 0.01171875,
+    "j1_median_wall_ratio": 0.9868635693235224,
+    "j2_mean_regret_improvement": 49.240234375,
+    "j2_regret_ci95": [-35.539599609375, 139.402392578125],
+    "j2_top_hit_delta": 0.037109375,
+    "j2_median_wall_ratio": 1.0512344508771674
+  },
+  "cohort": {
+    "source_parents": 2000,
+    "source_phase_counts": {"P0": 500, "P1": 500, "P2": 500, "P3": 500},
+    "exclude_job": "cpx62-1864-l3-scan-oracle-gate0-d3-retrospective-v1",
+    "exclude_attempt": "20260907T195559Z-8782aed3",
+    "excluded_parents": 512,
+    "selector_prefix": "SCAN-J12-FRESH-2026090801:",
+    "selection_key": "sha256(selector_prefix + parent_fingerprint)",
+    "selected_parents": 512,
+    "selected_phase_counts": {"P0": 128, "P1": 128, "P2": 128, "P3": 128},
+    "target_blind": true,
+    "required_overlap_with_prior_gate0": 0,
+    "score_reads_during_selection": 0,
+    "outcome_reads_during_selection": 0
+  },
+  "runtime": {
+    "value_model": "WDL_CONTROL",
+    "value_model_sha256": "e4d510fbb9b81cbe74574d92da48e8de6f61d8f98de6472eeb409713785f0de0",
+    "budget_nodes_per_parent_per_arm": 20000,
+    "node_limit_mode": "exact",
+    "threads": 1,
+    "book": false,
+    "external_egdb": false,
+    "fresh_engine_each_parent": true,
+    "planned_max_jass_nodes": 40960000,
+    "arms": {
+      "CONTROL": {"changes": []},
+      "J1_SCAN_VERIFY": {"scan_verify_pruning": true},
+      "J2_SCAN_THREAT_REENTRY": {"qs_threat_ext": false, "scan_threat_reentry": true},
+      "J12_SCAN_VERIFY_THREAT_REENTRY": {"scan_verify_pruning": true, "qs_threat_ext": false, "scan_threat_reentry": true}
+    },
+    "all_other_search_params": "historical defaults"
+  },
+  "oracle": {
+    "engine": "Scan",
+    "reference_nodes": 200000,
+    "reuse_existing_scores": true,
+    "new_scan_searches": 0,
+    "primary_parent_metric": "best Scan200k sibling score minus Scan200k score of move selected by arm",
+    "top_hit": "regret == 0"
+  },
+  "readout": {
+    "bootstrap_repetitions": 20000,
+    "paired_bootstrap_seed": 2026090802,
+    "interaction_bootstrap_seed": 2026090803,
+    "standard_gate_per_candidate": {
+      "mean_regret_improvement_gt_0": true,
+      "regret_lcb95_gt_0": true,
+      "top_hit_not_worse": true,
+      "median_wall_ratio_le": 1.05
+    },
+    "activation": {
+      "J1_SCAN_VERIFY": "scan_verify_probes > 0",
+      "J2_SCAN_THREAT_REENTRY": "scan_threat_reentries > 0",
+      "J12_SCAN_VERIFY_THREAT_REENTRY": "scan_verify_probes > 0 AND scan_threat_reentries > 0"
+    },
+    "factorial_interaction": "(CONTROL_regret-J12_regret) - (CONTROL_regret-J1_regret) - (CONTROL_regret-J2_regret)",
+    "interaction_is_diagnostic_not_gate": true
+  },
+  "survivor_rule": {
+    "candidate": "J12_SCAN_VERIFY_THREAT_REENTRY",
+    "requires_standard_gate_supported": true,
+    "requires_both_mechanisms_activated": true,
+    "pass_verdict": "J12_FACTORIAL_GATE0_SURVIVOR_V1",
+    "fail_verdict": "J12_FACTORIAL_GATE0_NOT_SUPPORTED_V1",
+    "strength_authorized": false,
+    "fresh_disjoint_confirmation_required_before_strength": true
+  },
+  "guards": {
+    "fits": 0,
+    "new_scan_searches": 0,
+    "strength_games": 0,
+    "selfplay_games": 0,
+    "promotions": 0,
+    "bakes": 0,
+    "automatic_continuation": false
+  }
+}
