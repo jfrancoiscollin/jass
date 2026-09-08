@@ -7,7 +7,9 @@ on:
       - 'jobs/tools/d4c_*'
       - 'jobs/templates/l3-d4c-rank-breaker-micro-screen-v1.sh'
       - 'jobs/templates/l3-d4c-rank-breaker-micro-screen-wrapper-v1.sh'
+      - 'jobs/templates/l3-d4c-post-teacher-recovery-v1.sh'
       - 'jobs/tests/test_d4c_rank_breaker.py'
+      - 'jobs/tests/test_d4c_post_teacher_recovery.py'
       - 'src/d4c_runtime_move_order.hpp'
       - '.github/workflows/d4c-rank-breaker-micro.yml'
 
@@ -21,11 +23,14 @@ jobs:
           python-version: '3.12'
       - name: Contract tests
         run: |
-          python -m unittest jobs.tests.test_d4c_rank_breaker -v
+          python -m unittest jobs.tests.test_d4c_rank_breaker jobs.tests.test_d4c_post_teacher_recovery -v
           python -m py_compile jobs/tools/d4c_rank_breaker.py jobs/tools/d4c_runtime_render.py jobs/tools/d4c_gate0_render.py
           bash -n jobs/templates/l3-d4c-rank-breaker-micro-screen-v1.sh
           bash -n jobs/templates/l3-d4c-rank-breaker-micro-screen-wrapper-v1.sh
+          bash -n jobs/templates/l3-d4c-post-teacher-recovery-v1.sh
           grep -q 'export PYTHONPATH="$JASS_CODE_DIR' jobs/templates/l3-d4c-rank-breaker-micro-screen-wrapper-v1.sh
+          grep -q 'd4-roots-4000.tsv' jobs/templates/l3-d4c-post-teacher-recovery-v1.sh
+          grep -q 'new_teacher_searches=0' jobs/templates/l3-d4c-post-teacher-recovery-v1.sh
       - name: Build isolated 20k teacher
         run: |
           mkdir -p /tmp/d4c-teacher
