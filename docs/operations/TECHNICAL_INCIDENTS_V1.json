@@ -224,12 +224,12 @@
     {
       "id": "TI-023",
       "dedupe_key": "launch-rehearsal-not-enforced-ed2-v1",
-      "context": "ED2 launch process review after 1878; ED3 first adopter of executable launch admission",
-      "symptom": "Component CI success and a readable process document were treated as launch readiness without a machine-required full target-host publication rehearsal; original failure diagnostics required another job.",
-      "root_cause": "The existing stage spec and shared dispatcher validate code/resources but do not require a prior successful full-pipeline rehearsal. The incident ledger synchronizes narrative fields rather than enforcing per-launch regression execution.",
-      "invariant": "New production stage-spec jobs must authenticate the exact successful published rehearsal and re-read output bytes with matching code/profile/normalized spec/runtime. Run mandatory nonempty, non-skipped regression suites; publish bounded phase/type/source diagnostics in original status. Never let an audit receipt authorize a different learning pipeline or use consumed TEST for tuning.",
-      "evidence": "Existing execution standard JASS_EXPERIMENT_EXECUTION_STANDARD_V1_20260905.md compared with templates/run-stage-v1.sh. New jobs/tools/launch_gate_v2.py and launch_runtime_v2.py, test_launch_gate_v2.py, test_launch_gate_pipeline_v2.py, test_ed3_label_pressure.py; 19 local tests pass, complete-repo CI and target-host R2 proof pending. Technical and scientific changes are separate commits; original v1 runner unchanged.; PR #877",
-      "status": "MITIGATION IMPLEMENTED — CI, shared-dispatcher activation and target-host roundtrip proof pending"
+      "context": "Launch V2 deployed by Jass #877 and jass-control #576; real-host ED3 audit rehearsal 1879 / 20260908T202244Z-b074eeaf",
+      "symptom": "Previously, component CI and a prose standard did not mechanically require complete target-host publication rehearsal. The new shared stage dispatcher now rejects missing admission and production without the matching successful published proof.",
+      "root_cause": "The original v1 spec/dispatcher lacked rehearsal admission. The new integration test additionally exposed canonical-spec versus raw-file hash confusion before any CPX launch; the corrected gate preserves both and tests actual published-byte roundtrip.",
+      "invariant": "Require same-code/profile/normalized-spec/runtime proof, completed R2 manifest and marker, authenticated output readback and nonempty non-skipped regression suites. Expose bounded original-phase/type/source diagnostics without raw secrets. An audit receipt cannot authorize a learner. Do not infer fresh liveness from an unchanged running record.",
+      "evidence": "Jass #877 merged b074eeafa32a578108bf30e3b329c83e956b2b24. Full-chain CI 34273484182 passed 23 top-level tests; build 34273484205 passed. Control #576 merged 96fe5b8668ab99f97c446a30cbadbc64d69c150f; CI 34274304113 passed five dispatcher/actual-queue tests. 1879 launch at 2026-09-08T20:22:48Z, attempt 20260908T202244Z-b074eeaf. docs/operations/LAUNCH_V2_ED3_DEPLOYMENT_RECEIPT_20260908.md records exact proof scope. Terminal R2 readback remains pending.; PR #878",
+      "status": "MITIGATED — shared dispatcher and mandatory CI active; real-host completed publication/readback proof pending"
     }
   ]
 }
