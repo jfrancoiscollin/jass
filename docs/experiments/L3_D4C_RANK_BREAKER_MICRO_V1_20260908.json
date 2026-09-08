@@ -1,0 +1,84 @@
+{
+  "schema": "jass.d4c.rank_breaker_micro_preregistration.v1",
+  "date": "2026-09-08",
+  "motivation_source": {
+    "job": "cpx62-1868-l3-d4b-search-utility-micro-screen-v1",
+    "attempt": "20260907T210728Z-34f48241",
+    "code_sha": "34f48241a9e99338c31e02c6561a410de7d56745",
+    "terminal_verdict": "D4B_MICRO_GATE0_NOT_SUPPORTED_V1",
+    "offline_verdict": "D4B_MICRO_OFFLINE_SUPPORTED_V1",
+    "eligible_nodes": 216779,
+    "hoists": 71,
+    "gate0_mean_regret_improvement": 0.0
+  },
+  "roots": {
+    "source": "sealed D4b 1868 target-blind manifest",
+    "total": 512,
+    "splits": {"train": 384, "valid": 64, "test": 64},
+    "fresh_confirmation": false
+  },
+  "teacher": {
+    "exact_nodes_per_root": 20000,
+    "planned_nodes": 10240000,
+    "threads": 1,
+    "book": false,
+    "shards": 8
+  },
+  "examples": {
+    "exact_counts": {"train": 8000, "valid": 1000, "test": 1000},
+    "canonical_cross_split_filter": true,
+    "phase_quota_gate": false
+  },
+  "model": {
+    "objective": "pairwise_label_vs_other_logistic",
+    "features": 24,
+    "phase_blocks": 4,
+    "trainable_parameters": 96,
+    "fixed_legacy_logit": false,
+    "legacy_rank_feature_retained": true,
+    "l2": 0.001,
+    "optimizer": "L-BFGS-B",
+    "max_iter": 500,
+    "maxcor": 10,
+    "gtol": 1e-6,
+    "fits": 1,
+    "model_searches": 0,
+    "hyperparameter_searches": 0,
+    "temperature_searches": 0,
+    "runtime_scale_searches": 0
+  },
+  "offline_gate": {
+    "valid_top1_gt_baseline": true,
+    "test_top1_gt_baseline": true,
+    "test_paired_top1_gain_mean_gt_0": true,
+    "test_change_rate_min": 0.01,
+    "test_change_rate_max": 0.35,
+    "test_correct_nonfirst_override_rate_min": 0.05,
+    "bootstrap_repetitions": 20000,
+    "bootstrap_seed": 2026090803
+  },
+  "runtime": {
+    "scope": "first_up_to_4_legacy_non_tt_internal_only",
+    "root_ordering_changed": false,
+    "tt_absolute_priority": true,
+    "stable_hoist": true,
+    "score": "beta_dot_features_without_fixed_rank_prior",
+    "diagnostics": ["eligible_nodes", "hoists", "predicted_rank1", "predicted_rank2", "predicted_rank3", "predicted_rank4"]
+  },
+  "scan_gate0": {
+    "parents": 512,
+    "jass_nodes_per_parent": 20000,
+    "new_scan_searches": 0,
+    "control_reused": true,
+    "scan200k_oracle_reused": true,
+    "permanent_gate_unchanged": true,
+    "survivor_only": true
+  },
+  "authorization": {
+    "strength_games": 0,
+    "selfplay_games": 0,
+    "promotions": 0,
+    "bakes": 0,
+    "strength_authorized": false
+  }
+}
