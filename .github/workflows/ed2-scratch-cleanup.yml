@@ -1,0 +1,26 @@
+name: ED2 scratch publication cleanup
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/ed2_cleanup_scratch.py'
+      - 'jobs/tests/test_ed2_cleanup_scratch.py'
+      - 'jobs/templates/l3-ed2-data-teacher-preflight-v1.sh'
+      - 'jobs/templates/l3-ed2-paired-value-fit-v1.sh'
+      - '.github/workflows/ed2-scratch-cleanup.yml'
+permissions:
+  contents: read
+jobs:
+  cleanup-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Preserve scientific evidence and refuse unsafe cleanup paths
+        run: |
+          python -m unittest jobs.tests.test_ed2_cleanup_scratch -v
+          python -m py_compile jobs/tools/ed2_cleanup_scratch.py jobs/tests/test_ed2_cleanup_scratch.py
+          bash -n jobs/templates/l3-ed2-data-teacher-preflight-v1.sh
+          bash -n jobs/templates/l3-ed2-paired-value-fit-v1.sh
