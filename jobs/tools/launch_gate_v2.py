@@ -190,6 +190,7 @@ def execute(args):
     need(subprocess.check_output(['git', '-C', str(repo), 'rev-parse', 'HEAD'], text=True).strip() == spec['code_sha'], 'CHECKOUT_IDENTITY')
     need(not subprocess.check_output(['git', '-C', str(repo), 'status', '--porcelain'], text=True).strip(), 'DIRTY_CHECKOUT')
     mode = validate_contract(spec, admission, profile, sha(args.spec), sha(pp), os.environ.get('JASS_JOB_ID', ''))
+    need(os.environ.get('EXPECTED_LAUNCH_TIMEOUT_SECONDS') == str(spec['timeouts']['stage_seconds']+600), 'OUTER_TIMEOUT_CONTRACT')
     runtime = runtime_identity(profile['command'][0])
     need(runtime['host'] == spec['resources']['hostname'] and runtime['nproc'] == spec['resources']['nproc'], 'HOST_MISMATCH')
     args.result_dir.mkdir(parents=True, exist_ok=True)
@@ -219,7 +220,8 @@ def execute(args):
     output_hashes = {p: sha(args.artifact_dir/p) for p in ['execution-evidence.json', 'launch-regressions.json'] + profile['evidence_outputs']}
     proof = dict(schema='jass.launch_receipt.v2', mode=mode,
                  verdict='REHEARSAL_EXECUTION_COMPLETE_V2' if mode == 'rehearsal' else 'ADMITTED_STAGE_COMPLETE_V2',
-                 code_sha=spec['code_sha'], common_spec_sha256=common_spec(spec), spec_sha256=sha(args.spec),
+                 code_sha=spec['code_sha'], common_spec_sha256=common_spec(spec),
+                 spec_sha256=receipt['spec_sha256'], spec_file_sha256=sha(args.spec),
                  profile_sha256=digest(profile), runtime=runtime, output_sha256=output_hashes,
                  job_id=os.environ['JASS_JOB_ID'], attempt_id=os.environ['JASS_ATTEMPT_ID'])
     atomic_json(args.artifact_dir/'launch-receipt.json', proof)
