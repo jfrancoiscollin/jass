@@ -96,7 +96,7 @@ timeout 180s cmake -S "$W/src" -B "$W/build" -DCMAKE_BUILD_TYPE=Release \
  -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON >"$W/cmake.log" 2>&1
 timeout 600s cmake --build "$W/build" -j16 --target jass_ed2_value_probe >"$W/build.log" 2>&1
 phase paired-pipeline-train-before-sealed-test
-"$PY" jobs/tools/ed2_value_pipeline.py run \
+"$PY" jobs/tools/ed2_value_entrypoint.py run \
  --source "$IN/source" --exclusions "$IN/benchmark-exclusions.txt" \
  --source-seal "$IN/ed2-source-seal.json" --preflight "$IN/ed2-preflight.json" \
  --base "$W/BASE.pjtw" --current "$W/current.jnnw" --meta "$W/current.jsm" --targets "$W/current-context30.npy" \
