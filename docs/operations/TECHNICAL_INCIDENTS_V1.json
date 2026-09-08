@@ -200,6 +200,16 @@
       "invariant": "Require cpx62 with 16 available CPUs without using nproc --all; preserve one-thread numeric caps, pinned clean code, ED1 data identities, labels, budgets, thresholds and information barriers.",
       "evidence": "Jass #870 merged as 941faa2df22c08b24cec45694d3277bd4407c0fc. jass-control/status/cpx62-1874-l3-ed1-partial-order-audit-openmp-recovery-v1.json: attempt 20260908T161858Z-941faa2d, completed exit 0 at 2026-09-08T16:24:13Z; label seal, ed1-readout.json and ED1_PARTIAL_ORDER_LABEL_SIGNAL_V1 published. Terminal rerun proves the unchanged resource guard and durable recovery.; PR #871",
       "status": "CLOSED — terminal deterministic recovery 1874 authenticated"
+    },
+    {
+      "id": "TI-021",
+      "dedupe_key": "ed2-p0-1875-missing-heartbeat-terminal-v1",
+      "context": "ED2-P0 1875 / 20260908T171140Z-bc30d685; ED2 paired learner PR #872 launch prerequisite",
+      "symptom": "TECHNICAL observability blocker: repeated control-plane reads still expose only the original 17:11:45Z running record, without a heartbeat snapshot, phase, terminal receipt or measured cost. Actual process liveness is unconfirmed; this is not a scientific negative.",
+      "root_cause": "UNDETERMINED. No current host process or stage log is available in the published control record. Startup delay, stalled execution, unavailable runner ticks, Git publication or object-store finalization have not been distinguished. Global pause is not established as cause because the cpx62 host-active exemption is present.",
+      "invariant": "No TRAIN/TEST labeling or paired fit before authenticating the exact P0 READY receipt, frozen source and spending gate. Never equate a stale running marker with live progress, edit a historical verdict, or requeue concurrently from unverified PID state. Preserve all source identities, scientific recipes and hard caps.",
+      "evidence": "jass-control/status/cpx62-1875-l3-ed2-data-teacher-preflight-v1.json blob 961a29fe227a80213ab2cbbbe53d0167c89f1c4b; last control commit ddc4ce12ebad8f469eb9cfd0eb1646bb3f4a3c40; infra/runner_v3.py heartbeat/reap functions at code bc30d685; state/host-active/cpx62 exists. No terminal scientific or technical verdict has been read.; PR #872",
+      "status": "OPEN — obtain current host/phase or terminal publication evidence; paired launch blocked"
     }
   ]
 }
