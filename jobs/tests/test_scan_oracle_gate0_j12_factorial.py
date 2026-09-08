@@ -26,6 +26,7 @@ class J12FactorialTests(unittest.TestCase):
         self.assertEqual(p["guards"]["new_scan_searches"], 0)
         self.assertEqual(p["guards"]["fits"], 0)
         self.assertEqual(p["guards"]["strength_games"], 0)
+        self.assertEqual(p["guards"]["selfplay_games"], 0)
         self.assertFalse(p["survivor_rule"]["strength_authorized"])
 
     def test_selector_is_disjoint_phase_balanced_and_target_blind(self) -> None:
@@ -70,8 +71,9 @@ class J12FactorialTests(unittest.TestCase):
         self.assertIn("J12_SCAN_VERIFY_THREAT_REENTRY", text)
         self.assertIn("new_scan_searches=0", text)
         self.assertIn("STRENGTH_GAMES__0", text)
+        self.assertIn("'selfplay_games':0", text)
         self.assertNotIn("cutechess", text.lower())
-        self.assertNotIn("selfplay", text.lower())
+        self.assertNotIn("generate_selfplay", text.lower())
 
 
 if __name__ == "__main__":
