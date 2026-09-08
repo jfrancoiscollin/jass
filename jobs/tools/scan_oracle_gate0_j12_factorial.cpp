@@ -80,7 +80,7 @@ bool exact_budget_ok(const SearchResult& r, std::uint64_t budget) {
         && !r.aborted_iteration;
 }
 
-struct Counters {
+struct J12Counters {
     std::uint64_t source_rows{0}, selected_rows{0}, processed_rows{0};
     std::uint64_t nodes{0}, eval_calls{0}, wall_us{0};
     std::uint64_t scan_verify_probes{0}, scan_verify_cutoffs{0};
@@ -90,7 +90,7 @@ struct Counters {
 };
 
 void write_report(const std::string& path, const std::string& arm,
-                  std::uint64_t budget, const Counters& c) {
+                  std::uint64_t budget, const J12Counters& c) {
     const bool verify_active = c.scan_verify_probes > 0;
     const bool threat_active = c.scan_threat_reentries > 0;
     bool activation_ok = true;
@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
         out << "parent_id\tfrom\tto\tcaptured_hex\tpromotes\tsearch_score\tnodes\t"
                "completed_depth\teffective_depth\teval_calls\tcutoffs\twall_us\n";
 
-        Counters c{};
+        J12Counters c{};
         DiskRow row{};
         for (std::uint32_t idx = 0; idx < declared; ++idx) {
             if (!read_row(in, row)) throw std::runtime_error("truncated parents JNNW");
