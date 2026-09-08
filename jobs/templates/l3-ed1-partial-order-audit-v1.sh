@@ -7,23 +7,37 @@ export PYTHONPATH="$JASS_CODE_DIR"
 export PYTHONDONTWRITEBYTECODE=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 W="$JASS_RESULT_DIR/work"; IN="$JASS_RESULT_DIR/inputs"; ART="$JASS_ARTEFACT_DIR"
 mkdir -p "$W" "$IN" "$ART"
-RES="$ART/RESULTS.txt"; : >"$RES"
-phase(){ printf 'phase=%s time_utc=%s\n' "$1" "$(date -u +%FT%TZ)" | tee -a "$RES"; }
+RES="$W/RESULTS.txt"; : >"$RES"; PHASE=preflight
+say(){ printf '%s\n' "$*" | tee -a "$RES"; }
+die(){ say "ED1_TECHNICAL_ABORT phase=$PHASE reason=$*"; exit 1; }
+phase(){ PHASE="$1"; say "phase=$PHASE time_utc=$(date -u +%FT%TZ)"; cp "$RES" "$ART/RESULTS.txt"; }
 finalize(){
-  rc=$?; trap - EXIT ERR; set +e
+  rc=$?; trap - EXIT ERR TERM INT; set +e
   if [ "$rc" -ne 0 ]; then
-    printf 'ED1 technical failure rc=%s; no scientific verdict\n' "$rc" >>"$RES"
+    printf 'ED1 technical failure phase=%s rc=%s; no scientific verdict\n' "$PHASE" "$rc" >>"$RES"
   fi
+  cp "$RES" "$ART/RESULTS.txt"
+  mkdir -p "$ART/execution-logs"
+  for log in "$W"/*.log; do [ ! -f "$log" ] || cp "$log" "$ART/execution-logs/"; done
   exit "$rc"
 }
 trap finalize EXIT
-[ "$ED1_AUDIT_GO" = 1 ]
-[ "$(hostname)" = cpx62 ] && [ "$(nproc)" -eq 16 ]
-[ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ]
+trap 'rc=$?; say "ED1_TECHNICAL_ABORT phase=$PHASE line=$LINENO rc=$rc"; exit "$rc"' ERR
+trap 'exit 143' TERM; trap 'exit 130' INT
+phase preflight
+[ "$ED1_AUDIT_GO" = 1 ] || die "ED1 GO missing"
+[ "$(hostname)" = cpx62 ] || die "CPX62 host mismatch"
+# GNU nproc observes OpenMP limits. Probe available CPUs without those numeric
+# library overrides; do not use --all (which also ignores CPU affinity/quotas).
+NCPU=$(env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc)
+[ "$NCPU" -eq 16 ] || die "CPX62 CPU count mismatch: got=$NCPU expected=16"
+say "available_nproc=$NCPU OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS OMP_NUM_THREADS=$OMP_NUM_THREADS MKL_NUM_THREADS=$MKL_NUM_THREADS"
+[ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ] || die "worktree must be detached/clean"
 PY="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}/bin/python"
-[ -x "$PY" ]; "$PY" -c 'import numpy'
+[ -x "$PY" ] || die "numeric venv missing"
+"$PY" -c 'import numpy' || die "numeric venv lacks numpy"
 SPEC_CODE=$("$PY" -c 'import json,sys; print(json.load(open(sys.argv[1]))["code_sha"])' "$JASS_STAGE_SPEC")
-[ "$(git rev-parse HEAD)" = "$SPEC_CODE" ]
+[ "$(git rev-parse HEAD)" = "$SPEC_CODE" ] || die "stage spec / HEAD mismatch"
 
 phase authenticate-existing-cohorts
 A_JOB=cpx62-1864-l3-scan-oracle-gate0-d3-retrospective-v1

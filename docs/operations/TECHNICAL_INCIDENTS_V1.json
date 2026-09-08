@@ -190,6 +190,16 @@
       "invariant": "absence of treatment activation on a screening cohort is a scientific/support result and must not abort unrelated arms; it should be reported as not exercised/non-survivor",
       "evidence": "1865 sealed artefacts contain J1/J2 TSV+report+readout and J3 TSV only; scorer calls assert_activation after all 512 searches and before report write; PR #863",
       "status": "MITIGATED — partial recovery reuses J1/J2 and reruns J3-J6 with nonfatal activation accounting"
+    },
+    {
+      "id": "TI-020",
+      "dedupe_key": "ed1-nproc-openmp-preflight-v1",
+      "context": "ED1 1873 / 20260908T140143Z-a3ac3cdc — partial-order label audit launcher",
+      "symptom": "TECHNICAL: stage exit 1 / runner exit 2 before cohort authentication; only a generic 50-byte RESULTS and no scientific verdict, label seal or audit readout.",
+      "root_cause": "ED1 exports OMP_NUM_THREADS=1 before checking nproc==16. GNU nproc observes OpenMP overrides, so the single-thread numeric cap contaminates the machine-resource probe. The original guard reproduces exit 1 locally; sparse failure logging obscured the offending check.",
+      "invariant": "Probe available CPUs with only OMP_NUM_THREADS and OMP_THREAD_LIMIT removed from that subprocess, never nproc --all. Keep host=cpx62, available CPUs=16, clean detached pinned code and all numeric library thread caps=1. Preserve phase/line/exit diagnostics and all ED1 scientific parameters byte-identically.",
+      "evidence": "Failed receipt: jass-control/status/cpx62-1873-l3-ed1-partial-order-audit-v1.json, attempt 20260908T140143Z-a3ac3cdc. Six actual-wrapper tests pass locally; original guard fails under OMP_NUM_THREADS=1. Scientific wrapper suffix authenticated against blob dddc4b1567472557436d615624dfa375f15e8282. Remote terminal rerun proof pending.; PR #870",
+      "status": "MITIGATED — terminal deterministic rerun proof pending"
     }
   ]
 }
