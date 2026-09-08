@@ -1,0 +1,44 @@
+{
+  "campaign": "ed3-soft-preference",
+  "command": [
+    "/var/tmp/jass-l3-numeric-venv-current-v1/bin/python",
+    "jobs/tools/ed3_label_pressure.py"
+  ],
+  "evidence_outputs": [
+    "ed3-label-pressure.json"
+  ],
+  "production_max_effects": {
+    "bakes": 0,
+    "fits": 0,
+    "new_jass_searches": 0,
+    "new_scan_searches": 0,
+    "promotions": 0,
+    "selfplay_games": 0,
+    "strength_games": 0,
+    "test_target_reads": 0
+  },
+  "regressions": [
+    "jobs.tests.test_launch_gate_v2",
+    "jobs.tests.test_launch_gate_pipeline_v2",
+    "jobs.tests.test_ed3_label_pressure",
+    "jobs.tests.test_ed2_cleanup_scratch"
+  ],
+  "rehearsal_max_effects": {
+    "bakes": 0,
+    "fits": 0,
+    "new_jass_searches": 0,
+    "new_scan_searches": 0,
+    "promotions": 0,
+    "selfplay_games": 0,
+    "strength_games": 0,
+    "test_target_reads": 0
+  },
+  "required_phases": [
+    "authenticate",
+    "load-train-and-replay",
+    "measure",
+    "publish"
+  ],
+  "schema": "jass.launch_profile.v2",
+  "stage": "ed3-train-pressure-audit-v1"
+}

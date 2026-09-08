@@ -1,0 +1,33 @@
+name: Launch admission V2 and ED3 full-chain rehearsal
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/launch_*v2.py'
+      - 'jobs/tools/ed3_label_pressure.py'
+      - 'jobs/tests/test_launch_*v2.py'
+      - 'jobs/tests/test_ed3_label_pressure.py'
+      - 'jobs/launch_profiles/**'
+      - '.github/workflows/launch-gate-v2-ed3.yml'
+      - 'docs/operations/LAUNCH_ADMISSION_V2_20260908.md'
+      - 'docs/experiments/L3_ED3_TRAIN_PRESSURE_DIAGNOSTIC_V1_20260908.md'
+permissions:
+  contents: read
+jobs:
+  whole-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy scipy
+      - name: Actual stage, synthetic complete audit, publisher and verified readback
+        run: |
+          python jobs/tools/launch_regressions_v2.py --profile jobs/launch_profiles/ed3-train-pressure-v1.json --out /tmp/launch-regressions.json
+          python -m py_compile jobs/tools/launch_gate_v2.py jobs/tools/launch_runtime_v2.py jobs/tools/launch_regressions_v2.py jobs/tools/ed3_label_pressure.py
