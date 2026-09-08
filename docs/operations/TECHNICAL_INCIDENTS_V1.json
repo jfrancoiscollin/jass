@@ -204,12 +204,12 @@
     {
       "id": "TI-021",
       "dedupe_key": "ed2-p0-1875-missing-heartbeat-terminal-v1",
-      "context": "ED2-P0 1875 / 20260908T171140Z-bc30d685; ED2 paired learner PR #872 launch prerequisite",
-      "symptom": "TECHNICAL observability blocker: repeated control-plane reads still expose only the original 17:11:45Z running record, without a heartbeat snapshot, phase, terminal receipt or measured cost. Actual process liveness is unconfirmed; this is not a scientific negative.",
-      "root_cause": "UNDETERMINED. No current host process or stage log is available in the published control record. Startup delay, stalled execution, unavailable runner ticks, Git publication or object-store finalization have not been distinguished. Global pause is not established as cause because the cpx62 host-active exemption is present.",
-      "invariant": "No TRAIN/TEST labeling or paired fit before authenticating the exact P0 READY receipt, frozen source and spending gate. Never equate a stale running marker with live progress, edit a historical verdict, or requeue concurrently from unverified PID state. Preserve all source identities, scientific recipes and hard caps.",
-      "evidence": "jass-control/status/cpx62-1875-l3-ed2-data-teacher-preflight-v1.json blob 961a29fe227a80213ab2cbbbe53d0167c89f1c4b; last control commit ddc4ce12ebad8f469eb9cfd0eb1646bb3f4a3c40; infra/runner_v3.py heartbeat/reap functions at code bc30d685; state/host-active/cpx62 exists. No terminal scientific or technical verdict has been read.; PR #872",
-      "status": "OPEN — obtain current host/phase or terminal publication evidence; paired launch blocked"
+      "context": "ED2-P0 1875 / 20260908T171140Z-bc30d685 and preparation of ED2 paired learner",
+      "symptom": "TECHNICAL observability blocker: published 1875 record remains its initial running snapshot without recent phase/heartbeat/terminal evidence. Source inspection also identifies entire repository/build scratch included in result publication.",
+      "root_cause": "Confirmed code-level exposure: ED2 finalizers retain work/src and work/build, while runner_v3_store inventories and Rclone-copies/checks the entire run directory before the terminal marker; runner_v3 reaps/publishes terminal status only afterward. This can produce disproportionate publication work. Attribution of 1875's current delay to this mechanism remains unconfirmed; no current host phase/PID evidence was obtained.",
+      "invariant": "Retain scientific data, models, seals, inputs, logs and native binary hashes; remove only this attempt's reproducible source/build scratch using strict path guards before publication. Never alter the running pinned attempt or history. No training before authenticated P0 READY, exact source and measured cost gates; stale running is not live progress.",
+      "evidence": "P0 status blob 961a29fe227a80213ab2cbbbe53d0167c89f1c4b, attempt 20260908T171140Z-bc30d685. Source at bc30d685: jobs/templates/l3-ed2-data-teacher-preflight-v1.sh finalize, infra/runner_v3_store.py inventory_files/RcloneResultStore.publish, infra/runner_v3.py reap_finished_job. Three local cleanup preservation/path tests pass. P0 current phase and remote cleanup/terminal proof pending.; PR #873",
+      "status": "MITIGATED FOR FUTURE ED2 RUNS — P0 phase/terminal and remote cleanup proof pending"
     }
   ]
 }
