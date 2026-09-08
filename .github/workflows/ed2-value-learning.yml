@@ -1,0 +1,40 @@
+name: ED2 paired value learning
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/ed2_value_*'
+      - 'jobs/tests/test_ed2_value_learning.py'
+      - 'jobs/templates/l3-ed2-paired-value-fit-v1.sh'
+      - 'docs/experiments/L3_ED2_PAIRED_VALUE_FIT_V1_20260908.md'
+      - '.github/workflows/ed2-value-learning.yml'
+permissions:
+  contents: read
+jobs:
+  paired-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy scipy
+      - name: Build frozen-architecture native value probe
+        run: |
+          python pattern_jass/tools/gen_patterns.py --emit --variant 8cf
+          printf '\nadd_executable(jass_ed2_value_probe jobs/tools/ed2_value_probe.cpp)\ntarget_link_libraries(jass_ed2_value_probe PRIVATE jass_lib)\n' >> CMakeLists.txt
+          cmake -S . -B /tmp/ed2-value-build -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/ed2-value-build -j2 --target jass_ed2_value_probe
+      - name: Native artifact roundtrip, gradients, seals and information barriers
+        env:
+          ED2_VALUE_PROBE: /tmp/ed2-value-build/jass_ed2_value_probe
+        run: |
+          python -m unittest jobs.tests.test_ed2_value_learning -v
+          python -m py_compile jobs/tools/ed2_value_math.py jobs/tools/ed2_value_pipeline.py
+          python jobs/tools/ed2_value_pipeline.py --help
+          bash -n jobs/templates/l3-ed2-paired-value-fit-v1.sh
