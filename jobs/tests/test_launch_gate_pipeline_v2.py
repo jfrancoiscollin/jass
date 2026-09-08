@@ -53,12 +53,15 @@ class ActualStageRoundtripTests(unittest.TestCase):
             with patch.dict(os.environ,{'JASS_JOB_ID':job,'JASS_ATTEMPT_ID':attempt}):
                 rc,receipt=core.run_stage(spec_path=sp,repo_root=repo,result_dir=run,artifact_dir=art)
             self.assertEqual(rc,0,receipt)
+            self.assertNotEqual(receipt['spec_sha256'],g.sha(sp)) # pretty file vs canonical spec
+            self.assertEqual(receipt['spec_sha256'],core.sha256_bytes(core.canonical_json_bytes(spec)))
             self.assertEqual(regress.run(profile['regressions'],art/'launch-regressions.json'),0)
             evidence=g.read(art/'execution-evidence.json');g.validate_evidence(evidence,profile,'rehearsal')
             hashes={p:g.sha(art/p) for p in ['execution-evidence.json','launch-regressions.json']+profile['evidence_outputs']}
             runtime={'host':'fixture-host','nproc':1}
             proof=dict(schema='jass.launch_receipt.v2',mode='rehearsal',verdict='REHEARSAL_EXECUTION_COMPLETE_V2',
-                       code_sha=head,common_spec_sha256=g.common_spec(spec),spec_sha256=g.sha(sp),
+                       code_sha=head,common_spec_sha256=g.common_spec(spec),spec_sha256=receipt['spec_sha256'],
+                       spec_file_sha256=g.sha(sp),
                        profile_sha256=g.digest(profile),runtime=runtime,output_sha256=hashes,job_id=job,attempt_id=attempt)
             atomic_json(art/'launch-receipt.json',proof)
             manifest=dict(job_id=job,attempt_id=attempt,code_sha=head,host='fixture-host',state='completed',exit_code=0)
@@ -78,14 +81,12 @@ class ActualStageRoundtripTests(unittest.TestCase):
             production=copy.deepcopy(spec);production['environment']['set']['LAUNCH_MODE']='production'
             # Runtime host matching also appears in the published outer manifest.
             production['resources']['hostname']='fixture-host'
-            # Preserve normalized identity while setting a concrete host for this
-            # fixture: reissue proof with the same stage's normalized host contract.
-            # The production gate must not accept such a mutation.
+            # This host mutation changes the registered spec and must be refused.
             with patch.dict(os.environ,{'PATH':str(fake)+os.pathsep+os.environ['PATH'],'FIXTURE_STORE':str(store)}):
                 with self.assertRaisesRegex(g.GateError,'STALE_REHEARSAL_SPEC'):
                     g.authenticate_published(admission,production,profile,runtime,root/'reject-change')
                 production['resources']['hostname']=None
-                # For the synthetic-only fixture host is None in the stage spec;
+                # Synthetic-only fixture uses no host restriction in its spec;
                 # test direct proof matching after authenticated transport below.
                 from jobs.tools.fetch_result_files import fetch_files
                 dest=root/'download';verified=fetch_files(rclone='rclone',
