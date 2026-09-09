@@ -80,6 +80,9 @@ jobs:
       - name: Run Python tests
         run: python -m pytest pattern_jass/tests
 
+      - name: Run ED4 source descriptor inventory tests
+        run: python -m unittest jobs.tests.test_ed4_source_descriptor_inventory -v
+
   # ---------------------------------------------------------------------------
   # WASM build: install emsdk, run the project's own wasm/build.sh, package
   # the artefacts.
