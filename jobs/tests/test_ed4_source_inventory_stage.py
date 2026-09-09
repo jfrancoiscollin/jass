@@ -51,12 +51,17 @@ class InventoryStageTests(unittest.TestCase):
             root = Path(td); art = root / 'artefacts'
             summary = fixture_run(root, art)
             report = stage.read_json(art / stage.OUTPUT)
+            candidates = stage.read_json(art / stage.CANDIDATE_OUTPUT)
             evidence = stage.read_json(art / 'execution-evidence.json')
             self.assertEqual(report['verdict'], 'ED4_C0A_INVENTORY_ADMISSION_READY_V1')
             self.assertEqual(evidence['completed_phases'], stage.PHASES)
             self.assertEqual(evidence['state'], 'completed')
             self.assertEqual(evidence['actual_side_effects'], {k: 0 for k in EFFECTS})
             self.assertEqual(summary['inventory_sha256'], inventory.digest((art / stage.OUTPUT).read_bytes()))
+            self.assertEqual(summary['c0b_candidate_manifest_sha256'],
+                             inventory.digest((art / stage.CANDIDATE_OUTPUT).read_bytes()))
+            self.assertEqual(candidates['payload_downloads'], 0)
+            self.assertEqual(candidates['payload_bytes_read'], 0)
             self.assertIsNone(summary['scientific_verdict'])
             for key in ('scientific_success_established', 'source_audit_completed',
                         'confirmation_authorized', 'runtime_authorized', 'automatic_continuation'):
@@ -80,13 +85,15 @@ class InventoryStageTests(unittest.TestCase):
                 self.assertEqual(stage.read_json(art / 'execution-evidence.json')['state'], 'completed')
                 self.assertEqual(summary['missing_paths_count'] + summary['unclassified_producers_count'], 1)
 
-    def test_rehearsal_and_production_have_identical_inventory(self):
+    def test_rehearsal_and_production_have_identical_inventory_and_candidate_freeze(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             for mode in ('rehearsal', 'production'):
                 fixture_run(root, root / mode, mode=mode, unknown=True)
             self.assertEqual((root / 'rehearsal' / stage.OUTPUT).read_bytes(),
                              (root / 'production' / stage.OUTPUT).read_bytes())
+            self.assertEqual((root / 'rehearsal' / stage.CANDIDATE_OUTPUT).read_bytes(),
+                             (root / 'production' / stage.CANDIDATE_OUTPUT).read_bytes())
 
     def test_corrupt_envelope_fails_at_authentication(self):
         with tempfile.TemporaryDirectory() as td:
@@ -154,12 +161,14 @@ class InventoryStageTests(unittest.TestCase):
         profile = json.loads((stage.ROOT / 'jobs/launch_profiles/ed4-source-inventory-v1.json').read_text())
         self.assertEqual(profile['schema'], 'jass.launch_profile.v2')
         self.assertEqual(profile['required_phases'], stage.PHASES)
-        self.assertEqual(profile['evidence_outputs'], [stage.OUTPUT])
+        self.assertEqual(profile['evidence_outputs'], [stage.OUTPUT, stage.CANDIDATE_OUTPUT])
         self.assertEqual(profile['command'][1:], ['jobs/tools/ed4_source_inventory_stage.py'])
         for mode in ('rehearsal', 'production'):
             self.assertEqual(profile[mode + '_max_effects'], {k: 0 for k in EFFECTS})
         for suite in ('jobs.tests.test_launch_gate_v2', 'jobs.tests.test_launch_gate_pipeline_v2',
                       'jobs.tests.test_ed4_source_descriptor_inventory',
+                      'jobs.tests.test_ed4_producer_classification',
+                      'jobs.tests.test_ed4_structural_candidate_manifest',
                       'jobs.tests.test_ed4_source_inventory_stage',
                       'jobs.tests.test_ed4_source_inventory_pipeline'):
             self.assertIn(suite, profile['regressions'])
