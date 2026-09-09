@@ -288,7 +288,7 @@
       "symptom": "The frozen protocol required at least 3 GiB free, but the stage had no explicit disk check before authenticating and downloading inputs.",
       "root_cause": "The inherited stage schema checks host and CPU identity, not disk capacity. A metadata-only sizing observation does not implement a per-stage disk guard.",
       "invariant": "Before downloading any source, check free space on both result and artifact volumes; less than 3 GiB is a technical refusal with zero source reads and fits. Do not change scientific parameters.",
-      "evidence": "Local Linux exact ED4 launch profile: 33 tests in 9.754 seconds, zero failures/errors/skips. Boundary tests cover insufficient space on either volume and exact-minimum admission, with mocked optimizer proving zero fits. The complete synthetic fit and publisher tests also pass. No real data or remote job.",
+      "evidence": "Local Linux exact ED4 launch profile: 33 tests in 9.754 seconds, zero failures/errors/skips. Boundary tests cover insufficient space on either volume and exact-minimum admission, with mocked optimizer proving zero fits. The complete synthetic fit and publisher tests also pass. No real data or remote job.; PR #885",
       "status": "CLOSED"
     }
   ]
