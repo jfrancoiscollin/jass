@@ -12,6 +12,24 @@
 
 ---
 
+## Campagne autonome eval/search — ED4-P1 publié, CI complète validée
+
+Le mandat du 9 septembre autorise la poursuite automatique de pistes scientifiques
+distinctes après un échec, avec préenregistrement et confirmations fraîches. Le
+[contrat de campagne](experiments/L3_EVAL_SEARCH_CANDIDATE_CAMPAIGN_V1_20260909.md)
+gèle les quatre gates candidat/décision/WDL/recherche et la dépense alpha. Le
+[fit réel ED4-P1](experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_FIT_V1_20260909.md)
+est préenregistré : répétition full512 puis production identique, un fit chacune.
+
+Le pipeline passe ses 33 régressions locales et les vérifications natives avec
+publication/relecture sur fixtures synthétiques. [Preuves locales et limites](operations/ED4_P1_LOCAL_READINESS_20260909.md).
+Publication ED4-P1 et fusion #884 explicitement autorisées et effectuées. La
+CI complète du code `93e2fd1f` est verte ; ses reçus publiés sont authentifiés
+et relus. [Préparation du lancement réel](operations/ED4_P1_LAUNCH_READINESS_20260909.md).
+La PR de contrôle #585 prépare la répétition full512. Zéro fit réel à ce
+checkpoint ; admission CPX et preuve scientifique restent à obtenir.
+Aucun scale-up ni promotion.
+
 ## ED4-P0 — objectif de choix et préflight synthétique validés
 
 Le protocole ED4-P0 est préenregistré et son préflight synthétique complet a réussi

@@ -52,10 +52,11 @@ def _term(u,x,idx):
 def derivatives(beta,d):
     beta=np.asarray(beta,float); need(beta.shape==(WIDTH,) and np.isfinite(beta).all(),'beta')
     x,z=d['phi'],d['z']; value=0.; grad=np.zeros(WIDTH); H=np.zeros((WIDTH,WIDTH))
+    logits=z+x@beta
     for g in d['groups']:
         V,A=g['V'],g['A']
         if not V or A==V: continue
-        sign=1. if g['stm']==1 else -1.; u=sign*(z+x@beta)
+        sign=1. if g['stm']==1 else -1.; u=sign*logits
         lv,gv,hv=_term(u,x,V); la,ga,ha=_term(u,x,A)
         value+=lv-la; grad+=sign*(gv-ga); H+=hv-ha
     value/=d['normalizer']; grad/=d['normalizer']; H/=d['normalizer']
@@ -66,7 +67,14 @@ def derivatives(beta,d):
 
 def fit(d):
     zero=np.zeros(WIDTH); L0,_,_=derivatives(zero,d)
-    result=minimize(lambda b:derivatives(b,d)[0],zero,jac=lambda b:derivatives(b,d)[1],hess=lambda b:derivatives(b,d)[2],**OPTIONS)
+    cache_key=None; cache_value=None
+    def cached(beta):
+        nonlocal cache_key,cache_value
+        key=np.asarray(beta,dtype=np.float64).tobytes()
+        if key!=cache_key:
+            cache_value=derivatives(beta,d); cache_key=key
+        return cache_value
+    result=minimize(lambda b:cached(b)[0],zero,jac=lambda b:cached(b)[1],hess=lambda b:cached(b)[2],**OPTIONS)
     base={'success':bool(getattr(result,'success',False)),'initial_value':L0,'nit':getattr(result,'nit',None),'nfev':getattr(result,'nfev',None),'njev':getattr(result,'njev',None),'nhev':getattr(result,'nhev',None),'message':str(getattr(result,'message','missing solver result'))}
     if not hasattr(result,'x') or np.shape(result.x)!=(WIDTH,) or not np.isfinite(result.x).all():
         base.update(final_value=None,gradient_l2=None,hessian_asymmetry=None,minimum_hessian_eigenvalue=None); raise NumericalFailure(base)

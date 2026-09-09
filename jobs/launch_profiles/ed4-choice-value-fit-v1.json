@@ -1,0 +1,54 @@
+{
+  "campaign": "ed4-choice-value-fit",
+  "command": [
+    "/var/tmp/jass-l3-numeric-venv-current-v1/bin/python",
+    "jobs/tools/ed4_choice_value_fit.py"
+  ],
+  "evidence_outputs": [
+    "ED4_CHOICE.pjtw",
+    "beta.npy",
+    "solver-diagnostic.json",
+    "fit-report.json",
+    "train-contract.json",
+    "native-roundtrip.json",
+    "candidate-seal.json"
+  ],
+  "production_max_effects": {
+    "bakes": 0,
+    "fits": 1,
+    "new_jass_searches": 0,
+    "new_scan_searches": 0,
+    "promotions": 0,
+    "selfplay_games": 0,
+    "strength_games": 0,
+    "test_target_reads": 0
+  },
+  "regressions": [
+    "jobs.tests.test_launch_gate_v2",
+    "jobs.tests.test_launch_gate_pipeline_v2",
+    "jobs.tests.test_ed4_choice_math",
+    "jobs.tests.test_ed4_choice_derivative_cache",
+    "jobs.tests.test_ed4_choice_value_fit",
+    "jobs.tests.test_ed4_choice_publication"
+  ],
+  "rehearsal_max_effects": {
+    "bakes": 0,
+    "fits": 1,
+    "new_jass_searches": 0,
+    "new_scan_searches": 0,
+    "promotions": 0,
+    "selfplay_games": 0,
+    "strength_games": 0,
+    "test_target_reads": 0
+  },
+  "required_phases": [
+    "authenticate",
+    "verify-inputs",
+    "native-base",
+    "fit-choice-set",
+    "serialize-and-reload",
+    "seal-and-publish"
+  ],
+  "schema": "jass.launch_profile.v2",
+  "stage": "ed4-choice-value-fit-v1"
+}
