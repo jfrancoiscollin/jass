@@ -3,6 +3,7 @@
 from __future__ import annotations
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 import sys
@@ -37,12 +38,61 @@ def terminal(report, mode):
                 **{key: report[key] for key in inventory.ZERO_READS})
 
 
+def collect_metadata(catalog, rclone='rclone', transport=inventory.metadata_transport):
+    """Authenticate envelope identity exactly as preregistered.
+
+    `host` is authenticated metadata/evidence, but it is not part of the C0A
+    source identity contract. Historical status host labels may differ from the
+    immutable outer result manifest without changing job/attempt/code/state/exit.
+    """
+    tasks = {}
+    for item in catalog:
+        job, attempt = item['job_id'], item.get('attempt_id')
+        if not attempt or item.get('state') not in {'completed', 'failed'}:
+            continue
+        inventory.need(re.fullmatch('[a-f0-9]{40}', item.get('code_sha') or ''),
+                       'catalog_code_sha')
+        prefix = f'r2:jass-data/runs/{job}/{attempt}'
+        inventory.need(item.get('result_uri') == prefix, 'catalog_result_uri')
+        tasks[job, attempt] = (prefix, item['state'], item['code_sha'], item['exit_code'])
+    for job, attempt, code, _ in inventory.SOURCES.values():
+        prefix = f'r2:jass-data/runs/{job}/{attempt}'
+        expected_state, expected_exit = inventory.SOURCE_TERMINALS[job]
+        if (job, attempt) in tasks:
+            inventory.need(tasks[job, attempt][1:3] == (expected_state, code)
+                           and tasks[job, attempt][3] == expected_exit,
+                           'literal_catalog_identity')
+        else:
+            tasks[job, attempt] = (prefix, expected_state, code, expected_exit)
+    metadata = {}
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures = {key: pool.submit(transport, rclone, value[0], value[1])
+                   for key, value in tasks.items()}
+        try:
+            for (job, attempt), future in futures.items():
+                item = future.result()
+                _, state, code, exit_code = tasks[job, attempt]
+                inventory.need((item['job_id'], item['attempt_id'], item['code_sha'],
+                                item['result_state'], item['exit_code']) ==
+                               (job, attempt, code, state, exit_code),
+                               'authenticated_catalog_identity')
+                metadata[job, attempt] = item
+        except Exception:
+            for future in futures.values():
+                future.cancel()
+            raise
+    return metadata
+
+
 def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalog,
-        collector=inventory.collect, builder=inventory.build):
+        collector=None, builder=inventory.build):
     """The same immutable metadata admission is used in both V2 modes."""
     evidence = StageEvidence(artifact, mode)
     audit_hash = protocol_hash = None
     read_counts = dict(inventory.ZERO_READS)
+    if collector is None:
+        collector = collect_metadata
     try:
         evidence.begin(PHASES[0])
         inventory.need(shutil.disk_usage(artifact).free >= 3 * 1024**3, 'disk_floor')
