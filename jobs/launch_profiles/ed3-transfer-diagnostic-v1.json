@@ -1,0 +1,12 @@
+{
+  "schema": "jass.launch_profile.v2",
+  "campaign": "ed3-transfer-diagnostic",
+  "stage": "ed3-transfer-diagnostic-v1",
+  "command": ["/var/tmp/jass-l3-numeric-venv-current-v1/bin/python", "jobs/tools/ed3_transfer_diagnostic.py"],
+  "required_phases": ["authenticate", "load-frozen-inputs", "calculate-twice", "publish"],
+  "evidence_outputs": ["ed3-transfer-diagnostic.json", "train-pair-transitions.jsonl", "confirmation-pair-transitions.jsonl", "parent-transfer.jsonl", "wdl-row-contributions.jsonl", "wdl-opening-contributions.jsonl", "source-authentication.json", "publication-manifest.json"],
+  "production_max_effects": {"fits": 0, "new_scan_searches": 0, "new_jass_searches": 0, "strength_games": 0, "selfplay_games": 0, "promotions": 0, "bakes": 0, "test_target_reads": 12894},
+  "rehearsal_max_effects": {"fits": 0, "new_scan_searches": 0, "new_jass_searches": 0, "strength_games": 0, "selfplay_games": 0, "promotions": 0, "bakes": 0, "test_target_reads": 12894},
+  "regressions": ["jobs.tests.test_launch_gate_v2", "jobs.tests.test_launch_gate_pipeline_v2", "jobs.tests.test_ed3_transfer_diagnostic", "jobs.tests.test_ed3_transfer_diagnostic_inputs", "jobs.tests.test_ed3_transfer_diagnostic_publication"],
+  "resources": {"numeric_cpus": 1, "available_cpus": 16, "minimum_free_disk_bytes": 3000000000, "stage_seconds": 900, "outer_admission_seconds": 1500}
+}
