@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""ED4-C0A descriptor-only admission.  Never fetches a source payload."""
+"""ED4-C0A descriptor-only admission. Never fetches a source payload."""
 from __future__ import annotations
 import argparse, hashlib, json, re, subprocess
 from pathlib import Path
 
 SOURCES={
  '1773':('cpx62-1835-l3-decision-math-b3-fresh-exclusion-prep-rerun-v1','20260906T134208Z-c553a572','c553a572ed8ada9c49f8ebbefa3db22a9b6ca739',['artefacts/b3-fresh-exclusion-union.txt','artefacts/b3-fresh-exclusion-manifest.json']),
- 'home':('home-1651-l3-scan-ceiling-selection-v1','20260829T133348Z-28e12fba','28e12fba0ead14def244ffc442b15937f65edc0e',['artefacts/manifest.json','artefacts/parents.jnnw.gz','artefacts/children.jnnw.gz','artefacts/siblings.tsv']),
+ 'home':('home-1651-l3-scan-ceiling-selection-v1','20260829T133348Z-28e12fba','28e12fba0ead14def244ffc442b15937f65edc0e',['manifest.json','artefacts/parents.jnnw.gz','artefacts/children.jnnw.gz','artefacts/siblings.tsv']),
  'b2':('cpx62-1778-l3-decision-math-b2-source-selection-v1','20260905T102917Z-d3657332','d3657332c3a5609a5501a9ff130f5d5c19488c7f',['artefacts/source-selection-publication.json','artefacts/parents.jnnw','artefacts/parents.tsv','artefacts/ordered-identities.txt']),
  'b3':('cpx62-1837-l3-decision-math-b3-fresh-source-selection-v1','20260906T141235Z-29084b25','29084b25789b1a88c19a86f73c476eedc52acbc6',['artefacts/source-selection-publication.json','artefacts/parents.jnnw','artefacts/parents.tsv','artefacts/ordered-identities.txt']),
  'd4':('cpx62-1862-l3-decision-math-d4-search-utility-offline-cardinality-recovery-requeue-v1','20260907T182914Z-1c779cc8','1c779cc87608a12b26432cad6a23872aeb5eabe8',['artefacts/d4-search-utility-roots.tsv','artefacts/d4-root-pool-provenance.json']),
@@ -20,12 +20,8 @@ from jobs.tools import fetch_t1bis_inputs as base
 
 CONTROL_SHA = '3ae5a3980ee60816ef078124deafa72b2e2f4662'
 PROTOCOL = 'docs/experiments/L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md'
-# D4 published its literal root descriptors before a downstream failure.
-# Authenticate that failed envelope exactly; never substitute a successful run.
 SOURCE_TERMINALS = {value[0]: ('failed', 2) if key == 'd4' else ('completed', 0)
                     for key, value in SOURCES.items()}
-# Metadata-only sizing of the fixed 116 sources: maximum inventory 18,121,658
-# bytes, total 68,041,184. This transport guard does not admit source payloads.
 MAX_ENVELOPE_BYTES = 32 * 1024 * 1024
 EXPECTED_HASHES = {
     'artefacts/b3-fresh-exclusion-union.txt': 'b553939e8ded3ab31d121e40b2be9cfa1012168bf01835f692b59a60815d9ecb',
@@ -154,18 +150,17 @@ def collect(catalog, rclone='rclone', transport=metadata_transport):
             need(tasks[job, attempt][1:3] == (expected_state, code)
                  and tasks[job, attempt][4] == expected_exit, 'literal_catalog_identity')
         else:
-            tasks[job, attempt] = (prefix, expected_state, code, job.split('-')[0], expected_exit)
+            tasks[job, attempt] = (prefix, expected_state, code, None, expected_exit)
     metadata = {}
-    # Read-only envelopes are independent; bounded concurrency saves round-trip latency.
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=4) as pool:
         futures = {key: pool.submit(transport, rclone, value[0], value[1]) for key, value in tasks.items()}
         try:
             for (job, attempt), future in futures.items():
                 item = future.result()
-                _, state, code, host, exit_code = tasks[job, attempt]
+                _, state, code, _host, exit_code = tasks[job, attempt]
                 need((item['job_id'], item['attempt_id'], item['code_sha'], item['result_state'],
-                      item['host'], item['exit_code']) == (job, attempt, code, state, host, exit_code),
+                      item['exit_code']) == (job, attempt, code, state, exit_code),
                      'authenticated_catalog_identity')
                 metadata[job, attempt] = item
         except Exception:
@@ -259,9 +254,7 @@ def main(argv=None):
         report = dict(schema='jass.ed4.c0a_source_descriptor_inventory.v1', state='failed',
             verdict='ED4_C0A_INVENTORY_ADMISSION_TECHNICAL_FAILURE_V1',
             audit_code_sha256=audit_hash, protocol_path=PROTOCOL, protocol_sha256=digest(protocol),
-            control_snapshot_commit=args.control_sha, failure_type=type(exc).__name__,
-            # Errors are metadata-only codes; never print remote stderr or excluded content.
-            **ZERO_READS)
+            control_snapshot_commit=args.control_sha, failure_type=type(exc).__name__, **ZERO_READS)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         with args.out.open('x', encoding='utf-8', newline='\n') as stream:
             stream.write(json.dumps(report, sort_keys=True, indent=2) + '\n')

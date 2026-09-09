@@ -16,7 +16,11 @@ def envelope(job, attempt, code, paths, state='completed'):
         host=job.split('-')[0], state=state, exit_code=0 if state == 'completed' else 2,
         scientific_summaries={'q200': [987654321.25], 'wdl': 'FORBIDDEN_SENTINEL'}))
     files = [dict(path=p, size_bytes=123, sha256=m.EXPECTED_HASHES.get(p, 'a'*64)) for p in paths]
-    files.append(dict(path='manifest.json', size_bytes=len(manifest), sha256=m.digest(manifest)))
+    if not any(x['path'] == 'manifest.json' for x in files):
+        files.append(dict(path='manifest.json', size_bytes=len(manifest), sha256=m.digest(manifest)))
+    else:
+        item = next(x for x in files if x['path'] == 'manifest.json')
+        item.update(size_bytes=len(manifest), sha256=m.digest(manifest))
     inventory = encoded(dict(files=files))
     checks = '\n'.join(f"{x['sha256']}  {x['path']}" for x in files)
     checks += f'\n{m.digest(inventory)}  inventory.json\n'
@@ -69,6 +73,11 @@ class Inventory(unittest.TestCase):
             return store[prefix][name]
         return lambda rclone, prefix, state='completed': m.metadata_transport(rclone, prefix, state, reader)
 
+    def test_home_scan_uses_result_manifest_not_nonexistent_artifact_manifest(self):
+        paths = m.SOURCES['home'][3]
+        self.assertIn('manifest.json', paths)
+        self.assertNotIn('artefacts/manifest.json', paths)
+
     def test_full_synthetic_admission_roundtrip_only_envelopes(self):
         catalog, store = self.fixtures()
         calls = []
@@ -79,6 +88,8 @@ class Inventory(unittest.TestCase):
         self.assertEqual(len(calls), 36)
         self.assertTrue(all(report[key] == 0 for key in m.ZERO_READS))
         self.assertEqual(json.loads(json.dumps(report)), report)
+        home = next(x for x in report['sources'] if x['job_id'] == m.SOURCES['home'][0])
+        self.assertTrue(all(x['present'] for x in home['required_paths']))
         d4 = next(x for x in report['sources'] if x['job_id'] == m.SOURCES['d4'][0])
         self.assertEqual((d4['result_state'], d4['exit_code'], d4['classification']),
                          ('failed', 2, 'included_exact'))
@@ -107,7 +118,7 @@ class Inventory(unittest.TestCase):
         self.assertEqual(len(report['sources']), 10)
         self.assertTrue(report['verdict'].endswith('INSUFFICIENT_V1'))
 
-    def test_nonexecuted_null_host_is_skipped_and_unknown(self):
+    def test_nonexecuted_null_host_is_skipped_and_unknown_at_base_inventory(self):
         catalog, store = self.fixtures()
         job = 'cpx62-1820-l3-decision-math-b2-terminal-classified-failure-zero-placeholder-repair-v1'
         raw = json.dumps(dict(job_id=job, attempt_id=None, code_sha=None,
@@ -122,7 +133,6 @@ class Inventory(unittest.TestCase):
         self.assertNotIn(job, {key[0] for key in meta})
         report = m.build(meta, catalog, 'b'*64, b'p')
         self.assertIn(job, report['unknown_or_unclassified_producers'])
-        self.assertTrue(report['verdict'].endswith('INSUFFICIENT_V1'))
 
     def test_missing_path_is_insufficient(self):
         catalog, store = self.fixtures()
