@@ -8,6 +8,9 @@ superset relations plus a conservative structural-descriptor screen.
 from __future__ import annotations
 from collections import Counter
 
+READY = 'ED4_C0A_INVENTORY_ADMISSION_READY_V1'
+INSUFFICIENT = 'ED4_C0A_INVENTORY_ADMISSION_INSUFFICIENT_V1'
+
 # Relations stated prospectively in L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md.
 # The keys are exact frozen control-snapshot jobs, not name-pattern heuristics.
 COVERED_BY = {
@@ -49,6 +52,8 @@ def structural_paths(meta):
 
 def apply(report, metadata):
     """Return report with evidence-based classifications, still fail-closed."""
+    if report.get('verdict') not in {READY, INSUFFICIENT}:
+        raise ValueError('classification_upstream_verdict')
     unknown = []
     for row in report.get('sources', []):
         if row.get('classification') != 'unknown':
@@ -75,7 +80,5 @@ def apply(report, metadata):
     report['classification_counts'] = dict(sorted(Counter(
         row.get('classification', 'unknown') for row in report.get('sources', [])
     ).items()))
-    report['verdict'] = ('ED4_C0A_INVENTORY_ADMISSION_INSUFFICIENT_V1'
-                         if report.get('missing_paths') or unknown
-                         else 'ED4_C0A_INVENTORY_ADMISSION_READY_V1')
+    report['verdict'] = (INSUFFICIENT if report.get('missing_paths') or unknown else READY)
     return report
