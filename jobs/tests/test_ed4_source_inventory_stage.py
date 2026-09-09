@@ -12,7 +12,7 @@ from jobs.tools.launch_runtime_v2 import EFFECTS
 from jobs.tests import test_ed4_source_descriptor_inventory as fixtures
 
 
-def fixture_inputs(*, missing=False, unknown=False):
+def fixture_inputs(*, missing=False, unknown=False, host_drift=False):
     case = fixtures.Inventory()
     catalog, store = case.fixtures()
     if missing:
@@ -22,13 +22,15 @@ def fixture_inputs(*, missing=False, unknown=False):
     if unknown:
         catalog.append(dict(job_id='cpx62-1780-unclaimed-v1', attempt_id=None,
                             code_sha=None, state=None, host=None, exit_code=None))
+    if host_drift:
+        catalog[0]['host'] = 'legacy-status-alias'
     calls = []
     transport = case.transport(store, calls)
     def catalog_reader(repo, sha):
         case.assertEqual(sha, inventory.CONTROL_SHA)
         return catalog
     def collector(items):
-        return inventory.collect(items, transport=transport)
+        return stage.collect_metadata(items, transport=transport)
     return catalog_reader, collector, calls, store
 
 
@@ -60,6 +62,13 @@ class InventoryStageTests(unittest.TestCase):
                         'confirmation_authorized', 'runtime_authorized', 'automatic_continuation'):
                 self.assertIs(summary[key], False)
             self.assertTrue(all(report[k] == summary[k] == 0 for k in inventory.ZERO_READS))
+
+    def test_status_host_drift_does_not_change_authenticated_source_identity(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); art = root / 'artefacts'
+            summary = fixture_run(root, art, host_drift=True)
+            self.assertEqual(summary['verdict'], 'ED4_C0A_INVENTORY_ADMISSION_READY_V1')
+            self.assertEqual(stage.read_json(art / 'execution-evidence.json')['state'], 'completed')
 
     def test_missing_and_unknown_are_completed_insufficient(self):
         for option in ('missing', 'unknown'):
