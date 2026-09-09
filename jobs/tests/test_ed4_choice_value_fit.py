@@ -14,8 +14,9 @@ from pathlib import Path
 import shutil
 import struct
 import tempfile
+from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock,patch
 import numpy as np
 from jobs.tools import ed4_choice_value_fit as p
 from jobs.tools import ed3_label_pressure as audit
@@ -120,6 +121,31 @@ def fixture_run(result,art,mode='rehearsal',real_probe=None,corrupt=None,prerequ
 
 
 class CompleteFitTests(unittest.TestCase):
+    def test_low_space_on_either_volume_stops_before_input_reads_or_fit(self):
+        for free in ((3*1024**3-1,4*1024**3),(4*1024**3,3*1024**3-1)):
+            with self.subTest(free=free),tempfile.TemporaryDirectory() as td,\
+                    patch.object(p.shutil,'disk_usage',side_effect=[SimpleNamespace(free=n) for n in free]),\
+                    patch.object(p.math,'fit') as optimizer:
+                root=Path(td);art=root/'artefacts';download=Mock();loader=Mock()
+                with self.assertRaisesRegex(ValueError,'disk_space_below_3gib'):
+                    p.run(root,art,'rehearsal',downloader=download,loader=loader)
+                download.assert_not_called();loader.assert_not_called();optimizer.assert_not_called()
+                evidence=audit.load_json(art/'execution-evidence.json')
+                self.assertEqual(evidence['phase'],'authenticate')
+                self.assertEqual(evidence['state'],'failed')
+                self.assertEqual(evidence['actual_side_effects']['fits'],0)
+                self.assertEqual(audit.load_json(art/'scientific-summary.json')['verdict'],
+                    'ED4_CHOICE_SET_REAL_FIT_TECHNICAL_FAILURE_V1')
+
+    def test_exact_disk_minimum_allows_authentication_without_fitting(self):
+        with tempfile.TemporaryDirectory() as td,\
+                patch.object(p.shutil,'disk_usage',return_value=SimpleNamespace(free=3*1024**3)),\
+                patch.object(p.math,'fit') as optimizer:
+            root=Path(td);download=Mock(side_effect=RuntimeError('download_started'))
+            with self.assertRaisesRegex(RuntimeError,'download_started'):
+                p.run(root,root/'artefacts','rehearsal',downloader=download)
+            download.assert_called_once();optimizer.assert_not_called()
+
     def test_complete_rehearsal_fit_native_io_and_candidate_role(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td);art=root/'artefacts';r=fixture_run(root,art)

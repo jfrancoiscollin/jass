@@ -36,8 +36,12 @@ required; matching version strings do not replace it.
 - 18 focused Linux tests passed in 5.824 seconds, including the real input
   loader with fabricated sealed sources, sparse row IDs, NaN outside selected
   replay targets, native I/O, and the original publisher/checksum readback.
-- The exact launch regression profile passed **31 tests**, zero errors,
-  failures or skips, in 9.521 seconds.
+- The initial exact launch profile passed 31 tests in 9.521 seconds. Final
+  review added the required 3 GiB disk guard before input downloads, on both
+  result and artifact volumes. The updated exact profile passed **33 tests**,
+  zero errors, failures or skips, in **9.754 seconds**. Boundary tests prove
+  insufficient space causes a technical refusal with zero input reads/fits,
+  while exactly 3 GiB permits authentication.
 - The freshly compiled unchanged C++ evaluator passed the same full synthetic
   rehearsal and production fixture; their candidate bytes were identical.
 - That evaluator also passed the complete fixed P0 recheck. Manifest report
@@ -48,11 +52,18 @@ required; matching version strings do not replace it.
   publisher, authenticated readback, corruption refusal and missing-marker
   refusal in one additional test (8.254 seconds).
 
-Explicit preparation ledger: **13 synthetic optimizer invocations** (4 in the
+Explicit preparation ledger: **17 synthetic optimizer invocations** (4 in the
 focused Linux suite, 2 in native rehearsal/production, 2 in the P0 recheck, 4 in
-the exact launch profile, 1 in actual-native publication); **0 real fits**.
+the initial launch profile, 1 in actual-native publication, 4 in the updated
+33-test launch profile); **0 real fits**.
 The initial local build setup failures occurred before any optimization.
 They are recorded as TI-027 and TI-028 and are technical, not scientific results.
+The missing disk guard was caught in local review and is recorded as TI-029.
+An initial attempt to invoke its tests with the bare Windows Python lacked
+SciPy and stopped at import; the installed Linux runtime ran the complete suite.
+No solver ran in that failed import attempt. The native evaluator and numerical
+code remain unchanged by the disk guard; their earlier actual-native receipts
+are supplemented by the new guard and complete launch-profile checks.
 
 ## Measured launch sizing and remaining evidence
 

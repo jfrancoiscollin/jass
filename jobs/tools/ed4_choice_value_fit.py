@@ -147,6 +147,8 @@ def run(result,artifact,mode,downloader=audit.fetch_existing,loader=load_inputs,
     roots={name:result/'inputs'/name for name in ('p0','n1','base','target')}
     try:
         evidence.begin('authenticate')
+        for path in (result,artifact):
+            need(shutil.disk_usage(path).free >= 3 * 1024**3,'disk_space_below_3gib')
         prerequisite=verify_prerequisite(result) if mode=='production' else None
         for key,identity,names in [('p0',audit.P0,P0_NAMES),('n1',audit.N1,N1_NAMES),
                 ('base',audit.BASE,['WDL_CONTROL.pjtw.gz']),('target',audit.TARGET,['current_2m-context30.npy.gz'])]:

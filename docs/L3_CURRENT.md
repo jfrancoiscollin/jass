@@ -21,7 +21,7 @@ gèle les quatre gates candidat/décision/WDL/recherche et la dépense alpha. Le
 [fit réel ED4-P1](experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_FIT_V1_20260909.md)
 est préenregistré : répétition full512 puis production identique, un fit chacune.
 
-Le pipeline passe ses 31 régressions locales et les vérifications natives avec
+Le pipeline passe ses 33 régressions locales et les vérifications natives avec
 publication/relecture sur fixtures synthétiques. [Preuves locales et limites](operations/ED4_P1_LOCAL_READINESS_20260909.md).
 Zéro fit réel ; CI et admission CPX encore à obtenir. Les autorisations de
 publication publique de la branche ED4-P1 et de fusion de la PR #884 sont demandées
