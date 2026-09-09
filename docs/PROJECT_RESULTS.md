@@ -7,6 +7,17 @@
 
 Le registre exhaustif antérieur reste archivé byte-identique au lien ci-dessus. Le présent fichier conserve seulement les résultats qui pilotent directement la frontière scientifique actuelle. En cas de contradiction, le verdict terminal le plus récent fondé sur un run complet et son manifest prévaut.
 
+## ED3-T1 — diagnostic descriptif terminé (9 septembre 2026)
+
+1885 (répétition) et 1886 (production) sont publiés et authentifiés, avec les
+mêmes sorties scientifiques et 29 régressions passées dans chaque invocation.
+Le [diagnostic sur données consommées](experiments/L3_ED3_TRANSFER_DIAGNOSTIC_RESULTS_20260909.md)
+décrit 44 changements de choix HARD→SOFT sur les 512 parents de confirmation,
+dont neuf entrées et sept sorties du meilleur ensemble ; 18 regrets diminuent,
+20 augmentent. Les distributions WDL reproduisent la perte moyenne SOFT−BASE
+positive. Ce résultat exploratoire ne constitue pas une nouvelle confirmation
+et ne modifie ni `ED3_SOFT_CONFIRMATION_NOT_SUPPORTED_V1` ni `STOP_ED3`.
+
 ## ED3-P2 — confirmation non supportée, STOP_ED3 (9 septembre 2026)
 
 La confirmation préenregistrée `1884 / 20260909T051901Z-0946f57d` compare les
