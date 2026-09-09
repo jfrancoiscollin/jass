@@ -129,7 +129,8 @@ def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalo
                        unclassified_producers_count=len(report['unknown_or_unclassified_producers']),
                        classification_counts=report.get('classification_counts', {}),
                        missing_paths=report['missing_paths'],
-                       unknown_or_unclassified_producers=report['unknown_or_unclassified_producers'])
+                       unknown_or_unclassified_producers=report['unknown_or_unclassified_producers'],
+                       unknown_producer_evidence=report.get('unknown_producer_evidence', []))
         atomic_json(artifact / 'scientific-summary.json', summary)
         inventory.need(read_json(artifact / 'scientific-summary.json') == summary,
                        'summary_readback')
