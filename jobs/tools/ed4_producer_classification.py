@@ -7,12 +7,11 @@ superset relations plus a conservative structural-descriptor screen.
 """
 from __future__ import annotations
 from collections import Counter
+import re
 
 READY = 'ED4_C0A_INVENTORY_ADMISSION_READY_V1'
 INSUFFICIENT = 'ED4_C0A_INVENTORY_ADMISSION_INSUFFICIENT_V1'
 
-# Relations stated prospectively in L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md.
-# The keys are exact frozen control-snapshot jobs, not name-pattern heuristics.
 COVERED_BY = {
     'cpx62-1773-l3-decision-math-b2-historical-preparation-v1':
         'cpx62-1835-l3-decision-math-b3-fresh-exclusion-prep-rerun-v1',
@@ -34,9 +33,6 @@ COVERED_BY = {
         'home-1651-l3-scan-ceiling-selection-v1',
 }
 
-# If any authenticated descriptor has one of these shapes we refuse to call the
-# producer "non-position" without an explicit superset relation. False positives
-# are intentional: they leave a blocker instead of incorrectly admitting data.
 STRUCTURAL_TOKENS = (
     '.jnnw', '.jsm', 'parent', 'child', 'sibling', 'root', 'position',
     'opening', 'trajectory', 'ordered-identit', 'exclusion-union', 'cohort',
@@ -50,12 +46,34 @@ def structural_paths(meta):
                   if any(token in path.lower() for token in STRUCTURAL_TOKENS))
 
 
+def path_family(path):
+    """Diagnostic-only family; never used to admit/classify a producer."""
+    value = re.sub(r'(?i)[0-9a-f]{16,}', '<hex>', path)
+    value = re.sub(r'\d+', '<n>', value)
+    return value
+
+
+def compact_evidence(job, attempt, basis, paths):
+    families = Counter(path_family(path) for path in paths)
+    return {
+        'job_id': job,
+        'attempt_id': attempt,
+        'basis': basis,
+        'structural_descriptor_count': len(paths),
+        'structural_path_families': [
+            {'path_family': family, 'count': count}
+            for family, count in sorted(families.items())
+        ],
+    }
+
+
 def apply(report, metadata):
     """Return report with evidence-based classifications, still fail-closed."""
     if report.get('verdict') not in {READY, INSUFFICIENT}:
         raise ValueError('classification_upstream_verdict')
     unknown = []
     unknown_evidence = []
+    compact = []
     for row in report.get('sources', []):
         if row.get('classification') != 'unknown':
             continue
@@ -83,8 +101,10 @@ def apply(report, metadata):
                 'basis': evidence['basis'],
                 'structural_descriptor_paths': paths,
             })
+            compact.append(compact_evidence(job, attempt, evidence['basis'], paths))
     report['unknown_or_unclassified_producers'] = sorted(unknown)
     report['unknown_producer_evidence'] = sorted(unknown_evidence, key=lambda item: item['job_id'])
+    report['unknown_producer_compact_evidence'] = sorted(compact, key=lambda item: item['job_id'])
     report['classification_counts'] = dict(sorted(Counter(
         row.get('classification', 'unknown') for row in report.get('sources', [])
     ).items()))
