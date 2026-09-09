@@ -24,7 +24,7 @@ class FittedModelPublicationTests(unittest.TestCase):
             root=Path(td);repo=root/'repo';repo.mkdir();run=root/'run';art=run/'artefacts';art.mkdir(parents=True)
             (repo/'fixture.py').write_text('import os,sys\nfrom pathlib import Path\nsys.path.insert(0,'+repr(str(ROOT))+')\n'
                 'from jobs.tests.test_ed4_choice_value_fit import fixture_run\n'
-                'fixture_run(Path(os.environ["JASS_RESULT_DIR"]),Path(os.environ["JASS_ARTEFACT_DIR"]))\n')
+                'fixture_run(Path(os.environ["JASS_RESULT_DIR"]),Path(os.environ["JASS_ARTEFACT_DIR"]),real_probe=Path(os.environ["ED4_NATIVE_PROBE"]) if "ED4_NATIVE_PROBE" in os.environ else None)\n')
             for cmd in (['git','init','-q'],['git','config','user.email','fixture@example.invalid'],
                         ['git','config','user.name','Fixture'],['git','add','.'],['git','commit','-qm','fixture']):
                 subprocess.run(cmd,cwd=repo,check=True)
@@ -43,6 +43,8 @@ class FittedModelPublicationTests(unittest.TestCase):
                 environment=dict(inherit=[],set={'LAUNCH_MODE':'rehearsal','OPENBLAS_NUM_THREADS':'1','PYTHONDONTWRITEBYTECODE':'1'}),
                 scientific_side_effects=dict(fits=1,strength_games=0,promotions=0,bakes=0),
                 success=dict(required_exit_code=0,next_stage=None))
+            if 'ED4_NATIVE_PROBE' in os.environ:
+                spec['environment']['set']['ED4_NATIVE_PROBE']=str(Path(os.environ['ED4_NATIVE_PROBE']).resolve(strict=True))
             sp=root/'spec.json';atomic_json(sp,spec)
             job='cpx62-ed4-choice-fixture';attempt='20260908T000000Z-'+head[:8]
             with patch.dict(os.environ,{'JASS_JOB_ID':job,'JASS_ATTEMPT_ID':attempt}):
