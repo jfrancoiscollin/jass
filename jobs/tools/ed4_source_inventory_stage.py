@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from jobs.tools import ed4_source_descriptor_inventory as inventory
+from jobs.tools import ed4_producer_classification as producer_classification
 from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json
 
 OUTPUT = 'ed4-c0a-source-descriptor-inventory.json'
@@ -107,6 +108,7 @@ def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalo
         evidence.complete()
         evidence.begin(PHASES[2])
         report = builder(metadata, catalog, audit_hash, protocol, inventory.CONTROL_SHA)
+        report = producer_classification.apply(report, metadata)
         for key in read_counts:
             count = report.get(key)
             if type(count) is int and count >= 0:
@@ -124,7 +126,10 @@ def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalo
         summary = terminal(report, mode)
         summary.update(inventory_sha256=inventory.digest((artifact / OUTPUT).read_bytes()),
                        missing_paths_count=len(report['missing_paths']),
-                       unclassified_producers_count=len(report['unknown_or_unclassified_producers']))
+                       unclassified_producers_count=len(report['unknown_or_unclassified_producers']),
+                       classification_counts=report.get('classification_counts', {}),
+                       missing_paths=report['missing_paths'],
+                       unknown_or_unclassified_producers=report['unknown_or_unclassified_producers'])
         atomic_json(artifact / 'scientific-summary.json', summary)
         inventory.need(read_json(artifact / 'scientific-summary.json') == summary,
                        'summary_readback')
