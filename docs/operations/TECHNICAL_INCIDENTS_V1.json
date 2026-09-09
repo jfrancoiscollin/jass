@@ -330,6 +330,16 @@
       "invariant": "Authenticate literal1862 via _FAILED with exact statefailed/exit2, attempt and code unchanged. Descriptor availability does not prove payload bytes, cardinality or scientific support. Never substitute a successful source.",
       "evidence": "Projected snapshot3ae5a398:1862 attempt20260907T182914Z-1c779cc8 code1c779cc87608a12b26432cad6a23872aeb5eabe8 statefailed exit2. Secondadmission0.429s,116catalogjobs,0R2envelopes,0payload/target/modelreads. Sol review confirms prereg did not require completed. Twelve synthetic tests pass including exact failed-literal admission and rejection of changed terminal state.",
       "status": "MITIGATED — exact literal terminal state implemented; repeated metadata admission pending"
+    },
+    {
+      "id": "TI-034",
+      "dedupe_key": "ed4-c0a-envelope-size-guard-v1",
+      "context": "C0A metadata-only admission, code68ef32b8",
+      "symptom": "Metadata admission stopped at envelope_size_limit after17 authenticated envelopes; no payload or scientific target was read.",
+      "root_cause": "The local 8MiB transport guard was smaller than six historical inventory envelopes. Metadata-only sizing of116 sources measured maximum18121658bytes and total68041184bytes in7.077s.",
+      "invariant": "Use bounded32MiB envelope transport for this fixed inventory; preserve exact metadata paths, field projections, source identities,900s cap and zero payload/target/model reads. Do not interpret descriptor sizing as full audit runtime.",
+      "evidence": "Thirdadmission10.474s,116catalogjobs,17authenticatedenvelopes. Largest inventory is1868; six inventories exceed8MiB. Thirteen synthetic tests pass including measured-largest transport and rejection above32MiB.",
+      "status": "MITIGATED — transport sized from metadata; repeated admission pending"
     }
   ]
 }

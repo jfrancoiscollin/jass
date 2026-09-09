@@ -24,6 +24,9 @@ PROTOCOL = 'docs/experiments/L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md'
 # Authenticate that failed envelope exactly; never substitute a successful run.
 SOURCE_TERMINALS = {value[0]: ('failed', 2) if key == 'd4' else ('completed', 0)
                     for key, value in SOURCES.items()}
+# Metadata-only sizing of the fixed 116 sources: maximum inventory 18,121,658
+# bytes, total 68,041,184. This transport guard does not admit source payloads.
+MAX_ENVELOPE_BYTES = 32 * 1024 * 1024
 EXPECTED_HASHES = {
     'artefacts/b3-fresh-exclusion-union.txt': 'b553939e8ded3ab31d121e40b2be9cfa1012168bf01835f692b59a60815d9ecb',
     'artefacts/b3-fresh-exclusion-manifest.json': 'f734de99761b7a3ee7ddb107de3d678fa29eb7e39a11708b6a8c8bbbe700cc0c',
@@ -59,7 +62,7 @@ def remote_envelope(rclone, prefix, name):
     result = subprocess.run([rclone, 'cat', prefix + '/' + name],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
     need(result.returncode == 0 and bool(result.stdout), 'envelope_transport_failed')
-    need(len(result.stdout) <= 8 * 1024 * 1024, 'envelope_size_limit')
+    need(len(result.stdout) <= MAX_ENVELOPE_BYTES, 'envelope_size_limit')
     return result.stdout
 
 

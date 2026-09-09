@@ -1,6 +1,7 @@
 import json
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 from jobs.tools import ed4_source_descriptor_inventory as m
 from jobs.tools.ed4_metadata_projection import project, STATUS, INVENTORY
 
@@ -184,6 +185,14 @@ class Inventory(unittest.TestCase):
         with patch.object(m.subprocess, 'run') as run, self.assertRaises(ValueError):
             m.remote_envelope('rclone', 'unused', 'artefacts/ED4_CHOICE.pjtw')
         run.assert_not_called()
+
+    def test_measured_inventory_size_fits_bounded_transport(self):
+        largest_observed_inventory = b' ' * 18121658
+        with patch.object(m.subprocess, 'run', return_value=SimpleNamespace(returncode=0, stdout=largest_observed_inventory)):
+            self.assertEqual(len(m.remote_envelope('rclone', 'fixture', 'inventory.json')), 18121658)
+        with patch.object(m.subprocess, 'run', return_value=SimpleNamespace(returncode=0, stdout=b' ' * (32*1024*1024+1))):
+            with self.assertRaises(ValueError):
+                m.remote_envelope('rclone', 'fixture', 'inventory.json')
 
 
 if __name__ == '__main__':
