@@ -1,0 +1,56 @@
+{
+  "campaign": "ed3-soft-preference",
+  "command": [
+    "/var/tmp/jass-l3-numeric-venv-current-v1/bin/python",
+    "jobs/tools/ed3_confirmation.py"
+  ],
+  "evidence_outputs": [
+    "model-identities.json",
+    "cohort-seal.json",
+    "guard-plan.json",
+    "teacher-cost.json",
+    "confirmation-readout.json",
+    "source/parents.jnnw",
+    "source/children.jnnw",
+    "source/parents.tsv",
+    "source/groups.tsv",
+    "source/source.json"
+  ],
+  "production_max_effects": {
+    "bakes": 0,
+    "fits": 0,
+    "new_jass_searches": 0,
+    "new_scan_searches": 8209,
+    "promotions": 0,
+    "selfplay_games": 0,
+    "strength_games": 0,
+    "test_target_reads": 16384
+  },
+  "regressions": [
+    "jobs.tests.test_launch_gate_v2",
+    "jobs.tests.test_launch_gate_pipeline_v2",
+    "jobs.tests.test_ed3_confirmation",
+    "jobs.tests.test_ed3_confirmation_publication"
+  ],
+  "rehearsal_max_effects": {
+    "bakes": 0,
+    "fits": 0,
+    "new_jass_searches": 0,
+    "new_scan_searches": 273,
+    "promotions": 0,
+    "selfplay_games": 0,
+    "strength_games": 0,
+    "test_target_reads": 0
+  },
+  "required_phases": [
+    "authenticate",
+    "select-and-seal",
+    "calibrate-cost",
+    "score-reference",
+    "native-readout",
+    "statistics",
+    "publish"
+  ],
+  "schema": "jass.launch_profile.v2",
+  "stage": "ed3-confirmation-v1"
+}
