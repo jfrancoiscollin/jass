@@ -320,6 +320,16 @@
       "invariant": "Permit null only in the optional status host descriptor; keep authenticated result-manifest host strict. Missing execution identity stays unknown and cannot authorize coverage or READY.",
       "evidence": "First admission report SHA256 0e0d25b32a12ee49606c5765788984c7ae40a6633e56a60556cfde82937ce72a; phasecatalog, duration0.228s, authenticated_envelopes0, all payload/target/model reads0. Field-projected scan of the full frozen status window found only this type mismatch.",
       "status": "MITIGATED — narrow status compatibility repair; repeated metadata admission pending"
+    },
+    {
+      "id": "TI-033",
+      "dedupe_key": "ed4-c0a-literal-failed-d4-envelope-v1",
+      "context": "C0A admission on code111883548 after frozen catalogue projection",
+      "symptom": "Literal catalogue identity rejected D4 before any R2 envelope fetch; attempt and code matched but the consumer assumed completed.",
+      "root_cause": "The literal1862 source published its roots/provenance before a downstream failure and its frozen outer state is failed exit2. Existing D4 consumers explicitly use expected-state failed.",
+      "invariant": "Authenticate literal1862 via _FAILED with exact statefailed/exit2, attempt and code unchanged. Descriptor availability does not prove payload bytes, cardinality or scientific support. Never substitute a successful source.",
+      "evidence": "Projected snapshot3ae5a398:1862 attempt20260907T182914Z-1c779cc8 code1c779cc87608a12b26432cad6a23872aeb5eabe8 statefailed exit2. Secondadmission0.429s,116catalogjobs,0R2envelopes,0payload/target/modelreads. Sol review confirms prereg did not require completed. Twelve synthetic tests pass including exact failed-literal admission and rejection of changed terminal state.",
+      "status": "MITIGATED — exact literal terminal state implemented; repeated metadata admission pending"
     }
   ]
 }

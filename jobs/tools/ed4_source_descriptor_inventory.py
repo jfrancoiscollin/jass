@@ -20,6 +20,10 @@ from jobs.tools import fetch_t1bis_inputs as base
 
 CONTROL_SHA = '3ae5a3980ee60816ef078124deafa72b2e2f4662'
 PROTOCOL = 'docs/experiments/L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md'
+# D4 published its literal root descriptors before a downstream failure.
+# Authenticate that failed envelope exactly; never substitute a successful run.
+SOURCE_TERMINALS = {value[0]: ('failed', 2) if key == 'd4' else ('completed', 0)
+                    for key, value in SOURCES.items()}
 EXPECTED_HASHES = {
     'artefacts/b3-fresh-exclusion-union.txt': 'b553939e8ded3ab31d121e40b2be9cfa1012168bf01835f692b59a60815d9ecb',
     'artefacts/b3-fresh-exclusion-manifest.json': 'f734de99761b7a3ee7ddb107de3d678fa29eb7e39a11708b6a8c8bbbe700cc0c',
@@ -142,10 +146,12 @@ def collect(catalog, rclone='rclone', transport=metadata_transport):
         tasks[job, attempt] = (prefix, item['state'], item['code_sha'], item.get('host'), item['exit_code'])
     for job, attempt, code, _ in SOURCES.values():
         prefix = f'r2:jass-data/runs/{job}/{attempt}'
+        expected_state, expected_exit = SOURCE_TERMINALS[job]
         if (job, attempt) in tasks:
-            need(tasks[job, attempt][1:3] == ('completed', code), 'literal_catalog_identity')
+            need(tasks[job, attempt][1:3] == (expected_state, code)
+                 and tasks[job, attempt][4] == expected_exit, 'literal_catalog_identity')
         else:
-            tasks[job, attempt] = (prefix, 'completed', code, job.split('-')[0], 0)
+            tasks[job, attempt] = (prefix, expected_state, code, job.split('-')[0], expected_exit)
     metadata = {}
     # Read-only envelopes are independent; bounded concurrency saves round-trip latency.
     from concurrent.futures import ThreadPoolExecutor
@@ -187,6 +193,8 @@ def build(metadata, catalog, audit_sha, protocol_bytes, control_sha=CONTROL_SHA)
         if job in literals or (attempt and status.get('state') in {'completed', 'failed'}):
             need(meta is not None and meta['job_id'] == job and meta['attempt_id'] == attempt
                  and meta['code_sha'] == code, 'missing_authenticated_metadata')
+        if job in literals:
+            need((meta['result_state'], meta['exit_code']) == SOURCE_TERMINALS[job], 'literal_terminal')
         files = {entry['path']: entry for entry in meta['files']} if meta else {}
         required = []
         for path in paths:

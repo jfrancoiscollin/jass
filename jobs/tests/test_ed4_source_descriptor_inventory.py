@@ -53,11 +53,12 @@ class Inventory(unittest.TestCase):
         catalog, store = [], {}
         for job, attempt, code, paths in m.SOURCES.values():
             self.assertEqual(len(code), 40)
-            prefix, raw = envelope(job, attempt, code, paths)
+            state, exit_code = m.SOURCE_TERMINALS[job]
+            prefix, raw = envelope(job, attempt, code, paths, state)
             store[prefix] = raw
             if not job.startswith('home-1651'):
                 catalog.append(dict(job_id=job, attempt_id=attempt, code_sha=code,
-                    state='completed', exit_code=0, host='cpx62', result_uri=prefix))
+                    state=state, exit_code=exit_code, host='cpx62', result_uri=prefix))
         return catalog, store
 
     def transport(self, store, calls):
@@ -77,6 +78,18 @@ class Inventory(unittest.TestCase):
         self.assertEqual(len(calls), 36)
         self.assertTrue(all(report[key] == 0 for key in m.ZERO_READS))
         self.assertEqual(json.loads(json.dumps(report)), report)
+        d4 = next(x for x in report['sources'] if x['job_id'] == m.SOURCES['d4'][0])
+        self.assertEqual((d4['result_state'], d4['exit_code'], d4['classification']),
+                         ('failed', 2, 'included_exact'))
+
+    def test_literal_d4_state_cannot_be_replaced(self):
+        catalog, store = self.fixtures()
+        row = next(x for x in catalog if x['job_id'] == m.SOURCES['d4'][0])
+        row.update(state='completed', exit_code=0)
+        calls = []
+        with self.assertRaises(ValueError):
+            m.collect(catalog, transport=self.transport(store, calls))
+        self.assertEqual(calls, [])
 
     def test_failed_job_authenticated_then_unknown(self):
         catalog, store = self.fixtures()
