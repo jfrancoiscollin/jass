@@ -228,8 +228,8 @@
       "symptom": "Previously, component CI and a prose standard did not mechanically require complete target-host publication rehearsal. The new shared stage dispatcher now rejects missing admission and production without the matching successful published proof.",
       "root_cause": "The original v1 spec/dispatcher lacked rehearsal admission. The new integration test additionally exposed canonical-spec versus raw-file hash confusion before any CPX launch; the corrected gate preserves both and tests actual published-byte roundtrip.",
       "invariant": "Require same-code/profile/normalized-spec/runtime proof, completed R2 manifest and marker, authenticated output readback and nonempty non-skipped regression suites. Expose bounded original-phase/type/source diagnostics without raw secrets. An audit receipt cannot authorize a learner. Do not infer fresh liveness from an unchanged running record.",
-      "evidence": "Jass #877 merged b074eeafa32a578108bf30e3b329c83e956b2b24. Full-chain CI 34273484182 passed 23 top-level tests; build 34273484205 passed. Control #576 merged 96fe5b8668ab99f97c446a30cbadbc64d69c150f; CI 34274304113 passed five dispatcher/actual-queue tests. 1879 launch at 2026-09-08T20:22:48Z, attempt 20260908T202244Z-b074eeaf. docs/operations/LAUNCH_V2_ED3_DEPLOYMENT_RECEIPT_20260908.md records exact proof scope. Terminal R2 readback remains pending.; PR #878",
-      "status": "MITIGATED — shared dispatcher and mandatory CI active; real-host completed publication/readback proof pending"
+      "evidence": "Jass #877 merged b074eeafa32a578108bf30e3b329c83e956b2b24. Full-chain CI 34273484182 passed 23 top-level tests; build 34273484205 passed. Control #576 merged 96fe5b8668ab99f97c446a30cbadbc64d69c150f; CI 34274304113 passed five dispatcher/actual-queue tests. 1879 launch at 2026-09-08T20:22:48Z, attempt 20260908T202244Z-b074eeaf. docs/operations/LAUNCH_V2_ED3_DEPLOYMENT_RECEIPT_20260908.md records exact proof scope. Terminal R2 readback remains pending.; PR #878; ED4-P1: 1887/20260909T141444Z-93e2fd1f and1888/20260909T143020Z-93e2fd1f completed exit0. Original R2 publication/authentication/readback validated separately for both; production admission verified same code/profile/common spec/runtime and 33 regressions. Six pure payload hashes identical, model2e856652..., production receiptc1933640..., stage970cb30d.... docs/experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_RESULTS_20260909.md. No heldout proof or promotion.",
+      "status": "CLOSED — same-code real learner production admitted after complete authenticated rehearsal"
     },
     {
       "id": "TI-024",
@@ -290,6 +290,56 @@
       "invariant": "Before downloading any source, check free space on both result and artifact volumes; less than 3 GiB is a technical refusal with zero source reads and fits. Do not change scientific parameters.",
       "evidence": "Local Linux exact ED4 launch profile: 33 tests in 9.754 seconds, zero failures/errors/skips. Boundary tests cover insufficient space on either volume and exact-minimum admission, with mocked optimizer proving zero fits. The complete synthetic fit and publisher tests also pass. No real data or remote job.; PR #885",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-030",
+      "dedupe_key": "ed4-c0a-metadata-field-barrier-v1",
+      "context": "ED4-C0A local inventory implementation review, before real metadata reads",
+      "symptom": "Initial local handoff decoded nested metadata generically and omitted queue-only/catalog producers; limited fixtures could pass without validating actual envelopes.",
+      "root_cause": "Projection was implemented after generic decoding, and tests did not cover the complete transport/catalog contract.",
+      "invariant": "Decode only schema-allowlisted scalar metadata at read time; lexically skip excluded values; authenticate every completed/failed envelope; union status and queue job names; unknown or missing producers prevent READY.",
+      "evidence": "Root replaced projection and completed transport/catalog. Ten synthetic contract tests pass, including poisoned semantic decoding, malformed/duplicate JSON, actual envelope hashes and sizes, failed jobs, absent payloads and queue-only status. No real C0 metadata or payload read.",
+      "status": "MITIGATED — synthetic complete contract passes; real inventory execution pending"
+    },
+    {
+      "id": "TI-031",
+      "dedupe_key": "ed4-c0a-publication-approval-v1",
+      "context": "Public ED4-P1 result and C0A preregistration publication",
+      "symptom": "Automatic approval review rejected the proposed git publication before commit/push execution.",
+      "root_cause": "After repository ownership and admin rights were verified, automatic review still required explicit approval for public exposure of this exact scientific payload.",
+      "invariant": "Keep the proposed payload local and reviewable; do not route the rejected publication through another tool or destination; await explicit user authorization.",
+      "evidence": "Connected GitHub identity jfrancoiscollin matches jass owner; repository public and viewer admin. Exact result/preregistration publication question is pending. No publication attempt executed.; User explicitly replied Accord donné. Go. Public branch79a4b51ff pushed successfully; PR886 created. CI workflow update1d4f2aea published through GitHub and verified byte-identical to local blobdac39830. Future ordinary campaign steps retain existing user authorization.",
+      "status": "CLOSED — exact public payload authorized and published"
+    },
+    {
+      "id": "TI-032",
+      "dedupe_key": "ed4-c0a-null-historical-status-host-v1",
+      "context": "C0A metadata admission on CPX62, code1d4f2aea",
+      "symptom": "The target-host synthetic tests passed, then catalogue projection failed before any R2 envelope was requested.",
+      "root_cause": "Frozen historical status cpx62-1820-l3-decision-math-b2-terminal-classified-failure-zero-placeholder-repair-v1 has host:null. The status schema incorrectly required a string for that optional field.",
+      "invariant": "Permit null only in the optional status host descriptor; keep authenticated result-manifest host strict. Missing execution identity stays unknown and cannot authorize coverage or READY.",
+      "evidence": "First admission report SHA256 0e0d25b32a12ee49606c5765788984c7ae40a6633e56a60556cfde82937ce72a; phasecatalog, duration0.228s, authenticated_envelopes0, all payload/target/model reads0. Field-projected scan of the full frozen status window found only this type mismatch.",
+      "status": "MITIGATED — narrow status compatibility repair; repeated metadata admission pending"
+    },
+    {
+      "id": "TI-033",
+      "dedupe_key": "ed4-c0a-literal-failed-d4-envelope-v1",
+      "context": "C0A admission on code111883548 after frozen catalogue projection",
+      "symptom": "Literal catalogue identity rejected D4 before any R2 envelope fetch; attempt and code matched but the consumer assumed completed.",
+      "root_cause": "The literal1862 source published its roots/provenance before a downstream failure and its frozen outer state is failed exit2. Existing D4 consumers explicitly use expected-state failed.",
+      "invariant": "Authenticate literal1862 via _FAILED with exact statefailed/exit2, attempt and code unchanged. Descriptor availability does not prove payload bytes, cardinality or scientific support. Never substitute a successful source.",
+      "evidence": "Projected snapshot3ae5a398:1862 attempt20260907T182914Z-1c779cc8 code1c779cc87608a12b26432cad6a23872aeb5eabe8 statefailed exit2. Secondadmission0.429s,116catalogjobs,0R2envelopes,0payload/target/modelreads. Sol review confirms prereg did not require completed. Twelve synthetic tests pass including exact failed-literal admission and rejection of changed terminal state.",
+      "status": "MITIGATED — exact literal terminal state implemented; repeated metadata admission pending"
+    },
+    {
+      "id": "TI-034",
+      "dedupe_key": "ed4-c0a-envelope-size-guard-v1",
+      "context": "C0A metadata-only admission, code68ef32b8",
+      "symptom": "Metadata admission stopped at envelope_size_limit after17 authenticated envelopes; no payload or scientific target was read.",
+      "root_cause": "The local 8MiB transport guard was smaller than six historical inventory envelopes. Metadata-only sizing of116 sources measured maximum18121658bytes and total68041184bytes in7.077s.",
+      "invariant": "Use bounded32MiB envelope transport for this fixed inventory; preserve exact metadata paths, field projections, source identities,900s cap and zero payload/target/model reads. Do not interpret descriptor sizing as full audit runtime.",
+      "evidence": "Thirdadmission10.474s,116catalogjobs,17authenticatedenvelopes. Largest inventory is1868; six inventories exceed8MiB. Thirteen synthetic tests pass including measured-largest transport and rejection above32MiB.",
+      "status": "MITIGATED — transport sized from metadata; repeated admission pending"
     }
   ]
 }
