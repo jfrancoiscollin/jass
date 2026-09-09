@@ -12,6 +12,26 @@
 
 ---
 
+## ED3-T1 — diagnostic sur données consommées terminé
+
+Le diagnostic autorisé est terminé : production `cpx62-1886-l3-ed3-transfer-diagnostic-production-v1`,
+tentative `20260909T062530Z-22ee9cd1`, code `22ee9cd1c362eec62882b50a8cdda6fbd276054a`,
+exit 0. La répétition 1885 a été authentifiée avant admission ; les sorties
+scientifiques des deux exécutions sont identiques et leur publication relue.
+[Résultat et reçus](experiments/L3_ED3_TRANSFER_DIAGNOSTIC_RESULTS_20260909.md).
+
+Sur la confirmation déjà consommée, SOFT change 44 des 512 choix de HARD :
+neuf entrent parmi les meilleurs coups de référence, sept en sortent ; le regret
+baisse sur 18 parents et augmente sur 20. Les distributions conservent les
+valeurs extrêmes et toutes les cellules. La logloss observée reste plus élevée
+que BASE. Les paires TRAIN Q5k/Q50k et confirmation Q200k sont des populations
+distinctes, sans estimation causale de transfert entre elles.
+
+`EXPLORATORY_CONSUMED_DATA`, `scientific_verdict=null`, **`STOP_ED3`** inchangé.
+Aucun nouvel entraînement, recherche, match, ajustement, promotion ou suite
+automatique. `CURRICULUM` reste champion ; le terminal de confirmation ci-dessous
+reste applicable.
+
 ## ED3 — confirmation prospective terminée le 9 septembre
 
 La comparaison préenregistrée BASE / HARD / SOFT est terminée : job
