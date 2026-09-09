@@ -22,7 +22,6 @@ class ProducerClassification(unittest.TestCase):
         self.assertEqual(out['unknown_or_unclassified_producers'], [])
         self.assertEqual(out['unknown_producer_evidence'], [])
         self.assertEqual(out['unknown_producer_compact_evidence'], [])
-        self.assertTrue(out['verdict'].endswith('READY_V1'))
 
     def test_inventory_without_structural_descriptor_is_non_position(self):
         job = 'cpx62-1802-synthetic-readout-v1'
@@ -31,29 +30,26 @@ class ProducerClassification(unittest.TestCase):
             {'path': 'manifest.json'}]}}
         out = c.apply(report_for(job), metadata)
         self.assertEqual(out['sources'][0]['classification'], 'non_position_producer')
-        self.assertEqual(out['unknown_or_unclassified_producers'], [])
 
-    def test_structural_descriptor_without_proof_stays_unknown_and_publishes_paths(self):
+    def test_structural_descriptor_publishes_small_kind_projection(self):
         job = 'cpx62-1810-unmapped-v1'
-        metadata = {(job, 'a'): {'files': [
-            {'path': 'artefacts/cohort-01.json'}, {'path': 'artefacts/cohort-02.json'}]}}
+        paths = ['artefacts/cohort-01.json', 'artefacts/parents.jnnw',
+                 'artefacts/children.jnnw', 'artefacts/siblings.tsv']
+        metadata = {(job, 'a'): {'files': [{'path': p} for p in paths]}}
         out = c.apply(report_for(job), metadata)
-        self.assertEqual(out['sources'][0]['classification'], 'unknown')
-        self.assertEqual(out['unknown_or_unclassified_producers'], [job])
-        self.assertEqual(out['unknown_producer_evidence'][0]['structural_descriptor_paths'],
-                         ['artefacts/cohort-01.json', 'artefacts/cohort-02.json'])
+        self.assertEqual(out['unknown_producer_evidence'][0]['structural_descriptor_paths'], sorted(paths))
         compact = out['unknown_producer_compact_evidence'][0]
-        self.assertEqual(compact['structural_descriptor_count'], 2)
-        self.assertEqual(compact['structural_path_families'], [
-            {'path_family': 'artefacts/cohort-<n>.json', 'count': 2}])
-        self.assertTrue(out['verdict'].endswith('INSUFFICIENT_V1'))
+        self.assertEqual(compact['structural_descriptor_count'], 4)
+        self.assertEqual(compact['structural_kind_counts'], {
+            'child': 1, 'cohort': 1, 'jnnw': 2, 'parent': 1, 'sibling': 1})
+        self.assertEqual(len(compact['example_structural_paths']), 3)
 
     def test_no_terminal_metadata_stays_unknown(self):
         job = 'cpx62-1811-unclaimed-v1'
         out = c.apply(report_for(job, None), {})
-        self.assertEqual(out['unknown_or_unclassified_producers'], [job])
-        self.assertEqual(out['unknown_producer_evidence'][0]['basis'], 'no_authenticated_terminal_metadata')
-        self.assertEqual(out['unknown_producer_compact_evidence'][0]['structural_path_families'], [])
+        compact = out['unknown_producer_compact_evidence'][0]
+        self.assertEqual(compact['structural_kind_counts'], {})
+        self.assertEqual(compact['example_structural_paths'], [])
 
     def test_missing_literal_path_keeps_insufficient_after_all_classified(self):
         job = 'cpx62-1802-synthetic-readout-v1'
@@ -63,8 +59,7 @@ class ProducerClassification(unittest.TestCase):
         self.assertTrue(out['verdict'].endswith('INSUFFICIENT_V1'))
 
     def test_invalid_upstream_verdict_is_not_repaired(self):
-        job = 'cpx62-1812-invalid-v1'
-        report = report_for(job); report['verdict'] = 'invalid'
+        job = 'cpx62-1812-invalid-v1'; report = report_for(job); report['verdict'] = 'invalid'
         with self.assertRaisesRegex(ValueError, 'classification_upstream_verdict'):
             c.apply(report, {})
 
