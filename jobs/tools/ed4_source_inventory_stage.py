@@ -73,10 +73,11 @@ def collect_metadata(catalog, rclone='rclone', transport=inventory.metadata_tran
             for (job, attempt), future in futures.items():
                 item = future.result()
                 _, state, code, exit_code = tasks[job, attempt]
-                inventory.need((item['job_id'], item['attempt_id'], item['code_sha'],
-                                item['result_state'], item['exit_code']) ==
-                               (job, attempt, code, state, exit_code),
-                               'authenticated_catalog_identity')
+                inventory.need(item['job_id'] == job, 'authenticated_job_id')
+                inventory.need(item['attempt_id'] == attempt, 'authenticated_attempt_id')
+                inventory.need(item['code_sha'] == code, 'authenticated_code_sha')
+                inventory.need(item['result_state'] == state, 'authenticated_result_state')
+                inventory.need(item['exit_code'] == exit_code, 'authenticated_exit_code')
                 metadata[job, attempt] = item
         except Exception:
             for future in futures.values():
