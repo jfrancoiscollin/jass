@@ -2,6 +2,8 @@
 """Conservative C0A producer classification from authenticated metadata only."""
 from __future__ import annotations
 from collections import Counter
+from pathlib import PurePosixPath
+import re
 
 READY = 'ED4_C0A_INVENTORY_ADMISSION_READY_V1'
 INSUFFICIENT = 'ED4_C0A_INVENTORY_ADMISSION_INSUFFICIENT_V1'
@@ -27,12 +29,47 @@ STRUCTURAL_KINDS = (
     ('corpus', 'corpus'), ('dataset', 'dataset'), ('fen', 'fen'),
 )
 STRUCTURAL_TOKENS = tuple(token for _, token in STRUCTURAL_KINDS)
+RAW_SUFFIXES = ('.jnnw', '.jnnw.gz', '.jsm', '.jsm.gz', '.fen', '.fen.gz')
+IDENTITY_TERMS = ('parent', 'child', 'sibling', 'root', 'position', 'opening',
+                  'identit', 'exclusion')
+NON_PAYLOAD_MARKERS = ('/cmakefiles/', '/native-build/', '/build/cmakefiles/',
+                       '/documentary-worktree/docs/', '/docs/archives/')
+NON_PAYLOAD_SUFFIXES = ('.o', '.o.d', '.cpp', '.hpp', '.cc', '.c', '.cmake', '.md',
+                        '.py', '.sh', '.log', '.err')
 
 
 def structural_paths(meta):
     paths = [entry.get('path', '') for entry in (meta or {}).get('files', [])]
     return sorted(path for path in paths
                   if any(token in path.lower() for token in STRUCTURAL_TOKENS))
+
+
+def is_position_payload_path(path):
+    """Descriptor-only screen for files capable of carrying position identity.
+
+    This intentionally ignores build objects, docs and diagnostics whose names
+    merely contain words such as root/sibling. It does not open any payload.
+    """
+    lower = '/' + str(path).lower().lstrip('/')
+    if any(marker in lower for marker in NON_PAYLOAD_MARKERS):
+        return False
+    if lower.endswith(NON_PAYLOAD_SUFFIXES):
+        return False
+    if lower.endswith(RAW_SUFFIXES):
+        return True
+    name = PurePosixPath(lower).name
+    if name.endswith(('.tsv', '.tsv.gz', '.txt', '.txt.gz')):
+        return any(term in name for term in IDENTITY_TERMS)
+    if name.endswith(('.jsonl', '.jsonl.gz')):
+        return any(term in lower for term in ('dataset', 'position', '.fen'))
+    return False
+
+
+def position_entries(meta):
+    return sorted(
+        [entry for entry in (meta or {}).get('files', [])
+         if is_position_payload_path(entry.get('path', ''))],
+        key=lambda entry: entry.get('path', ''))
 
 
 def compact_evidence(job, attempt, basis, paths):
@@ -52,9 +89,37 @@ def compact_evidence(job, attempt, basis, paths):
     }
 
 
+def literal_hash_sets(report):
+    """Hashes of the frozen required paths for each exact C0A source."""
+    result = {}
+    for row in report.get('sources', []):
+        if row.get('classification') != 'included_exact':
+            continue
+        hashes = {item.get('sha256') for item in row.get('required_paths', [])
+                  if item.get('present') is True and re.fullmatch(r'[0-9a-f]{64}', item.get('sha256') or '')}
+        if hashes:
+            result[row['job_id']] = hashes
+    return result
+
+
+def hash_cover(entries, source_hashes):
+    hashes = {entry.get('sha256') for entry in entries}
+    if not hashes or any(not re.fullmatch(r'[0-9a-f]{64}', value or '') for value in hashes):
+        return None
+    covering = [job for job, allowed in source_hashes.items() if hashes <= allowed]
+    return sorted(covering)[0] if covering else None
+
+
+def is_authenticated_nonexecution(row):
+    """Frozen status proof that the semantic job never acquired an attempt."""
+    return (row.get('attempt_id') is None and row.get('code_sha') is None
+            and row.get('result_state') == 'failed' and row.get('exit_code') == -1)
+
+
 def apply(report, metadata):
     if report.get('verdict') not in {READY, INSUFFICIENT}:
         raise ValueError('classification_upstream_verdict')
+    source_hashes = literal_hash_sets(report)
     unknown = []
     unknown_evidence = []
     compact = []
@@ -65,25 +130,37 @@ def apply(report, metadata):
         attempt = row.get('attempt_id')
         meta = metadata.get((job, attempt)) if attempt else None
         paths = structural_paths(meta)
+        payloads = position_entries(meta)
         evidence = row.setdefault('classification_evidence', {})
         evidence['structural_descriptor_paths'] = paths
+        evidence['position_payload_descriptor_paths'] = [x.get('path') for x in payloads]
+        covering = hash_cover(payloads, source_hashes)
         if job in COVERED_BY:
             row['classification'] = 'covered_by_authenticated_superset'
             evidence['covering_source'] = COVERED_BY[job]
             evidence['basis'] = 'frozen_protocol_superset_relation_plus_authenticated_inventory'
-        elif meta is not None and not paths:
+        elif is_authenticated_nonexecution(row):
             row['classification'] = 'non_position_producer'
-            evidence['basis'] = 'authenticated_inventory_has_no_structural_descriptor'
+            evidence['basis'] = 'frozen_status_proves_no_attempt_and_no_code_execution'
+        elif meta is not None and not payloads:
+            row['classification'] = 'non_position_producer'
+            evidence['basis'] = 'authenticated_inventory_has_no_position_payload_descriptor'
+        elif covering is not None:
+            row['classification'] = 'covered_by_authenticated_superset'
+            evidence['covering_source'] = covering
+            evidence['basis'] = 'all_position_payload_descriptors_sha256_match_one_frozen_exact_source'
+            evidence['covered_payload_sha256'] = sorted({x['sha256'] for x in payloads})
         else:
             unknown.append(job)
-            evidence['basis'] = ('authenticated_inventory_contains_structural_descriptor_without_'
-                                 'preregistered_coverage_proof' if meta is not None
-                                 else 'no_authenticated_terminal_metadata')
+            evidence['basis'] = ('authenticated_inventory_contains_uncovered_position_payload_descriptor'
+                                 if meta is not None else 'no_authenticated_terminal_metadata')
             unknown_evidence.append({
                 'job_id': job, 'attempt_id': attempt, 'basis': evidence['basis'],
                 'structural_descriptor_paths': paths,
+                'position_payload_descriptor_paths': [x.get('path') for x in payloads],
             })
-            compact.append(compact_evidence(job, attempt, evidence['basis'], paths))
+            compact.append(compact_evidence(job, attempt, evidence['basis'],
+                                             [x.get('path', '') for x in payloads] or paths))
     report['unknown_or_unclassified_producers'] = sorted(unknown)
     report['unknown_producer_evidence'] = sorted(unknown_evidence, key=lambda item: item['job_id'])
     report['unknown_producer_compact_evidence'] = sorted(compact, key=lambda item: item['job_id'])
