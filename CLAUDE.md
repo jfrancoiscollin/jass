@@ -81,6 +81,7 @@ Pour éviter les **erreurs de reporting** (troncature RESULTS, variable non-lié
 - **Ne queuer qu'après** le round-trip write→read validé.
 
 ### 4. Autres règles gravées
+- **🔓 RELABEL ADJUGÉ AUTORISÉ COMME CIBLE (décision JFC 2026-09-09, périmètre = prereg R1).** L'interdiction de `L3_PURE_PLAN` §2 est levée pour la **cible** seulement : arbitre **interne** (recherche Jass profondeur fixe `14` + EGDB), bande de nulle `50 cp`, blend `0,5/0,5` avec le WDL terminal, un seul facteur, recette de fit byte-identique. **Toujours interdits** : MMTO, ranking/préférence, positions/parties/poids externes (Scan, Gen2, maîtres). Motif chiffré : la classe contient le point de Scan (port exact `600/600`, `home-0957`) alors que le fit n'identifie que `effective_df ≈ 23 687` sur `8 503 296` coordonnées, `97,0 %` jamais activées (JFI finding C) ; les labels vrais et denses ont déjà payé `+52` (MMTO gen2) et `+49 Elo` (arbitre d14+EGDB, `0722`). ⛔ **Aucun job R1 ne part sans GO distinct** ; G2 (décision fraîche) est un gate offline **avant toute partie**. Doc : [`docs/experiments/L3_R1_ADJUDICATED_RELABEL_V1_20260909.md`](docs/experiments/L3_R1_ADJUDICATED_RELABEL_V1_20260909.md).
 - **✅ CHAMPION GÉNÉRAL COURANT = CURRICULUM depuis le 15 août 2026.** Bras D
   `C_PRIOR_THEN_CURRENT_2M` : pré-entraînement `MEGA_FULL_4M`, puis recentrage
   `CURRENT_2M` sur cible alignée `CONTEXT_30`. Il bat L2LOW sur deux pools frais
