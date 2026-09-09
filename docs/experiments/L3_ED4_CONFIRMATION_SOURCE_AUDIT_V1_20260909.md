@@ -266,8 +266,25 @@ ne lit aucune valeur scientifique.
 
 Le cutoff du catalogue est littéral : tous les jobs dont l'ordinal sémantique
 est compris entre **1773 et 1888 inclus**, tels qu'ils existent dans les
-metadata authentifiées de `jass-control` au commit de préenregistrement C0A,
-doivent avoir exactement une ligne. Les sources antérieures nommées
+metadata authentifiées de `jass-control` au snapshot immuable :
+
+```text
+repository  jfrancoiscollin/jass-control
+commit      3ae5a3980ee60816ef078124deafa72b2e2f4662
+```
+
+doivent avoir exactement une ligne. Le draft C0A local `07bc2146` avait été
+écrit alors que le snapshot contrôle
+`e9e49336edbd35f89d083ae4a379903a73a63660` marquait encore 1888 running. Le
+snapshot retenu conserve les bornes ordinales 1773..1888 mais ajoute, par
+rapport au précédent, le fichier
+`status/cpx62-1888-l3-ed4-choice-value-fit-production-v1.json` créé à la fin du
+job. Il fixe ainsi le terminal publié de 1888 avant publication de ce protocole
+et avant toute exécution d'une enveloppe metadata, tout payload, inventaire ou
+calcul C0. Cette substitution prospective est explicite et ne peut plus dériver
+après le gel.
+
+Les sources antérieures nommées
 explicitement dans les allowlists, dont HomeScan 1651, restent incluses par leur
 identité littérale ; elles ne rouvrent pas un inventaire antérieur général. Un
 job créé après 1888 n'entre pas rétroactivement dans C0A-v1. Un identifiant sans
@@ -287,6 +304,11 @@ structural_payload_unavailable
 Chaque ligne donne job/attempt/code, rôle historique, source couvrante et preuve.
 La catégorie est justifiée par le manifest, l'inventaire ou un reçu source
 authentifié ; le nom du job ne suffit pas à la déduire.
+L'inventaire externe prouve l'identité, l'état et les descripteurs de fichiers ;
+il ne prouve pas à lui seul qu'un job est un non-producteur ou un sous-ensemble
+d'une source déjà couverte. Si cette relation n'est pas attestée par un champ ou
+reçu allowlisté, la valeur reste `unknown`. C0A-v1 n'ouvre pas un payload
+supplémentaire pour faire passer l'admission.
 Un producteur absent du catalogue, une catégorie inconnue, ou un producteur de
 TRAIN/benchmark/confirmation placé dans `structural_payload_unavailable` rend
 le verdict positif impossible. Le stage publie alors la liste exacte des
@@ -362,6 +384,7 @@ Avant l'implémentation du parser complet, une admission séparée publie exacte
 state, verdict
 audit_code_sha256, protocol_path, protocol_sha256
 catalogue_cutoff = {first_ordinal:1773,last_ordinal:1888,inclusive:true}
+control_snapshot_commit = 3ae5a3980ee60816ef078124deafa72b2e2f4662
 sources[] = {
   job_id, attempt_id, code_sha, prefix, result_state, exit_code,
   required_paths[] = {
@@ -394,6 +417,8 @@ Ce terminal ne fetch aucun payload, n'est ni la répétition ni l'audit C0A, ne
 prouve aucune canonicalisation, cardinalité réelle, durée ou compatibilité avec
 le cap, et n'autorise ni confirmation ni production. Il autorise seulement
 l'implémentation/revue du chemin complet contre les descripteurs disponibles.
+Un verdict `INSUFFICIENT` dû à des classifications `unknown` est donc une issue
+attendue et correcte, pas une panne à contourner par heuristique.
 
 La répétition puis la production exécutent toutes deux **l'audit complet** avec
 les mêmes inputs, code et protocole. Aucun sous-échantillon. La répétition publie

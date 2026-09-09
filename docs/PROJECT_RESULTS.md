@@ -7,6 +7,15 @@
 
 Le registre exhaustif antérieur reste archivé byte-identique au lien ci-dessus. Le présent fichier conserve seulement les résultats qui pilotent directement la frontière scientifique actuelle. En cas de contradiction, le verdict terminal le plus récent fondé sur un run complet et son manifest prévaut.
 
+## ED4-P1 — candidat valide, confirmation encore ouverte (9 septembre 2026)
+
+La répétition 1887 et la production 1888 sont publiées, authentifiées et relues.
+Le candidat `ED4_CHOICE.pjtw`, empreinte `2e856652…`, et ses cinq autres
+payloads purs sont identiques. Le fit, la quantification et le reload natif
+passent le premier gate technique de campagne. [Preuves et limites](experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_RESULTS_20260909.md).
+Les trois gates prospectifs décision/WDL/recherche restent non évalués ; aucun
+gain scientifique, bake ou promotion n'est déclaré. Ce fait ne rouvre pas ED3.
+
 ## ED3-T1 — diagnostic descriptif terminé (9 septembre 2026)
 
 1885 (répétition) et 1886 (production) sont publiés et authentifiés, avec les

@@ -228,8 +228,8 @@
       "symptom": "Previously, component CI and a prose standard did not mechanically require complete target-host publication rehearsal. The new shared stage dispatcher now rejects missing admission and production without the matching successful published proof.",
       "root_cause": "The original v1 spec/dispatcher lacked rehearsal admission. The new integration test additionally exposed canonical-spec versus raw-file hash confusion before any CPX launch; the corrected gate preserves both and tests actual published-byte roundtrip.",
       "invariant": "Require same-code/profile/normalized-spec/runtime proof, completed R2 manifest and marker, authenticated output readback and nonempty non-skipped regression suites. Expose bounded original-phase/type/source diagnostics without raw secrets. An audit receipt cannot authorize a learner. Do not infer fresh liveness from an unchanged running record.",
-      "evidence": "Jass #877 merged b074eeafa32a578108bf30e3b329c83e956b2b24. Full-chain CI 34273484182 passed 23 top-level tests; build 34273484205 passed. Control #576 merged 96fe5b8668ab99f97c446a30cbadbc64d69c150f; CI 34274304113 passed five dispatcher/actual-queue tests. 1879 launch at 2026-09-08T20:22:48Z, attempt 20260908T202244Z-b074eeaf. docs/operations/LAUNCH_V2_ED3_DEPLOYMENT_RECEIPT_20260908.md records exact proof scope. Terminal R2 readback remains pending.; PR #878",
-      "status": "MITIGATED — shared dispatcher and mandatory CI active; real-host completed publication/readback proof pending"
+      "evidence": "Jass #877 merged b074eeafa32a578108bf30e3b329c83e956b2b24. Full-chain CI 34273484182 passed 23 top-level tests; build 34273484205 passed. Control #576 merged 96fe5b8668ab99f97c446a30cbadbc64d69c150f; CI 34274304113 passed five dispatcher/actual-queue tests. 1879 launch at 2026-09-08T20:22:48Z, attempt 20260908T202244Z-b074eeaf. docs/operations/LAUNCH_V2_ED3_DEPLOYMENT_RECEIPT_20260908.md records exact proof scope. Terminal R2 readback remains pending.; PR #878; ED4-P1: 1887/20260909T141444Z-93e2fd1f and1888/20260909T143020Z-93e2fd1f completed exit0. Original R2 publication/authentication/readback validated separately for both; production admission verified same code/profile/common spec/runtime and 33 regressions. Six pure payload hashes identical, model2e856652..., production receiptc1933640..., stage970cb30d.... docs/experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_RESULTS_20260909.md. No heldout proof or promotion.",
+      "status": "CLOSED — same-code real learner production admitted after complete authenticated rehearsal"
     },
     {
       "id": "TI-024",
@@ -290,6 +290,26 @@
       "invariant": "Before downloading any source, check free space on both result and artifact volumes; less than 3 GiB is a technical refusal with zero source reads and fits. Do not change scientific parameters.",
       "evidence": "Local Linux exact ED4 launch profile: 33 tests in 9.754 seconds, zero failures/errors/skips. Boundary tests cover insufficient space on either volume and exact-minimum admission, with mocked optimizer proving zero fits. The complete synthetic fit and publisher tests also pass. No real data or remote job.; PR #885",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-030",
+      "dedupe_key": "ed4-c0a-metadata-field-barrier-v1",
+      "context": "ED4-C0A local inventory implementation review, before real metadata reads",
+      "symptom": "Initial local handoff decoded nested metadata generically and omitted queue-only/catalog producers; limited fixtures could pass without validating actual envelopes.",
+      "root_cause": "Projection was implemented after generic decoding, and tests did not cover the complete transport/catalog contract.",
+      "invariant": "Decode only schema-allowlisted scalar metadata at read time; lexically skip excluded values; authenticate every completed/failed envelope; union status and queue job names; unknown or missing producers prevent READY.",
+      "evidence": "Root replaced projection and completed transport/catalog. Ten synthetic contract tests pass, including poisoned semantic decoding, malformed/duplicate JSON, actual envelope hashes and sizes, failed jobs, absent payloads and queue-only status. No real C0 metadata or payload read.",
+      "status": "MITIGATED — synthetic complete contract passes; real inventory execution pending"
+    },
+    {
+      "id": "TI-031",
+      "dedupe_key": "ed4-c0a-publication-approval-v1",
+      "context": "Public ED4-P1 result and C0A preregistration publication",
+      "symptom": "Automatic approval review rejected the proposed git publication before commit/push execution.",
+      "root_cause": "After repository ownership and admin rights were verified, automatic review still required explicit approval for public exposure of this exact scientific payload.",
+      "invariant": "Keep the proposed payload local and reviewable; do not route the rejected publication through another tool or destination; await explicit user authorization.",
+      "evidence": "Connected GitHub identity jfrancoiscollin matches jass owner; repository public and viewer admin. Exact result/preregistration publication question is pending. No publication attempt executed.",
+      "status": "OPEN — explicit public-payload approval pending"
     }
   ]
 }

@@ -12,7 +12,7 @@
 
 ---
 
-## Campagne autonome eval/search — ED4-P1 publié, CI complète validée
+## Campagne autonome eval/search — candidat ED4-P1 scellé et authentifié
 
 Le mandat du 9 septembre autorise la poursuite automatique de pistes scientifiques
 distinctes après un échec, avec préenregistrement et confirmations fraîches. Le
@@ -26,9 +26,16 @@ publication/relecture sur fixtures synthétiques. [Preuves locales et limites](o
 Publication ED4-P1 et fusion #884 explicitement autorisées et effectuées. La
 CI complète du code `93e2fd1f` est verte ; ses reçus publiés sont authentifiés
 et relus. [Préparation du lancement réel](operations/ED4_P1_LAUNCH_READINESS_20260909.md).
-La PR de contrôle #585 prépare la répétition full512. Zéro fit réel à ce
-checkpoint ; admission CPX et preuve scientifique restent à obtenir.
-Aucun scale-up ni promotion.
+La répétition 1887 et la production 1888 sont terminées avec exit 0 et leurs
+résultats publiés sont authentifiés puis relus. Le modèle `ED4_CHOICE.pjtw`,
+SHA256 `2e856652efdd1d2758a949a5d4a29557fa31f4a64d55505ae6dc41482b641f5b`,
+et les cinq autres payloads purs sont identiques entre les deux exécutions.
+Deux fits réels au total, un candidat ; le premier gate technique passe.
+[Résultat, reçus et limites](experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_RESULTS_20260909.md).
+Les preuves de gain décisionnel, de calibration WDL indépendante et de transfert
+en recherche restent à obtenir. L'[audit prospectif C0A](experiments/L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md)
+prépare les exclusions ; aucune confirmation ED4 n'a commencé. Aucun scale-up
+ni promotion.
 
 ## ED4-P0 — objectif de choix et préflight synthétique validés
 
