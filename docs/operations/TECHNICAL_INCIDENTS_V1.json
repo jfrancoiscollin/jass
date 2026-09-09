@@ -238,7 +238,7 @@
       "symptom": "Local launch preparation initially computed hashes from CRLF checkout files instead of the immutable LF Git blobs; local dispatcher validation caught the mismatch before publication.",
       "root_cause": "Git checkout newline conversion changes raw file bytes while the V2 admission correctly authenticates the bytes executed on Linux.",
       "invariant": "Read immutable profile and rehearsal files from Git blobs; write production spec/admission as LF; compare normalized specs and validate exact proposed bytes with the existing Linux dispatcher before enqueue.",
-      "evidence": "Corrected local builder; five Linux dispatcher tests PASS; control PR582 CI34314248908 PASS; 1884 attempt20260909T051901Z-0946f57d accepted same-code admission and published-prerequisite verification before selection.",
+      "evidence": "Corrected local builder; five Linux dispatcher tests PASS; control PR582 CI34314248908 PASS; 1884 attempt20260909T051901Z-0946f57d accepted same-code admission and published-prerequisite verification before selection.; ED4-P1 local preparation: ordinary Windows git archive converted the sealed spec from 1793 LF bytes to 1794 bytes with one CR. git -c core.autocrlf=false archive preserved exact Git blobs; five dispatcher tests passed in 0.317 s with proposed1887, spec33693e4e and admission1a332456. No remote attempt or fit. See ED4_P1_LAUNCH_READINESS_20260909.md.",
       "status": "CLOSED"
     },
     {

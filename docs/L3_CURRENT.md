@@ -12,7 +12,7 @@
 
 ---
 
-## Campagne autonome eval/search — ED4-P1 préparé localement
+## Campagne autonome eval/search — ED4-P1 publié, CI complète validée
 
 Le mandat du 9 septembre autorise la poursuite automatique de pistes scientifiques
 distinctes après un échec, avec préenregistrement et confirmations fraîches. Le
@@ -23,9 +23,12 @@ est préenregistré : répétition full512 puis production identique, un fit cha
 
 Le pipeline passe ses 33 régressions locales et les vérifications natives avec
 publication/relecture sur fixtures synthétiques. [Preuves locales et limites](operations/ED4_P1_LOCAL_READINESS_20260909.md).
-Zéro fit réel ; CI et admission CPX encore à obtenir. Les autorisations de
-publication publique de la branche ED4-P1 et de fusion de la PR #884 sont demandées
-à la suite des refus du contrôle automatique. Aucun scale-up ni promotion.
+Publication ED4-P1 et fusion #884 explicitement autorisées et effectuées. La
+CI complète du code `93e2fd1f` est verte ; ses reçus publiés sont authentifiés
+et relus. [Préparation du lancement réel](operations/ED4_P1_LAUNCH_READINESS_20260909.md).
+La PR de contrôle #585 prépare la répétition full512. Zéro fit réel à ce
+checkpoint ; admission CPX et preuve scientifique restent à obtenir.
+Aucun scale-up ni promotion.
 
 ## ED4-P0 — objectif de choix et préflight synthétique validés
 
