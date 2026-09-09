@@ -1,0 +1,60 @@
+name: ed4-source-inventory
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/ed4_*'
+      - 'jobs/tests/test_ed4_*'
+      - 'jobs/tools/launch_*'
+      - 'jobs/tests/test_launch_*'
+      - 'jobs/launch_profiles/ed4-source-inventory-v1.json'
+      - 'jobs/tools/run_experiment_stage.py'
+      - 'jobs/tools/fetch_result_files.py'
+      - 'jobs/tools/fetch_t1bis_inputs.py'
+      - 'infra/runner_v3_store.py'
+      - '.github/workflows/ed4-source-inventory.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'jobs/tools/ed4_*'
+      - 'jobs/tests/test_ed4_*'
+      - 'jobs/tools/launch_*'
+      - 'jobs/tests/test_launch_*'
+      - 'jobs/launch_profiles/ed4-source-inventory-v1.json'
+      - 'jobs/tools/run_experiment_stage.py'
+      - 'jobs/tools/fetch_result_files.py'
+      - 'jobs/tools/fetch_t1bis_inputs.py'
+      - 'infra/runner_v3_store.py'
+      - '.github/workflows/ed4-source-inventory.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  synthetic-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install synthetic test dependencies
+        run: python -m pip install numpy scipy
+      - name: Run registered generic and C0A regression suites
+        run: >-
+          python -m unittest
+          jobs.tests.test_launch_gate_v2
+          jobs.tests.test_launch_gate_pipeline_v2
+          jobs.tests.test_ed4_source_descriptor_inventory
+          jobs.tests.test_ed4_source_inventory_stage
+          jobs.tests.test_ed4_source_inventory_pipeline
+          -v
