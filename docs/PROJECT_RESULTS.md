@@ -206,19 +206,14 @@ Le corpus est résolu fail-closed comme l'input byte-exact unique du dernier sta
 
 Le merge de la preregistration n'est pas un GO. **E1, E2 et E3 exigent chacun un GO JFC distinct** après les faits machine, rate comparable, sizing/ETA, disque et checks pré-lancement.
 
-**Rectification du 9 septembre 2026** : l'état ci-dessous était périmé. E1 et E2 ont tourné le 31 août sous GO explicite et E3 est fermé par E2 :
+Au moment de cette mise à jour :
 
 ```text
-E1 = E1_COST_ATTRIBUTED            cpx62-1708, attempt 20260831T054226Z-47258018, exit 0
-     top family = F3 (PROMOTION_RACE), nodes_ratio_E1 = 2.023410
-E2 = E2_F6_INFORMATION_VALUE_NOT_ESTABLISHED
-     cpx62-1714 / 1715 / 1716, attempts 20260831T1032..1114Z-e8e46e70, exit 0
-     delta_info = -65.375148015 Elo, CI95 [-89.821293148 ; -40.233502863]
-E3 = CLOSED_BY_E2
+E1 = NOT_STARTED
+E2 = LOCKED_BEHIND_E1
+E3 = LOCKED_BEHIND_E2
 strength games under current active authorization = 0
 ```
-
-Sources : [`L3_F6_TRANSFER_E1_RESULTS_20260831.md`](experiments/L3_F6_TRANSFER_E1_RESULTS_20260831.md), [`L3_PATTERN_LATENT_MICROSEARCH_PL8_V1_20260831.md`](experiments/L3_PATTERN_LATENT_MICROSEARCH_PL8_V1_20260831.md) §1.5. La branche F6 est terminale négative : l'information F6 ne vaut rien à nœuds égaux.
 
 ---
 
@@ -249,15 +244,4 @@ Les détails exhaustifs et les portes historiques restent dans le [snapshot ant�
 9. E2/E3 restent fail-closed derrière leurs gates et GO distincts.
 10. Toute nouvelle force sur un evaluator optimisé/distillé exige une preregistration de force séparée, un fresh disjoint et un GO séparé.
 
-## 6. Programme suivant préenregistré : R1 — relabel adjugé (9 septembre 2026)
-
-Décision de programme JFC du 9 septembre : levée de l'interdiction du relabel adjugé pour la **cible** d'entraînement, périmètre strict de la preregistration [`L3_R1_ADJUDICATED_RELABEL_V1_20260909.md`](experiments/L3_R1_ADJUDICATED_RELABEL_V1_20260909.md). Diagnostic fondateur : la classe contient le point de Scan (port exact `600/600`, `home-0957`, conversion `99/98 %` avec moteur réparé `home-0961ter`) alors que le fit n'identifie que `effective_df = 23 687` sur `8 503 296` coordonnées (JFI finding C) ; la contrainte liante est l'information par position du label, pas la classe, l'optimiseur ni la recherche.
-
-R1 change un seul facteur : cible `y_R1 = 0,5 × WDL terminal + 0,5 × WDL adjugé` (arbitre interne d14 + EGDB, bande `50 cp`), corpus et recette byte-identiques. Gates fail-closed : G1 hygiène du label, G2 décision fraîche (pairwise/top-hit vs `q200`, borne basse > 0) **avant toute partie**, G3 force sur deux pools frais de `6 000` parties. Le mécanisme `--prior-precision-file` (R2) est livré désactivé et byte-identique ; sa politique exige une preregistration séparée.
-
-```text
-R1 = PREREGISTERED_TOOLING_ONLY
-R1 launches under current authorization = 0
-```
-
-La frontière active est désormais `R1_ADJUDICATED_RELABEL_PENDING_EXPLICIT_GO`.
+La frontière active est désormais `E1_COST_ATTRIBUTION_PENDING_EXPLICIT_GO`.

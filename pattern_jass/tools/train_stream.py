@@ -987,32 +987,6 @@ def project_champion_mean(path, folder, keep, PAT_N, E):
 PRIOR_DECAY_DEFAULT = 1.0
 
 
-def _load_prior_precision_vector(path, TB):
-    """Load and validate an R2-mechanism per-coordinate ridge precision vector.
-
-    1-D float32/float64 `.npy` of length exactly `TB` (the canonical folded
-    pattern space), every entry finite and strictly positive. Loaded
-    read-only (mmap) and never mutated; the caller indexes it with `keep`.
-    """
-    arr = np.load(path, allow_pickle=False, mmap_mode='r')
-    if arr.ndim != 1:
-        raise SystemExit(f'--prior-precision-file {path}: expected a 1-D array, '
-                         f'got ndim={arr.ndim}')
-    if arr.dtype not in (np.float32, np.float64):
-        raise SystemExit(f'--prior-precision-file {path}: dtype must be float32 or '
-                         f'float64, got {arr.dtype}')
-    if arr.shape[0] != TB:
-        raise SystemExit(f'--prior-precision-file {path}: length {arr.shape[0]:,} != '
-                         f'canonical folded pattern space TB={TB:,}')
-    vec = np.asarray(arr, dtype=np.float64)
-    if not np.all(np.isfinite(vec)):
-        raise SystemExit(f'--prior-precision-file {path}: contains non-finite values')
-    if not np.all(vec > 0.0):
-        raise SystemExit(f'--prior-precision-file {path}: contains non-positive values '
-                         f'(precision must be strictly > 0)')
-    return vec
-
-
 def build_sequential_prior(args, folder, keep, kept_counts, PAT_N, E, N, l2):
     mu, scale_c = project_champion_mean(
         args.prior_mean, folder, keep, PAT_N, E)
@@ -1024,18 +998,7 @@ def build_sequential_prior(args, folder, keep, kept_counts, PAT_N, E, N, l2):
     dec_ext = dec if args.prior_decay_ext is None else float(args.prior_decay_ext)
     visits = kept_counts.astype(np.float64) / max(N, 1)
     prec_pat = np.full(PAT_N, l2, dtype=np.float64)
-    precision_file_path = getattr(args, 'prior_precision_file', None)
-    if precision_file_path is not None:
-        # R2 mechanism only: an explicit per-coordinate precision REPLACES the
-        # decay formula (validate_prior_precision_file already required
-        # decay=0, so prec_pat[1:] below would be l2 uniformly anyway; this
-        # takes the branch that keeps `prec_ext_val` at its decay=0 value
-        # (l2) and only overrides the pattern slots).
-        prec_pat[1:] = l2 + dec * lam * visits
-        prec_ext_val = l2 + dec_ext * lam
-        vec = _load_prior_precision_vector(precision_file_path, folder.TB)
-        prec_pat[1:] = vec[keep]
-    elif args.prior_alpha_cap is None:
+    if args.prior_alpha_cap is None:
         prec_pat[1:] = l2 + dec * lam * visits
         prec_ext_val = l2 + dec_ext * lam                    # extras active every row (visits/N=1)
     else:
@@ -1059,9 +1022,7 @@ def build_sequential_prior(args, folder, keep, kept_counts, PAT_N, E, N, l2):
         prec_ext_val = min(l2, k * lam)
     prec = np.concatenate([prec_pat, prec_pat,
                            np.full(E, prec_ext_val), np.full(E, prec_ext_val)])
-    if precision_file_path is not None:
-        mode = f'decay={dec} decay_ext={dec_ext} precision_file={precision_file_path}'
-    elif args.prior_alpha_cap is None:
+    if args.prior_alpha_cap is None:
         mode = f'decay={dec} decay_ext={dec_ext}'
     else:
         # Realised share, not the requested cap: buckets sitting at the l2
@@ -1253,22 +1214,9 @@ def train_stream(args):
     # training layout as a per-weight precision-weighted Gaussian prior. OFF
     # (--prior-mean unset) => exact plain-L2 behaviour, byte-identical output.
     prior_mean = prior_prec = initial_mean = None
-    prior_precision_file_report = None
     if args.prior_mean:
         prior_mean, prior_prec = build_sequential_prior(
             args, folder, keep, kept_counts, PAT_N, EVAL_NUM_EXTRAS, N, args.l2)
-        if args.prior_precision_file:
-            # prior_prec = concat([prec_pat, prec_pat, ext, ext]); slots 1..K of
-            # the (shared mg/eg) pattern bank are what the file actually set.
-            applied = prior_prec[1:PAT_N]
-            prior_precision_file_report = {
-                'path': str(args.prior_precision_file),
-                'sha256': _sha256_file(args.prior_precision_file),
-                'length': int(applied.size),
-                'min': float(applied.min()) if applied.size else None,
-                'mean': float(applied.mean()) if applied.size else None,
-                'max': float(applied.max()) if applied.size else None,
-            }
     if args.warm_start:
         initial_mean, scale_c = project_champion_mean(
             args.warm_start, folder, keep, PAT_N, EVAL_NUM_EXTRAS)
@@ -1284,9 +1232,6 @@ def train_stream(args):
               '(independent of L2 centre)')
     t0 = time.time()
     optimizer_diagnostics = {}
-    if prior_precision_file_report is not None:
-        # only present when the R2 mechanism is active: the legacy report stays byte-identical
-        optimizer_diagnostics['prior_precision_file'] = prior_precision_file_report
     w_float, train_loss, n_iter = train_lbfgs_chunked(
         build_fn, tr_idx, y_all, args.l2, args.max_iter,
         logistic, n_cols, chunk, sw_all=sample_weights,
@@ -1390,33 +1335,6 @@ def validate_prior_alpha_cap(args):
         if val not in (None, PRIOR_DECAY_DEFAULT):
             raise SystemExit(f'--prior-alpha-cap replaces the decay formula and cannot be '
                              f'combined with an explicit {flag}={val}')
-
-
-def validate_prior_precision_file(args):
-    """Refuse toute combinaison ambigue AVANT de toucher au corpus.
-
-    R2 mechanism only : --prior-precision-file REPLACES the visit-decay
-    formula for the pattern slots, so it requires the same guarantee as
-    --prior-alpha-cap (mutually exclusive) and demands the decay knobs be
-    pinned at 0 (their "no additional shrinkage" value) so the only source
-    of pattern precision is the file itself.
-    """
-    if args.prior_precision_file is None:
-        return
-    if not args.prior_mean:
-        raise SystemExit('--prior-precision-file requires --prior-mean (it replaces the '
-                         'derived precision of a parent-centred prior; without a parent '
-                         'there is nothing to precisify)')
-    if args.prior_alpha_cap is not None:
-        raise SystemExit('--prior-precision-file cannot be combined with --prior-alpha-cap '
-                         '(both replace the pattern precision formula)')
-    if args.prior_decay != 0.0:
-        raise SystemExit(f'--prior-precision-file requires --prior-decay 0 (an explicit '
-                         f'per-coordinate precision replaces the decay formula), got '
-                         f'--prior-decay={args.prior_decay}')
-    if args.prior_decay_ext is not None and args.prior_decay_ext != 0.0:
-        raise SystemExit(f'--prior-precision-file requires --prior-decay-ext unset or 0, '
-                         f'got --prior-decay-ext={args.prior_decay_ext}')
 
 
 def validate_initialization_args(args):
@@ -1531,15 +1449,6 @@ def main(argv=None):
                          'cap->1 is the constant-l2 recipe, cap->0 approaches a scratch fit. '
                          'Mutually exclusive with --prior-decay/--prior-decay-ext. Only with '
                          '--prior-mean.')
-    ap.add_argument('--prior-precision-file', type=str, default=None,
-                    help='R2 MECHANISM ONLY, OFF by default (byte-identical when absent): '
-                         '.npy (float32/float64, 1-D, length = folder.TB canonical folded '
-                         'pattern space, all finite and strictly > 0) giving a per-coordinate '
-                         'ridge precision toward --prior-mean, REPLACING the visit-decay '
-                         'formula for the pattern slots (extras untouched). Requires '
-                         '--prior-mean and --prior-decay 0 (--prior-decay-ext left unset or '
-                         '0). Mutually exclusive with --prior-alpha-cap and with any nonzero '
-                         '--prior-decay/--prior-decay-ext.')
     ap.add_argument('--max-iter', type=int, default=25,
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
     ap.add_argument('--optimizer-report', type=str, default=None,
@@ -1596,7 +1505,6 @@ def main(argv=None):
                          'men-only binary). Default OFF = men-only occupancy.')
     args = ap.parse_args(argv)
     validate_prior_alpha_cap(args)
-    validate_prior_precision_file(args)
     validate_initialization_args(args)
     return train_stream(args)
 

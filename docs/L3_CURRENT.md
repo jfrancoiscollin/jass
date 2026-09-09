@@ -8,8 +8,7 @@
 > T3 terminal : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md).  
 > Runtime v4 : [prereg](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md) · [terminal Pool1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md).  
 > O1 exact cache : [prereg](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md) · [terminal](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_RESULTS_20260830.md).  
-> Programme suivant : [E1/E2/E3](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md) · [amendment O1 terminal](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_O1_TERMINAL_AMENDMENT_20260830.md).  
-> **R1 relabel adjugé (9 sept., décision JFC, prereg mergée avec l'outillage, aucun lancement)** : [prereg R1](experiments/L3_R1_ADJUDICATED_RELABEL_V1_20260909.md) · amendement [`L3_PURE_PLAN` §0/§2](L3_PURE_PLAN.md).
+> Programme suivant : [E1/E2/E3](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md) · [amendment O1 terminal](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_O1_TERMINAL_AMENDMENT_20260830.md).
 
 ---
 
