@@ -13,9 +13,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from jobs.tools import ed4_source_descriptor_inventory as inventory
 from jobs.tools import ed4_producer_classification as producer_classification
+from jobs.tools import ed4_structural_candidate_manifest as structural_candidates
 from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json
 
 OUTPUT = 'ed4-c0a-source-descriptor-inventory.json'
+CANDIDATE_OUTPUT = 'ed4-c0b-structural-candidate-manifest.json'
 PHASES = ['control-catalog', 'authenticate-envelopes', 'classify-descriptors', 'publish-readback']
 VERDICTS = {'ED4_C0A_INVENTORY_ADMISSION_READY_V1',
             'ED4_C0A_INVENTORY_ADMISSION_INSUFFICIENT_V1'}
@@ -101,6 +103,7 @@ def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalo
         evidence.begin(PHASES[2])
         report = builder(metadata, catalog, audit_hash, protocol, inventory.CONTROL_SHA)
         report = producer_classification.apply(report, metadata)
+        candidates = structural_candidates.build(metadata, report, inventory.CONTROL_SHA)
         for key in read_counts:
             count = report.get(key)
             if type(count) is int and count >= 0:
@@ -111,12 +114,24 @@ def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalo
                        'inventory_snapshot')
         inventory.need(all(type(report.get(k)) is int and report[k] == 0
                            for k in inventory.ZERO_READS), 'inventory_read_barrier')
+        inventory.need(all(candidates.get(k) == 0 for k in
+                           ('payload_downloads','payload_bytes_read','model_reads','target_reads',
+                            'outcome_reads','qvalue_reads')), 'candidate_read_barrier')
         evidence.complete()
         evidence.begin(PHASES[3])
         atomic_json(artifact / OUTPUT, report)
+        atomic_json(artifact / CANDIDATE_OUTPUT, candidates)
         inventory.need(read_json(artifact / OUTPUT) == report, 'inventory_readback')
+        inventory.need(read_json(artifact / CANDIDATE_OUTPUT) == candidates,
+                       'candidate_manifest_readback')
         summary = terminal(report, mode)
         summary.update(inventory_sha256=inventory.digest((artifact / OUTPUT).read_bytes()),
+                       c0b_candidate_manifest_sha256=inventory.digest((artifact / CANDIDATE_OUTPUT).read_bytes()),
+                       c0b_candidate_jobs_count=candidates['candidate_jobs_count'],
+                       c0b_candidate_files_count=candidates['candidate_files_count'],
+                       c0b_candidate_declared_bytes_total=candidates['candidate_declared_bytes_total'],
+                       c0b_candidate_kind_counts=candidates['candidate_kind_counts'],
+                       c0b_jobs_without_parseable_position_candidate_count=len(candidates['jobs_without_parseable_position_candidate']),
                        missing_paths_count=len(report['missing_paths']),
                        unclassified_producers_count=len(report['unknown_or_unclassified_producers']),
                        classification_counts=report.get('classification_counts', {}),
