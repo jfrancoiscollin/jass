@@ -230,6 +230,16 @@
       "invariant": "Require same-code/profile/normalized-spec/runtime proof, completed R2 manifest and marker, authenticated output readback and nonempty non-skipped regression suites. Expose bounded original-phase/type/source diagnostics without raw secrets. An audit receipt cannot authorize a learner. Do not infer fresh liveness from an unchanged running record.",
       "evidence": "Jass #877 merged b074eeafa32a578108bf30e3b329c83e956b2b24. Full-chain CI 34273484182 passed 23 top-level tests; build 34273484205 passed. Control #576 merged 96fe5b8668ab99f97c446a30cbadbc64d69c150f; CI 34274304113 passed five dispatcher/actual-queue tests. 1879 launch at 2026-09-08T20:22:48Z, attempt 20260908T202244Z-b074eeaf. docs/operations/LAUNCH_V2_ED3_DEPLOYMENT_RECEIPT_20260908.md records exact proof scope. Terminal R2 readback remains pending.; PR #878",
       "status": "MITIGATED — shared dispatcher and mandatory CI active; real-host completed publication/readback proof pending"
+    },
+    {
+      "id": "TI-024",
+      "dedupe_key": "ed3-local-windows-checkout-hash-v1",
+      "context": "ED3 1884 launch preparation on Windows; no remote failed attempt",
+      "symptom": "Local launch preparation initially computed hashes from CRLF checkout files instead of the immutable LF Git blobs; local dispatcher validation caught the mismatch before publication.",
+      "root_cause": "Git checkout newline conversion changes raw file bytes while the V2 admission correctly authenticates the bytes executed on Linux.",
+      "invariant": "Read immutable profile and rehearsal files from Git blobs; write production spec/admission as LF; compare normalized specs and validate exact proposed bytes with the existing Linux dispatcher before enqueue.",
+      "evidence": "Corrected local builder; five Linux dispatcher tests PASS; control PR582 CI34314248908 PASS; 1884 attempt20260909T051901Z-0946f57d accepted same-code admission and published-prerequisite verification before selection.",
+      "status": "CLOSED"
     }
   ]
 }

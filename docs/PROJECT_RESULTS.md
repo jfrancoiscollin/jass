@@ -1,11 +1,31 @@
 # Jass — synthèse consolidée des résultats du projet
 
-> **Mis à jour :** 2026-08-30  
+> **Mis à jour :** 2026-09-09
 > **Rôle :** registre scientifique courant des directions établies/fermées ; empêcher de rouvrir une piste close sans fait nouveau.  
 > **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)  
 > **Historique consolidé antérieur complet :** [PROJECT_RESULTS_PRE_T3_20260830.md](PROJECT_RESULTS_PRE_T3_20260830.md)
 
 Le registre exhaustif antérieur reste archivé byte-identique au lien ci-dessus. Le présent fichier conserve seulement les résultats qui pilotent directement la frontière scientifique actuelle. En cas de contradiction, le verdict terminal le plus récent fondé sur un run complet et son manifest prévaut.
+
+## ED3-P2 — confirmation non supportée, STOP_ED3 (9 septembre 2026)
+
+La confirmation préenregistrée `1884 / 20260909T051901Z-0946f57d` compare les
+modèles gelés BASE / HARD / SOFT sur 512 parents frais, avec une garde WDL
+historique distincte de 8 192 lignes. Verdict :
+`ED3_SOFT_CONFIRMATION_NOT_SUPPORTED_V1` ; décision de programme : `STOP_ED3`.
+[Preuves et résultat détaillé](experiments/L3_ED3_CONFIRMATION_RESULTS_20260909.md).
+
+SOFT diminue ponctuellement le regret moyen, mais les deux IC95 contre BASE
+et HARD incluent zéro. Sa logloss WDL est plus élevée et la borne supérieure
+de différence (0,002236) dépasse la marge de non-infériorité 0,002. Le contrôle
+de meilleurs coups face à BASE et celui des parents améliorés/dégradés échouent
+aussi. Le Brier seul passe. Aucun gain décisionnel avec calibration préservée
+n'est établi ; ce n'est pas une preuve d'effet nul. La garde historique ne
+constitue pas une nouvelle mesure d'issues de parties.
+
+Aucun fit, force jouée, promotion, bake ou suite automatique. `CURRICULUM`
+reste champion ; pas de Gate0, extension de l'échantillon ou retuning ED3
+sur ce résultat. Les faits historiques ED2 restent inchangés.
 
 ## 1. Règle de lecture
 
