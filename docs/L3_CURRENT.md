@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 5 septembre 2026**
+> **Mis à jour : 9 septembre 2026**
 > **Source de vérité active : ce document.**
 >
 > Résultats acquis / portes closes : [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md).  
@@ -11,6 +11,28 @@
 > Programme suivant : [E1/E2/E3](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md) · [amendment O1 terminal](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_O1_TERMINAL_AMENDMENT_20260830.md).
 
 ---
+
+## ED3 — confirmation prospective terminée le 9 septembre
+
+La comparaison préenregistrée BASE / HARD / SOFT est terminée : job
+`cpx62-1884-l3-ed3-confirmation-production-v1`, tentative
+`20260909T051901Z-0946f57d`, code `0946f57d5443c0507fd9210371396bdf1c49abd2`,
+exit 0. Verdict : **`ED3_SOFT_CONFIRMATION_NOT_SUPPORTED_V1`**, suite
+**`STOP_ED3`**. [Résultat, preuves et limites](experiments/L3_ED3_CONFIRMATION_RESULTS_20260909.md).
+
+Sur 512 parents frais, les réductions moyennes de regret par SOFT sont
++19,818 face à BASE (IC95 [−36,049 ; +88,387]) et +32,404 face à HARD
+(IC95 [−1,262 ; +81,031]). Aucun gain décisionnel n'est établi. Sur la garde
+WDL historique de 8 192 lignes, la différence de logloss SOFT−BASE est
++0,001397 (IC95 [+0,000570 ; +0,002236]) : sa borne haute dépasse la marge
+de non-infériorité 0,002. Les portes top-hit et améliorés/dégradés échouent
+également ; seul le Brier respecte sa tolérance.
+
+Les modèles sont restés gelés, dont SOFT `d8a193de…`. La production a vérifié
+la répétition 1883 publiée et relue sur le même code avant toute sélection.
+Aucun entraînement, match, promotion ou enchaînement automatique.
+`CURRICULUM` reste champion. Le résultat ne démontre pas un effet exactement
+nul et ne justifie pas une extension ou un réglage après lecture.
 
 ## 0. Programme decision-information — reprise du 5 septembre
 
