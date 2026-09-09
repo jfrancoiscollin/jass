@@ -2,11 +2,13 @@
 """Conservative C0A producer classification from authenticated metadata only."""
 from __future__ import annotations
 from collections import Counter
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
+import hashlib
 import re
 
 READY = 'ED4_C0A_INVENTORY_ADMISSION_READY_V1'
 INSUFFICIENT = 'ED4_C0A_INVENTORY_ADMISSION_INSUFFICIENT_V1'
+CLASSIFICATION_PROTOCOL = 'docs/experiments/L3_ED4_CONFIRMATION_SOURCE_AUDIT_V2_20260909.md'
 
 COVERED_BY = {
     'cpx62-1773-l3-decision-math-b2-historical-preparation-v1': 'cpx62-1835-l3-decision-math-b3-fresh-exclusion-prep-rerun-v1',
@@ -45,11 +47,6 @@ def structural_paths(meta):
 
 
 def is_position_payload_path(path):
-    """Descriptor-only screen for files capable of carrying position identity.
-
-    This intentionally ignores build objects, docs and diagnostics whose names
-    merely contain words such as root/sibling. It does not open any payload.
-    """
     lower = '/' + str(path).lower().lstrip('/')
     if any(marker in lower for marker in NON_PAYLOAD_MARKERS):
         return False
@@ -66,10 +63,9 @@ def is_position_payload_path(path):
 
 
 def position_entries(meta):
-    return sorted(
-        [entry for entry in (meta or {}).get('files', [])
-         if is_position_payload_path(entry.get('path', ''))],
-        key=lambda entry: entry.get('path', ''))
+    return sorted([entry for entry in (meta or {}).get('files', [])
+                   if is_position_payload_path(entry.get('path', ''))],
+                  key=lambda entry: entry.get('path', ''))
 
 
 def compact_evidence(job, attempt, basis, paths):
@@ -79,24 +75,20 @@ def compact_evidence(job, attempt, basis, paths):
         for label, token in STRUCTURAL_KINDS:
             if token in lower:
                 kinds[label] += 1
-    return {
-        'job_id': job,
-        'attempt_id': attempt,
-        'basis': basis,
-        'structural_descriptor_count': len(paths),
-        'structural_kind_counts': dict(sorted(kinds.items())),
-        'example_structural_paths': paths[:3],
-    }
+    return {'job_id': job, 'attempt_id': attempt, 'basis': basis,
+            'structural_descriptor_count': len(paths),
+            'structural_kind_counts': dict(sorted(kinds.items())),
+            'example_structural_paths': paths[:3]}
 
 
 def literal_hash_sets(report):
-    """Hashes of the frozen required paths for each exact C0A source."""
     result = {}
     for row in report.get('sources', []):
         if row.get('classification') != 'included_exact':
             continue
         hashes = {item.get('sha256') for item in row.get('required_paths', [])
-                  if item.get('present') is True and re.fullmatch(r'[0-9a-f]{64}', item.get('sha256') or '')}
+                  if item.get('present') is True
+                  and re.fullmatch(r'[0-9a-f]{64}', item.get('sha256') or '')}
         if hashes:
             result[row['job_id']] = hashes
     return result
@@ -111,14 +103,21 @@ def hash_cover(entries, source_hashes):
 
 
 def is_authenticated_nonexecution(row):
-    """Frozen status proof that the semantic job never acquired an attempt."""
     return (row.get('attempt_id') is None and row.get('code_sha') is None
             and row.get('result_state') == 'failed' and row.get('exit_code') == -1)
+
+
+def bind_protocol(report):
+    root = Path(__file__).resolve().parents[2]
+    raw = (root / CLASSIFICATION_PROTOCOL).read_bytes()
+    report['classification_protocol_path'] = CLASSIFICATION_PROTOCOL
+    report['classification_protocol_sha256'] = hashlib.sha256(raw).hexdigest()
 
 
 def apply(report, metadata):
     if report.get('verdict') not in {READY, INSUFFICIENT}:
         raise ValueError('classification_upstream_verdict')
+    bind_protocol(report)
     source_hashes = literal_hash_sets(report)
     unknown = []
     unknown_evidence = []
@@ -157,15 +156,13 @@ def apply(report, metadata):
             unknown_evidence.append({
                 'job_id': job, 'attempt_id': attempt, 'basis': evidence['basis'],
                 'structural_descriptor_paths': paths,
-                'position_payload_descriptor_paths': [x.get('path') for x in payloads],
-            })
+                'position_payload_descriptor_paths': [x.get('path') for x in payloads]})
             compact.append(compact_evidence(job, attempt, evidence['basis'],
                                              [x.get('path', '') for x in payloads] or paths))
     report['unknown_or_unclassified_producers'] = sorted(unknown)
     report['unknown_producer_evidence'] = sorted(unknown_evidence, key=lambda item: item['job_id'])
     report['unknown_producer_compact_evidence'] = sorted(compact, key=lambda item: item['job_id'])
     report['classification_counts'] = dict(sorted(Counter(
-        row.get('classification', 'unknown') for row in report.get('sources', [])
-    ).items()))
+        row.get('classification', 'unknown') for row in report.get('sources', [])).items()))
     report['verdict'] = (INSUFFICIENT if report.get('missing_paths') or unknown else READY)
     return report
