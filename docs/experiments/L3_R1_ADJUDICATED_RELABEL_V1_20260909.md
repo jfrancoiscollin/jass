@@ -38,20 +38,20 @@ Un seul facteur change : **la cible**. Les positions sont les mêmes lignes, dan
 
 ### 3.2 Arbitre interne gelé
 
-Mode binaire `jass --adjudicate-relabel`, code SHA pinné dans le job, une passe par ligne :
+Mode binaire existant `jass --deep-relabel` (`src/main.cpp`), étendu par cette PR de deux options **inactives par défaut** ; sans elles la sortie reste byte-identique à l'ancien comportement. Code SHA pinné dans le job, une passe par ligne :
 
 1. position = les quatre bitboards + trait de la ligne JNNW ;
-2. **EGDB d'abord** : si la base renvoie un WDL exact, `adj = WDL(EGDB)` et `source = TB` ;
-3. sinon, si le trait n'a aucun coup légal : `adj = perte du trait`, `source = TERMINAL` ;
-4. sinon recherche à **profondeur fixe `14`**, paramètres de recherche `Q00` (captures obligatoires seules en quiescence, baseline L3), EGDB **ON**, book **OFF**, `threads = 1`, **TT vidée avant chaque position**, aucun `movetime` ; score `s` en centipions, POV du trait ; `source = SEARCH` ;
-5. **bande de nulle gelée `50 cp`** : `adj = +1` si `s ≥ +50`, `adj = −1` si `s ≤ −50`, `adj = 0` sinon. La constante `50` est celle des jobs `0722/0726` (`draw-band-50`) ; elle n'est pas un paramètre de R1 ;
-6. sortie par ligne : `adj_stm ∈ {−1, 0, +1}` (int8), `score_raw` (int32, POV trait), `source ∈ {TB, TERMINAL, SEARCH}` (uint8), `depth_reached` (uint8).
+2. **EGDB d'abord** : si la base renvoie un WDL exact, `adj = WDL(EGDB)`, `score = adj × 10000`, `source = TB` ; aucune recherche ;
+3. sinon, si le trait n'a aucun coup légal : `adj = −1` (perte du trait, règle du jeu), `score = −10000`, `source = TERMINAL` ; aucune recherche ;
+4. sinon recherche à **profondeur fixe `14`**, paramètres de recherche `Q00` passés par `--search-params` (captures obligatoires seules en quiescence, baseline L3), EGDB **ON**, book **OFF**, `threads = 1`, **TT vidée avant chaque position** (`--clear-tt`), aucun `movetime` ; score `s` en centipions, POV du trait ; `source = SEARCH` ;
+5. **bande de nulle gelée `50 cp`** (`--draw-band 50`, valeur par défaut du mode et des jobs `0722/0726`) : `adj = +1` si `s > +50`, `adj = −1` si `s < −50`, `adj = 0` sinon. La constante `50` n'est pas un paramètre de R1 ;
+6. sorties : (a) un JNNW **relabellisé** de même longueur et même ordre, où seuls l'octet `wdl` (`adj`, POV trait) et le champ `score` (`s` brut, POV trait) diffèrent de l'original ; (b) un fichier de **tags de source** d'un octet par ligne (`--source-tags-out`) : `0 = SEARCH`, `1 = TB`, `2 = TERMINAL`.
 
-Déterministe. Shardage par plages de lignes contiguës ; la fusion vérifie le nombre de lignes et publie le SHA256 du sidecar fusionné. Aucune position n'est jouée, aucune partie n'est générée.
+Déterministe. Shardage par plages de lignes contiguës ; la fusion vérifie le nombre de lignes, l'identité byte-à-byte des 33 premiers octets de chaque ligne avec l'original, et publie le SHA256 des fichiers fusionnés. Aucune position n'est jouée, aucune partie n'est générée.
 
 ### 3.3 Cible R1
 
-Conversion en POV noir puis en probabilité : `p_term = (wdl_black + 1) / 2`, `p_adj = (adj_black + 1) / 2`.
+Outil `jobs/tools/l3_r1_adjudicated_target.py` (livré par cette PR, testé, fail-closed). Conversion en POV noir puis en probabilité : `p_term = (wdl_black + 1) / 2` depuis l'original, `p_adj = (adj_black + 1) / 2` depuis le relabellisé.
 
 ```text
 y_R1 = 0.5 × p_term + 0.5 × p_adj
@@ -79,6 +79,28 @@ Recette **byte-identique** à celle du dernier stage de `CURRICULUM`, un seul fi
 
 `l2`, `gtol`, fold, tempo, prior, extras, quantification : inchangés. Le gain d'identification attendu d'un label moins bruité **ne** se matérialise **pas** dans R1 par un changement de `l2` ; un tel changement exigerait sa propre preregistration après le terminal R1.
 
+### 3.5 Commandes gelées
+
+```text
+# arbitre, par shard k de lignes contiguës [a_k ; b_k)
+jass --deep-relabel <shard_k.jnnw> <shard_k.adj.jnnw> 14 \
+     --egdb <EGDIR> --cache-mb 512 --search-params "<Q00 résolu>" \
+     --draw-band 50 --clear-tt --source-tags-out <shard_k.tags>
+
+# fusion (ordre des shards = ordre des lignes), puis cible
+python3 jobs/tools/l3_r1_adjudicated_target.py \
+     --original <CURRENT_2M.jnnw> --relabelled <merged.adj.jnnw> --source-tags <merged.tags> \
+     --out-r1 <y_r1.npy> --out-adj <y_adj.npy> --report <r1_target_report.json> \
+     --context30 <context30.npy>
+
+# fit, un par bras, recette byte-identique au dernier stage CURRICULUM
+train_stream ... --target external --target-values <y_*.npy> --targets-report <...> \
+     --exact-fold --tempo-stage --prior-mean <CURRICULUM> --prior-decay 0 \
+     --l2 1e-5 --lbfgs-gtol 1e-4 --lbfgs-maxcor 20 --optimizer-report <...>
+```
+
+`--prior-precision-file` **n'apparaît dans aucune commande R1**.
+
 ---
 
 ## 4. Gates, dans l'ordre, fail-closed
@@ -88,13 +110,15 @@ Recette **byte-identique** à celle du dernier stage de `CURRICULUM`, un seul fi
 - `nproc` imprimé par le job ;
 - micro-sonde `--adjudicate-relabel` sur `2 000` lignes, un shard, avec TT vidée par position : rate mesuré en s/position ; l'ancre `0,033 s/position` (`0721`) est un ordre de grandeur **sans** vidage de TT et ne vaut pas comme rate ;
 - ETA = `2 000 000 × rate / nproc` + build + fusion + deux fits ; garde `df` ; `RES`/`PROG` hors arbre git ; smoke-test write→read sur `2 000` lignes complet jusqu'au sidecar externe.
+- EGDB shardée : `cache_mb × nshards < ~24 Go` (gotcha gravé après l'OOM `0723` : `512 × 16` OK) ; les moteurs EGDB peuvent mourir au démarrage en masse-parallèle, donc redémarrage sur mort et vérification du compte de lignes par shard ;
+- micro-sonde obligatoire aussi pour le **taux de renversement** sur les `2 000` lignes : s'il sort de `[0,20 ; 0,80]`, arrêt et diagnostic avant tout job complet (les valeurs historiques sont `61,5 %` sur corpus bootstrap `d9` ; un pilote `d8` à `8 %` d'exploration devrait être dans la même région, mais ce n'est pas acquis).
 
 ### 4.2 G1 — hygiène du label (offline, zéro partie)
 
 Publiés par l'outil de construction de cible, tous obligatoires :
 
 - nombre de lignes du sidecar `=` nombre de lignes JNNW, SHA256 des deux ;
-- répartition `source` TB / TERMINAL / SEARCH et `depth_reached` (histogramme) ;
+- répartition des tags `source` TB / TERMINAL / SEARCH (la profondeur est fixe à `14`, il n'y a pas de profondeur atteinte variable à publier) ;
 - matrice de confusion `wdl_terminal × adj` (9 cellules) et **taux de renversement** global et par phase P0–P3 ;
 - distribution W/D/L de `adj` dans les bandes de `assert_corpus_wdl.py` (nulles dans `[0,10 ; 0,60]`, |W−L| ≤ 10 points), sinon `R1_LABEL_GUARD_FAILED` et STOP ;
 - distribution de `y_R1` (moyenne, quantiles) contre `context30` sur les mêmes lignes.
