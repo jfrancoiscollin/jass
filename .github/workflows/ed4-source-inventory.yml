@@ -55,6 +55,7 @@ jobs:
           jobs.tests.test_launch_gate_v2
           jobs.tests.test_launch_gate_pipeline_v2
           jobs.tests.test_ed4_source_descriptor_inventory
+          jobs.tests.test_ed4_producer_classification
           jobs.tests.test_ed4_source_inventory_stage
           jobs.tests.test_ed4_source_inventory_pipeline
           -v
