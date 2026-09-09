@@ -23,7 +23,6 @@ FAILURE = 'ED4_C0A_INVENTORY_ADMISSION_TECHNICAL_FAILURE_V1'
 
 
 def read_json(path):
-    # Only our own allowlisted, generated metadata report is decoded here.
     return json.loads(path.read_text(encoding='utf-8'))
 
 
@@ -40,12 +39,6 @@ def terminal(report, mode):
 
 
 def collect_metadata(catalog, rclone='rclone', transport=inventory.metadata_transport):
-    """Authenticate envelope identity exactly as preregistered.
-
-    `host` is authenticated metadata/evidence, but it is not part of the C0A
-    source identity contract. Historical status host labels may differ from the
-    immutable outer result manifest without changing job/attempt/code/state/exit.
-    """
     tasks = {}
     for item in catalog:
         job, attempt = item['job_id'], item.get('attempt_id')
@@ -89,7 +82,6 @@ def collect_metadata(catalog, rclone='rclone', transport=inventory.metadata_tran
 
 def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalog,
         collector=None, builder=inventory.build):
-    """The same immutable metadata admission is used in both V2 modes."""
     evidence = StageEvidence(artifact, mode)
     audit_hash = protocol_hash = None
     read_counts = dict(inventory.ZERO_READS)
@@ -130,7 +122,7 @@ def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalo
                        classification_counts=report.get('classification_counts', {}),
                        missing_paths=report['missing_paths'],
                        unknown_or_unclassified_producers=report['unknown_or_unclassified_producers'],
-                       unknown_producer_evidence=report.get('unknown_producer_evidence', []))
+                       unknown_producer_compact_evidence=report.get('unknown_producer_compact_evidence', []))
         atomic_json(artifact / 'scientific-summary.json', summary)
         inventory.need(read_json(artifact / 'scientific-summary.json') == summary,
                        'summary_readback')
@@ -138,7 +130,6 @@ def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalo
         evidence.finish()
         return summary
     except Exception as exc:
-        # No raw exception text, stderr, environment, or excluded value is mirrored.
         failure = dict(schema='jass.ed4.c0a_source_descriptor_inventory.v1',
                        state='failed', verdict=FAILURE, audit_code_sha256=audit_hash,
                        protocol_path=inventory.PROTOCOL, protocol_sha256=protocol_hash,
