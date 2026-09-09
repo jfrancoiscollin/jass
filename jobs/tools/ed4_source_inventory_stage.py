@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""V2 evidence wrapper for C0A descriptor admission; no source payload access."""
+from __future__ import annotations
+import json
+import os
+import shutil
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from jobs.tools import ed4_source_descriptor_inventory as inventory
+from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json
+
+OUTPUT = 'ed4-c0a-source-descriptor-inventory.json'
+PHASES = ['control-catalog', 'authenticate-envelopes', 'classify-descriptors', 'publish-readback']
+VERDICTS = {'ED4_C0A_INVENTORY_ADMISSION_READY_V1',
+            'ED4_C0A_INVENTORY_ADMISSION_INSUFFICIENT_V1'}
+FAILURE = 'ED4_C0A_INVENTORY_ADMISSION_TECHNICAL_FAILURE_V1'
+
+
+def read_json(path):
+    # Only our own allowlisted, generated metadata report is decoded here.
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+def terminal(report, mode):
+    return dict(schema='jass.ed4.c0a_inventory_terminal.v1', state=report['state'],
+                verdict=report['verdict'], mode=mode, classification='METADATA_ONLY',
+                scientific_verdict=None, scientific_success_established=False,
+                inventory_only=True, source_audit_completed=False,
+                confirmation_authorized=False, runtime_authorized=False,
+                automatic_continuation=False, fits=0, teacher_calls=0,
+                search_calls=0, games=0, alpha_spent=0, promotions=0, bakes=0,
+                control_snapshot_commit=inventory.CONTROL_SHA,
+                **{key: report[key] for key in inventory.ZERO_READS})
+
+
+def run(artifact, mode, control_repo, *, catalog_reader=inventory.control_catalog,
+        collector=inventory.collect, builder=inventory.build):
+    """The same immutable metadata admission is used in both V2 modes."""
+    evidence = StageEvidence(artifact, mode)
+    audit_hash = protocol_hash = None
+    read_counts = dict(inventory.ZERO_READS)
+    try:
+        evidence.begin(PHASES[0])
+        inventory.need(shutil.disk_usage(artifact).free >= 3 * 1024**3, 'disk_floor')
+        protocol = (ROOT / inventory.PROTOCOL).read_bytes()
+        protocol_hash = inventory.digest(protocol)
+        audit_hash = inventory.digest(Path(inventory.__file__).read_bytes())
+        catalog = catalog_reader(control_repo, inventory.CONTROL_SHA)
+        evidence.complete()
+        evidence.begin(PHASES[1])
+        metadata = collector(catalog)
+        evidence.complete()
+        evidence.begin(PHASES[2])
+        report = builder(metadata, catalog, audit_hash, protocol, inventory.CONTROL_SHA)
+        for key in read_counts:
+            count = report.get(key)
+            if type(count) is int and count >= 0:
+                read_counts[key] = count
+        inventory.need(report.get('state') == 'completed'
+                       and report.get('verdict') in VERDICTS, 'inventory_terminal')
+        inventory.need(report.get('control_snapshot_commit') == inventory.CONTROL_SHA,
+                       'inventory_snapshot')
+        inventory.need(all(type(report.get(k)) is int and report[k] == 0
+                           for k in inventory.ZERO_READS), 'inventory_read_barrier')
+        evidence.complete()
+        evidence.begin(PHASES[3])
+        atomic_json(artifact / OUTPUT, report)
+        inventory.need(read_json(artifact / OUTPUT) == report, 'inventory_readback')
+        summary = terminal(report, mode)
+        summary.update(inventory_sha256=inventory.digest((artifact / OUTPUT).read_bytes()),
+                       missing_paths_count=len(report['missing_paths']),
+                       unclassified_producers_count=len(report['unknown_or_unclassified_producers']))
+        atomic_json(artifact / 'scientific-summary.json', summary)
+        inventory.need(read_json(artifact / 'scientific-summary.json') == summary,
+                       'summary_readback')
+        evidence.complete()
+        evidence.finish()
+        return summary
+    except Exception as exc:
+        # No raw exception text, stderr, environment, or excluded value is mirrored.
+        failure = dict(schema='jass.ed4.c0a_source_descriptor_inventory.v1',
+                       state='failed', verdict=FAILURE, audit_code_sha256=audit_hash,
+                       protocol_path=inventory.PROTOCOL, protocol_sha256=protocol_hash,
+                       control_snapshot_commit=inventory.CONTROL_SHA,
+                       failure_type=type(exc).__name__, **read_counts)
+        atomic_json(artifact / OUTPUT, failure)
+        atomic_json(artifact / 'scientific-summary.json', terminal(failure, mode))
+        evidence.fail(exc)
+        raise
+
+
+def main():
+    try:
+        run(Path(os.environ['JASS_ARTEFACT_DIR']), os.environ['LAUNCH_MODE'],
+            Path(os.environ['ED4_CONTROL_REPO']))
+        return 0
+    except Exception as exc:
+        print('ED4 inventory stage failed: ' + type(exc).__name__, file=sys.stderr)
+        return 2
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
