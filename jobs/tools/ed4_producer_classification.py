@@ -55,6 +55,7 @@ def apply(report, metadata):
     if report.get('verdict') not in {READY, INSUFFICIENT}:
         raise ValueError('classification_upstream_verdict')
     unknown = []
+    unknown_evidence = []
     for row in report.get('sources', []):
         if row.get('classification') != 'unknown':
             continue
@@ -76,7 +77,14 @@ def apply(report, metadata):
             evidence['basis'] = ('authenticated_inventory_contains_structural_descriptor_without_'
                                  'preregistered_coverage_proof' if meta is not None
                                  else 'no_authenticated_terminal_metadata')
+            unknown_evidence.append({
+                'job_id': job,
+                'attempt_id': attempt,
+                'basis': evidence['basis'],
+                'structural_descriptor_paths': paths,
+            })
     report['unknown_or_unclassified_producers'] = sorted(unknown)
+    report['unknown_producer_evidence'] = sorted(unknown_evidence, key=lambda item: item['job_id'])
     report['classification_counts'] = dict(sorted(Counter(
         row.get('classification', 'unknown') for row in report.get('sources', [])
     ).items()))

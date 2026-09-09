@@ -22,6 +22,7 @@ class ProducerClassification(unittest.TestCase):
         out = c.apply(report, metadata)
         self.assertEqual(out['sources'][0]['classification'], 'covered_by_authenticated_superset')
         self.assertEqual(out['unknown_or_unclassified_producers'], [])
+        self.assertEqual(out['unknown_producer_evidence'], [])
         self.assertTrue(out['verdict'].endswith('READY_V1'))
 
     def test_inventory_without_structural_descriptor_is_non_position(self):
@@ -35,13 +36,17 @@ class ProducerClassification(unittest.TestCase):
         self.assertEqual(out['sources'][0]['classification'], 'non_position_producer')
         self.assertEqual(out['unknown_or_unclassified_producers'], [])
 
-    def test_structural_descriptor_without_proof_stays_unknown(self):
+    def test_structural_descriptor_without_proof_stays_unknown_and_publishes_paths(self):
         job = 'cpx62-1810-unmapped-v1'
         report = report_for(job)
         metadata = {(job, 'a'): {'files': [{'path': 'artefacts/cohort.json'}]}}
         out = c.apply(report, metadata)
         self.assertEqual(out['sources'][0]['classification'], 'unknown')
         self.assertEqual(out['unknown_or_unclassified_producers'], [job])
+        self.assertEqual(out['unknown_producer_evidence'], [{
+            'job_id': job, 'attempt_id': 'a',
+            'basis': 'authenticated_inventory_contains_structural_descriptor_without_preregistered_coverage_proof',
+            'structural_descriptor_paths': ['artefacts/cohort.json']}])
         self.assertTrue(out['verdict'].endswith('INSUFFICIENT_V1'))
 
     def test_no_terminal_metadata_stays_unknown(self):
@@ -49,6 +54,7 @@ class ProducerClassification(unittest.TestCase):
         report = report_for(job, None)
         out = c.apply(report, {})
         self.assertEqual(out['unknown_or_unclassified_producers'], [job])
+        self.assertEqual(out['unknown_producer_evidence'][0]['basis'], 'no_authenticated_terminal_metadata')
 
     def test_missing_literal_path_keeps_insufficient_after_all_classified(self):
         job = 'cpx62-1802-synthetic-readout-v1'
