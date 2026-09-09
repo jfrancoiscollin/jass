@@ -1,0 +1,41 @@
+name: ED3 disjoint confirmation complete path
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/ed3_confirmation*.py'
+      - 'jobs/tests/*ed3_confirmation*.py'
+      - 'jobs/launch_profiles/ed3-confirmation-v1.json'
+      - 'docs/experiments/L3_ED3_CONFIRMATION_V1_20260909.md'
+      - '.github/workflows/ed3-confirmation.yml'
+permissions:
+  contents: read
+jobs:
+  complete-confirmation-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy scipy
+      - name: Identity-only selection and complete stage to published readback
+        run: |
+          python -m unittest jobs.tests.test_ed3_confirmation jobs.tests.test_ed3_confirmation_publication -v
+          python -m py_compile jobs/tools/ed3_confirmation.py jobs/tools/ed3_confirmation_data.py
+      - name: Build unchanged real source generator and native evaluator
+        run: |
+          python pattern_jass/tools/gen_patterns.py --emit --variant 8cf
+          printf '\nadd_executable(jass_ed3_confirm_source jobs/tools/ed2_source.cpp)\ntarget_link_libraries(jass_ed3_confirm_source PRIVATE jass_lib)\nadd_executable(jass_ed3_confirm_probe jobs/tools/ed2_value_probe.cpp)\ntarget_link_libraries(jass_ed3_confirm_probe PRIVATE jass_lib)\n' >> CMakeLists.txt
+          cmake -S . -B /tmp/ed3-confirm-native -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/ed3-confirm-native -j2 --target jass_ed3_confirm_source jass_ed3_confirm_probe
+      - name: Complete confirmation with actual source and actual evaluator, never skip
+        env:
+          ED3_CONFIRM_SOURCE: /tmp/ed3-confirm-native/jass_ed3_confirm_source
+          ED3_CONFIRM_NATIVE_PROBE: /tmp/ed3-confirm-native/jass_ed3_confirm_probe
+        run: python -m jobs.tests.ed3_confirmation_native_contract
