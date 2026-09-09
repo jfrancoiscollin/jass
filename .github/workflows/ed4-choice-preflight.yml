@@ -1,0 +1,49 @@
+name: ED4 choice-set synthetic preflight
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/ed4_choice*.py'
+      - 'jobs/tests/test_ed4_choice*.py'
+      - 'jobs/tests/fixtures/ed4-choice-native-records-v1.json'
+      - 'docs/experiments/L3_ED4_CHOICE_SET_PREFLIGHT_V1_20260909.md'
+      - '.github/workflows/ed4-choice-preflight.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.18.1
+      - name: Synthetic derivatives and fail-closed contract (zero optimizer invocations)
+        run: python -m unittest jobs.tests.test_ed4_choice_math jobs.tests.test_ed4_choice_preflight -v
+      - name: Build unchanged production evaluator
+        run: |
+          python pattern_jass/tools/gen_patterns.py --emit --variant 8cf
+          printf '\nadd_executable(jass_ed4_probe jobs/tools/ed2_value_probe.cpp)\ntarget_link_libraries(jass_ed4_probe PRIVATE jass_lib)\n' >> CMakeLists.txt
+          cmake -S . -B /tmp/ed4-native -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON
+          cmake --build /tmp/ed4-native -j2 --target jass_ed4_probe
+      - name: One complete preflight receipt, exactly two synthetic solves
+        run: python -m jobs.tools.ed4_choice_preflight --native-probe /tmp/ed4-native/jass_ed4_probe --out-dir /tmp/ed4-p0-result
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ed4-choice-preflight-receipt
+          if-no-files-found: warn
+          path: |
+            /tmp/ed4-p0-result/report.json
+            /tmp/ed4-p0-result/manifest.json
+            /tmp/ed4-p0-result/progress.json
+            /tmp/ed4-p0-result/failure.json
+            /tmp/ed4-p0-result/numeric-failure.json
