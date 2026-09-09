@@ -7,11 +7,17 @@ def row(job, attempt='a'):
             'classification_evidence': {}}
 
 
+def report_for(job, attempt='a', missing=None):
+    return {'sources': [row(job, attempt)],
+            'missing_paths': list(missing or []),
+            'unknown_or_unclassified_producers': [job],
+            'verdict': c.INSUFFICIENT}
+
+
 class ProducerClassification(unittest.TestCase):
     def test_explicit_superset_relation_wins_even_with_structural_paths(self):
         job = 'cpx62-1842-l3-decision-math-b3-fresh-audit-subset-seal-v1'
-        report = {'sources': [row(job)], 'missing_paths': [],
-                  'unknown_or_unclassified_producers': [job]}
+        report = report_for(job)
         metadata = {(job, 'a'): {'files': [{'path': 'artefacts/parents.jnnw'}]}}
         out = c.apply(report, metadata)
         self.assertEqual(out['sources'][0]['classification'], 'covered_by_authenticated_superset')
@@ -20,8 +26,7 @@ class ProducerClassification(unittest.TestCase):
 
     def test_inventory_without_structural_descriptor_is_non_position(self):
         job = 'cpx62-1802-synthetic-readout-v1'
-        report = {'sources': [row(job)], 'missing_paths': [],
-                  'unknown_or_unclassified_producers': [job]}
+        report = report_for(job)
         metadata = {(job, 'a'): {'files': [
             {'path': 'artefacts/scientific-summary.json'},
             {'path': 'artefacts/metrics.json'},
@@ -32,8 +37,7 @@ class ProducerClassification(unittest.TestCase):
 
     def test_structural_descriptor_without_proof_stays_unknown(self):
         job = 'cpx62-1810-unmapped-v1'
-        report = {'sources': [row(job)], 'missing_paths': [],
-                  'unknown_or_unclassified_producers': [job]}
+        report = report_for(job)
         metadata = {(job, 'a'): {'files': [{'path': 'artefacts/cohort.json'}]}}
         out = c.apply(report, metadata)
         self.assertEqual(out['sources'][0]['classification'], 'unknown')
@@ -42,20 +46,24 @@ class ProducerClassification(unittest.TestCase):
 
     def test_no_terminal_metadata_stays_unknown(self):
         job = 'cpx62-1811-unclaimed-v1'
-        report = {'sources': [row(job, None)], 'missing_paths': [],
-                  'unknown_or_unclassified_producers': [job]}
+        report = report_for(job, None)
         out = c.apply(report, {})
         self.assertEqual(out['unknown_or_unclassified_producers'], [job])
 
     def test_missing_literal_path_keeps_insufficient_after_all_classified(self):
         job = 'cpx62-1802-synthetic-readout-v1'
-        report = {'sources': [row(job)],
-                  'missing_paths': [{'job_id': 'literal', 'path': 'work/current.jsm'}],
-                  'unknown_or_unclassified_producers': [job]}
+        report = report_for(job, missing=[{'job_id': 'literal', 'path': 'work/current.jsm'}])
         metadata = {(job, 'a'): {'files': [{'path': 'artefacts/report.json'}]}}
         out = c.apply(report, metadata)
         self.assertEqual(out['unknown_or_unclassified_producers'], [])
         self.assertTrue(out['verdict'].endswith('INSUFFICIENT_V1'))
+
+    def test_invalid_upstream_verdict_is_not_repaired(self):
+        job = 'cpx62-1812-invalid-v1'
+        report = report_for(job)
+        report['verdict'] = 'invalid'
+        with self.assertRaisesRegex(ValueError, 'classification_upstream_verdict'):
+            c.apply(report, {})
 
     def test_tokens_are_conservative(self):
         meta = {'files': [{'path': p} for p in [
