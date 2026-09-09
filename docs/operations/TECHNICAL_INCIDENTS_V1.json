@@ -240,6 +240,16 @@
       "invariant": "Read immutable profile and rehearsal files from Git blobs; write production spec/admission as LF; compare normalized specs and validate exact proposed bytes with the existing Linux dispatcher before enqueue.",
       "evidence": "Corrected local builder; five Linux dispatcher tests PASS; control PR582 CI34314248908 PASS; 1884 attempt20260909T051901Z-0946f57d accepted same-code admission and published-prerequisite verification before selection.",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-025",
+      "dedupe_key": "ed3-t1-synthetic-payload-contract-v1",
+      "context": "ED3-T1 development, before historical launch",
+      "symptom": "Full-sized synthetic calculation reached deterministic serialization but NumPy int64 parent margins were not JSON serializable.",
+      "root_cause": "The new readout retained NumPy scalar types in row-level parent output; scalar unit cases did not exercise full payload serialization.",
+      "invariant": "Convert published scalar values to JSON-native types and require deterministic byte identity of every summary and JSONL payload through the real stage-publisher-fetch path before launch.",
+      "evidence": "Local full-sized synthetic run passed; Linux CPX62 synthetic suite: 26 tests in 5.296 seconds, zero skips/errors/failures, including real stage-publisher-checked readback and missing-marker/corruption rejection. No historical ED3-T1 metrics or jobs ran during this repair.",
+      "status": "CLOSED"
     }
   ]
 }
