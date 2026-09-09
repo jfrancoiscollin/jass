@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ED4-C0A descriptor-only admission.  Never fetches a source payload."""
+"""ED4-C0A descriptor-only admission. Never fetches a source payload."""
 from __future__ import annotations
 import argparse, hashlib, json, re, subprocess
 from pathlib import Path
@@ -54,76 +54,83 @@ def project_inventory(raw):
 
 def remote_envelope(rclone, prefix, name):
     need(name in {'_SUCCESS', '_FAILED', 'manifest.json', 'inventory.json', 'checksums.sha256'},
-         'remote_name_not_allowlisted')
-    result = subprocess.run([rclone, 'cat', f'{prefix}/{name}'], check=True,
-                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                            timeout=120)
-    need(len(result.stdout) <= MAX_ENVELOPE_BYTES, 'metadata_envelope_too_large')
+         'payload_transport_forbidden')
+    result = subprocess.run([rclone, 'cat', prefix + '/' + name],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+    need(result.returncode == 0 and bool(result.stdout), 'envelope_transport_failed')
+    need(len(result.stdout) <= MAX_ENVELOPE_BYTES, 'envelope_size_limit')
     return result.stdout
 
 
-def checksum_map(raw):
-    result = {}
-    for line in raw.decode('ascii').splitlines():
-        parts = line.split('  ', 1)
-        need(len(parts) == 2 and re.fullmatch('[a-f0-9]{64}', parts[0]), 'checksums_format')
-        result[parts[1]] = parts[0]
-    return result
+def metadata_transport(rclone, prefix, expected_state='completed', reader=remote_envelope):
+    need(re.fullmatch(r'r2:jass-data/runs/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+', prefix), 'prefix')
+    need(expected_state in {'completed', 'failed'}, 'result_state')
+    reader(rclone, prefix, '_SUCCESS' if expected_state == 'completed' else '_FAILED')
+    raw_manifest = reader(rclone, prefix, 'manifest.json')
+    raw_inventory = reader(rclone, prefix, 'inventory.json')
+    raw_checksums = reader(rclone, prefix, 'checksums.sha256')
+    manifest = project_manifest(raw_manifest)
+    need(type(manifest.get('exit_code')) is int, 'exit_code')
+    base.verify_result_identity(prefix, manifest, expected_state=expected_state)
+    inventory = project_inventory(raw_inventory)
+    files = base.inventory_map(inventory)
+    checksums = base.parse_checksums(raw_checksums)
+    need(all(re.fullmatch('[a-f0-9]{64}', h) for h in checksums.values()), 'checksum_format')
+    need(checksums.get('inventory.json') == digest(raw_inventory), 'inventory_checksum')
+    item = files.get('manifest.json')
+    need(item and item['sha256'] == digest(raw_manifest)
+         and item['size_bytes'] == len(raw_manifest), 'manifest_descriptor')
+    for path, descriptor in files.items():
+        need('\\' not in path and not re.match(r'^[A-Za-z]:', path), 'unsafe_inventory_path')
+        need(checksums.get(path) == descriptor['sha256'], 'checksum_descriptor_mismatch')
+    for entry in inventory['files']:
+        cardinality = entry.get('declared_cardinality')
+        need(cardinality is None or (type(cardinality) is int and cardinality >= 0), 'cardinality')
+    return dict(manifest, result_state=manifest['state'], files=inventory['files'], prefix=prefix,
+        authentication={'manifest_sha256': digest(raw_manifest),
+            'inventory_sha256': digest(raw_inventory), 'checksums_sha256': digest(raw_checksums)})
 
 
-def metadata_transport(rclone, prefix, state):
-    marker = '_SUCCESS' if state == 'completed' else '_FAILED'
-    marker_raw = remote_envelope(rclone, prefix, marker)
-    manifest_raw = remote_envelope(rclone, prefix, 'manifest.json')
-    inventory_raw = remote_envelope(rclone, prefix, 'inventory.json')
-    checksums_raw = remote_envelope(rclone, prefix, 'checksums.sha256')
-    checksums = checksum_map(checksums_raw)
-    need(checksums.get('manifest.json') == digest(manifest_raw), 'manifest_checksum')
-    need(checksums.get('inventory.json') == digest(inventory_raw), 'inventory_checksum')
-    manifest = project_manifest(manifest_raw)
-    inventory = project_inventory(inventory_raw)
-    need(manifest['state'] == state, 'manifest_state')
-    need(digest(marker_raw) == checksums.get(marker), 'marker_checksum')
-    files = inventory['files']
-    return dict(prefix=prefix, job_id=manifest['job_id'], attempt_id=manifest['attempt_id'],
-                code_sha=manifest['code_sha'], host=manifest['host'], result_state=manifest['state'],
-                exit_code=manifest['exit_code'], files=files,
-                authentication=dict(marker=marker, marker_sha256=digest(marker_raw),
-                    manifest_sha256=digest(manifest_raw), inventory_sha256=digest(inventory_raw),
-                    checksums_sha256=digest(checksums_raw)))
+def _git(repo, args):
+    return subprocess.check_output(['git', '-C', str(repo), *args], timeout=30)
 
 
-def _git(repo, control_sha, path):
-    return subprocess.run(['git', '-C', str(repo), 'show', f'{control_sha}:{path}'],
-                          check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                          timeout=30).stdout
-
-
-def control_catalog(repo, control_sha=CONTROL_SHA):
-    need(control_sha == CONTROL_SHA, 'control_snapshot_not_frozen')
-    raw = _git(repo, control_sha, 'status/catalog.json')
-    payload = json.loads(raw)
-    rows = payload if isinstance(payload, list) else payload.get('jobs', payload.get('entries', []))
-    need(isinstance(rows, list), 'catalog_schema')
+def control_catalog(repo, sha, git=_git):
+    need(sha == CONTROL_SHA, 'control_snapshot_changed')
+    need(git(repo, ['rev-parse', sha + '^{commit}']).decode().strip() == sha, 'control_commit')
+    paths = git(repo, ['ls-tree', '-r', '--name-only', sha, '--', 'status', 'queue']).decode().splitlines()
     result = []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        job = row.get('job_id') or row.get('job')
-        match = re.search(r'(?:cpx62|home)-(\d+)', str(job or ''))
+    jobs = {}
+    for path in paths:
+        name = Path(path).stem
+        match = re.fullmatch(r'(?:cpx62|ccx33|home)-(\d+)-[A-Za-z0-9._-]+', name)
         if not match or not 1773 <= int(match.group(1)) <= 1888:
             continue
-        status_path = row.get('status_path') or f'status/{job}.json'
-        try:
-            status_raw = _git(repo, control_sha, status_path)
-        except subprocess.CalledProcessError:
-            status_raw = json.dumps(row).encode()
-        status = project_status(status_raw)
-        status['status_path'] = status_path
-        status['status_sha256'] = digest(status_raw)
-        status['queue_paths'] = row.get('queue_paths', [])
+        is_status = path == 'status/' + name + '.json'
+        is_queue = path.startswith('queue/') and path.endswith('.sh')
+        if not (is_status or is_queue):
+            continue
+        item = jobs.setdefault(name, {'status_path': None, 'queue_paths': []})
+        if is_status:
+            need(item['status_path'] is None, 'catalog_path_duplicate')
+            item['status_path'] = path
+        else:
+            need(path not in item['queue_paths'], 'catalog_path_duplicate')
+            item['queue_paths'].append(path)
+    for name, entries in sorted(jobs.items()):
+        path = entries['status_path']
+        if path:
+            raw = git(repo, ['show', sha + ':' + path])
+            status = project_status(raw)
+            need(status.get('job_id') == name, 'catalog_identity')
+            status['status_sha256'] = digest(raw)
+        else:
+            status = dict(job_id=name, attempt_id=None, code_sha=None, state=None,
+                          exit_code=None, host=None, result_uri=None, status_sha256=None)
+        status.update(entries)
         result.append(status)
-    return result
+    need(result, 'empty_control_catalog')
+    return sorted(result, key=lambda item: item['job_id'])
 
 
 def collect(catalog, rclone='rclone', transport=metadata_transport):
