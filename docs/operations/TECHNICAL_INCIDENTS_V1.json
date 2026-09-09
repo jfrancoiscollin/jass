@@ -340,6 +340,16 @@
       "invariant": "Use bounded32MiB envelope transport for this fixed inventory; preserve exact metadata paths, field projections, source identities,900s cap and zero payload/target/model reads. Do not interpret descriptor sizing as full audit runtime.",
       "evidence": "Thirdadmission10.474s,116catalogjobs,17authenticatedenvelopes. Largest inventory is1868; six inventories exceed8MiB. Thirteen synthetic tests pass including measured-largest transport and rejection above32MiB.",
       "status": "MITIGATED — transport sized from metadata; repeated admission pending"
+    },
+    {
+      "id": "TI-035",
+      "dedupe_key": "cpx62-stale-host-filter-blocked-1890-v1",
+      "context": "CPX62 routing after ED4 C0A rerun 1890 was queued",
+      "symptom": "1890 remained pending with no status while cpx62 was explicitly active",
+      "root_cause": "state/host-filter/cpx62 was stale and still pinned to retired job cpx62-1886-l3-ed3-transfer-diagnostic-production-v1, preventing the runner from claiming 1890",
+      "invariant": "When an explicitly authorized cpx62 job is queued under a targeted host filter, the filter must match that job prefix; routing state must never silently keep an obsolete completed-job prefix",
+      "evidence": "Before repair: state/host-active/cpx62='active cpx62', pending contained 1890, running was empty, and state/host-filter/cpx62 named 1886. jass-control#589 changes only the filter to cpx62-1890-l3-ed4-source-inventory-rehearsal-v1; terminal claim/publication proof pending.; PR #890",
+      "status": "MITIGATED — host filter corrected to 1890; runner claim and terminal proof pending"
     }
   ]
 }
