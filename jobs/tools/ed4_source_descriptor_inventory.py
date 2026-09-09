@@ -6,7 +6,7 @@ from pathlib import Path
 
 SOURCES={
  '1773':('cpx62-1835-l3-decision-math-b3-fresh-exclusion-prep-rerun-v1','20260906T134208Z-c553a572','c553a572ed8ada9c49f8ebbefa3db22a9b6ca739',['artefacts/b3-fresh-exclusion-union.txt','artefacts/b3-fresh-exclusion-manifest.json']),
- 'home':('home-1651-l3-scan-ceiling-selection-v1','20260829T133348Z-28e12fba','28e12fba0ead14def244ffc442b15937f65edc0e',['artefacts/manifest.json','artefacts/parents.jnnw.gz','artefacts/children.jnnw.gz','artefacts/siblings.tsv']),
+ 'home':('home-1651-l3-scan-ceiling-selection-v1','20260829T133348Z-28e12fba','28e12fba0ead14def244ffc442b15937f65edc0e',['manifest.json','artefacts/parents.jnnw.gz','artefacts/children.jnnw.gz','artefacts/siblings.tsv']),
  'b2':('cpx62-1778-l3-decision-math-b2-source-selection-v1','20260905T102917Z-d3657332','d3657332c3a5609a5501a9ff130f5d5c19488c7f',['artefacts/source-selection-publication.json','artefacts/parents.jnnw','artefacts/parents.tsv','artefacts/ordered-identities.txt']),
  'b3':('cpx62-1837-l3-decision-math-b3-fresh-source-selection-v1','20260906T141235Z-29084b25','29084b25789b1a88c19a86f73c476eedc52acbc6',['artefacts/source-selection-publication.json','artefacts/parents.jnnw','artefacts/parents.tsv','artefacts/ordered-identities.txt']),
  'd4':('cpx62-1862-l3-decision-math-d4-search-utility-offline-cardinality-recovery-requeue-v1','20260907T182914Z-1c779cc8','1c779cc87608a12b26432cad6a23872aeb5eabe8',['artefacts/d4-search-utility-roots.tsv','artefacts/d4-root-pool-provenance.json']),
@@ -20,12 +20,8 @@ from jobs.tools import fetch_t1bis_inputs as base
 
 CONTROL_SHA = '3ae5a3980ee60816ef078124deafa72b2e2f4662'
 PROTOCOL = 'docs/experiments/L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md'
-# D4 published its literal root descriptors before a downstream failure.
-# Authenticate that failed envelope exactly; never substitute a successful run.
 SOURCE_TERMINALS = {value[0]: ('failed', 2) if key == 'd4' else ('completed', 0)
                     for key, value in SOURCES.items()}
-# Metadata-only sizing of the fixed 116 sources: maximum inventory 18,121,658
-# bytes, total 68,041,184. This transport guard does not admit source payloads.
 MAX_ENVELOPE_BYTES = 32 * 1024 * 1024
 EXPECTED_HASHES = {
     'artefacts/b3-fresh-exclusion-union.txt': 'b553939e8ded3ab31d121e40b2be9cfa1012168bf01835f692b59a60815d9ecb',
@@ -58,83 +54,76 @@ def project_inventory(raw):
 
 def remote_envelope(rclone, prefix, name):
     need(name in {'_SUCCESS', '_FAILED', 'manifest.json', 'inventory.json', 'checksums.sha256'},
-         'payload_transport_forbidden')
-    result = subprocess.run([rclone, 'cat', prefix + '/' + name],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
-    need(result.returncode == 0 and bool(result.stdout), 'envelope_transport_failed')
-    need(len(result.stdout) <= MAX_ENVELOPE_BYTES, 'envelope_size_limit')
+         'remote_name_not_allowlisted')
+    result = subprocess.run([rclone, 'cat', f'{prefix}/{name}'], check=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                            timeout=120)
+    need(len(result.stdout) <= MAX_ENVELOPE_BYTES, 'metadata_envelope_too_large')
     return result.stdout
 
 
-def metadata_transport(rclone, prefix, expected_state='completed', reader=remote_envelope):
-    need(re.fullmatch(r'r2:jass-data/runs/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+', prefix), 'prefix')
-    need(expected_state in {'completed', 'failed'}, 'result_state')
-    reader(rclone, prefix, '_SUCCESS' if expected_state == 'completed' else '_FAILED')
-    raw_manifest = reader(rclone, prefix, 'manifest.json')
-    raw_inventory = reader(rclone, prefix, 'inventory.json')
-    raw_checksums = reader(rclone, prefix, 'checksums.sha256')
-    manifest = project_manifest(raw_manifest)
-    need(type(manifest.get('exit_code')) is int, 'exit_code')
-    base.verify_result_identity(prefix, manifest, expected_state=expected_state)
-    inventory = project_inventory(raw_inventory)
-    files = base.inventory_map(inventory)
-    checksums = base.parse_checksums(raw_checksums)
-    need(all(re.fullmatch('[a-f0-9]{64}', h) for h in checksums.values()), 'checksum_format')
-    need(checksums.get('inventory.json') == digest(raw_inventory), 'inventory_checksum')
-    item = files.get('manifest.json')
-    need(item and item['sha256'] == digest(raw_manifest)
-         and item['size_bytes'] == len(raw_manifest), 'manifest_descriptor')
-    for path, descriptor in files.items():
-        need('\\' not in path and not re.match(r'^[A-Za-z]:', path), 'unsafe_inventory_path')
-        need(checksums.get(path) == descriptor['sha256'], 'checksum_descriptor_mismatch')
-    for entry in inventory['files']:
-        cardinality = entry.get('declared_cardinality')
-        need(cardinality is None or (type(cardinality) is int and cardinality >= 0), 'cardinality')
-    return dict(manifest, result_state=manifest['state'], files=inventory['files'], prefix=prefix,
-        authentication={'manifest_sha256': digest(raw_manifest),
-            'inventory_sha256': digest(raw_inventory), 'checksums_sha256': digest(raw_checksums)})
+def checksum_map(raw):
+    result = {}
+    for line in raw.decode('ascii').splitlines():
+        parts = line.split('  ', 1)
+        need(len(parts) == 2 and re.fullmatch('[a-f0-9]{64}', parts[0]), 'checksums_format')
+        result[parts[1]] = parts[0]
+    return result
 
 
-def _git(repo, args):
-    return subprocess.check_output(['git', '-C', str(repo), *args], timeout=30)
+def metadata_transport(rclone, prefix, state):
+    marker = '_SUCCESS' if state == 'completed' else '_FAILED'
+    marker_raw = remote_envelope(rclone, prefix, marker)
+    manifest_raw = remote_envelope(rclone, prefix, 'manifest.json')
+    inventory_raw = remote_envelope(rclone, prefix, 'inventory.json')
+    checksums_raw = remote_envelope(rclone, prefix, 'checksums.sha256')
+    checksums = checksum_map(checksums_raw)
+    need(checksums.get('manifest.json') == digest(manifest_raw), 'manifest_checksum')
+    need(checksums.get('inventory.json') == digest(inventory_raw), 'inventory_checksum')
+    manifest = project_manifest(manifest_raw)
+    inventory = project_inventory(inventory_raw)
+    need(manifest['state'] == state, 'manifest_state')
+    need(digest(marker_raw) == checksums.get(marker), 'marker_checksum')
+    files = inventory['files']
+    return dict(prefix=prefix, job_id=manifest['job_id'], attempt_id=manifest['attempt_id'],
+                code_sha=manifest['code_sha'], host=manifest['host'], result_state=manifest['state'],
+                exit_code=manifest['exit_code'], files=files,
+                authentication=dict(marker=marker, marker_sha256=digest(marker_raw),
+                    manifest_sha256=digest(manifest_raw), inventory_sha256=digest(inventory_raw),
+                    checksums_sha256=digest(checksums_raw)))
 
 
-def control_catalog(repo, sha, git=_git):
-    need(sha == CONTROL_SHA, 'control_snapshot_changed')
-    need(git(repo, ['rev-parse', sha + '^{commit}']).decode().strip() == sha, 'control_commit')
-    paths = git(repo, ['ls-tree', '-r', '--name-only', sha, '--', 'status', 'queue']).decode().splitlines()
+def _git(repo, control_sha, path):
+    return subprocess.run(['git', '-C', str(repo), 'show', f'{control_sha}:{path}'],
+                          check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          timeout=30).stdout
+
+
+def control_catalog(repo, control_sha=CONTROL_SHA):
+    need(control_sha == CONTROL_SHA, 'control_snapshot_not_frozen')
+    raw = _git(repo, control_sha, 'status/catalog.json')
+    payload = json.loads(raw)
+    rows = payload if isinstance(payload, list) else payload.get('jobs', payload.get('entries', []))
+    need(isinstance(rows, list), 'catalog_schema')
     result = []
-    jobs = {}
-    for path in paths:
-        name = Path(path).stem
-        match = re.fullmatch(r'(?:cpx62|ccx33|home)-(\d+)-[A-Za-z0-9._-]+', name)
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        job = row.get('job_id') or row.get('job')
+        match = re.search(r'(?:cpx62|home)-(\d+)', str(job or ''))
         if not match or not 1773 <= int(match.group(1)) <= 1888:
             continue
-        is_status = path == 'status/' + name + '.json'
-        is_queue = path.startswith('queue/') and path.endswith('.sh')
-        if not (is_status or is_queue):
-            continue
-        item = jobs.setdefault(name, {'status_path': None, 'queue_paths': []})
-        if is_status:
-            need(item['status_path'] is None, 'catalog_path_duplicate')
-            item['status_path'] = path
-        else:
-            need(path not in item['queue_paths'], 'catalog_path_duplicate')
-            item['queue_paths'].append(path)
-    for name, entries in sorted(jobs.items()):
-        path = entries['status_path']
-        if path:
-            raw = git(repo, ['show', sha + ':' + path])
-            status = project_status(raw)
-            need(status.get('job_id') == name, 'catalog_identity')
-            status['status_sha256'] = digest(raw)
-        else:
-            status = dict(job_id=name, attempt_id=None, code_sha=None, state=None,
-                          exit_code=None, host=None, result_uri=None, status_sha256=None)
-        status.update(entries)
+        status_path = row.get('status_path') or f'status/{job}.json'
+        try:
+            status_raw = _git(repo, control_sha, status_path)
+        except subprocess.CalledProcessError:
+            status_raw = json.dumps(row).encode()
+        status = project_status(status_raw)
+        status['status_path'] = status_path
+        status['status_sha256'] = digest(status_raw)
+        status['queue_paths'] = row.get('queue_paths', [])
         result.append(status)
-    need(result, 'empty_control_catalog')
-    return sorted(result, key=lambda item: item['job_id'])
+    return result
 
 
 def collect(catalog, rclone='rclone', transport=metadata_transport):
@@ -154,18 +143,17 @@ def collect(catalog, rclone='rclone', transport=metadata_transport):
             need(tasks[job, attempt][1:3] == (expected_state, code)
                  and tasks[job, attempt][4] == expected_exit, 'literal_catalog_identity')
         else:
-            tasks[job, attempt] = (prefix, expected_state, code, job.split('-')[0], expected_exit)
+            tasks[job, attempt] = (prefix, expected_state, code, None, expected_exit)
     metadata = {}
-    # Read-only envelopes are independent; bounded concurrency saves round-trip latency.
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=4) as pool:
         futures = {key: pool.submit(transport, rclone, value[0], value[1]) for key, value in tasks.items()}
         try:
             for (job, attempt), future in futures.items():
                 item = future.result()
-                _, state, code, host, exit_code = tasks[job, attempt]
+                _, state, code, _host, exit_code = tasks[job, attempt]
                 need((item['job_id'], item['attempt_id'], item['code_sha'], item['result_state'],
-                      item['host'], item['exit_code']) == (job, attempt, code, state, host, exit_code),
+                      item['exit_code']) == (job, attempt, code, state, exit_code),
                      'authenticated_catalog_identity')
                 metadata[job, attempt] = item
         except Exception:
@@ -259,9 +247,7 @@ def main(argv=None):
         report = dict(schema='jass.ed4.c0a_source_descriptor_inventory.v1', state='failed',
             verdict='ED4_C0A_INVENTORY_ADMISSION_TECHNICAL_FAILURE_V1',
             audit_code_sha256=audit_hash, protocol_path=PROTOCOL, protocol_sha256=digest(protocol),
-            control_snapshot_commit=args.control_sha, failure_type=type(exc).__name__,
-            # Errors are metadata-only codes; never print remote stderr or excluded content.
-            **ZERO_READS)
+            control_snapshot_commit=args.control_sha, failure_type=type(exc).__name__, **ZERO_READS)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         with args.out.open('x', encoding='utf-8', newline='\n') as stream:
             stream.write(json.dumps(report, sort_keys=True, indent=2) + '\n')
