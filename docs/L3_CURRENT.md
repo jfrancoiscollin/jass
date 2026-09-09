@@ -12,6 +12,20 @@
 
 ---
 
+## ED4-P0 — objectif de choix et préflight synthétique validés
+
+Le protocole ED4-P0 est préenregistré et son préflight synthétique complet a réussi
+en [CI 34342663391](https://github.com/jfrancoiscollin/jass/actions/runs/34342663391).
+Deux optimisations identiques, contrôle de stationnarité au second ordre,
+quantification et rechargements par le véritable évaluateur C++ vérifiés ; reçu
+publié authentifié et relu. [Résultat et limites](experiments/L3_ED4_CHOICE_SET_PREFLIGHT_RESULTS_20260909.md).
+
+`ED4_CHOICE_SET_OBJECTIVE_PREFLIGHT_COMPLETE_V1`, `SYNTHETIC_TECHNICAL_ONLY`.
+Aucun modèle réel entraîné ou évalué. Prochaine étape : revoir et préenregistrer
+le candidat ED4 avant une autorisation distincte de fit réel et sa répétition
+complète. Cela n'établit aucun gain décisionnel ni de calibration. `STOP_ED3`,
+`CURRICULUM` et l'absence de suite automatique restent inchangés.
+
 ## ED3-T1 — diagnostic sur données consommées terminé
 
 Le diagnostic autorisé est terminé : production `cpx62-1886-l3-ed3-transfer-diagnostic-production-v1`,
