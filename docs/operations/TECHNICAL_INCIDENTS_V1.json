@@ -250,6 +250,16 @@
       "invariant": "Convert published scalar values to JSON-native types and require deterministic byte identity of every summary and JSONL payload through the real stage-publisher-fetch path before launch.",
       "evidence": "Local full-sized synthetic run passed; Linux CPX62 synthetic suite: 26 tests in 5.296 seconds, zero skips/errors/failures, including real stage-publisher-checked readback and missing-marker/corruption rejection. No historical ED3-T1 metrics or jobs ran during this repair.",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-026",
+      "dedupe_key": "ed3-t1-workflow-oauth-publication-v1",
+      "context": "ED3-T1 GitHub workflow publication",
+      "symptom": "HTTPS Git push rejected a new CI workflow because the local OAuth token lacks workflow scope.",
+      "root_cause": "The configured git credential has repo/read:org/gist scopes; workflow creation requires a separate authorized capability.",
+      "invariant": "Publish workflow files through the connected GitHub app with workflow capability, verify identical blob bytes, merge that commit, and then push the unchanged validated code. Do not remove or weaken CI to bypass the credential limit.",
+      "evidence": "GitHub app created workflow commit fcba565292f151e4abea77cdae69cc273c3f6c9b; local and remote workflow blobs both 8dc766ee0ccda70d4dd116c6594c4df22c4c4961; merge 09bbcf582 pushed successfully through ordinary Git.",
+      "status": "CLOSED"
     }
   ]
 }
