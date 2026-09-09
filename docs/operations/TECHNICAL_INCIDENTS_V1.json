@@ -308,8 +308,18 @@
       "symptom": "Automatic approval review rejected the proposed git publication before commit/push execution.",
       "root_cause": "After repository ownership and admin rights were verified, automatic review still required explicit approval for public exposure of this exact scientific payload.",
       "invariant": "Keep the proposed payload local and reviewable; do not route the rejected publication through another tool or destination; await explicit user authorization.",
-      "evidence": "Connected GitHub identity jfrancoiscollin matches jass owner; repository public and viewer admin. Exact result/preregistration publication question is pending. No publication attempt executed.",
-      "status": "OPEN — explicit public-payload approval pending"
+      "evidence": "Connected GitHub identity jfrancoiscollin matches jass owner; repository public and viewer admin. Exact result/preregistration publication question is pending. No publication attempt executed.; User explicitly replied Accord donné. Go. Public branch79a4b51ff pushed successfully; PR886 created. CI workflow update1d4f2aea published through GitHub and verified byte-identical to local blobdac39830. Future ordinary campaign steps retain existing user authorization.",
+      "status": "CLOSED — exact public payload authorized and published"
+    },
+    {
+      "id": "TI-032",
+      "dedupe_key": "ed4-c0a-null-historical-status-host-v1",
+      "context": "C0A metadata admission on CPX62, code1d4f2aea",
+      "symptom": "The target-host synthetic tests passed, then catalogue projection failed before any R2 envelope was requested.",
+      "root_cause": "Frozen historical status cpx62-1820-l3-decision-math-b2-terminal-classified-failure-zero-placeholder-repair-v1 has host:null. The status schema incorrectly required a string for that optional field.",
+      "invariant": "Permit null only in the optional status host descriptor; keep authenticated result-manifest host strict. Missing execution identity stays unknown and cannot authorize coverage or READY.",
+      "evidence": "First admission report SHA256 0e0d25b32a12ee49606c5765788984c7ae40a6633e56a60556cfde82937ce72a; phasecatalog, duration0.228s, authenticated_envelopes0, all payload/target/model reads0. Field-projected scan of the full frozen status window found only this type mismatch.",
+      "status": "MITIGATED — narrow status compatibility repair; repeated metadata admission pending"
     }
   ]
 }

@@ -93,6 +93,23 @@ class Inventory(unittest.TestCase):
         self.assertEqual(len(report['sources']), 10)
         self.assertTrue(report['verdict'].endswith('INSUFFICIENT_V1'))
 
+    def test_nonexecuted_null_host_is_skipped_and_unknown(self):
+        catalog, store = self.fixtures()
+        job = 'cpx62-1820-l3-decision-math-b2-terminal-classified-failure-zero-placeholder-repair-v1'
+        raw = json.dumps(dict(job_id=job, attempt_id=None, code_sha=None,
+            state='failed', exit_code=-1, host=None)).encode()
+        self.assertEqual(m.project_status(raw)['host'], None)
+        with self.assertRaises(ValueError):
+            m.project_manifest(raw)
+        catalog.append(dict(job_id=job, attempt_id=None, code_sha=None,
+            state='failed', exit_code=-1, host=None))
+        calls = []
+        meta = m.collect(catalog, transport=self.transport(store, calls))
+        self.assertNotIn(job, {key[0] for key in meta})
+        report = m.build(meta, catalog, 'b'*64, b'p')
+        self.assertIn(job, report['unknown_or_unclassified_producers'])
+        self.assertTrue(report['verdict'].endswith('INSUFFICIENT_V1'))
+
     def test_missing_path_is_insufficient(self):
         catalog, store = self.fixtures()
         job, attempt, code, paths = m.SOURCES['n1']

@@ -102,7 +102,7 @@ IDENTITY = {
     'code_sha': (str, type(None)), 'state': (str,),
     'exit_code': (int, type(None)), 'host': (str,),
 }
-STATUS = dict(IDENTITY, result_uri=(str, type(None)))
+STATUS = dict(IDENTITY, result_uri=(str, type(None)), host=(str, type(None)))
 INVENTORY = {'files': [{
     'path': (str,), 'size_bytes': (int,), 'sha256': (str,),
     'declared_cardinality': (int, type(None)),
