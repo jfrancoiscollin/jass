@@ -400,6 +400,16 @@
       "invariant": "C0C must fetch the same immutable 1897 C0A/C0B bytes only through their authenticated runner inventory paths artefacts/..., preserving fixed job/attempt/code/SHA256 and all scientific semantics.",
       "evidence": "1902 attempt 20260910T095847Z-390d1f31 frames; 1897 terminal nonempty artifact sizes; runner_v3_store inventory path contract; jobs.tests.test_ed4_c0c_exclusion_union parent-path regression; runtime proof pending.; PR #904",
       "status": "MITIGATED — CI and immutable C0C rerun pending"
+    },
+    {
+      "id": "TI-041",
+      "dedupe_key": "job:cpx62-1903-l3-ed4-c0c-structural-exclusion-union-v3",
+      "context": "ED4 C0C retry 1903",
+      "symptom": "Exit 2 / STAGE_FAILED:EXECUTE during parse-position-identity-only; frames end at ed4_c0c_exclusion_union.py build_union line 181 -> fetch_result_files.py line 118.",
+      "root_cause": "UNKNOWN — authenticate runner receipt/stdout/stderr before repair; sparse GitOps status is insufficient to identify the offending candidate path.",
+      "invariant": "Do not alter C0C parser, exclusion universe, candidate bytes, thresholds, alpha or confirmation corpus until the immutable 1903 runner diagnostics prove the technical cause.",
+      "evidence": "jass-control status cpx62-1903-l3-ed4-c0c-structural-exclusion-union-v3 attempt 20260910T111237Z-731ae702; authenticated readout pending.; PR #905",
+      "status": "OPEN — authenticated diagnostic retry pending"
     }
   ]
 }
