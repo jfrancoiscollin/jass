@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# Keep this suite on an ordinary branch commit after the incident-register bot
+a# autofeeds TI-043 so the required PR checks run against the final head.
 import gzip
 import json
 import os
