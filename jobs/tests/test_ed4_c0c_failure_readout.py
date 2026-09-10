@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +12,9 @@ from jobs.tools.ed4_c0c_failure_readout_stage import (
     bounded_text_tail,
     summarize_receipt,
 )
+
+ROOT = Path(__file__).resolve().parents[2]
+STAGE = ROOT / "jobs/tools/ed4_c0c_failure_readout_stage.py"
 
 
 class C0CFailureReadoutTests(unittest.TestCase):
@@ -49,6 +55,25 @@ class C0CFailureReadoutTests(unittest.TestCase):
             text = bounded_text_tail(path, 8)
             self.assertLessEqual(len(text.encode("utf-8")), 12)
             self.assertTrue(text.endswith("tail"))
+
+    def test_direct_stage_entrypoint_bootstraps_repo_imports_without_pythonpath(self):
+        env = {"PATH": os.defpath, "PYTHONDONTWRITEBYTECODE": "1"}
+        completed = subprocess.run(
+            [sys.executable, str(STAGE)],
+            cwd=ROOT,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        # No runner-owned environment is supplied here on purpose.  Reaching the
+        # expected JASS_ARTEFACT_DIR lookup proves that direct-path startup got
+        # past the jobs.tools imports under the same no-PYTHONPATH condition as
+        # run_experiment_stage.
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertNotIn("ModuleNotFoundError", completed.stderr)
+        self.assertIn("JASS_ARTEFACT_DIR", completed.stderr)
 
 
 if __name__ == "__main__":
