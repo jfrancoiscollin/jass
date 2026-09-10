@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Authenticate the failed ED4 C0C 1903 attempt and publish only technical diagnostics.
+"""Authenticate the failed ED4 C0C 1907 attempt and publish only technical diagnostics.
 
 This stage reads runner-owned stage receipt/stdout/stderr from the already-failed
 attempt. It never opens any scientific payload, position corpus, target, model,
@@ -26,9 +26,9 @@ if str(ROOT) not in sys.path:
 from jobs.tools import fetch_result_files
 from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json
 
-SOURCE_JOB = "cpx62-1903-l3-ed4-c0c-structural-exclusion-union-v3"
-SOURCE_ATTEMPT = "20260910T111237Z-731ae702"
-SOURCE_CODE = "731ae702ce60d2dc830a97171e6721dc892575c1"
+SOURCE_JOB = "cpx62-1907-l3-ed4-c0c-structural-exclusion-union-v4"
+SOURCE_ATTEMPT = "20260910T145830Z-96b4d879"
+SOURCE_CODE = "96b4d87920485d3836132c54c2e26c16241fdde7"
 SOURCE_PREFIX = f"r2:jass-data/runs/{SOURCE_JOB}/{SOURCE_ATTEMPT}"
 PHASES = ["authenticate-failed-attempt", "read-runner-diagnostics", "publish-technical-readout"]
 MAX_TAIL_BYTES = 8192
@@ -112,7 +112,7 @@ def main() -> int:
     evidence = StageEvidence(artifact, os.environ["LAUNCH_MODE"])
     try:
         evidence.begin(PHASES[0])
-        out = result / "c0c-1903-failure-readout"
+        out = result / "c0c-1907-failure-readout"
         report = fetch_runner_diagnostics(out)
         identity = (
             report.get("job_id"), report.get("attempt_id"), report.get("code_sha"),
@@ -165,7 +165,7 @@ def main() -> int:
         evidence.begin(PHASES[2])
         atomic_json(artifact / "ed4-c0c-failure-readout.json", technical)
         summary = dict(technical)
-        summary["next_stage"] = "ED4_C0C_TECHNICAL_REPAIR_FROM_AUTHENTICATED_1903_DIAGNOSTIC"
+        summary["next_stage"] = "ED4_C0C_TECHNICAL_REPAIR_FROM_AUTHENTICATED_1907_DIAGNOSTIC"
         atomic_json(artifact / "scientific-summary.json", summary)
         evidence.complete()
         evidence.finish()
