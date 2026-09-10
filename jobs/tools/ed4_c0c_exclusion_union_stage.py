@@ -3,11 +3,6 @@ from __future__ import annotations
 import json, os, sys
 from pathlib import Path
 
-# run_experiment_stage executes the registered stage by filesystem path with a
-# sanitized environment and no inherited PYTHONPATH.  In that mode Python adds
-# jobs/tools, not the repository root, to sys.path.  Add only the repository
-# import root before importing jobs.tools; this changes no C0C inputs, parsing,
-# exclusion universe, thresholds, alpha, candidate bytes, or scientific logic.
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -29,6 +24,15 @@ def main():
         atomic_json(art/'scientific-summary.json',summary); ev.complete(); ev.finish(); return 0
     except Exception as exc:
         ev.fail(exc)
-        atomic_json(art/'scientific-summary.json',{'schema':'jass.ed4.c0c_failure.v1','state':'failed','verdict':'ED4_C0C_TECHNICAL_OR_PARSE_FAILURE_V1','error_type':type(exc).__name__,'scientific_verdict':None,'confirmation_authorized':False})
+        atomic_json(art/'scientific-summary.json',{
+            'schema':'jass.ed4.c0c_failure.v1',
+            'state':'failed',
+            'verdict':'ED4_C0C_TECHNICAL_OR_PARSE_FAILURE_V1',
+            'error_type':type(exc).__name__,
+            'error_context':str(exc)[:2048],
+            'scientific_verdict':None,
+            'confirmation_authorized':False,
+            'alpha_spent':0,
+        })
         return 2
 if __name__=='__main__': raise SystemExit(main())
