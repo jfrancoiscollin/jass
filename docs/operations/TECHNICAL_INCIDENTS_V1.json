@@ -424,12 +424,12 @@
     {
       "id": "TI-043",
       "dedupe_key": "job:cpx62-1907-l3-ed4-c0c-structural-exclusion-union-v4",
-      "context": "ED4 C0C retry 1907 / diagnostic 1909",
-      "symptom": "1909 localized the first authenticated malformed C0B candidate: producer 1785 path b2-preread-schema-compat/documentary-worktree/jobs/results/ccx33-0206-wdl-loop-mt60/artefacts/sp1-1.jnnw, SHA256 730ee719a651e371c782afd1c1f29a4a95a2c81b2bfdf7f9748aab4d6d7cd576, size 114914, declared_count=0, exact token jnnw_trailing_bytes.",
-      "root_cause": "Job 1785 recursively published a detached documentary Git worktree containing historical failed job 0206 output. That historical --gen-data-wdl writer wrote a zero JNNW count placeholder, streamed records, and was interrupted before final count backpatch; the frozen object has 3023 complete 38-byte widths plus a 32-byte partial tail after the header while count remains zero.",
-      "invariant": "C0C V1 remains fail-closed on malformed counted JNNW. Do not skip the frozen candidate, broaden worktree exclusions, or salvage record prefixes after observing the payload without an explicit prospective protocol/version; preserve the 1897 C0A/C0B bytes, ED4 candidate, exclusion objective, thresholds, alpha and confirmation corpus.",
-      "evidence": "1909 attempt 20260910T162746Z-35f0fd1b exit 0: first_failure exact path/reason with record_fields_decoded=0,target_reads=0,alpha_spent=0; historical 0206 status failed while shard processes active; exact historical generator backpatches count only on normal completion.; PR #912",
-      "status": "OPEN — explicit prospective protocol decision required before C0C recovery"
+      "context": "ED4 C0C V2 prospective recovery after diagnostic 1909",
+      "symptom": "Authenticated historical JNNW has count placeholder 0, 3023 complete records and 32-byte partial tail.",
+      "root_cause": "Historical job 0206 was interrupted before count backpatch while producer 1785 later published its documentary worktree.",
+      "invariant": "V1 remains unchanged. V2 salvage is allowed only for the exact authenticated job/attempt/path/SHA/size/shape from diagnostic 1909; recover complete 38-byte records only, never decode the final 5 target bytes, discard the incomplete tail, and fail closed for every other malformed JNNW.",
+      "evidence": "1909 attempt 20260910T162746Z-35f0fd1b; explicit protocol decision 2026-09-10 to recover the 3023 complete records.; PR #913",
+      "status": "MITIGATED — prospective C0C V2 CI/runtime proof pending"
     }
   ]
 }
