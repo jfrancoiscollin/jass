@@ -14,6 +14,9 @@ from pathlib import Path
 import sys
 from typing import Any
 
+# Keep an ordinary source commit after incident-register autofeed so required
+# PR checks rerun on the actual current head; the immutable source identity below
+# remains the only diagnostic input change.
 # run_experiment_stage intentionally launches stages with a sanitized environment
 # that does not inherit PYTHONPATH.  When this file is executed by path, Python
 # otherwise places jobs/tools (not the repository root) on sys.path, so the
