@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# Keep this module in the ED4 workflow so incident-register autofeed commits are
+# followed by an ordinary branch commit that retriggers the required checks.
 from contextlib import ExitStack
 import hashlib
 import json
