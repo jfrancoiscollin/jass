@@ -1,7 +1,10 @@
 from __future__ import annotations
-import gzip, struct, tempfile, unittest
+import gzip, os, struct, subprocess, sys, tempfile, unittest
 from pathlib import Path
 from jobs.tools.ed4_c0c_exclusion_union import parse_jnnw, parse_fen_file, parse_tsv, parse_candidate
+
+ROOT = Path(__file__).resolve().parents[2]
+STAGE = ROOT / 'jobs/tools/ed4_c0c_exclusion_union_stage.py'
 
 class C0CParserTests(unittest.TestCase):
     def _record(self,target=b'abcde'):
@@ -33,4 +36,16 @@ class C0CParserTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             p=Path(td)/'x.jnnw'; p.write_bytes(b'JNNW'+struct.pack('<I',1)+self._record()+b'x')
             with self.assertRaises(Exception): parse_jnnw(p)
+    def test_direct_stage_entrypoint_bootstraps_repo_imports_without_pythonpath(self):
+        env = {'PATH': os.defpath, 'PYTHONDONTWRITEBYTECODE': '1'}
+        completed = subprocess.run(
+            [sys.executable, str(STAGE)], cwd=ROOT, env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        )
+        # No runner-owned stage environment is supplied. Reaching the expected
+        # JASS_ARTEFACT_DIR lookup proves direct-path startup got past jobs.tools
+        # imports under the same no-PYTHONPATH condition that broke 1898.
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertNotIn('ModuleNotFoundError', completed.stderr)
+        self.assertIn('JASS_ARTEFACT_DIR', completed.stderr)
 if __name__=='__main__': unittest.main()
