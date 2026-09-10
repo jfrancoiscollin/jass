@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, os
+import json, os, sys
 from pathlib import Path
+
+# run_experiment_stage executes the registered stage by filesystem path with a
+# sanitized environment and no inherited PYTHONPATH.  In that mode Python adds
+# jobs/tools, not the repository root, to sys.path.  Add only the repository
+# import root before importing jobs.tools; this changes no C0C inputs, parsing,
+# exclusion universe, thresholds, alpha, candidate bytes, or scientific logic.
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from jobs.tools.ed4_c0c_exclusion_union import build_union
 from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json
 
