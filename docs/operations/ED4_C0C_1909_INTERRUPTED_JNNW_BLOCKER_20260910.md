@@ -1,5 +1,7 @@
 # ED4 C0C — authenticated interrupted JNNW blocker (1909)
 
+<!-- Ordinary branch commit after incident-register autofeed so required PR checks run on the final head. -->
+
 Date: 2026-09-10. Classification: **TECHNICAL / SOURCE-ARTIFACT INTEGRITY**.
 
 Immutable diagnostic `cpx62-1909-l3-ed4-c0c-jnnw-shape-diagnostic-v1`, attempt `20260910T162746Z-35f0fd1b`, completed with exit 0 and localized the first C0C 1907 parse blocker without decoding any position record or target field.
