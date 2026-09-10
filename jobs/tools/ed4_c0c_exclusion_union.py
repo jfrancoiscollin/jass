@@ -33,6 +33,22 @@ C0B_SHA = 'c04c5ad0a3c6b98d6d3c86575f1ba5607cdad17e92ae5b1ed4108aeb81274bda'
 EMPTY_SHA256 = hashlib.sha256(b'').hexdigest()
 SCHEMA = 'jass.ed4.c0c_structural_exclusion_union.v1'
 
+# 1909 authenticated the first 1907 parse failure as this exact path and proved
+# the envelope is a live-writer snapshot (JNNW count=0 with trailing bytes):
+# 1785 created this subtree with `git worktree add --detach ...` under its runner
+# scratch while preparing documentary commit S, then failed exit 128.  Therefore
+# files below this exact immutable worktree prefix are repository checkout copies,
+# not positions produced/consumed by 1785.  C0B was deliberately path-only and
+# overinclusive, so the frozen descriptors remain authenticated here but these
+# operational copies contribute no *new producer* identities.  The generic JNNW
+# parser remains strict; no malformed JNNW is salvaged or accepted.
+OPERATIONAL_COPY_JOB = 'cpx62-1785-l3-decision-math-b2-documentary-preread-schema-compat-v1'
+OPERATIONAL_COPY_ATTEMPT = '20260905T145718Z-d3657332'
+OPERATIONAL_COPY_CODE = 'd3657332c3a5609a5501a9ff130f5d5c19488c7f'
+OPERATIONAL_COPY_EXIT = 128
+OPERATIONAL_COPY_PREFIX = 'b2-preread-schema-compat/documentary-worktree/'
+OPERATIONAL_COPY_SEMANTICS = 'authenticated_failed_1785_documentary_git_worktree_copy_no_new_production'
+
 
 class C0CError(RuntimeError):
     pass
@@ -238,6 +254,25 @@ def _authenticate_candidate_descriptors(
     return nonempty, zero_receipts
 
 
+def _operational_copy_semantics(*, source: dict, job_id: str, attempt: str, path: str) -> str | None:
+    """Classify only the exact 1785 Git worktree proven by 1909.
+
+    C0B remains byte-identical and every descriptor is authenticated first.  A
+    prefix match outside this one immutable failed attempt is never generalized.
+    """
+    if job_id != OPERATIONAL_COPY_JOB or attempt != OPERATIONAL_COPY_ATTEMPT:
+        return None
+    if not path.startswith(OPERATIONAL_COPY_PREFIX):
+        return None
+    if (
+        source.get('code_sha') != OPERATIONAL_COPY_CODE
+        or source.get('result_state') != 'failed'
+        or source.get('exit_code') != OPERATIONAL_COPY_EXIT
+    ):
+        raise C0CError('operational_copy_source_identity')
+    return OPERATIONAL_COPY_SEMANTICS
+
+
 def build_union(work: Path, artifact: Path) -> dict:
     if work.exists() or work.is_symlink():
         raise C0CError('work_dir_must_not_exist')
@@ -250,6 +285,7 @@ def build_union(work: Path, artifact: Path) -> dict:
     total_rows = 0
     downloaded = 0
     zero_size_authenticated = 0
+    operational_copy_authenticated = 0
 
     for job in c0b.get('candidate_jobs', []):
         job_id, attempt = job['job_id'], job.get('attempt_id')
@@ -274,12 +310,32 @@ def build_union(work: Path, artifact: Path) -> dict:
         )
         file_receipts.extend(zero_receipts)
         zero_size_authenticated += len(zero_receipts)
-        if not nonempty:
+
+        parseable: list[tuple[int, dict]] = []
+        for i, desc in nonempty:
+            copy_semantics = _operational_copy_semantics(
+                source=source, job_id=job_id, attempt=attempt, path=desc['path']
+            )
+            if copy_semantics is None:
+                parseable.append((i, desc))
+                continue
+            operational_copy_authenticated += 1
+            file_receipts.append({
+                'job_id': job_id,
+                'attempt_id': attempt,
+                'path': desc['path'],
+                'kind': desc['kind'],
+                'sha256': desc['sha256'],
+                'rows': 0,
+                'unique_identities': 0,
+                'semantics': copy_semantics,
+            })
+        if not parseable:
             continue
 
         selections = [
             (desc['path'], f'{i:04d}-{Path(desc["path"]).name}')
-            for i, desc in nonempty
+            for i, desc in parseable
         ]
         fetched = fetch_result_files.fetch_files(
             rclone='rclone',
@@ -291,7 +347,7 @@ def build_union(work: Path, artifact: Path) -> dict:
         if fetched.get('job_id') != job_id or fetched.get('attempt_id') != attempt:
             raise C0CError('download_identity')
         fetched_map = {x['path']: x for x in fetched['files']}
-        for i, desc in nonempty:
+        for i, desc in parseable:
             got = fetched_map.get(desc['path'])
             if not got or got['sha256'] != desc['sha256'] or got['size_bytes'] != desc['size_bytes']:
                 raise C0CError('descriptor_drift')
@@ -328,6 +384,7 @@ def build_union(work: Path, artifact: Path) -> dict:
         'parent_c0b_sha256': C0B_SHA,
         'candidate_files_downloaded': downloaded,
         'candidate_zero_size_authenticated': zero_size_authenticated,
+        'candidate_operational_copy_authenticated': operational_copy_authenticated,
         'candidate_rows_parsed': total_rows,
         'unique_canonical_identities': len(all_ids),
         'union_sha256': hashlib.sha256(union_raw).hexdigest(),
