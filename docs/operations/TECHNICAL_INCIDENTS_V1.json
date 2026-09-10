@@ -380,6 +380,16 @@
       "invariant": "Keep 1899 as the sole next diagnostic step; do not alter C0C science or parsing behavior, reroute scientific work, or consume confirmation data. Restore/observe CPX62 runner service, execute 1899 under its green V2 contract, then repair only the authenticated underlying 1898 technical cause",
       "evidence": "jass-control#598 merged 2026-09-09T22:06:21Z; at 2026-09-09T23:26Z queue contains cpx62-1899-l3-ed4-c0c-1898-failure-readout-v1, queue/running is empty, no 1899 status exists, state/host-active/cpx62 exists, and state/host-filter/cpx62 exactly matches 1899; runner-v3 timer contract is every five minutes; PR #900",
       "status": "OPEN — CPX62 runner claim/service observation required; 1899 diagnostic still pending"
+    },
+    {
+      "id": "TI-039",
+      "dedupe_key": "job:cpx62-1900-l3-ed4-c0c-1898-failure-readout-v2",
+      "context": "ED4 C0C diagnostic 1900",
+      "symptom": "Exit 2 at authenticate-failed-attempt; RuntimeError in fetch_result_files.py line 118 after authenticated inventory inspection.",
+      "root_cause": "The diagnostic applied the generic nonempty-payload guard to runner stdout/stderr, which may legitimately be zero bytes. The same guard rejection is covered by synthetic regression; the sparse remote status does not yet identify the exact offending log or original 1898 exception.",
+      "invariant": "Only the fixed runner stdout/stderr paths may be empty, and their actual remote objects still require verified existence, size and SHA256. Receipt remains nonempty; generic scientific readers and all frozen ED4 contracts remain unchanged.",
+      "evidence": "1900 attempt 20260910T080806Z-60653eb3 status; jobs/tests/test_ed4_c0c_failure_readout.py; immutable runtime proof pending.; PR #902",
+      "status": "MITIGATED — CI and authenticated diagnostic retry pending"
     }
   ]
 }
