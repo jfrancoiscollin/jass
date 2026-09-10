@@ -430,6 +430,16 @@
       "invariant": "V1 remains unchanged. V2 salvage is allowed only for the exact authenticated job/attempt/path/SHA/size/shape from diagnostic 1909; recover complete 38-byte records only, never decode the final 5 target bytes, discard the incomplete tail, and fail closed for every other malformed JNNW.",
       "evidence": "1909 attempt 20260910T162746Z-35f0fd1b; explicit protocol decision 2026-09-10 to recover the 3023 complete records.; PR #913",
       "status": "MITIGATED — prospective C0C V2 CI/runtime proof pending"
+    },
+    {
+      "id": "TI-044",
+      "dedupe_key": "job:cpx62-1910-l3-ed4-c0c-v2-structural-exclusion-union-v1",
+      "context": "ED4 C0C V2 1910 subsequent malformed JNNW",
+      "symptom": "1910 failed in parse-position-identity-only-v2 after the first explicitly authorized salvage, with frames returning through V1 parse_jnnw line 74.",
+      "root_cause": "At least one additional frozen historical JNNW is malformed; exact identity and envelope shape not yet localized.",
+      "invariant": "Skip only the already-authorized 1909 object and inspect only authenticated JNNW envelope structure. Do not decode positions/targets or extend salvage policy until the next object is proven.",
+      "evidence": "1910 attempt 20260910T173938Z-755e6ae0; diagnostic implementation in this PR.; PR #914",
+      "status": "OPEN — next malformed JNNW localization pending"
     }
   ]
 }
