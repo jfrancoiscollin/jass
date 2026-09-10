@@ -365,11 +365,11 @@
       "id": "TI-037",
       "dedupe_key": "job:cpx62-1898-l3-ed4-c0c-structural-exclusion-union-v1",
       "context": "ED4 C0C run 1898",
-      "symptom": "C0C terminated exit 2 with terminal status only STAGE_FAILED:EXECUTE; the specific stage error was not visible in the published status.",
-      "root_cause": "The V2 launch wrapper replaces a failed stage's artifact summary with a generic launch failure and does not surface the runner-owned stage-receipt/stdout/stderr details needed to classify the underlying technical failure.",
-      "invariant": "Diagnose the failed attempt only from authenticated runner-owned diagnostics before changing C0C behavior; preserve the frozen ED4 scientific contract and consume zero confirmation science during diagnosis.",
-      "evidence": "1898 attempt 20260909T212744Z-2bf3785b; jass-control terminal exit_code=2/STAGE_FAILED:EXECUTE; this PR adds an authenticated bounded failure readout stage and regression tests.; PR #899",
-      "status": "OPEN — authenticated 1898 diagnostic readout pending"
+      "symptom": "C0C failed at EXECUTE after 0.095518 s before computation; authenticated stderr from diagnostic 1901 reports ModuleNotFoundError: No module named 'jobs'.",
+      "root_cause": "run_experiment_stage executes the registered Python stage by filesystem path with sanitized environment/no inherited PYTHONPATH, so Python places jobs/tools rather than the repository root on sys.path; ed4_c0c_exclusion_union_stage.py imported jobs.tools before bootstrapping the repository root.",
+      "invariant": "Direct-path stage startup must resolve the repository package without changing any C0C scientific input or parser semantics. The frozen ED4 candidate, exclusion universe, thresholds, alpha and confirmation corpus remain unchanged; diagnosis/recovery consumes zero confirmation science.",
+      "evidence": "1898 attempt 20260909T212744Z-2bf3785b; authenticated diagnostic 1901 attempt 20260910T090616Z-f64849c0 exit 0 with stderr SHA a982220380299ccf5bac8e03d3d1b1530f6ebdb08bdede550ebddd1e1e06528c; direct-path no-PYTHONPATH regression added in jobs.tests.test_ed4_c0c_exclusion_union; runtime C0C proof pending.; PR #903",
+      "status": "MITIGATED — code/CI merge and immutable C0C rerun pending"
     },
     {
       "id": "TI-038",
