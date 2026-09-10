@@ -61,4 +61,5 @@ jobs:
           jobs.tests.test_ed4_c0c_exclusion_union
           jobs.tests.test_ed4_c0c_failure_readout
           jobs.tests.test_ed4_c0c_fetch_precondition_diagnostic
+          jobs.tests.test_ed4_c0c_jnnw_shape_diagnostic
           -v

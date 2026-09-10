@@ -1,0 +1,11 @@
+{
+  "campaign": "ed4-confirmation-source-audit",
+  "command": ["/var/tmp/jass-l3-numeric-venv-current-v1/bin/python", "jobs/tools/ed4_c0c_jnnw_shape_diagnostic_stage.py"],
+  "evidence_outputs": ["ed4-c0c-jnnw-shape-diagnostic.json"],
+  "production_max_effects": {"bakes":0,"fits":0,"new_jass_searches":0,"new_scan_searches":0,"promotions":0,"selfplay_games":0,"strength_games":0,"test_target_reads":0},
+  "regressions": ["jobs.tests.test_launch_gate_v2","jobs.tests.test_launch_gate_pipeline_v2","jobs.tests.test_ed4_c0c_jnnw_shape_diagnostic"],
+  "rehearsal_max_effects": {"bakes":0,"fits":0,"new_jass_searches":0,"new_scan_searches":0,"promotions":0,"selfplay_games":0,"strength_games":0,"test_target_reads":0},
+  "required_phases": ["authenticate-c0b-parent-metadata","scan-authenticated-jnnw-envelopes","publish-jnnw-shape-diagnostic"],
+  "schema": "jass.launch_profile.v2",
+  "stage": "ed4-c0c-jnnw-shape-diagnostic-v1"
+}

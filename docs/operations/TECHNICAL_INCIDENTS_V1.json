@@ -425,11 +425,11 @@
       "id": "TI-043",
       "dedupe_key": "job:cpx62-1907-l3-ed4-c0c-structural-exclusion-union-v4",
       "context": "ED4 C0C retry 1907",
-      "symptom": "1907 exited 2 in parse-position-identity-only with C0CError; GitOps frames end in parse_jnnw but the exact fail-closed token is not present in status.",
-      "root_cause": "Pending authenticated runner stderr readout; no parser behavior is changed until the exact 1907 C0CError is proven.",
-      "invariant": "Diagnostic reads only runner-owned receipt/stdout/stderr from the immutable failed attempt. ED4 candidate bytes, exclusion universe, thresholds, alpha, confirmation corpus and parser semantics remain frozen.",
-      "evidence": "jass-control status for 1907 attempt 20260910T145830Z-96b4d879; authenticated diagnostic retry pending.; PR #909",
-      "status": "OPEN — authenticated 1907 failure readout pending"
+      "symptom": "1907 exited 2 in parse-position-identity-only; immutable frames end at parse_jnnw line 74. 1908 authenticated stdout/stderr as zero-byte objects.",
+      "root_cause": "The exact parser guard is now proven as jnnw_trailing_bytes by the immutable source line, but the offending authenticated historical payload path is not recoverable from runner logs. This PR adds a structural-only localization diagnostic and does not alter parser behavior.",
+      "invariant": "Replay only the frozen 1897 C0A/C0B candidate order. Authenticate inventories and payload hashes; inspect only JNNW magic/count/body length. Decode zero record fields and zero confirmation targets. Parser semantics remain fail-closed.",
+      "evidence": "jass-control 1907 attempt 20260910T145830Z-96b4d879 frames ending at ed4_c0c_exclusion_union.py:74; 1908 attempt 20260910T154534Z-67a14b2c completed exit 0 with authenticated stdout_size_bytes=0 and stderr_size_bytes=0; regression jobs.tests.test_ed4_c0c_jnnw_shape_diagnostic.; PR #911",
+      "status": "OPEN — authenticated malformed JNNW path localization pending"
     }
   ]
 }
