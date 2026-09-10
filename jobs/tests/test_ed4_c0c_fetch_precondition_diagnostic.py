@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# Keep an ordinary branch-authored commit after incident-register autofeed so
+# the required PR checks run against the final ledger-synchronized head.
 import os
 import subprocess
 import sys
