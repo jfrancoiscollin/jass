@@ -7,21 +7,13 @@ are skipped without interpretation. JSM/JSM.GZ are provenance sidecars and do
 not independently encode a board position.
 """
 from __future__ import annotations
-
-import csv
-import gzip
-import hashlib
-import json
-import shutil
-import struct
+import csv, gzip, hashlib, json, shutil, struct
 from pathlib import Path
 from typing import BinaryIO, TextIO
 
 from jobs.tools import fetch_result_files
 from jobs.tools.adaptive_sibling_b2_exclusions import (
-    canonical_fen,
-    canonical_fingerprint,
-    format_fingerprint,
+    canonical_fen, canonical_fingerprint, format_fingerprint,
 )
 
 PARENT_JOB = 'cpx62-1897-l3-ed4-c0b-structural-payload-freeze-v2'
@@ -69,60 +61,47 @@ def parse_jnnw(path: Path, compressed: bool = False) -> tuple[set[str], int]:
             if len(record) != 38:
                 raise C0CError('jnnw_truncated')
             identities.add(canonical_from_position_bytes(record[:33]))
-            # record[33:38] is intentionally never unpacked or interpreted.
         if f.read(1):
             raise C0CError('jnnw_trailing_bytes')
     return identities, count
 
 
 def _text(path: Path, compressed: bool) -> TextIO:
-    return (
-        gzip.open(path, 'rt', encoding='utf-8', newline='')
-        if compressed
-        else path.open('r', encoding='utf-8', newline='')
-    )
+    return gzip.open(path, 'rt', encoding='utf-8', newline='') if compressed else path.open('r', encoding='utf-8', newline='')
 
 
 def parse_fen_file(path: Path, compressed: bool = False) -> tuple[set[str], int]:
-    out: set[str] = set()
-    rows = 0
+    out: set[str] = set(); rows = 0
     with _text(path, compressed) as f:
         for raw in f:
             value = raw.split('#', 1)[0].strip()
             if not value:
                 continue
-            out.add(canonical_fen(value))
-            rows += 1
+            out.add(canonical_fen(value)); rows += 1
     if rows == 0:
         raise C0CError('fen_empty')
     return out, rows
 
 
 def parse_identity_text(path: Path, compressed: bool = False) -> tuple[set[str], int]:
-    out: set[str] = set()
-    rows = 0
+    out: set[str] = set(); rows = 0
     with _text(path, compressed) as f:
         for raw in f:
             value = raw.strip()
             if not value:
                 continue
-            out.add(canonical_fingerprint(value))
-            rows += 1
+            out.add(canonical_fingerprint(value)); rows += 1
     if rows == 0:
         raise C0CError('identity_empty')
     return out, rows
 
 
 def parse_tsv(path: Path, compressed: bool = False) -> tuple[set[str], int]:
-    out: set[str] = set()
-    rows = 0
+    out: set[str] = set(); rows = 0
     with _text(path, compressed) as f:
         reader = csv.DictReader(f, delimiter='\t')
         fields = reader.fieldnames or []
-        identity_field = next(
-            (x for x in ('canonical_identity', 'canonical_fingerprint', 'raw_fingerprint') if x in fields),
-            None,
-        )
+        identity_field = next((x for x in ('canonical_identity','canonical_fingerprint','raw_fingerprint') if x in fields), None)
         fen_field = 'fen' if 'fen' in fields else None
         if identity_field is None and fen_field is None:
             raise C0CError('tsv_no_position_field')
@@ -167,46 +146,20 @@ def _read_json(path: Path) -> dict:
 
 
 def fetch_parent(work: Path) -> tuple[dict, dict]:
-    out = work / 'parent'
-    out.mkdir(parents=True)
+    out = work / 'parent'; out.mkdir(parents=True)
     report = fetch_result_files.fetch_files(
-        rclone='rclone',
-        prefix=PARENT_PREFIX,
-        expected_state='completed',
-        out_dir=out,
-        selections=[
-            ('artefacts/ed4-c0a-source-descriptor-inventory.json', 'c0a.json'),
-            ('artefacts/ed4-c0b-structural-candidate-manifest.json', 'c0b.json'),
-        ],
-    )
-    if (report.get('job_id'), report.get('attempt_id'), report.get('code_sha')) != (
-        PARENT_JOB,
-        PARENT_ATTEMPT,
-        PARENT_CODE,
-    ):
+        rclone='rclone', prefix=PARENT_PREFIX, expected_state='completed', out_dir=out,
+        selections=[('artefacts/ed4-c0a-source-descriptor-inventory.json','c0a.json'),
+                    ('artefacts/ed4-c0b-structural-candidate-manifest.json','c0b.json')])
+    if (report.get('job_id'), report.get('attempt_id'), report.get('code_sha')) != (PARENT_JOB, PARENT_ATTEMPT, PARENT_CODE):
         raise C0CError('parent_identity')
-    if sha256_file(out / 'c0a.json') != C0A_SHA or sha256_file(out / 'c0b.json') != C0B_SHA:
+    if sha256_file(out/'c0a.json') != C0A_SHA or sha256_file(out/'c0b.json') != C0B_SHA:
         raise C0CError('parent_artifact_hash')
-    return _read_json(out / 'c0a.json'), _read_json(out / 'c0b.json')
+    return _read_json(out/'c0a.json'), _read_json(out/'c0b.json')
 
 
-def _authenticate_candidate_descriptors(
-    *,
-    prefix: str,
-    state: str,
-    job_id: str,
-    attempt: str,
-    candidates: list[dict],
-) -> tuple[list[tuple[int, dict]], list[dict]]:
-    """Authenticate every descriptor before payload transport.
-
-    A zero-byte object contains no board identity and therefore contributes the
-    empty set. It is still accepted only when the authenticated runner inventory
-    agrees on path, size=0 and SHA256(empty); it is never parsed as JNNW/text.
-    """
-    report = fetch_result_files.inspect_result_inventory(
-        rclone='rclone', prefix=prefix, expected_state=state
-    )
+def _authenticate_candidate_descriptors(*, prefix: str, state: str, job_id: str, attempt: str, candidates: list[dict]) -> tuple[list[tuple[int, dict]], list[dict]]:
+    report = fetch_result_files.inspect_result_inventory(rclone='rclone', prefix=prefix, expected_state=state)
     if report.get('job_id') != job_id or report.get('attempt_id') != attempt:
         raise C0CError('candidate_inventory_identity')
     inventory = {item['path']: item for item in report['files']}
@@ -214,25 +167,12 @@ def _authenticate_candidate_descriptors(
     zero_receipts: list[dict] = []
     for i, desc in enumerate(candidates):
         item = inventory.get(desc['path'])
-        if (
-            item is None
-            or item['sha256'] != desc['sha256']
-            or item['size_bytes'] != desc['size_bytes']
-        ):
+        if item is None or item['sha256'] != desc['sha256'] or item['size_bytes'] != desc['size_bytes']:
             raise C0CError('descriptor_drift')
         if item['size_bytes'] == 0:
             if item['sha256'] != EMPTY_SHA256:
                 raise C0CError('zero_size_hash_mismatch')
-            zero_receipts.append({
-                'job_id': job_id,
-                'attempt_id': attempt,
-                'path': desc['path'],
-                'kind': desc['kind'],
-                'sha256': desc['sha256'],
-                'rows': 0,
-                'unique_identities': 0,
-                'semantics': 'authenticated_zero_size_no_position_bytes',
-            })
+            zero_receipts.append({'job_id':job_id,'attempt_id':attempt,'path':desc['path'],'kind':desc['kind'],'sha256':desc['sha256'],'rows':0,'unique_identities':0,'semantics':'authenticated_zero_size_no_position_bytes'})
         else:
             nonempty.append((i, desc))
     return nonempty, zero_receipts
@@ -241,16 +181,10 @@ def _authenticate_candidate_descriptors(
 def build_union(work: Path, artifact: Path) -> dict:
     if work.exists() or work.is_symlink():
         raise C0CError('work_dir_must_not_exist')
-    work.mkdir(parents=True)
-    artifact.mkdir(parents=True, exist_ok=True)
+    work.mkdir(parents=True); artifact.mkdir(parents=True, exist_ok=True)
     c0a, c0b = fetch_parent(work)
     sources = {x['job_id']: x for x in c0a.get('sources', [])}
-    all_ids: set[str] = set()
-    file_receipts = []
-    total_rows = 0
-    downloaded = 0
-    zero_size_authenticated = 0
-
+    all_ids: set[str] = set(); file_receipts = []; total_rows = 0; downloaded = 0; zero_size_authenticated = 0
     for job in c0b.get('candidate_jobs', []):
         job_id, attempt = job['job_id'], job.get('attempt_id')
         candidates = job.get('candidate_files', [])
@@ -260,34 +194,16 @@ def build_union(work: Path, artifact: Path) -> dict:
         if not source or source.get('attempt_id') != attempt:
             raise C0CError('c0a_c0b_identity_mismatch')
         state = source.get('result_state')
-        if state not in {'completed', 'failed'}:
+        if state not in {'completed','failed'}:
             raise C0CError('candidate_result_state')
         prefix = f'r2:jass-data/runs/{job_id}/{attempt}'
         local = work / ('job-' + hashlib.sha256(job_id.encode()).hexdigest()[:12])
-
-        nonempty, zero_receipts = _authenticate_candidate_descriptors(
-            prefix=prefix,
-            state=state,
-            job_id=job_id,
-            attempt=attempt,
-            candidates=candidates,
-        )
-        file_receipts.extend(zero_receipts)
-        zero_size_authenticated += len(zero_receipts)
+        nonempty, zero_receipts = _authenticate_candidate_descriptors(prefix=prefix,state=state,job_id=job_id,attempt=attempt,candidates=candidates)
+        file_receipts.extend(zero_receipts); zero_size_authenticated += len(zero_receipts)
         if not nonempty:
             continue
-
-        selections = [
-            (desc['path'], f'{i:04d}-{Path(desc["path"]).name}')
-            for i, desc in nonempty
-        ]
-        fetched = fetch_result_files.fetch_files(
-            rclone='rclone',
-            prefix=prefix,
-            expected_state=state,
-            selections=selections,
-            out_dir=local,
-        )
+        selections = [(desc['path'], f'{i:04d}-{Path(desc["path"]).name}') for i, desc in nonempty]
+        fetched = fetch_result_files.fetch_files(rclone='rclone', prefix=prefix, expected_state=state, selections=selections, out_dir=local)
         if fetched.get('job_id') != job_id or fetched.get('attempt_id') != attempt:
             raise C0CError('download_identity')
         fetched_map = {x['path']: x for x in fetched['files']}
@@ -296,58 +212,18 @@ def build_union(work: Path, artifact: Path) -> dict:
             if not got or got['sha256'] != desc['sha256'] or got['size_bytes'] != desc['size_bytes']:
                 raise C0CError('descriptor_drift')
             path = local / f'{i:04d}-{Path(desc["path"]).name}'
-            ids, rows, semantics = parse_candidate(path, desc['kind'])
-            all_ids.update(ids)
-            total_rows += rows
-            downloaded += 1
-            file_receipts.append({
-                'job_id': job_id,
-                'attempt_id': attempt,
-                'path': desc['path'],
-                'kind': desc['kind'],
-                'sha256': desc['sha256'],
-                'rows': rows,
-                'unique_identities': len(ids),
-                'semantics': semantics,
-            })
+            try:
+                ids, rows, semantics = parse_candidate(path, desc['kind'])
+            except C0CError as exc:
+                raise C0CError(f'{exc};job_id={job_id};attempt_id={attempt};path={desc["path"]};kind={desc["kind"]};candidate_index={i}') from exc
+            all_ids.update(ids); total_rows += rows; downloaded += 1
+            file_receipts.append({'job_id':job_id,'attempt_id':attempt,'path':desc['path'],'kind':desc['kind'],'sha256':desc['sha256'],'rows':rows,'unique_identities':len(ids),'semantics':semantics})
             path.unlink(missing_ok=True)
         shutil.rmtree(local, ignore_errors=True)
-
     if not all_ids:
         raise C0CError('empty_exclusion_union')
     union_raw = ('\n'.join(sorted(all_ids)) + '\n').encode('ascii')
-    union_path = artifact / 'ed4-c0c-structural-exclusion-union.txt'
-    union_path.write_bytes(union_raw)
-    manifest = {
-        'schema': SCHEMA,
-        'state': 'completed',
-        'verdict': 'ED4_C0C_STRUCTURAL_EXCLUSION_UNION_READY_V1',
-        'parent_job_id': PARENT_JOB,
-        'parent_attempt_id': PARENT_ATTEMPT,
-        'parent_c0a_sha256': C0A_SHA,
-        'parent_c0b_sha256': C0B_SHA,
-        'candidate_files_downloaded': downloaded,
-        'candidate_zero_size_authenticated': zero_size_authenticated,
-        'candidate_rows_parsed': total_rows,
-        'unique_canonical_identities': len(all_ids),
-        'union_sha256': hashlib.sha256(union_raw).hexdigest(),
-        'union_size_bytes': len(union_raw),
-        'target_fields_decoded': 0,
-        'score_reads': 0,
-        'wdl_reads': 0,
-        'qvalue_reads': 0,
-        'model_reads': 0,
-        'teacher_calls': 0,
-        'search_calls': 0,
-        'fits': 0,
-        'games': 0,
-        'alpha_spent': 0,
-        'confirmation_authorized': False,
-        'automatic_continuation': False,
-        'files': file_receipts,
-    }
-    (artifact / 'ed4-c0c-structural-exclusion-manifest.json').write_text(
-        json.dumps(manifest, sort_keys=True, separators=(',', ':')) + '\n',
-        encoding='utf-8',
-    )
+    union_path = artifact / 'ed4-c0c-structural-exclusion-union.txt'; union_path.write_bytes(union_raw)
+    manifest = {'schema':SCHEMA,'state':'completed','verdict':'ED4_C0C_STRUCTURAL_EXCLUSION_UNION_READY_V1','parent_job_id':PARENT_JOB,'parent_attempt_id':PARENT_ATTEMPT,'parent_c0a_sha256':C0A_SHA,'parent_c0b_sha256':C0B_SHA,'candidate_files_downloaded':downloaded,'candidate_zero_size_authenticated':zero_size_authenticated,'candidate_rows_parsed':total_rows,'unique_canonical_identities':len(all_ids),'union_sha256':hashlib.sha256(union_raw).hexdigest(),'union_size_bytes':len(union_raw),'target_fields_decoded':0,'score_reads':0,'wdl_reads':0,'qvalue_reads':0,'model_reads':0,'teacher_calls':0,'search_calls':0,'fits':0,'games':0,'alpha_spent':0,'confirmation_authorized':False,'automatic_continuation':False,'files':file_receipts}
+    (artifact/'ed4-c0c-structural-exclusion-manifest.json').write_text(json.dumps(manifest,sort_keys=True,separators=(',',':'))+'\n',encoding='utf-8')
     return manifest
