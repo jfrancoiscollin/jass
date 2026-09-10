@@ -11,7 +11,17 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import sys
 from typing import Any
+
+# run_experiment_stage intentionally launches stages with a sanitized environment
+# that does not inherit PYTHONPATH.  When this file is executed by path, Python
+# otherwise places jobs/tools (not the repository root) on sys.path, so the
+# package imports below fail before the diagnostic can start.  Bootstrap only the
+# repository import root; this changes no diagnostic inputs or scientific logic.
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from jobs.tools import fetch_result_files
 from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json
