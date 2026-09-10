@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # Keep this suite on an ordinary branch commit after the incident-register bot
 # autofeeds TI-043 so the required PR checks run against the final head.
+# Retrigger marker: author commit after incident autofeed; no diagnostic semantics change.
 import gzip
 import json
 import os
