@@ -59,4 +59,5 @@ jobs:
           jobs.tests.test_ed4_source_inventory_stage
           jobs.tests.test_ed4_source_inventory_pipeline
           jobs.tests.test_ed4_c0c_exclusion_union
+          jobs.tests.test_ed4_c0c_failure_readout
           -v
