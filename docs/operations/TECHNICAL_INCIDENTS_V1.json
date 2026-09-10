@@ -390,6 +390,16 @@
       "invariant": "Only the fixed runner stdout/stderr paths may be empty, and their actual remote objects still require verified existence, size and SHA256. Receipt remains nonempty; generic scientific readers and all frozen ED4 contracts remain unchanged.",
       "evidence": "1900 attempt 20260910T080806Z-60653eb3 status; jobs/tests/test_ed4_c0c_failure_readout.py; immutable runtime proof pending.; PR #902",
       "status": "MITIGATED — CI and authenticated diagnostic retry pending"
+    },
+    {
+      "id": "TI-040",
+      "dedupe_key": "job:cpx62-1902-l3-ed4-c0c-structural-exclusion-union-v2",
+      "context": "ED4 C0C rerun 1902",
+      "symptom": "STAGE_FAILED:EXECUTE at parse-position-identity-only; frames end at fetch_parent -> fetch_result_files.py line 118.",
+      "root_cause": "fetch_parent selected the two sealed 1897 parent artifacts as bare result-root paths, but 1897 writes them under JASS_ARTEFACT_DIR and runner-v3 inventories paths relative to the run root as artefacts/<name>. The nonempty artifacts therefore could not be found under the requested bare names.",
+      "invariant": "C0C must fetch the same immutable 1897 C0A/C0B bytes only through their authenticated runner inventory paths artefacts/..., preserving fixed job/attempt/code/SHA256 and all scientific semantics.",
+      "evidence": "1902 attempt 20260910T095847Z-390d1f31 frames; 1897 terminal nonempty artifact sizes; runner_v3_store inventory path contract; jobs.tests.test_ed4_c0c_exclusion_union parent-path regression; runtime proof pending.; PR #904",
+      "status": "MITIGATED — CI and immutable C0C rerun pending"
     }
   ]
 }
