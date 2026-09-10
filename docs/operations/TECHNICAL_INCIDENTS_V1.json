@@ -424,12 +424,12 @@
     {
       "id": "TI-043",
       "dedupe_key": "job:cpx62-1907-l3-ed4-c0c-structural-exclusion-union-v4",
-      "context": "ED4 C0C retry 1907",
-      "symptom": "1907 exited 2 in parse-position-identity-only with C0CError; GitOps frames end in parse_jnnw but the exact fail-closed token is not present in status.",
-      "root_cause": "Pending authenticated runner stderr readout; no parser behavior is changed until the exact 1907 C0CError is proven.",
-      "invariant": "Diagnostic reads only runner-owned receipt/stdout/stderr from the immutable failed attempt. ED4 candidate bytes, exclusion universe, thresholds, alpha, confirmation corpus and parser semantics remain frozen.",
-      "evidence": "jass-control status for 1907 attempt 20260910T145830Z-96b4d879; authenticated diagnostic retry pending.; PR #909",
-      "status": "OPEN — authenticated 1907 failure readout pending"
+      "context": "ED4 C0C retry 1907 / exact candidate diagnostics",
+      "symptom": "1907 failed in parse_jnnw with exact token jnnw_truncated; authenticated runner log readout 1908 had empty stdout/stderr, so the candidate path was not observable.",
+      "root_cause": "A nonempty authenticated JNNW candidate has a declared record count larger than the available decompressed payload; exact candidate identity remains to be proven by the bounded context instrumentation.",
+      "invariant": "Instrumentation may expose only job/attempt/path/kind/index and the existing fail-closed token. It must not alter candidate bytes, parser semantics, exclusion identities, targets, alpha, confirmation, or promotion state.",
+      "evidence": "1907 attempt 20260910T145830Z-96b4d879; parse_jnnw line 74 = jnnw_truncated; 1908 authenticated diagnostic completed with empty stdout/stderr; runtime candidate identification pending.; PR #910",
+      "status": "MITIGATED — CI and immutable diagnostic retry pending"
     }
   ]
 }
