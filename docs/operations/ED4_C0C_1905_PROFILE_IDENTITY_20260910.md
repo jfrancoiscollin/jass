@@ -9,3 +9,5 @@ The admission pinned `04a34e561dd1e3737f9e4c0e021ce53ef48c1fc1e8560f59a5d5268390
 This failure happened before the metadata-only diagnostic stage executed. It consumed no ED4 confirmation targets and changed no candidate bytes, exclusion universe, thresholds, alpha, model, fit, search, game or promotion state.
 
 The control-plane mitigation is a new immutable V2-admitted diagnostic retry with the same code/spec/runtime/scientific contract and the correct profile-file SHA256. Runtime proof remains required before closure.
+
+The central technical-incident register auto-feed assigned this defect `TI-042`.
