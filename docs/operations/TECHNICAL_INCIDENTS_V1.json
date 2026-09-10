@@ -420,6 +420,16 @@
       "invariant": "Every V2 admission must pin the raw SHA256 of the exact profile file at the immutable code SHA; a failed launch cannot be retried under the same job ID. Scientific payloads and ED4 frozen semantics remain untouched.",
       "evidence": "1905 attempt 20260910T115446Z-60a74cf8 status; admission profile_sha256 04a34e56…; immutable profile file SHA256 781d267b…; jass-control #607 queues corrected immutable retry 1906.; PR #907",
       "status": "MITIGATED — corrected immutable retry 1906 pending CI/runtime proof"
+    },
+    {
+      "id": "TI-043",
+      "dedupe_key": "job:cpx62-1907-l3-ed4-c0c-structural-exclusion-union-v4",
+      "context": "ED4 C0C retry 1907",
+      "symptom": "1907 exited 2 in parse-position-identity-only with C0CError; GitOps frames end in parse_jnnw but the exact fail-closed token is not present in status.",
+      "root_cause": "Pending authenticated runner stderr readout; no parser behavior is changed until the exact 1907 C0CError is proven.",
+      "invariant": "Diagnostic reads only runner-owned receipt/stdout/stderr from the immutable failed attempt. ED4 candidate bytes, exclusion universe, thresholds, alpha, confirmation corpus and parser semantics remain frozen.",
+      "evidence": "jass-control status for 1907 attempt 20260910T145830Z-96b4d879; authenticated diagnostic retry pending.; PR #909",
+      "status": "OPEN — authenticated 1907 failure readout pending"
     }
   ]
 }
