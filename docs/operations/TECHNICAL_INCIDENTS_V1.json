@@ -405,11 +405,11 @@
       "id": "TI-041",
       "dedupe_key": "job:cpx62-1903-l3-ed4-c0c-structural-exclusion-union-v3",
       "context": "ED4 C0C retry 1903",
-      "symptom": "Exit 2 / STAGE_FAILED:EXECUTE during parse-position-identity-only; frames end at ed4_c0c_exclusion_union.py build_union line 181 -> fetch_result_files.py line 118.",
-      "root_cause": "UNKNOWN — authenticate runner receipt/stdout/stderr before repair; sparse GitOps status is insufficient to identify the offending candidate path.",
-      "invariant": "Do not alter C0C parser, exclusion universe, candidate bytes, thresholds, alpha or confirmation corpus until the immutable 1903 runner diagnostics prove the technical cause.",
-      "evidence": "jass-control status cpx62-1903-l3-ed4-c0c-structural-exclusion-union-v3 attempt 20260910T111237Z-731ae702; authenticated readout pending.; PR #905",
-      "status": "OPEN — authenticated diagnostic retry pending"
+      "symptom": "1904 authenticated the 1903 failed receipt; both runner stdout and stderr are valid zero-byte objects. The 1903 traceback still ends at fetch_result_files.fetch_files line 118 during parse-position-identity-only.",
+      "root_cause": "NARROWED, NOT YET PATH-IDENTIFIED — line 118 is exclusively the missing/empty selected-file guard. Because the authenticated runner logs are empty, a metadata-only replay of frozen C0B descriptors against authenticated runner inventories is required to name the exact candidate.",
+      "invariant": "Do not download candidate payloads or alter C0C semantics while diagnosing. Reproduce only the missing/zero-size pre-download guard from frozen C0A/C0B and authenticated inventories; preserve candidate bytes, exclusion universe, thresholds, alpha and confirmation corpus.",
+      "evidence": "1903 status attempt 20260910T111237Z-731ae702; 1904 completed attempt 20260910T112822Z-d7cb92ac with authenticated zero-byte stdout/stderr; dedicated regression and target-host metadata diagnostic pending.; PR #906",
+      "status": "OPEN — exact authenticated candidate-path diagnosis pending"
     }
   ]
 }
