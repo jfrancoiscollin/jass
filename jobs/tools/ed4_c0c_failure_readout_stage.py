@@ -32,6 +32,43 @@ SOURCE_CODE = "2bf3785bcf3bafcb048c64cd2de1f85cbdc7cd45"
 SOURCE_PREFIX = f"r2:jass-data/runs/{SOURCE_JOB}/{SOURCE_ATTEMPT}"
 PHASES = ["authenticate-failed-attempt", "read-runner-diagnostics", "publish-technical-readout"]
 MAX_TAIL_BYTES = 8192
+DIAGNOSTIC_PATHS = ("stage-receipt.json", "stage.stdout.log", "stage.stderr.log")
+
+
+def fetch_runner_diagnostics(out_dir: Path) -> dict[str, Any]:
+    """Read exactly three authenticated runner files, allowing empty logs only.
+
+    A failed Python entrypoint can legitimately have zero stdout.  The generic
+    scientific file reader must continue to reject empty payloads; this narrow
+    adapter still requires every log to exist and downloads/verifies even a
+    zero-byte log against the authenticated inventory size and SHA256.
+    """
+    report = fetch_result_files.inspect_result_inventory(
+        rclone="rclone", prefix=SOURCE_PREFIX, expected_state="failed",
+    )
+    identity = (
+        report.get("job_id"), report.get("attempt_id"), report.get("code_sha"),
+        report.get("result_state"), report.get("exit_code"),
+    )
+    if identity != (SOURCE_JOB, SOURCE_ATTEMPT, SOURCE_CODE, "failed", 2):
+        raise RuntimeError("failed_attempt_identity")
+    files = {item["path"]: item for item in report["files"]}
+    # Validate the complete fixed allowlist before downloading any payload.
+    for name in DIAGNOSTIC_PATHS:
+        item = files.get(name)
+        if item is None or item["size_bytes"] < 0:
+            raise RuntimeError(f"missing/invalid runner diagnostic: {name}")
+        if name == "stage-receipt.json" and item["size_bytes"] == 0:
+            raise RuntimeError("empty runner stage receipt")
+    selected = []
+    for name in DIAGNOSTIC_PATHS:
+        item = files[name]
+        fetch_result_files.base.download_verified(
+            "rclone", SOURCE_PREFIX + "/" + name, out_dir / name,
+            item["sha256"], item["size_bytes"],
+        )
+        selected.append({**item, "local_name": name})
+    return {**report, "files": selected}
 
 
 def sha256_file(path: Path) -> str:
@@ -76,17 +113,7 @@ def main() -> int:
     try:
         evidence.begin(PHASES[0])
         out = result / "c0c-1898-failure-readout"
-        report = fetch_result_files.fetch_files(
-            rclone="rclone",
-            prefix=SOURCE_PREFIX,
-            expected_state="failed",
-            selections=[
-                ("stage-receipt.json", "stage-receipt.json"),
-                ("stage.stdout.log", "stage.stdout.log"),
-                ("stage.stderr.log", "stage.stderr.log"),
-            ],
-            out_dir=out,
-        )
+        report = fetch_runner_diagnostics(out)
         identity = (
             report.get("job_id"), report.get("attempt_id"), report.get("code_sha"),
             report.get("result_state"), report.get("exit_code"),
