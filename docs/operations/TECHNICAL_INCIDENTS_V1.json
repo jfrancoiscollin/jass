@@ -410,6 +410,16 @@
       "invariant": "Do not download candidate payloads or alter C0C semantics while diagnosing. Reproduce only the missing/zero-size pre-download guard from frozen C0A/C0B and authenticated inventories; preserve candidate bytes, exclusion universe, thresholds, alpha and confirmation corpus.",
       "evidence": "1903 status attempt 20260910T111237Z-731ae702; 1904 completed attempt 20260910T112822Z-d7cb92ac with authenticated zero-byte stdout/stderr; dedicated regression and target-host metadata diagnostic pending.; PR #906",
       "status": "OPEN — exact authenticated candidate-path diagnosis pending"
+    },
+    {
+      "id": "TI-042",
+      "dedupe_key": "job:cpx62-1905-l3-ed4-c0c-1903-fetch-precondition-diagnostic-v1",
+      "context": "ED4 C0C metadata-only diagnostic 1905",
+      "symptom": "Job was claimed and failed before stage execution with PROFILE_IDENTITY.",
+      "root_cause": "The admission pinned the canonical JSON digest of the launch profile instead of the SHA256 of the actual profile file bytes required by launch_gate_v2.",
+      "invariant": "Every V2 admission must pin the raw SHA256 of the exact profile file at the immutable code SHA; a failed launch cannot be retried under the same job ID. Scientific payloads and ED4 frozen semantics remain untouched.",
+      "evidence": "1905 attempt 20260910T115446Z-60a74cf8 status; admission profile_sha256 04a34e56…; immutable profile file SHA256 781d267b…; jass-control #607 queues corrected immutable retry 1906.; PR #907",
+      "status": "MITIGATED — corrected immutable retry 1906 pending CI/runtime proof"
     }
   ]
 }
