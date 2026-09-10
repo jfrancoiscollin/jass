@@ -148,8 +148,8 @@ def fetch_parent(work: Path) -> tuple[dict, dict]:
     out = work / 'parent'; out.mkdir(parents=True)
     report = fetch_result_files.fetch_files(
         rclone='rclone', prefix=PARENT_PREFIX, expected_state='completed', out_dir=out,
-        selections=[('ed4-c0a-source-descriptor-inventory.json','c0a.json'),
-                    ('ed4-c0b-structural-candidate-manifest.json','c0b.json')])
+        selections=[('artefacts/ed4-c0a-source-descriptor-inventory.json','c0a.json'),
+                    ('artefacts/ed4-c0b-structural-candidate-manifest.json','c0b.json')])
     if (report.get('job_id'), report.get('attempt_id'), report.get('code_sha')) != (PARENT_JOB, PARENT_ATTEMPT, PARENT_CODE):
         raise C0CError('parent_identity')
     if sha256_file(out/'c0a.json') != C0A_SHA or sha256_file(out/'c0b.json') != C0B_SHA:
