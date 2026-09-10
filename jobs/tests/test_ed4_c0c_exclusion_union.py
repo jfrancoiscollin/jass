@@ -1,4 +1,6 @@
 from __future__ import annotations
+# Keep this module in the ED4 workflow so incident-register autofeed commits are
+# followed by an ordinary branch commit that retriggers the required checks.
 import gzip, os, struct, subprocess, sys, tempfile, unittest
 from pathlib import Path
 from jobs.tools.ed4_c0c_exclusion_union import parse_jnnw, parse_fen_file, parse_tsv, parse_candidate
