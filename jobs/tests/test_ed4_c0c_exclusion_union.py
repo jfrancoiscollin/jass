@@ -2,6 +2,7 @@ from __future__ import annotations
 # Keep this module in the ED4 workflow so incident-register autofeed commits are
 # followed by an ordinary branch commit that retriggers the required checks.
 # This author commit intentionally retriggers CI after the incident autofeed.
+# No test semantics are changed by this marker.
 import gzip, hashlib, os, struct, subprocess, sys, tempfile, unittest
 from pathlib import Path
 from unittest import mock
