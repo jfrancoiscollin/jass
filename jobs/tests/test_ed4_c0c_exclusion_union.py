@@ -3,6 +3,8 @@ from __future__ import annotations
 # followed by an ordinary branch commit that retriggers the required checks.
 import gzip, os, struct, subprocess, sys, tempfile, unittest
 from pathlib import Path
+from unittest import mock
+from jobs.tools import ed4_c0c_exclusion_union as c0c
 from jobs.tools.ed4_c0c_exclusion_union import parse_jnnw, parse_fen_file, parse_tsv, parse_candidate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,6 +40,21 @@ class C0CParserTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             p=Path(td)/'x.jnnw'; p.write_bytes(b'JNNW'+struct.pack('<I',1)+self._record()+b'x')
             with self.assertRaises(Exception): parse_jnnw(p)
+    def test_parent_fetch_uses_runner_artefacts_namespace(self):
+        sentinel = RuntimeError('stop-after-call-contract')
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(
+            c0c.fetch_result_files, 'fetch_files', side_effect=sentinel
+        ) as fetch:
+            with self.assertRaisesRegex(RuntimeError, 'stop-after-call-contract'):
+                c0c.fetch_parent(Path(td))
+        self.assertEqual(fetch.call_count, 1)
+        kwargs = fetch.call_args.kwargs
+        self.assertEqual(kwargs['prefix'], c0c.PARENT_PREFIX)
+        self.assertEqual(kwargs['expected_state'], 'completed')
+        self.assertEqual(kwargs['selections'], [
+            ('artefacts/ed4-c0a-source-descriptor-inventory.json', 'c0a.json'),
+            ('artefacts/ed4-c0b-structural-candidate-manifest.json', 'c0b.json'),
+        ])
     def test_direct_stage_entrypoint_bootstraps_repo_imports_without_pythonpath(self):
         env = {'PATH': os.defpath, 'PYTHONDONTWRITEBYTECODE': '1'}
         completed = subprocess.run(
