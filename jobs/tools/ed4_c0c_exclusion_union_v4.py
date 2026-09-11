@@ -11,10 +11,30 @@ REC=38
 SALVAGE_JOB='cpx62-1785-l3-decision-math-b2-documentary-preread-schema-compat-v1'
 SALVAGE_ATTEMPT='20260905T145718Z-d3657332'
 SALVAGE_PREFIX='b2-preread-schema-compat/documentary-worktree/jobs/results/ccx33-0206-wdl-loop-mt60/artefacts/'
+# Prospective V4A extension after terminal diagnostic 1920. This is intentionally
+# an exact authenticated object allow-list, not a new directory/prefix class.
+V4A_EXACT_OBJECTS={
+    'b2-preread-schema-compat/documentary-worktree/jobs/results/ccx33-0297-saturate-loop/artefacts/sp0-1.jnnw':{
+        'sha256':'bb556ce4b75a16e2123c2413346bb2abe34375c46d53531079d9ca324cc9aeea',
+        'size_bytes':98498,
+    },
+}
+
+
+def _is_scoped_object(desc:dict, job_id:str, attempt:str)->bool:
+    if not (job_id==SALVAGE_JOB and attempt==SALVAGE_ATTEMPT and desc.get('kind')=='jnnw'):
+        return False
+    path=str(desc.get('path',''))
+    if path.startswith(SALVAGE_PREFIX):
+        return True
+    exact=V4A_EXACT_OBJECTS.get(path)
+    if exact is None:
+        return False
+    return desc.get('sha256')==exact['sha256'] and desc.get('size_bytes')==exact['size_bytes']
 
 
 def _parse_scoped_interrupted_jnnw(path:Path, desc:dict, job_id:str, attempt:str):
-    if not (job_id==SALVAGE_JOB and attempt==SALVAGE_ATTEMPT and desc.get('kind')=='jnnw' and str(desc.get('path','')).startswith(SALVAGE_PREFIX)):
+    if not _is_scoped_object(desc,job_id,attempt):
         return None
     raw=path.read_bytes()
     if len(raw)!=desc.get('size_bytes') or hashlib.sha256(raw).hexdigest()!=desc.get('sha256'):
@@ -87,6 +107,6 @@ def build_union_v4(work:Path, artifact:Path)->dict:
     if class_files<3: raise v1.C0CError('v4_expected_class_instances_missing')
     if not all_ids: raise v1.C0CError('empty_exclusion_union')
     raw=('\n'.join(sorted(all_ids))+'\n').encode('ascii'); (artifact/'ed4-c0c-structural-exclusion-union.txt').write_bytes(raw)
-    manifest={'schema':SCHEMA,'state':'completed','verdict':VERDICT,'protocol_change':'prospective_v4_scoped_interrupted_writer_class_2026-09-10','parent_job_id':v1.PARENT_JOB,'parent_attempt_id':v1.PARENT_ATTEMPT,'parent_c0a_sha256':v1.C0A_SHA,'parent_c0b_sha256':v1.C0B_SHA,'candidate_files_downloaded':downloaded,'candidate_zero_size_authenticated':zero,'candidate_rows_parsed':total_rows,'class_salvaged_files':class_files,'class_salvaged_complete_records':class_records,'discarded_partial_tail_bytes':discarded,'unique_canonical_identities':len(all_ids),'union_sha256':hashlib.sha256(raw).hexdigest(),'union_size_bytes':len(raw),'target_fields_decoded':0,'target_reads':0,'score_reads':0,'wdl_reads':0,'qvalue_reads':0,'model_reads':0,'teacher_calls':0,'search_calls':0,'fits':0,'games':0,'alpha_spent':0,'confirmation_authorized':False,'automatic_continuation':False,'files':receipts}
+    manifest={'schema':SCHEMA,'state':'completed','verdict':VERDICT,'protocol_change':'prospective_v4_scoped_interrupted_writer_class_plus_v4a_exact_object_2026-09-11','parent_job_id':v1.PARENT_JOB,'parent_attempt_id':v1.PARENT_ATTEMPT,'parent_c0a_sha256':v1.C0A_SHA,'parent_c0b_sha256':v1.C0B_SHA,'candidate_files_downloaded':downloaded,'candidate_zero_size_authenticated':zero,'candidate_rows_parsed':total_rows,'class_salvaged_files':class_files,'class_salvaged_complete_records':class_records,'discarded_partial_tail_bytes':discarded,'unique_canonical_identities':len(all_ids),'union_sha256':hashlib.sha256(raw).hexdigest(),'union_size_bytes':len(raw),'target_fields_decoded':0,'target_reads':0,'score_reads':0,'wdl_reads':0,'qvalue_reads':0,'model_reads':0,'teacher_calls':0,'search_calls':0,'fits':0,'games':0,'alpha_spent':0,'confirmation_authorized':False,'automatic_continuation':False,'files':receipts}
     (artifact/'ed4-c0c-structural-exclusion-manifest.json').write_text(json.dumps(manifest,sort_keys=True,separators=(',',':'))+'\n')
     return manifest
