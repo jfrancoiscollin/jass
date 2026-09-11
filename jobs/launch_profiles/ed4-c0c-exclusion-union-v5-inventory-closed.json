@@ -1,0 +1,10 @@
+{
+  "campaign": "ed4-confirmation-source-audit",
+  "command": ["/var/tmp/jass-l3-numeric-venv-current-v1/bin/python", "jobs/tools/ed4_c0c_exclusion_union_v5_stage.py"],
+  "evidence_outputs": ["ed4-c0c-structural-exclusion-union.txt", "ed4-c0c-structural-exclusion-manifest.json"],
+  "production_max_effects": {"bakes":0,"fits":0,"new_jass_searches":0,"new_scan_searches":0,"promotions":0,"selfplay_games":0,"strength_games":0,"test_target_reads":0},
+  "rehearsal_max_effects": {"bakes":0,"fits":0,"new_jass_searches":0,"new_scan_searches":0,"promotions":0,"selfplay_games":0,"strength_games":0,"test_target_reads":0},
+  "required_phases": ["authenticate-1922-inventory","authenticate-c0b-parent","download-authenticated-candidates","parse-position-identity-only-v5-inventory-closed","publish-union-v5"],
+  "schema": "jass.launch_profile.v2",
+  "stage": "ed4-c0c-exclusion-union-v5-inventory-closed"
+}
