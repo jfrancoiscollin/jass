@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ED4 C0C V4 structural diagnostic: locate first malformed JNNW not handled by V4 class.
 
-Reads only authenticated envelope structure (magic, declared count, body length/tail). It does
+Reads only authenticated envelope structure (declared count/body length/tail). It does
 not decode any record field, position identity, target, score, WDL, q-value, model, search,
 fit, game or alpha. Objects matching the preregistered V4 interrupted-writer class are skipped.
 """
@@ -15,11 +15,27 @@ from jobs.tools import ed4_c0c_jnnw_shape_diagnostic_stage as base
 from jobs.tools import ed4_c0c_exclusion_union_v4 as v4
 from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json
 PHASES=["authenticate-c0b-parent-metadata","scan-after-v4-class","publish-v4-next-failure-diagnostic"]
+REC=38
+HEADER=8
 
 def is_v4_class(job_id,attempt,desc,shape):
+    """Match the preregistered interrupted-writer class using only authenticated structure.
+
+    ``inspect_jnnw_envelope`` intentionally does not decode record bytes and therefore only
+    reports envelope state/reason/count/body counters.  For an uncompressed JNNW with declared
+    count zero, the number of complete 38-byte records and the incomplete tail are derived from
+    the authenticated file size; no record field (including the final five target bytes) is read.
+    """
     if not (job_id==v4.SALVAGE_JOB and attempt==v4.SALVAGE_ATTEMPT and desc.get('kind')=='jnnw' and str(desc.get('path','')).startswith(v4.SALVAGE_PREFIX)):
         return False
-    return bool(shape.get('magic')=='JNNW' and shape.get('declared_count')==0 and shape.get('complete_records',0)>=1 and 1<=shape.get('partial_tail_bytes',0)<=37)
+    if not (shape.get('state')=='invalid' and shape.get('reason')=='jnnw_trailing_bytes' and shape.get('declared_count')==0):
+        return False
+    size=desc.get('size_bytes')
+    if not isinstance(size,int) or size < HEADER + REC:
+        return False
+    body=size-HEADER
+    complete_records,partial_tail_bytes=divmod(body,REC)
+    return complete_records>=1 and 1<=partial_tail_bytes<=REC-1
 
 def find_next(c0a,c0b,work):
     sources={r['job_id']:r for r in c0a.get('sources',[])}
