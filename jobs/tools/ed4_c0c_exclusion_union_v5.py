@@ -14,6 +14,12 @@ INV_CODE='832b0339fe02cbf3b187377ff475a3ddd289e0d6'
 INV_PATH='ed4-c0c-v4-full-malformed-inventory.json'
 
 
+def _required(mapping:dict,key:str,code:str):
+    if not isinstance(mapping,dict) or key not in mapping:
+        raise v1.C0CError(f'{code}:missing:{key}')
+    return mapping[key]
+
+
 def _load_inventory(work:Path):
     prefix=f'r2:jass-data/runs/{INV_JOB}/{INV_ATTEMPT}'
     invr=fetch_result_files.inspect_result_inventory(rclone='rclone',prefix=prefix,expected_state='completed')
@@ -24,7 +30,10 @@ def _load_inventory(work:Path):
         raise v1.C0CError('v5_inventory_artifact_missing')
     out=work/'inventory'; out.mkdir(parents=True,exist_ok=True)
     fetched=fetch_result_files.fetch_files(rclone='rclone',prefix=prefix,expected_state='completed',selections=[(INV_PATH,'inventory.json')],out_dir=out)
-    got=fetched['files'][0]
+    fetched_files=fetched.get('files') if isinstance(fetched,dict) else None
+    if not isinstance(fetched_files,list) or len(fetched_files)!=1:
+        raise v1.C0CError('v5_inventory_fetch_report')
+    got=fetched_files[0]
     if got.get('sha256')!=item.get('sha256') or got.get('size_bytes')!=item.get('size_bytes'):
         raise v1.C0CError('v5_inventory_artifact_drift')
     raw=(out/'inventory.json').read_bytes()
@@ -46,23 +55,27 @@ def _load_inventory(work:Path):
         key=(row.get('job_id'),row.get('attempt_id'),row.get('path'))
         if not all(isinstance(x,str) and x for x in key) or key in allow:
             raise v1.C0CError('v5_inventory_key')
-        allow[key]={'sha256':row.get('sha256'),'size_bytes':row.get('size_bytes'),'complete':complete,'tail':tail}
+        sha=row.get('sha256'); size=row.get('size_bytes')
+        if not isinstance(sha,str) or not sha or not isinstance(size,int) or size<=0:
+            raise v1.C0CError('v5_inventory_object_identity')
+        allow[key]={'sha256':sha,'size_bytes':size,'complete':complete,'tail':tail}
     return allow, hashlib.sha256(raw).hexdigest(), len(raw)
 
 
 def _salvage(path:Path,desc:dict,job_id:str,attempt:str,allow:dict):
-    exact=allow.get((job_id,attempt,str(desc.get('path',''))))
+    desc_path=desc.get('path')
+    exact=allow.get((job_id,attempt,str(desc_path or '')))
     if exact is None:
         return None
-    if desc.get('kind')!='jnnw' or desc.get('sha256')!=exact['sha256'] or desc.get('size_bytes')!=exact['size_bytes']:
+    if desc.get('kind')!='jnnw' or desc.get('sha256')!=exact.get('sha256') or desc.get('size_bytes')!=exact.get('size_bytes'):
         raise v1.C0CError('v5_exact_object_identity')
     raw=path.read_bytes()
-    if len(raw)!=exact['size_bytes'] or hashlib.sha256(raw).hexdigest()!=exact['sha256']:
+    if len(raw)!=exact.get('size_bytes') or hashlib.sha256(raw).hexdigest()!=exact.get('sha256'):
         raise v1.C0CError('v5_download_identity')
     if len(raw)<8 or raw[:4]!=b'JNNW' or struct.unpack('<I',raw[4:8])[0]!=0:
         raise v1.C0CError('v5_header_identity')
     complete,tail=divmod(len(raw)-8,REC)
-    if (complete,tail)!=(exact['complete'],exact['tail']):
+    if (complete,tail)!=(exact.get('complete'),exact.get('tail')):
         raise v1.C0CError('v5_geometry_drift')
     ids=set(); body=raw[8:]
     for i in range(complete):
@@ -76,10 +89,18 @@ def build_union_v5(work:Path,artifact:Path)->dict:
     if work.exists() or work.is_symlink(): raise v1.C0CError('work_dir_must_not_exist')
     work.mkdir(parents=True); artifact.mkdir(parents=True,exist_ok=True)
     allow,inv_sha,inv_size=_load_inventory(work)
-    c0a,c0b=v1.fetch_parent(work/'parent'); sources={x['job_id']:x for x in c0a.get('sources',[])}
+    c0a,c0b=v1.fetch_parent(work/'parent')
+    sources={}
+    for source in c0a.get('sources',[]):
+        job_id=source.get('job_id') if isinstance(source,dict) else None
+        if not job_id:
+            raise v1.C0CError('v5_c0a_source_missing_job_id')
+        sources[job_id]=source
     all_ids=set(); receipts=[]; total_rows=downloaded=zero=salv_files=salv_records=discarded=0; seen=set()
     for job in c0b.get('candidate_jobs',[]):
-        job_id,attempt=job['job_id'],job.get('attempt_id'); candidates=job.get('candidate_files',[])
+        if not isinstance(job,dict) or not job.get('job_id'):
+            raise v1.C0CError('v5_c0b_candidate_missing_job_id')
+        job_id=job.get('job_id'); attempt=job.get('attempt_id'); candidates=job.get('candidate_files',[])
         if not candidates: continue
         source=sources.get(job_id)
         if not source or source.get('attempt_id')!=attempt: raise v1.C0CError('c0a_c0b_identity_mismatch')
@@ -89,25 +110,36 @@ def build_union_v5(work:Path,artifact:Path)->dict:
         nonempty,zero_receipts=v1._authenticate_candidate_descriptors(prefix=prefix,state=state,job_id=job_id,attempt=attempt,candidates=candidates)
         receipts.extend(zero_receipts); zero+=len(zero_receipts)
         if not nonempty: continue
-        selections=[(d['path'],f'{i:04d}-{Path(d["path"]).name}') for i,d in nonempty]
-        fetched=fetch_result_files.fetch_files(rclone='rclone',prefix=prefix,expected_state=state,selections=selections,out_dir=local)
-        fmap={x['path']:x for x in fetched['files']}
+        selections=[]
         for i,desc in nonempty:
-            got=fmap.get(desc['path'])
-            if not got or got['sha256']!=desc['sha256'] or got['size_bytes']!=desc['size_bytes']: raise v1.C0CError('descriptor_drift')
-            path=local/f'{i:04d}-{Path(desc["path"]).name}'
+            path_value=desc.get('path') if isinstance(desc,dict) else None
+            if not path_value:
+                raise v1.C0CError('v5_candidate_missing_path')
+            selections.append((path_value,f'{i:04d}-{Path(path_value).name}'))
+        fetched=fetch_result_files.fetch_files(rclone='rclone',prefix=prefix,expected_state=state,selections=selections,out_dir=local)
+        fetched_files=fetched.get('files') if isinstance(fetched,dict) else None
+        if not isinstance(fetched_files,list):
+            raise v1.C0CError('v5_candidate_fetch_report')
+        fmap={x.get('path'):x for x in fetched_files if isinstance(x,dict) and x.get('path')}
+        for i,desc in nonempty:
+            desc_path=desc.get('path'); desc_sha=desc.get('sha256'); desc_size=desc.get('size_bytes'); desc_kind=desc.get('kind')
+            if not desc_path or not desc_sha or not isinstance(desc_size,int) or not desc_kind:
+                raise v1.C0CError('v5_candidate_descriptor_shape')
+            got=fmap.get(desc_path)
+            if not got or got.get('sha256')!=desc_sha or got.get('size_bytes')!=desc_size: raise v1.C0CError('descriptor_drift')
+            path=local/f'{i:04d}-{Path(desc_path).name}'
             recovered=_salvage(path,desc,job_id,attempt,allow)
             if recovered is not None:
-                ids,rows,recovery=recovered; seen.add((job_id,attempt,desc['path'])); sem='position_identity_only_v5_inventory_salvage'
+                ids,rows,recovery=recovered; seen.add((job_id,attempt,desc_path)); sem='position_identity_only_v5_inventory_salvage'
             else:
                 try:
-                    ids,rows,sem=v1.parse_candidate(path,desc['kind']); recovery=None
+                    ids,rows,sem=v1.parse_candidate(path,desc_kind); recovery=None
                 except v1.C0CError:
                     raise v1.C0CError('v5_malformed_not_in_inventory')
             all_ids.update(ids); total_rows+=rows; downloaded+=1
-            receipt={'job_id':job_id,'attempt_id':attempt,'path':desc['path'],'kind':desc['kind'],'sha256':desc['sha256'],'size_bytes':desc['size_bytes'],'rows':rows,'unique_identities':len(ids),'semantics':sem}
+            receipt={'job_id':job_id,'attempt_id':attempt,'path':desc_path,'kind':desc_kind,'sha256':desc_sha,'size_bytes':desc_size,'rows':rows,'unique_identities':len(ids),'semantics':sem}
             if recovery is not None:
-                receipt['recovery']=recovery; salv_files+=1; salv_records+=recovery['complete_records_recovered']; discarded+=recovery['partial_tail_bytes_discarded']
+                receipt['recovery']=recovery; salv_files+=1; salv_records+=recovery.get('complete_records_recovered',0); discarded+=recovery.get('partial_tail_bytes_discarded',0)
             receipts.append(receipt); path.unlink(missing_ok=True)
         shutil.rmtree(local,ignore_errors=True)
     if seen!=set(allow): raise v1.C0CError('v5_inventory_universe_mismatch')
