@@ -1,0 +1,11 @@
+{
+  "campaign": "ed4-confirmation-source-audit",
+  "command": ["/var/tmp/jass-l3-numeric-venv-current-v1/bin/python", "jobs/tools/ed4_c0c_v4_full_malformed_inventory_stage.py"],
+  "evidence_outputs": ["ed4-c0c-v4-full-malformed-inventory.json"],
+  "production_max_effects": {"bakes":0,"fits":0,"new_jass_searches":0,"new_scan_searches":0,"promotions":0,"selfplay_games":0,"strength_games":0,"test_target_reads":0},
+  "regressions": ["jobs.tests.test_launch_gate_v2","jobs.tests.test_launch_gate_pipeline_v2"],
+  "rehearsal_max_effects": {"bakes":0,"fits":0,"new_jass_searches":0,"new_scan_searches":0,"promotions":0,"selfplay_games":0,"strength_games":0,"test_target_reads":0},
+  "required_phases": ["authenticate-c0b-parent-metadata","scan-all-jnnw-envelopes","publish-full-malformed-inventory"],
+  "schema": "jass.launch_profile.v2",
+  "stage": "ed4-c0c-v4-full-malformed-inventory-v1"
+}
