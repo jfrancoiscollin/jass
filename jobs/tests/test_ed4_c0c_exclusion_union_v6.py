@@ -20,6 +20,16 @@ def row(n, aligned=False, target=b'abcde'):
 
 
 class V6ContractTests(unittest.TestCase):
+    def setUp(self):
+        for name in ('run_capture', 'download_verified'):
+            patcher = mock.patch.object(
+                v6.fetch_result_files.base, name,
+                side_effect=AssertionError('V6 test attempted real transport'),
+            )
+            transport = patcher.start()
+            self.addCleanup(patcher.stop)
+            self.addCleanup(transport.assert_not_called)
+
     def inventory(self):
         pairs = [row(i) for i in range(216)] + [row(216 + i, True) for i in range(15)]
         rows = [x[0] for x in pairs]
@@ -128,10 +138,12 @@ class V6ContractTests(unittest.TestCase):
         with self.assertRaises(v1.C0CError): v6.validate_1927(inv, readout)
 
     def test_stage_fails_without_sizing_and_cannot_emit_ready(self):
-        with tempfile.TemporaryDirectory() as td, mock.patch.dict(os.environ, {'JASS_ARTEFACT_DIR':str(Path(td)/'a'),'JASS_RESULT_DIR':str(Path(td)/'r'),'LAUNCH_MODE':'rehearsal'}):
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(stage, 'RUNTIME_MAX_SECONDS', None), mock.patch.object(stage, 'build_union_v6', side_effect=AssertionError('builder must not run')) as builder, mock.patch.dict(os.environ, {'JASS_ARTEFACT_DIR':str(Path(td)/'a'),'JASS_RESULT_DIR':str(Path(td)/'r'),'LAUNCH_MODE':'rehearsal'}):
             self.assertEqual(stage.main(),2)
             summary=json.loads((Path(td)/'a'/'scientific-summary.json').read_text())
+        builder.assert_not_called()
         self.assertEqual(summary['state'],'failed'); self.assertFalse(summary['confirmation_authorized']); self.assertEqual(summary['target_reads'],0)
+        self.assertEqual(summary['error'], 'v6_runtime_sizing_pending')
 
     def test_profile_has_required_boundary_suites_and_nonempty_v6_suite(self):
         profile=json.loads((Path(__file__).parents[1]/'launch_profiles/ed4-c0c-exclusion-union-v6-inventory-closed-aligned-count0.json').read_text())
