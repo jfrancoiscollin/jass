@@ -72,4 +72,6 @@ jobs:
           jobs.tests.test_ed4_c0c_exclusion_union_v6
           jobs.tests.test_ed4_c0c_full_format_diagnostic
           jobs.tests.test_ed4_c0c_full_format_diagnostic_v2
+          jobs.tests.test_ed4_c0c_exact_linkage_diagnostic
+          jobs.tests.test_ed4_c0c_exact_linkage_transport
           -v
