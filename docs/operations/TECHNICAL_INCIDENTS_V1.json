@@ -450,6 +450,16 @@
       "invariant": "Require the canonical pending directory, reject misplaced queue scripts in CI, and preserve the frozen execution contract.",
       "evidence": "Control PR #630; five dispatcher tests and the negative queue-placement fixture; completed execution and authenticated publication readback documented in docs/operations/ED4_1927_PUBLICATION_READBACK_20260912.md in this PR. The initial readback permission block was resolved by explicit user authorization. PR #929",
       "status": "CLOSED — queue placement corrected, regression guard passed, execution and publication readback verified"
+    },
+    {
+      "id": "TI-046",
+      "dedupe_key": "ed4-c0c-v5-aligned-count-zero-inventory-v1",
+      "context": "ED4 C0C V5 source recovery after authenticated 1927 class diagnostic",
+      "symptom": "V5 cannot accept the complete frozen malformed-file inventory: 15 of 231 rows are outside its partial-tail rule.",
+      "root_cause": "The V5 contract requires a count-zero JNNW with at least one complete record and tail length 1..37. The authenticated 1927 readout has 216 such rows plus 15 aligned count-zero objects with tail length zero. The aligned shape alone does not prove writer interruption.",
+      "invariant": "Preserve V1-V5 and scientific gates. Prospective V6 may recover only the exact authenticated 231-object inventory partition, with separately pinned full and aligned row-set digests; decode only position bytes 0:33 and never interpret bytes 33:38. Missing pins, identity drift, duplicate/unseen objects, forbidden reads or missing runtime evidence fail closed. Total campaign job duration must remain within 45 minutes.",
+      "evidence": "Authenticated 1927 publication/readback and authorized V6 R2→CPX62 metadata freeze: docs/operations/ED4_1927_PUBLICATION_READBACK_20260912.md, docs/operations/ED4_C0C_V6_AUTHENTICATED_FREEZE_20260912.json, docs/operations/ED4_C0C_V6_LOCAL_READINESS_20260912.md. Frozen full and aligned canonical pins are recorded there; no V6 real-data execution or scientific success is claimed. The historical approval-review rejection of the additional 171848-byte inventory fetch was resolved by explicit authorization. Local V6 profile evidence remains the historical 49-test Linux report; bounded same-code target-free rehearsal/readback remains pending.; PR #930",
+      "status": "MITIGATED — V6 canonical freeze complete; bounded same-code target-free rehearsal and authenticated readback pending"
     }
   ]
 }

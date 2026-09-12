@@ -1,0 +1,24 @@
+# ED4 C0C — structural source recovery V6
+
+Date: 2026-09-12. Status: authenticated canonical-row freeze complete; fixed 2100-second stage ceiling set; CPX rehearsal evidence remains pending. Classification: `TECHNICAL_STRUCTURAL_SOURCE_RECOVERY_ONLY`.
+
+V6 is a new immutable protocol version. It does not alter V1–V5, candidate identity, C0A/C0B parent pins, universe, targets, alpha, or any scientific decision. It authenticates only the completed 1927 result `cpx62-1927-l3-ed4-c0c-v5-inventory-class-readout-v1`, attempt `20260912T111000Z-26d79792`, code `26d79792d207018982f482bbb8a96520a845c659`, host CPX62, exit 0. Metadata admission transports only `inventory/inventory.json` (SHA256 `1e8ebc5ee1c5614390c950e903377a6c3664b8d0c2a08f21c0295b2066f4d599`, 171848 bytes) and `artefacts/ed4-c0c-v5-inventory-class-readout.json` (SHA256 `e93bb11a3783077955bc2393ca55e219be8e93df92260c42c35484684d4135e1`, 9083 bytes). After that admission, the frozen original C0B candidate payloads may be authenticated and read under the exact allowlist.
+
+Before any candidate payload access, V6 validates exactly 231 malformed rows: 216 V5 interrupted-tail JNNW rows (tail 1..37, original boolean true) and 15 aligned count-zero JNNW rows (tail zero, original boolean false). The aligned rows are exactly two 73880-byte / 1944-record objects plus thirteen 82088-byte / 2160-record objects, for 31968 records. The class readout's `outside_class` rows must equal the aligned subset on frozen identity fields.
+
+The canonical full allowlist and aligned-subset digests serialize exactly `job_id,attempt_id,path,kind,sha256,size_bytes,reason,declared_count,complete_records_from_size,partial_tail_bytes_from_size`, sort lexicographically by `(job_id,attempt_id,path)`, use JSON sorted keys and compact ASCII-safe separators, append one newline, and hash with SHA-256. The authenticated freeze pins are:
+
+```text
+full allowlist = f56fda00c0ce815eaeac924ede0ce78840bed60f68360b57de9b801fb8885f95
+aligned subset = 7721b29bcbb65a0dc070def901bdb03b9738ca399bf146d2a5a156338dd4fb47
+```
+
+The enforced stage ceiling is fixed at 2100 seconds, with the existing 600-second framework reserve giving a 2700-second budget. The dispatcher command timeout excludes the outer R2 publisher, so 2700 seconds is a budget rather than a hard end-to-end deadline. The stage remains closed to production admission until one bounded, same-code, target-free rehearsal using the common specification completes with published authenticated readback, all six phases, zero effects, the exact 231-object encounter, stage duration at or below 2100 seconds, and an authenticated published-completion timestamp minus attempt start at or below 2700 seconds. Missing, inconsistent, or over-limit timing fails admission; production receives the same post-publication check before downstream use.
+
+The 216 rows invoke V5's `_salvage` unchanged. Aligned rows authenticate magic, count zero, exact geometry, whole-file hash and size, then decode only the first 33 bytes of each complete 38-byte record through V1's canonical decoder. Their remaining five bytes are never decoded, unpacked, or interpreted; whole-object hashing reads their raw bytes. An aligned zero tail is not evidence of writer interruption.
+
+Every allowlisted key must be encountered once and only once. Duplicate, missing, extra, drifted, malformed-unlisted, invalid-position, wrong header, empty, or wrong geometry inputs fail closed. Nonallowlisted valid candidates retain V1's strict parser and zero-object behavior unchanged.
+
+No target/WDL/qvalue/score/model read, teacher/search call, fit, game, alpha spend, confirmation, automatic continuation, promotion, or bake is allowed. Success token: `ED4_C0C_STRUCTURAL_EXCLUSION_UNION_READY_V6_INVENTORY_CLOSED_ALIGNED_COUNT0`; `scientific_verdict=null`.
+
+Local decoder sizing only: an isolated CPX62 synthetic probe ran 50,000 legal-width 33-byte position records through the existing V1 canonical decoder in 0.554053273 seconds (90,244 rows/s) on 16 CPUs. It measures decoder work only; it does not bound remote metadata/transport, hashing, set/sort, publication, or total V6 duration. A same-code target-free rehearsal remains required to establish evidence that the fixed 2100-second stage ceiling and 2700-second outer budget are sufficient for production admission.
