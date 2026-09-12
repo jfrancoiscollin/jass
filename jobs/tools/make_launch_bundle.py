@@ -14,6 +14,10 @@ def canon(obj): return (json.dumps(obj,sort_keys=True,separators=(',',':'),allow
 def build(job_id,code_sha,profile_path,spec_template,mode='rehearsal',rehearsal=None):
     if not HEX40.fullmatch(code_sha): raise ContractError('code_sha')
     profile=validate_profile(profile_path)
+    try: profile_rel=profile_path.resolve().relative_to(ROOT.resolve())
+    except ValueError as exc: raise ContractError('profile_outside_repo') from exc
+    if profile_rel.parts[:2] != ('jobs','launch_profiles') or len(profile_rel.parts) != 3:
+        raise ContractError('profile_path')
     spec=json.loads(spec_template.read_text())
     spec['code_sha']=code_sha
     spec['campaign']=profile['campaign']; spec['stage']=profile['stage']; spec['command']=profile['command']
@@ -24,7 +28,7 @@ def build(job_id,code_sha,profile_path,spec_template,mode='rehearsal',rehearsal=
     declared={x.get('path') for x in spec.get('outputs',[]) if isinstance(x,dict) and x.get('required') is True and x.get('nonempty') is True and x.get('scope')=='artifact'}
     if not required<=declared: raise ContractError('output_contract')
     sb=canon(spec); spec_sha=sha_bytes(sb); pb=profile_path.read_bytes(); profile_sha=sha_bytes(pb)
-    admission={'schema':'jass.launch_admission.v2','job_id':job_id,'profile':str(profile_path.relative_to(Path.cwd())),'profile_sha256':profile_sha,'spec_sha256':spec_sha,'rehearsal':rehearsal}
+    admission={'schema':'jass.launch_admission.v2','job_id':job_id,'profile':profile_rel.as_posix(),'profile_sha256':profile_sha,'spec_sha256':spec_sha,'rehearsal':rehearsal}
     if mode=='rehearsal' and rehearsal is not None: raise ContractError('rehearsal_mode_conflict')
     if mode=='production' and not isinstance(rehearsal,dict): raise ContractError('production_rehearsal_required')
     ab=canon(admission); admission_sha=sha_bytes(ab)
