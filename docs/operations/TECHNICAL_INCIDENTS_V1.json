@@ -460,6 +460,16 @@
       "invariant": "Preserve V1-V5 and scientific gates. Prospective V6 may recover only the exact authenticated 231-object inventory partition, with separately pinned full and aligned row-set digests; decode only position bytes 0:33 and never interpret bytes 33:38. Missing pins, identity drift, duplicate/unseen objects, forbidden reads or missing runtime evidence fail closed. Total campaign job duration must remain within 45 minutes.",
       "evidence": "Authenticated 1927 publication/readback and authorized V6 R2→CPX62 metadata freeze: docs/operations/ED4_1927_PUBLICATION_READBACK_20260912.md, docs/operations/ED4_C0C_V6_AUTHENTICATED_FREEZE_20260912.json, docs/operations/ED4_C0C_V6_LOCAL_READINESS_20260912.md. Frozen full and aligned canonical pins are recorded there; no V6 real-data execution or scientific success is claimed. The historical approval-review rejection of the additional 171848-byte inventory fetch was resolved by explicit authorization. Local V6 profile evidence remains the historical 49-test Linux report; bounded same-code target-free rehearsal/readback remains pending.; PR #930",
       "status": "MITIGATED — V6 canonical freeze complete; bounded same-code target-free rehearsal and authenticated readback pending"
+    },
+    {
+      "id": "TI-047",
+      "dedupe_key": "ed4-v6-preflight-real-io-v1",
+      "context": "ED4 C0C V6 rehearsal 1928, attempt 20260912T121834Z-365f1d00",
+      "symptom": "No-sizing unit test entered real candidate transport on CPX62 and the stopped attempt published exit 143.",
+      "root_cause": "The test called stage.main after the runtime cap became configured, without patching the cap or builder.",
+      "invariant": "The no-sizing test must set the cap to None and prove build_union_v6 has zero calls before asserting the exact fail-closed error.",
+      "evidence": "jobs.tests.test_ed4_c0c_exclusion_union_v6 isolates the cap guard; docs/operations/ED4_C0C_V6_PREFLIGHT_REAL_IO_INCIDENT_20260912.md.; Authenticated failed 1928: exit 143; three metadata/log files reread; no stage receipt, execution evidence, or launch receipt; 136 temporary files (276979640 bytes). Position reads were not measured; scientific confirmation did not start.",
+      "status": "MITIGATED_PENDING_NEW_REHEARSAL"
     }
   ]
 }
