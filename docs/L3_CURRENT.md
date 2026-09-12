@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 9 septembre 2026**
+> **Mis à jour : 12 septembre 2026**
 > **Source de vérité active : ce document.**
 >
 > Résultats acquis / portes closes : [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md).  
@@ -36,6 +36,14 @@ Les preuves de gain décisionnel, de calibration WDL indépendante et de transfe
 en recherche restent à obtenir. L'[audit prospectif C0A](experiments/L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md)
 prépare les exclusions ; aucune confirmation ED4 n'a commencé. Aucun scale-up
 ni promotion.
+
+Le [diagnostic complet des formats C0C V2](experiments/L3_ED4_C0C_FULL_FORMAT_DIAGNOSTIC_V2_RESULTS_20260912.md)
+est terminé, publié, authentifié et relu : 726 descripteurs recensés, 21 rejets
+structurels correspondant à six contenus distincts, 66 régressions réussies et
+783 secondes jusqu'à publication. Les 231 récupérations V5/V6 et les six objets
+vides restent identiques. Cette étape ne produit aucune union d'exclusion ni
+preuve de gain scientifique. L'investigation des rejets et un nouveau protocole
+de récupération précèdent encore l'audit complet et les confirmations fraîches.
 
 ## ED4-P0 — objectif de choix et préflight synthétique validés
 
