@@ -1,8 +1,8 @@
 # Gen2-MMTO — expert de conversion P3 (CVH1)
 
-> **Statut :** infrastructure proposée, aucun job lancé
-> **Branche :** `agent/gen2-mmto-conversion-head`
-> **Cible de PR :** `develop`
+> **Statut :** screen initial passé ; C10 sélectionné ; suivi généraliste préparé
+> **Implémentation :** PR #353 mergée (`61c0e20f`), optimisation NPS `6bfc700fc`
+> **Campagne active :** Gen2-MMTO gelé uniquement ; aucune intégration L3
 
 ## 1. Question causale
 
@@ -11,7 +11,7 @@ leader-relative de la convertibilité permet-elle de mieux choisir les
 continuations qui réalisent un avantage matériel de valeur `+1` ?
 
 Le symptôme ciblé est la faiblesse P3 : avantage mince détecté mais mal réalisé.
-Ce test ne remplace pas la loss WDL et ne modifie pas la campagne L3 active.
+Ce test ne remplace pas la loss WDL et ne modifie pas la campagne L3.
 
 ## 2. Invariant principal : Gen2-MMTO gelé
 
@@ -28,18 +28,9 @@ Le packer compare les SHA-256 du champion et de la copie et échoue si les octet
 diffèrent. Sans sidecar, le loader suit exactement le chemin historique. Un
 sidecar présent mais invalide fait échouer le chargement.
 
-Cette conception remplace volontairement le PJTW-v5 envisagé dans le premier
-mémo : elle réduit le risque de compatibilité et rend le contrôle `lambda=0`
-plus lisible.
-
 ## 3. Domaine du MVP
 
-Valeur matérielle :
-
-```text
-homme = 1
-dame  = 3
-```
+Valeur matérielle : homme = 1, dame = 3.
 
 La tête n'est active que lorsque :
 
@@ -49,9 +40,8 @@ La tête n'est active que lorsque :
 - décroissance linéaire entre `12` et `20` ;
 - activation nulle à partir de `20` pièces.
 
-Les positions à sept pièces ou moins sont laissées au domaine exact EGDB.
-P4 matériel égal est hors périmètre : le leader ne peut pas y être défini sans
-un mécanisme supplémentaire.
+Les positions à sept pièces ou moins sont laissées au domaine exact EGDB. P4
+matériel égal reste hors périmètre.
 
 ## 4. Features CVH1
 
@@ -79,14 +69,8 @@ l'appartenance à un pool de mesure.
 
 ## 5. Modèle et correction
 
-Le fit auxiliaire est une logistique binaire :
-
-```text
-y = 1  si le leader matériel courant gagne la partie
-y = 0  si la partie est nulle ou si le leader perd
-```
-
-La sortie est recentrée par le logit de prévalence du train. Au runtime :
+La cible auxiliaire est `1` si le leader matériel courant gagne la partie, `0`
+si la partie est nulle ou si le leader perd.
 
 ```text
 raw       = bias + Σ weight_i × standardized_feature_i
@@ -94,93 +78,128 @@ centered  = raw - center_logit
 delta_cp  = leader_sign × phase_gate × lambda_cp × tanh(centered / tanh_scale)
 ```
 
-La correction est donc bornée par `lambda_cp` et antisymétrique par couleur.
+La correction est bornée par `lambda_cp` et antisymétrique par couleur.
 
 ## 6. Contrat de données
 
-Le fit exige un identifiant de groupe par ligne JNNW. Le groupe doit représenter
-au minimum une partie, idéalement une paire d'ouverture.
-
-Le split train/holdout est fait par groupe complet. Un split aléatoire par ligne
-est interdit. Chaque groupe reçoit une masse totale comparable dans la loss pour
-qu'une partie longue ne domine pas le fit.
+Le split train/holdout est fait par partie ou paire d'ouverture, jamais par
+ligne. Chaque groupe reçoit une masse totale comparable dans la loss.
 
 Interdictions :
 
-- PC Blues au training ;
+- PC Blues ou pool de mesure au training ;
 - `conv_self_eval_set.fen` au training ;
-- pool de gate au training ;
-- labels Scan, deep-relabel externe ou teacher ;
+- labels Scan, teacher ou deep-relabel externe ;
 - fine-tune des poids Gen2-MMTO.
 
-## 7. Fichiers et outils
+## 7. Résultat offline
 
-- `src/conversion_head.hpp/.cpp` : format, features, gate et wrapper runtime ;
-- `pattern_jass/tools/conversion_head.py` : contrat Python identique ;
-- `pattern_jass/tools/train_conversion_head.py` : fit groupé ;
-- `pattern_jass/tools/pack_conversion_head.py` : copie immuable + sidecar ;
-- tests C++ et Python couvrant gate, signes, format et absence de fuite de groupe.
+Mesure ccx33 :
 
-Exemple de fit, à ne lancer qu'après résolution de la provenance et accord JFC :
+| Métrique | Valeur |
+|---|---:|
+| débit self-play Gen2 | 33 100 positions/min |
+| positions P3 éligibles | 8 985 |
+| holdout log-loss tête | 0,683 |
+| intercept seul | 0,699 |
+| gain absolu | +0,016 |
 
-```bash
-python pattern_jass/tools/train_conversion_head.py \
-  --data corpus.jnnw \
-  --groups game_ids.npy \
-  --out-json head.json \
-  --lambda-cp 10
-```
+Verdict offline : `head_discriminates`.
 
-Création de cellules sans refaire le fit :
+## 8. Screen initial A/Z/C5/C10/C20
 
-```bash
-python pattern_jass/tools/pack_conversion_head.py \
-  --champion gen2-mmto.pjtw \
-  --head-json head.json \
-  --out candidate-l10.pjtw \
-  --lambda-cp 10
-```
+Job : `ccx33-0813-cvh-p3-screen`, `n=180` par cellule, défenseur Gen2 fixe.
 
-## 8. Screen pré-enregistré proposé
+| Cellule | Conversion P3 | Δ vs A |
+|---|---:|---:|
+| A | 0,500 | — |
+| Z (`lambda=0`) | 0,500 | 0,000 |
+| C5 | 0,500 | 0,000 |
+| **C10** | **0,522** | **+0,022** |
+| C20 | 0,494 | -0,006 |
 
-Cellules :
+Le contrôle A/Z passe (`az_ok=True`). C10 franchit le seuil pré-enregistré
+`ΔP3 >= +0,02`. C20 montre une sur-correction. Aucun nouveau sweep de lambda
+n'est autorisé avant confirmation : **C10 est gelé comme seul candidat**.
 
-| Cellule | Description |
-|---|---|
-| A | Gen2-MMTO original, aucun sidecar |
-| Z | copie identique + CVH1 avec `lambda_cp=0` |
-| C5 | même tête, `lambda_cp=5` |
-| C10 | même tête, `lambda_cp=10` |
-| C20 | même tête, `lambda_cp=20` |
+Verdict : `candidate_for_generalist_screen`.
 
-Ordre :
+## 9. Correctif NPS
 
-1. tests et contrôle A/Z ;
-2. microbenchmark NPS ;
-3. conversion P3 avec défenseur Gen2-MMTO fixe ;
-4. common-search généraliste ;
-5. movetime court ;
-6. confirmation haut N seulement en cas de signal.
+Le screen 0813 a montré environ `-44 %` de NPS parce que les 16 features étaient
+calculées avant la vérification du gate. Le commit `6bfc700fc` effectue d'abord
+un pré-gate par `popcount` (marge + nombre de pièces), puis extrait les features
+uniquement lorsque le gate est actif.
 
-Seuil de passage du screen : amélioration P3 ponctuelle d'au moins `+0,02`,
-sans régression généraliste établie ni coût NPS prohibitif.
+Le delta reste identique dans les positions actives. Le sweep de conversion n'a
+pas à être rejoué ; seule la vitesse post-correctif doit être remesurée.
 
-## 9. Décisions possibles
+## 10. Suivi pré-enregistré
 
-- `better_fit_no_play_signal` : diagnostics hors ligne meilleurs, jeu plat ;
-- `conversion_gain_not_bakeable` : P3 meilleur mais force générale en baisse ;
-- `candidate_for_l3_fork` : P3 et force non régressive, à confirmer ;
-- `no_signal_close` : aucune cellule ne justifie une confirmation.
+La suite est divisée en trois jobs séparés pour conserver des décisions causales
+et un go explicite avant chaque coût supplémentaire.
 
-## 10. Hors périmètre de cette PR
+### Étape 1 — NPS post-correctif puis common-search
 
-- résolution du chemin et du SHA canonique de Gen2-MMTO ;
-- génération d'un nouveau corpus ;
-- exécution du screen ;
-- modification de `docs/L3_CURRENT.md`, `docs/L3_PURE_PLAN.md` ou
-  `docs/PROJECT_RESULTS.md` ;
-- intégration à la lignée L3 ;
-- P4 et rollouts stochastiques.
+Template : `jobs/templates/cvh-p3-postfix-nps-common-v1.sh`.
 
-Aucun job ne doit être copié dans la queue sans micro-calibration, ETA, contrôles
-`CLAUDE.md` et go explicite JFC.
+Mesures appariées A/Z/C10 sur les mêmes positions et profondeurs :
+
+- corpus généraliste hors gate à la racine ;
+- corpus P3 actif ;
+- contrôle exact des coups A/Z.
+
+Gates par défaut :
+
+- zéro erreur et zéro divergence de coup A/Z ;
+- ratio NPS général C10/A `>= 0,98` ;
+- ratio Z/A dans `[0,99 ; 1,01]` ;
+- common-search C10 vs A : `n >= 64`, score ponctuel `>= 0,49`, et borne haute
+  de l'IC 95 % au moins égale à `0,50`.
+
+Échec NPS : arrêt avant match. Échec common-search : arrêt avant movetime.
+
+### Étape 2 — movetime court
+
+Template : `jobs/templates/cvh-p3-movetime-v1.sh`.
+
+- exige le JSON `common_search_pass` ;
+- ouvertures déterministes strictement disjointes de l'étape 1 ;
+- même binaire, même recherche, même temps pour A et C10 ;
+- gate par défaut identique : `n >= 64`, score `>= 0,49`, borne haute IC >= 0,50.
+
+Échec : `conversion_gain_not_bakeable`. Passage : confirmation P3 autorisée.
+
+### Étape 3 — confirmation P3 appariée haut N
+
+Template : `jobs/templates/cvh-p3-confirm-v1.sh`.
+
+- exige le JSON `movetime_pass` ;
+- pool indépendant du fit et du screen 0813 ;
+- sous-pool gelé de 600 positions P3 décisives par défaut ;
+- A et C10 jouent exactement les mêmes indices contre le même défenseur A ;
+- plancher apparié `n >= 400` ;
+- gain `>= +0,02` ;
+- borne basse de l'IC apparié 95 % strictement supérieure à zéro.
+
+Passage final : `candidate_for_l3_fork`. Sinon : `p3_not_confirmed`.
+
+## 11. Outils de garde
+
+- `tools/cvh_nps_ab.py` : benchmark fixe apparié, nodes/s, temps/recherche,
+  erreurs et divergence A/Z ;
+- `jobs/tools/cvh_followup_verdict.py` : agrégation des shards et gates fail-closed ;
+- `pattern_jass/tests/test_cvh_followup.py` : filtres, IC, pairing et `bash -n`.
+
+Les templates exigent : commit `6bfc700fc`, identité byte-à-byte des PJTW,
+sidecars corrects, garde disque, `nproc`, timeout par shard, PIDs explicites,
+smoke write/read, ETA approuvée et `JFC_GO=1`.
+
+## 12. Hors périmètre
+
+- aucun script n'est placé dans `jobs/queue` ;
+- aucun job n'est lancé par cette PR ;
+- aucun corpus ou chemin d'artefact n'est deviné ;
+- aucune modification de `docs/L3_CURRENT.md`, `docs/L3_PURE_PLAN.md` ou
+  `docs/PROJECT_RESULTS.md` avant verdict scientifique complet ;
+- aucune intégration à la nouvelle lignée avant confirmation.
