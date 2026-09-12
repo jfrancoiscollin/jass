@@ -468,7 +468,7 @@
       "symptom": "A synthetic regression inherited a mutable configured runtime and entered the builder and external I/O path.",
       "root_cause": "The test implicitly assumed RUNTIME_MAX_SECONDS would be unset, but the configured default was present; the no-sizing case was not selected explicitly.",
       "invariant": "Synthetic validation must explicitly patch the no-sizing case, require v6_runtime_sizing_pending, verify the builder is not called, and fail closed at transport boundaries; V6 scientific and runtime contracts remain unchanged.",
-      "evidence": "Generic repair and validation are documented in docs/operations/ED4_C0C_V6_TEST_ISOLATION_20260912.md; transport canaries and cleanup assertions cover swallowed calls; complete synthetic V6 coverage and shared dispatcher regression coverage pass; a new same-code rehearsal remains pending.",
+      "evidence": "Generic repair and validation are documented in docs/operations/ED4_C0C_V6_TEST_ISOLATION_20260912.md; transport canaries and cleanup assertions cover swallowed calls; complete synthetic V6 coverage and shared dispatcher regression coverage pass; a new same-code rehearsal remains pending.; PR #931",
       "status": "MITIGATED_PENDING_NEW_REHEARSAL"
     }
   ]
