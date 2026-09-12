@@ -1,6 +1,6 @@
-# ED4 C0C V6 — local preparation and remaining admission
+# ED4 C0C V6 — authenticated freeze and remaining admission
 
-Date: 2026-09-12. Technical preparation only; no V6 real-data execution.
+Date: 2026-09-12. Authenticated metadata freeze complete; no V6 real-data execution.
 
 The [1927 readback](ED4_1927_PUBLICATION_READBACK_20260912.md) is complete and
 merged in Jass PR #929. It identifies 15 aligned count-zero objects outside
@@ -8,13 +8,25 @@ V5's permitted partial-tail class. A Sol protocol review authorized preparation
 of a new immutable V6 under the existing autonomous campaign mandate; Terra
 implements it with root review. Luna handled the bounded 1927 incident work.
 The [V6 protocol](../experiments/L3_ED4_C0C_STRUCTURAL_RECOVERY_V6_20260912.md)
-remains incomplete until exact canonical allowlist digests and sizing are frozen.
+has its exact canonical allowlist digests frozen below. Runtime sizing remains
+the sole outstanding admission item.
 
-## Pending metadata read
+## Authenticated freeze
 
-Only the additional metadata object below is needed to calculate the two
-canonical row-set digests. The original five 1927 outputs have already been
-explicitly authorized and successfully read back.
+The authorized CPX62 readback of the 1927 inventory and class readout completed
+with exit 0. The exact canonical row-set pins are:
+
+- Full 231-row allowlist: `f56fda00c0ce815eaeac924ede0ce78840bed60f68360b57de9b801fb8885f95`.
+- Aligned 15-row subset: `7721b29bcbb65a0dc070def901bdb03b9738ca399bf146d2a5a156338dd4fb47`.
+
+The earlier approval review rejection below was resolved by the user's explicit
+authorization for the V6 R2→CPX62 reads and the subsequent authenticated freeze.
+
+## Authenticated metadata read
+
+The additional metadata object required to calculate the two canonical row-set
+digests was explicitly authorized and successfully read back, alongside the
+already authenticated class readout.
 
 - Producer: `cpx62-1927-l3-ed4-c0c-v5-inventory-class-readout-v1`.
 - Attempt: `20260912T111000Z-26d79792`.
@@ -25,15 +37,17 @@ explicitly authorized and successfully read back.
   `/var/tmp/ed4-1927-publication-readback-20260912/source-inventory.json`.
 
 Its descriptor is authenticated in the 1927 result inventory. Automatic
-approval review rejected the additional payload fetch because the previous
-explicit permission named only five other files. The fetch did not run.
-No alternative transport or indirect read has been attempted.
+approval review initially rejected the additional payload fetch because the
+previous explicit permission named only five other files. That historical
+rejection was resolved by explicit authorization for all V6 R2→CPX62 reads;
+the authenticated fetch and canonical freeze then completed.
 
-The prepared freeze step verifies this object's exact digest and length,
+The completed freeze step verifies this object's exact digest and length,
 its zero-read counters, the 231/216/15 partition, and exact equality of the
 aligned subset with the already verified 1927 readout. It then hashes the
 canonical full and aligned row lists. No position or target record is decoded.
-V6 retains non-digest placeholders until this step succeeds; these fail closed.
+The digest placeholders have now been replaced by the frozen pins above. The
+runtime cap remains unset, so the stage still fails closed before launch.
 
 ## Runtime evidence and limits
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Frozen V6 technical recovery of the ED4 C0C structural source union.
 
-This module is deliberately unusable for a remote run until the two canonical
-row-set digests and the runtime sizing cap are filled from the authenticated
-1927 readout.  It never reads target bytes: JNNW records are passed to the V1
-position decoder as exactly 33-byte prefixes.
+This module remains deliberately unusable for a remote run until the runtime
+sizing cap is measured and set.  Its two canonical row-set digests are frozen
+from the authenticated 1927 readout. It never reads target bytes: JNNW records
+are passed to the V1 position decoder as exactly 33-byte prefixes.
 """
 from __future__ import annotations
 
@@ -34,10 +34,9 @@ INV_SIZE = 171848
 READOUT_SHA256 = 'e93bb11a3783077955bc2393ca55e219be8e93df92260c42c35484684d4135e1'
 READOUT_SIZE = 9083
 
-# These are intentionally not SHA-256 values.  The scientist-approved 1927
-# canonical row digests must replace them before pre-production admission.
-FULL_ALLOWLIST_CANONICAL_SHA256 = 'PENDING_AUTHENTICATED_1927_FULL_ALLOWLIST_DIGEST'
-ALIGNED_SUBSET_CANONICAL_SHA256 = 'PENDING_AUTHENTICATED_1927_ALIGNED_SUBSET_DIGEST'
+# Frozen from the authenticated 1927 inventory/readout pair.
+FULL_ALLOWLIST_CANONICAL_SHA256 = 'f56fda00c0ce815eaeac924ede0ce78840bed60f68360b57de9b801fb8885f95'
+ALIGNED_SUBSET_CANONICAL_SHA256 = '7721b29bcbb65a0dc070def901bdb03b9738ca399bf146d2a5a156338dd4fb47'
 # Runtime sizing is not inferred.  The stage refuses launch until the measured
 # CPX rehearsal supplies this explicit cap.
 RUNTIME_MAX_SECONDS: int | None = None

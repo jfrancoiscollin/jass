@@ -61,10 +61,11 @@ class V6ContractTests(unittest.TestCase):
         self.assertEqual(v6.INV_SHA256, '1e8ebc5ee1c5614390c950e903377a6c3664b8d0c2a08f21c0295b2066f4d599')
         self.assertTrue(v6.HEX64.fullmatch(v6.INV_SHA256))
 
-    def test_pending_pins_fail_before_payload_work(self):
+    def test_invalid_pins_fail_before_payload_work(self):
         inv, readout, *_ = self.inventory()
-        with self.assertRaisesRegex(v1.C0CError, 'digest_pins_pending'):
-            v6.validate_1927(inv, readout)
+        with mock.patch.object(v6, 'FULL_ALLOWLIST_CANONICAL_SHA256', 'pending'), mock.patch.object(v6, 'ALIGNED_SUBSET_CANONICAL_SHA256', 'pending'):
+            with self.assertRaisesRegex(v1.C0CError, 'digest_pins_pending'):
+                v6.validate_1927(inv, readout)
 
     def test_aligned_decodes_exactly_33_bytes_and_ignores_target_bytes(self):
         first, raw = row(0, True, b'abcde'); changed = bytearray(raw)
