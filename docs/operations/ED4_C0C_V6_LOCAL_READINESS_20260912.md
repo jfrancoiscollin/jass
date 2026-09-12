@@ -50,6 +50,24 @@ a full V6 runtime. The runtime cap remains unset, so the stage cannot launch.
 A bounded target-free sizing/rehearsal and publication reserve must establish
 the campaign's maximum 2700-second job duration before real V6 admission.
 
+## Completed local validation
+
+The exact registered five-suite profile passed **49 tests**, zero failures,
+errors or skips, under Linux on the LF-preserving archive of source commit
+`41089b4ec8409694bb8c0f986ea1d35c6caaba6e`. This includes the generic
+stage/publisher/readback fixture and the V1/V2/V6 boundary suites. The
+[regression report](ED4_C0C_V6_LOCAL_REGRESSIONS_20260912.json) has SHA256
+`323039f7917b71a7754738f6e986418fbe53d5163aa2fea8b7e3d13f72c62d95`.
+The profile contract, compilation and whitespace checks also passed.
+
+The V6 tests perform two complete synthetic 231-object union builds with
+identical output bytes. They exercise malformed and unlisted objects,
+missing/duplicate encounters, real invalid position bytes, metadata identity
+and counter guards, unchanged V5 rejection of aligned count-zero files, and
+phase evidence on failure. Earlier Windows-only generic runtime fixture
+failures were resolved by executing the unmodified suite in Linux.
+These are synthetic technical checks, not a real-data rehearsal or timing proof.
+
 No model, held-out cohort, scientific threshold or alpha allocation changes.
 No scientific gain, completed exclusion union, confirmation, scale-up,
 promotion or bake is claimed.

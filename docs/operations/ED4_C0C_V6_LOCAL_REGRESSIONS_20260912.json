@@ -1,0 +1,15 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "passed": true,
+  "schema": "jass.launch_regressions.v2",
+  "skipped": 0,
+  "suites": [
+    "jobs.tests.test_launch_gate_v2",
+    "jobs.tests.test_launch_gate_pipeline_v2",
+    "jobs.tests.test_ed4_c0c_exclusion_union",
+    "jobs.tests.test_ed4_c0c_exclusion_union_v2",
+    "jobs.tests.test_ed4_c0c_exclusion_union_v6"
+  ],
+  "tests": 49
+}
