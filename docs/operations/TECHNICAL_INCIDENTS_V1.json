@@ -470,6 +470,16 @@
       "invariant": "Synthetic validation must explicitly patch the no-sizing case, require v6_runtime_sizing_pending, verify the builder is not called, and fail closed at transport boundaries; V6 scientific and runtime contracts remain unchanged.",
       "evidence": "Generic repair and validation are documented in docs/operations/ED4_C0C_V6_TEST_ISOLATION_20260912.md; transport canaries and cleanup assertions cover swallowed calls; complete synthetic V6 coverage and shared dispatcher regression coverage pass; a new same-code rehearsal remains pending.; PR #931",
       "status": "MITIGATED_PENDING_NEW_REHEARSAL"
+    },
+    {
+      "id": "TI-048",
+      "dedupe_key": "ed4-c0c-full-format-diagnostic-v1",
+      "context": "ED4 C0C bounded complete format diagnostic",
+      "symptom": "V6 structural recovery stopped on a nonempty comment-only FEN because strict V1 parsing reports fen_empty.",
+      "root_cause": "The prior exhaustive inventory covered JNNW envelopes; it did not classify all other formats.",
+      "invariant": "Preserve V1-V6 and the frozen descriptor universe and recovery partition; authenticate and classify every descriptor exactly once, continue only after known parser errors, and publish no positions, targets, union, readiness, or scientific verdict.",
+      "evidence": "Prospective generic diagnostic implementation, deterministic full-universe fixture, parser-error continuation, fail-closed authentication and deadline coverage.; PR #932",
+      "status": "MITIGATED_PENDING_BOUNDED_REHEARSAL"
     }
   ]
 }

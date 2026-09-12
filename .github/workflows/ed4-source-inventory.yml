@@ -8,6 +8,9 @@ on:
       - 'jobs/tools/launch_*'
       - 'jobs/tests/test_launch_*'
       - 'jobs/launch_profiles/ed4-*.json'
+      - 'jobs/tools/ed4_c0c_full_format_diagnostic.py'
+      - 'jobs/tools/ed4_c0c_full_format_diagnostic_stage.py'
+      - 'jobs/tests/test_ed4_c0c_full_format_diagnostic.py'
       - 'jobs/tools/run_experiment_stage.py'
       - 'jobs/tools/fetch_result_files.py'
       - 'jobs/tools/fetch_t1bis_inputs.py'
@@ -21,6 +24,9 @@ on:
       - 'jobs/tools/launch_*'
       - 'jobs/tests/test_launch_*'
       - 'jobs/launch_profiles/ed4-*.json'
+      - 'jobs/tools/ed4_c0c_full_format_diagnostic.py'
+      - 'jobs/tools/ed4_c0c_full_format_diagnostic_stage.py'
+      - 'jobs/tests/test_ed4_c0c_full_format_diagnostic.py'
       - 'jobs/tools/run_experiment_stage.py'
       - 'jobs/tools/fetch_result_files.py'
       - 'jobs/tools/fetch_t1bis_inputs.py'
@@ -64,4 +70,5 @@ jobs:
           jobs.tests.test_ed4_c0c_fetch_precondition_diagnostic
           jobs.tests.test_ed4_c0c_jnnw_shape_diagnostic
           jobs.tests.test_ed4_c0c_exclusion_union_v6
+          jobs.tests.test_ed4_c0c_full_format_diagnostic
           -v
