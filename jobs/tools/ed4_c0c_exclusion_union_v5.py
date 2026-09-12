@@ -11,7 +11,7 @@ REC=38
 INV_JOB='cpx62-1922-l3-ed4-c0c-v4-full-malformed-inventory-v1'
 INV_ATTEMPT='20260911T181346Z-832b0339'
 INV_CODE='832b0339fe02cbf3b187377ff475a3ddd289e0d6'
-INV_PATH='ed4-c0c-v4-full-malformed-inventory.json'
+INV_PATH='artefacts/ed4-c0c-v4-full-malformed-inventory.json'
 
 
 def _required(mapping:dict,key:str,code:str):
