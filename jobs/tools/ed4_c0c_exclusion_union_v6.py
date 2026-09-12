@@ -37,9 +37,10 @@ READOUT_SIZE = 9083
 # Frozen from the authenticated 1927 inventory/readout pair.
 FULL_ALLOWLIST_CANONICAL_SHA256 = 'f56fda00c0ce815eaeac924ede0ce78840bed60f68360b57de9b801fb8885f95'
 ALIGNED_SUBSET_CANONICAL_SHA256 = '7721b29bcbb65a0dc070def901bdb03b9738ca399bf146d2a5a156338dd4fb47'
-# Runtime sizing is not inferred.  The stage refuses launch until the measured
-# CPX rehearsal supplies this explicit cap.
-RUNTIME_MAX_SECONDS: int | None = None
+# Fixed campaign ceiling: 2100 seconds for the stage, with the existing
+# framework's 600-second reserve making a 2700-second outer budget. A same-SHA
+# rehearsal must still provide evidence that this ceiling is sufficient.
+RUNTIME_MAX_SECONDS = 2100
 HEX64 = re.compile(r'^[0-9a-f]{64}$')
 CANONICAL_FIELDS = ('job_id','attempt_id','path','kind','sha256','size_bytes','reason','declared_count','complete_records_from_size','partial_tail_bytes_from_size')
 

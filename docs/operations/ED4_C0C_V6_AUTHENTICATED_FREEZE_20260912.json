@@ -20,5 +20,9 @@
   "position_reads": 0,
   "alpha_spent": 0,
   "runtime_max_seconds": null,
+  "fixed_stage_ceiling_seconds": 2100,
+  "framework_reserve_seconds": 600,
+  "outer_budget_seconds": 2700,
+  "runtime_evidence_status": "pending_same_code_target_free_rehearsal",
   "real_data_execution": false
 }

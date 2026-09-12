@@ -8,8 +8,9 @@ V5's permitted partial-tail class. A Sol protocol review authorized preparation
 of a new immutable V6 under the existing autonomous campaign mandate; Terra
 implements it with root review. Luna handled the bounded 1927 incident work.
 The [V6 protocol](../experiments/L3_ED4_C0C_STRUCTURAL_RECOVERY_V6_20260912.md)
-has its exact canonical allowlist digests frozen below. Runtime sizing remains
-the sole outstanding admission item.
+has its exact canonical allowlist digests frozen below. The stage ceiling is
+fixed at 2100 seconds; rehearsal evidence remains the sole outstanding
+admission item.
 
 ## Authenticated freeze
 
@@ -47,7 +48,9 @@ its zero-read counters, the 231/216/15 partition, and exact equality of the
 aligned subset with the already verified 1927 readout. It then hashes the
 canonical full and aligned row lists. No position or target record is decoded.
 The digest placeholders have now been replaced by the frozen pins above. The
-runtime cap remains unset, so the stage still fails closed before launch.
+enforced stage ceiling is 2100 seconds, with the existing 600-second framework
+reserve giving a 2700-second outer budget. The stage still fails closed for
+production admission until the required rehearsal evidence exists.
 
 ## Runtime evidence and limits
 
@@ -60,9 +63,17 @@ target, teacher, search, fit or game was accessed.
 This measures decoder work only, excluding transport, decompression, descriptor
 verification, hash-set growth, sorting, regressions and publication. The old
 1922 JNNW-envelope scan took 30m44s on CPX62. These observations do not establish
-a full V6 runtime. The runtime cap remains unset, so the stage cannot launch.
-A bounded target-free sizing/rehearsal and publication reserve must establish
-the campaign's maximum 2700-second job duration before real V6 admission.
+a full V6 runtime. The fixed 2100-second stage ceiling leaves the existing
+600-second publication/framework reserve inside the 2700-second outer budget.
+A single bounded, same-code, target-free rehearsal using the common
+specification must complete with published authenticated readback, all six
+phases, zero effects, the exact 231-object encounter, and stage duration ≤2100
+seconds before production admission. The dispatcher command timeout excludes
+the outer R2 publisher, so the 2700-second value is a budget rather than a hard
+end-to-end deadline; authenticated published-completion timestamp minus
+attempt start must still be ≤2700 seconds. Missing, inconsistent, or
+over-limit timing fails admission, and production receives the same check
+before downstream use.
 
 ## Completed local validation
 
