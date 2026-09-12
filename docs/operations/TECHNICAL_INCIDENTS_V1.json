@@ -478,7 +478,7 @@
       "symptom": "V6 structural recovery stopped on a nonempty comment-only FEN because strict V1 parsing reports fen_empty.",
       "root_cause": "The prior exhaustive inventory covered JNNW envelopes; it did not classify all other formats.",
       "invariant": "Preserve V1-V6 and the frozen descriptor universe and recovery partition; authenticate and classify every descriptor exactly once, continue only after known parser errors, and publish no positions, targets, union, readiness, or scientific verdict.",
-      "evidence": "Prospective generic diagnostic implementation, deterministic full-universe fixture, parser-error continuation, fail-closed authentication and deadline coverage.",
+      "evidence": "Prospective generic diagnostic implementation, deterministic full-universe fixture, parser-error continuation, fail-closed authentication and deadline coverage.; PR #932",
       "status": "MITIGATED_PENDING_BOUNDED_REHEARSAL"
     }
   ]
