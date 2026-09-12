@@ -480,6 +480,16 @@
       "invariant": "Preserve V1-V6 and the frozen descriptor universe and recovery partition; authenticate and classify every descriptor exactly once, continue only after known parser errors, and publish no positions, targets, union, readiness, or scientific verdict.",
       "evidence": "Prospective generic diagnostic implementation, deterministic full-universe fixture, parser-error continuation, fail-closed authentication and deadline coverage.; PR #932",
       "status": "MITIGATED_PENDING_BOUNDED_REHEARSAL"
+    },
+    {
+      "id": "TI-049",
+      "dedupe_key": "ed4-c0c-format-diagnostic-v2-position-leaf-validation",
+      "context": "ED4 C0C complete format diagnostic V2",
+      "symptom": "The first complete format rehearsal reached a position validation failure outside the V1 parser-error classifier.",
+      "root_cause": "V1 classified only C0CError values although the existing strict position and FEN canonicalizer exposes finite leaf validation failures as ContractError.",
+      "invariant": "Preserve all frozen descriptors and recovery rules; classify only the explicit leaf position and FEN validation failures, and fail closed for unknown ContractError and all authentication, runtime, or catalog errors.",
+      "evidence": "Prospective V2 bounded diagnostic with finite leaf-error mapping and no target or identity publication.",
+      "status": "MITIGATED_PENDING_BOUNDED_REHEARSAL"
     }
   ]
 }
