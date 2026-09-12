@@ -45,6 +45,17 @@ vides restent identiques. Cette étape ne produit aucune union d'exclusion ni
 preuve de gain scientifique. L'investigation des rejets et un nouveau protocole
 de récupération précèdent encore l'audit complet et les confirmations fraîches.
 
+Le [diagnostic exact de liaison C0C V1](experiments/L3_ED4_C0C_EXACT_LINKAGE_DIAGNOSTIC_V1_RESULTS_20260912.md)
+est terminé, publié, authentifié et relu : 21 descripteurs examinés, 84
+régressions de préflight réussies, cinq phases d'exécution terminées et terminal
+`ED4_C0C_V7_BLOCKED_BY_INCOMPLETE_STRUCTURAL_COVERAGE`. Les 21 descripteurs
+examinés comprennent 15 alias TSV dans quatre cas, trois FEN et trois JNNW ;
+les agrégats comprennent 7 568 parents et 49 181 lignes enfants. Trois alias
+FEN vides et 15 liaisons TSV sont prouvés, tandis que trois alias STM restent
+non résolus en fail-closed. La causalité des artefacts n'est pas établie. Le
+candidat, la partition V5/V6, le verdict scientifique nul, l'absence de
+confirmation et alpha zéro restent inchangés.
+
 ## ED4-P0 — objectif de choix et préflight synthétique validés
 
 Le protocole ED4-P0 est préenregistré et son préflight synthétique complet a réussi

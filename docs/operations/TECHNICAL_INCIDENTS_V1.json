@@ -488,8 +488,8 @@
       "symptom": "The first complete format rehearsal reached a position validation failure outside the V1 parser-error classifier.",
       "root_cause": "V1 classified only C0CError values although the existing strict position and FEN canonicalizer exposes finite leaf validation failures as ContractError.",
       "invariant": "Preserve all frozen descriptors and recovery rules; classify only the explicit leaf position and FEN validation failures, and fail closed for unknown ContractError and all authentication, runtime, or catalog errors.",
-      "evidence": "Prospective V2 bounded diagnostic with finite leaf-error mapping and no target or identity publication.; V2 rehearsal completed and published; independent authenticated readback verified all 726 descriptors, exact recovery membership, 21 classified failures across six content hashes, 66 regressions and the fixed timing limits. See docs/experiments/L3_ED4_C0C_FULL_FORMAT_DIAGNOSTIC_V2_RESULTS_20260912.md; PR #933. No exclusion union or scientific confirmation follows.",
-      "status": "MITIGATED_DIAGNOSTIC_COMPLETE_RECOVERY_PENDING"
+      "evidence": "Prospective V2 bounded diagnostic with finite leaf-error mapping and no target or identity publication.; V2 rehearsal completed and published; independent authenticated readback verified all 726 descriptors, exact recovery membership, 21 classified failures across six content hashes, 66 regressions and the fixed timing limits. The exact-linkage diagnostic then completed and published with independent authenticated readback; its aggregate results record 21 examined descriptors (15 TSV aliases in four schemas, three FEN aliases and three JNNW aliases), 84 preflight regressions, five completed execution phases, exact linkage/empty-set evidence and three unresolved STM aliases. Artifact causality was not established. See docs/experiments/L3_ED4_C0C_FULL_FORMAT_DIAGNOSTIC_V2_RESULTS_20260912.md and docs/experiments/L3_ED4_C0C_EXACT_LINKAGE_DIAGNOSTIC_V1_RESULTS_20260912.md; PR #933 and PR #935. No exclusion union or scientific confirmation follows.",
+      "status": "MITIGATED_LINKAGE_COMPLETE_PROVENANCE_PENDING"
     }
   ]
 }
