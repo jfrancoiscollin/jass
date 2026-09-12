@@ -1,0 +1,11 @@
+{
+  "schema": "jass.launch_profile.v2",
+  "campaign": "ed4-confirmation-source-audit",
+  "stage": "ed4-c0c-v5-inventory-class-readout",
+  "command": ["/var/tmp/jass-l3-numeric-venv-current-v1/bin/python", "jobs/tools/ed4_c0c_v5_inventory_class_readout_stage.py"],
+  "regressions": ["jobs.tests.test_launch_gate_v2", "jobs.tests.test_launch_gate_pipeline_v2"],
+  "required_phases": ["authenticate-1922-inventory", "classify-structural-rows-only", "publish-class-readout"],
+  "evidence_outputs": ["ed4-c0c-v5-inventory-class-readout.json"],
+  "rehearsal_max_effects": {"fits":0,"new_scan_searches":0,"new_jass_searches":0,"strength_games":0,"selfplay_games":0,"promotions":0,"bakes":0,"test_target_reads":0},
+  "production_max_effects": {"fits":0,"new_scan_searches":0,"new_jass_searches":0,"strength_games":0,"selfplay_games":0,"promotions":0,"bakes":0,"test_target_reads":0}
+}
