@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, importlib.util, json, re
+import argparse, importlib.util, json, re, sys
 from pathlib import Path
+ROOT=Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path: sys.path.insert(0,str(ROOT))
 from jobs.tools.launch_runtime_v2 import EFFECTS
 
-ROOT=Path(__file__).resolve().parents[2]
 BASE_REG={'jobs.tests.test_launch_gate_v2','jobs.tests.test_launch_gate_pipeline_v2'}
 REQ={'schema','campaign','stage','command','evidence_outputs','production_max_effects','rehearsal_max_effects','regressions','required_phases'}
 HEX64=re.compile(r'^[0-9a-f]{64}$')
