@@ -440,6 +440,16 @@
       "invariant": "Skip only the already-authorized 1909 object and inspect only authenticated JNNW envelope structure. Do not decode positions/targets or extend salvage policy until the next object is proven.",
       "evidence": "1910 attempt 20260910T173938Z-755e6ae0; diagnostic implementation in this PR.; PR #914",
       "status": "OPEN — next malformed JNNW localization pending"
+    },
+    {
+      "id": "TI-045",
+      "dedupe_key": "control-v3-1927-queue-root-path-v1",
+      "context": "Queue placement repair and publication verification for job 1927",
+      "symptom": "The job was invisible to runner v3 because its script was outside the pending directory.",
+      "root_cause": "The queue script was placed at the queue root, which both the runner and the former control validation ignored.",
+      "invariant": "Require the canonical pending directory, reject misplaced queue scripts in CI, and preserve the frozen execution contract.",
+      "evidence": "Control PR #630; five dispatcher tests and the negative queue-placement fixture; completed execution and authenticated publication readback documented in docs/operations/ED4_1927_PUBLICATION_READBACK_20260912.md in this PR. The initial readback permission block was resolved by explicit user authorization. PR #929",
+      "status": "CLOSED — queue placement corrected, regression guard passed, execution and publication readback verified"
     }
   ]
 }
