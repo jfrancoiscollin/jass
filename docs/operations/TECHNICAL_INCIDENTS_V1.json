@@ -460,6 +460,16 @@
       "invariant": "Preserve V1-V5 and scientific gates. Prospective V6 may recover only the exact authenticated 231-object inventory partition, with separately pinned full and aligned row-set digests; decode only position bytes 0:33 and never interpret bytes 33:38. Missing pins, identity drift, duplicate/unseen objects, forbidden reads or missing runtime evidence fail closed. Total campaign job duration must remain within 45 minutes.",
       "evidence": "Authenticated 1927 publication/readback and authorized V6 R2→CPX62 metadata freeze: docs/operations/ED4_1927_PUBLICATION_READBACK_20260912.md, docs/operations/ED4_C0C_V6_AUTHENTICATED_FREEZE_20260912.json, docs/operations/ED4_C0C_V6_LOCAL_READINESS_20260912.md. Frozen full and aligned canonical pins are recorded there; no V6 real-data execution or scientific success is claimed. The historical approval-review rejection of the additional 171848-byte inventory fetch was resolved by explicit authorization. Local V6 profile evidence remains the historical 49-test Linux report; bounded same-code target-free rehearsal/readback remains pending.; PR #930",
       "status": "MITIGATED — V6 canonical freeze complete; bounded same-code target-free rehearsal and authenticated readback pending"
+    },
+    {
+      "id": "TI-047",
+      "dedupe_key": "ed4-v6-preflight-real-io-v1",
+      "context": "ED4 C0C V6 synthetic preflight isolation",
+      "symptom": "A synthetic regression inherited a mutable configured runtime and entered the builder and external I/O path.",
+      "root_cause": "The test implicitly assumed RUNTIME_MAX_SECONDS would be unset, but the configured default was present; the no-sizing case was not selected explicitly.",
+      "invariant": "Synthetic validation must explicitly patch the no-sizing case, require v6_runtime_sizing_pending, verify the builder is not called, and fail closed at transport boundaries; V6 scientific and runtime contracts remain unchanged.",
+      "evidence": "Generic repair and validation are documented in docs/operations/ED4_C0C_V6_TEST_ISOLATION_20260912.md; transport canaries and cleanup assertions cover swallowed calls; complete synthetic V6 coverage and shared dispatcher regression coverage pass; a new same-code rehearsal remains pending.",
+      "status": "MITIGATED_PENDING_NEW_REHEARSAL"
     }
   ]
 }
