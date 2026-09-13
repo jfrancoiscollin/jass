@@ -10,6 +10,19 @@ from pathlib import Path
 from runner_v3_common import Config, run, utcnow, write_json
 
 
+# The runner is a five-minute oneshot and must never be held indefinitely by a
+# wedged object-store socket.  These are rclone inactivity/connection bounds,
+# not total transfer deadlines: healthy large uploads may continue for as long
+# as bytes keep flowing.  Internal rclone retries are deliberately minimized
+# because RcloneResultStore already owns the bounded outer retry loop.
+RCLONE_TRANSPORT_ARGS = (
+    "--contimeout", "30s",
+    "--timeout", "2m",
+    "--retries", "1",
+    "--low-level-retries", "2",
+)
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -83,16 +96,17 @@ class RcloneResultStore(ResultStore):
         marker = run_dir / marker_name
         marker.unlink(missing_ok=True)
         last_error = ""
+        transport = list(RCLONE_TRANSPORT_ARGS)
         for attempt in range(1, self.cfg.upload_retries + 1):
             copy = run([self.cfg.rclone_bin, "copy", str(run_dir), remote,
-                        "--checksum", "--immutable"], check=False)
+                        "--checksum", "--immutable", *transport], check=False)
             if copy.returncode == 0:
                 check = run([self.cfg.rclone_bin, "check", str(run_dir), remote,
-                             "--one-way", "--checksum"], check=False)
+                             "--one-way", "--checksum", *transport], check=False)
                 if check.returncode == 0:
                     marker.write_text(utcnow() + "\n", encoding="utf-8")
                     final = run([self.cfg.rclone_bin, "copyto", str(marker),
-                                 remote_join(remote, marker_name)], check=False)
+                                 remote_join(remote, marker_name), *transport], check=False)
                     if final.returncode == 0:
                         return remote
                     last_error = final.stderr or final.stdout
