@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Execute the required regression suite and reject empty or skipped suites."""
 from __future__ import annotations
+# Final CI retrigger after automatic incident-ledger update; gate semantics unchanged.
 import argparse
 import json
 import os
