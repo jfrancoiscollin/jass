@@ -495,11 +495,11 @@
       "id": "TI-050",
       "dedupe_key": "job:cpx62-1939-l3-ed4-fresh-s-source-rehearsal-v1",
       "context": "ED4-FRESH S-source rehearsal 1939 / generic regression admission",
-      "symptom": "1939 and generic-only diagnostics fail mandatory V2 regression admission; 1942 now identifies the failing test module/method but not its assertion line.",
-      "root_cause": "Exact target-host assertion is still under investigation. V2 failure evidence now has the test ID; this follow-up safely adds source basename/line so the next run can identify the exact assertion without exposing traceback/message data.",
-      "invariant": "Do not relax/remove/skip the failing generic test. Publish only non-sensitive source basename+line. Preserve Fresh-S reserve seed 202609120413, quotas, target barrier, ED4 candidate, alpha and confirmation corpus.",
-      "evidence": "1942 attempt 20260913T184539Z-71e0b1d0 terminal exit2 identified jobs.tests.test_launch_gate_pipeline_v2.ActualStageRoundtripTests.test_actual_stage_publication_fetch_and_fail_closed_marker as unittest-failure; no scientific verdict/read occurred.; PR #946",
-      "status": "INVESTIGATING — exact assertion line pending one target-host rerun"
+      "symptom": "1939 failed mandatory V2 regression admission before any ED4 scientific read; diagnostics 1943/1944 localized the failure to test_launch_gate_pipeline_v2.py:55 and a nested synthetic stage EXECUTE exit code 1.",
+      "root_cause": "The generic infrastructure roundtrip test imported fixture_run from test_ed3_label_pressure, which imported the scientific ED3 module and scipy.special.expit. Under the deliberately sanitized target-host child environment that accidental SciPy dependency raised ImportError before the infrastructure assertions executed.",
+      "invariant": "Do not relax, remove or skip the generic launch regression. Keep the generic pipeline fixture hermetic and zero-science while preserving the real stage runner, StageEvidence validation, publication/authenticated readback, stale-spec rejection and fail-closed marker checks. Preserve Fresh-S reserve seed 202609120413, quotas, target barrier, ED4 candidate, alpha and confirmation corpus.",
+      "evidence": "1943 attempt 20260913T190146Z-4e84e48b identified test_launch_gate_pipeline_v2.py line 55; 1944 proved STAGE_EXIT_CODE during EXECUTE with exit 1 and no timeout; zero-science 1945 attempt 20260913T210751Z-c7436110 proved ImportError through test_ed3_label_pressure.py into ed3_label_pressure.py:19 with SciPy implicated and zero scientific reads/writes; bounded diagnostic #947; hermetic repair #948; target-host validation rerun 1946 currently pending terminal publication.; PR #950",
+      "status": "MITIGATED_PENDING_TARGET_HOST_VALIDATION_1946"
     }
   ]
 }
