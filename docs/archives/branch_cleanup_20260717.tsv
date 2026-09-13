@@ -1,0 +1,152 @@
+﻿branch	tip_sha	associated_pr	pr_state	disposition	reason
+agent/forkc-teacher-diagnostics	6c50107ad99e5a242d2cfd82b36885688df57a0a	#340	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#340)
+agent/pr-c-tools-consolidation	1ab9be08414f9306045ecc7c969dbf6bafd2f174	#333	CLOSED	delete_closed_pr_superseded	PR #333 replaced by #335
+agent/t1bis-runner-v3-native	f37017e712545fc91e45254307105e764bb0b2cc	#334	CLOSED	delete_closed_pr_superseded	PR #334 replaced by #336
+agent/t3-adj-g1-launch	9ba5c8314f54a7687c45e1acdf26b2c78d92b8ab	#338	OPEN	keep	PR #338 source retained until archive PR merges
+agent/t3-adj-g1-probe	80e66b56a7138d8aa738e41642818d89a66dd9c1		NONE	delete_no_pr_obsolete	exact duplicate of migration/clean-main-20260717T140558Z
+agent/t3-adj-g1-probe-v1	5145ea9844f0e33f9cb71a120f351ababfc1de94	#339	OPEN	delete_after_close_339	PR #339 duplicate replaced by archive PR
+claude/0045-standby	b90ddb25f42f11cf5f39942ecead4e53e0408922	#85	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#85)
+claude/0068-embed-variants-sweep	586ac28ee272e0b2f072f5ad195ab7ec81778435	#114	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#114)
+claude/0069-jpat-v8-embed-cxx-port	417c9c87a8cd65fe439d312cb98d743e5771aadf	#115,#116	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#116)
+claude/0071-v9-bigger-mlp	4d8e0c1d0168e9c19a0fd0d2d9450f3af5360b59	#117	MERGED	delete_post_pr_superseded	post-PR commits already integrated or superseded
+claude/0073-scan-install-outside-tmp	4eeaed8ee5a5f0e1b1721d20d9e52f3d7b7497da	#123	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#123)
+claude/0074-scan-distill-master-bce-fix	b6ab9f45e547fe145d6f64e3d98e7118321b557c	#124	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#124)
+claude/0075-pure-distillation	91d90dd3f6790918cd022910176e426ae5f2c8c5	#125	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#125)
+claude/0076-256-128-diagnostic	15fac7a8a86af117f77343917295671d489dd5fe	#126	MERGED	delete_post_pr_superseded	post-PR commits already integrated or superseded
+claude/0077-pattern-distill	f653dcb8a9ac6982adeca8d770819b02c0ba8354	#127	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#127)
+claude/0078-distill-1M-scaleup	39e2f31aad6edc58a90302656f9836e24acd150e	#128	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#128)
+claude/0079-pattern-calibration-sweep	e4dab08ffbf3b9a6edb4ebfd54853fb6a62fbd51	#129	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#129)
+claude/0080-pattern-1M	c8c20fa53376f4ea00e02aba1bb887193f59c899	#130	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#130)
+claude/0081-pattern-amplitude-fix	68827a193fb2f01bfa063b6b440a0e19ee4219fc	#131	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#131)
+claude/0082-pattern-clipped-labels	140e126730adbe5c88f254f7220fd58209417c97	#132	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#132)
+claude/0083-v11-capacity-bump	fd5bebea8e4635bb4d8ddaa6b2c21080dc3aaa19	#133	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#133)
+claude/0084-scale-2M-v12	ef70617b976294c42029e97d3d5001cff441446d	#134	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#134)
+claude/0085-loss-phase-diagnostic	5a722b8a7628c8c7192da4379b60980ebc278902	#135	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#135)
+claude/0086-v11-selfplay-distill	f293d81f7fa024932ee8a406b445cadc15807e81	#136	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#136)
+claude/0087-master-opening-targeted	2018113b30138355aaeceb2ac9db5083e21ee1af	#137	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#137)
+claude/0088-smp-delta-v11	d557d0db2bd0d4c4774d6350e0a4983bcbad9850	#138	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#138)
+claude/0089-depth-nps-investigation	4a840a775b075b9894ad90b2e542b687b9b8ace8	#141	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#141)
+claude/0089-fix-heredoc	a7b552c9a42e099af6ac86aaed0e55f861221bfd	#142	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#142)
+claude/0090-small-arch-sweep	9429e56b8f871dbb379b4b6d161bd231e86462ae	#143	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#143)
+claude/0091-v15-nps-profile	3d6260f68b1f904afd8d0e278be53cb969970dc2	#147	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#147)
+claude/0092-perf-profile-hot-path	7db302c93ef98267509569d97a7eb1820b1199db	#148	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#148)
+claude/0093b-breakdown-fix	e8a9c4ed21aa92adfb953f84525043732994110d	#150	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#150)
+claude/0093-eval-time-breakdown	5deb1ce044b688d47ca31ca74efd6db1bdbf34a3	#149	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#149)
+claude/0095-build-pipe-fix	6de0413885a004fba5eeff48bf08840094cbb93e	#151	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#151)
+claude/0097-profil-other-bucket	de085a4e008a739e106d564613f3e5b927bc64e8	#154	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#154)
+claude/0098-lazy-accumulator	4256a16276c5345e1cde9370de8990776ac1d57a	#155	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#155)
+claude/0099-subprofile-movegen	711981265cb59b455e7b0b1334cad238a2aac41f	#157	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#157)
+claude/0100-movegen-wrapper-kill	46a93f6a767a89e5ed0c0bfb383f9ada622b4831	#158	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#158)
+claude/0101-capture-optim-audit	c30753832dc43a1bfe7ad5af7f596f8203754eb6	#159	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#159)
+claude/0102-quiet-prefilter	d5cab3a515f9ab96ae21e1b46eb94a5b27b43530	#162	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#162)
+claude/0103-nnue-simd-audit	80f4a1e6a6596212bdf55f4c0db1e55bc7bde066	#163	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#163)
+claude/0104bis-smp-scaling-fix	beb1d3437b5a67af6f82b85d49995ba65258175b	#165	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#165)
+claude/0104-smp-scaling-audit	626fdf5a2d8a69e00c8f3e816344a18c7ee22eae	#164	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#164)
+claude/0105bis-smp-selfplay-smaller	e27bcc60b5179b3dd9be3d5086f5704673f8628f	#167	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#167)
+claude/0105-smp-selfplay	ea4fa785cb0cb315d81cbf9b56504f5c83589de0	#166	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#166)
+claude/0106-gen-data-depth20-2M	d527e24c5326cda75f7888e81c91c786088be5b1	#168	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#168)
+claude/0107-train-v16	f6303631069573a686d502d5e9fd41b94292b636	#169	CLOSED	delete_closed_pr_superseded	PR #169 abandoned NNUE job; never executed
+claude/0108-othello-board-movegen	937224d2283beaee60035f332f81f796610f221d	#170	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#170)
+claude/0109-othello-patterns	5abdf0e003c7e1d0853d6d1f93d05b4bb2cf5f20	#172	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#172)
+claude/0110-othello-eval-search	93ccafec40361a9e8419798a08afabf7e5ce95a7	#173	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#173)
+claude/0111-othello-gen-data	72efbcb2bf275a7134cd2c765b858ba8c63ed7d1	#174	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#174)
+claude/0112-othello-train-python	cb6d310c4a78a6482b56d05001e9e8eff1124b3d	#175	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#175)
+claude/0113-othello-weights-loader-bench	dc269025d9d716cc161ea5041e2cd4df17a89462	#176	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#176)
+claude/0114-othello-day7-gate1-final	a7e98278c21c9a72964f313fff1351191f20d44b	#177	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#177)
+claude/0115-pattern-jass-day1	36e74eda13245401e8179df037219815b2ba059c	#178	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#178)
+claude/0116-pattern-jass-day2-training	e1e217e91abf5efe49478b6092800ed48e55826e	#179	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#179)
+claude/0117-pattern-jass-day3-loader	b0f76a67a24aa805168fca702d70e21854815d88	#180,#181	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#181)
+claude/0118bis-fix-scipy-install	b16e24a6b81c650308828a8f145c39dcb78bca32	#183	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#183)
+claude/0118-pattern-jass-day5-gate2	70aeb02443cf203be516eee8b81b9a74d2a58d81	#182	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#182)
+claude/0119-pattern-jass-variant-A-score	4eadea5a1f14982f549987181be19110e31e6f3a	#184	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#184)
+claude/0120-pattern-jass-variant-B-geom	d8f00dd3db76d296f5abec4c16cc790d1142c04d	#185	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#185)
+claude/0121-pattern-jass-variant-C-kings	40c4e45910d4b8af9d3aff6bceeaa881080ba14c	#186	CLOSED	keep	unique pattern kings source retained until archive PR merges
+claude/0122bis-fix-tmpdir	67c444df5c88ecb1e6465c44797eb2c5cd55ebed	#188	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#188)
+claude/0122-rewrite-master-scores	73cd564238764bfec8a34c75d5d44df57f76c2bf	#187	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#187)
+claude/0124-movegen-king-ray-masks	9da58d7d3e4c245f15c41982550c6ebaf7755f57	#189	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#189)
+claude/0126-movegen-enemy-reach-batch	55bc5144c050d910f874d5c67acb826065bf12c4	#190	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#190)
+claude/0127-pattern-scan-geometry	c998ffe209312c835d41542790d6e7e2484e6887	#191	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#191)
+claude/0128-pattern-hybrid-skeleton	0d6fcde22bd66659c218ecd40783cff6735ee953	#192	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#192)
+claude/0130-phase3-scan-bootstrap-pilot	9b07e3db17fb9147aad06e996e57d4083b66e805	#193	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#193)
+claude/0131-phase3-scan-full	57a01f7217046a21fa204ec9c2b7b63f0180d5ab	#194	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#194)
+claude/0132-pattern-i-nnue-skeleton	8014523cc55d5959dc4c86c7e9cb1040749a2af3	#196	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#196)
+claude/activate-0043	ce9fefc7152e96a4621e60e9ec2d51ca5c18a407	#82	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#82)
+claude/activate-0045	ba1d5ee028ece18951ad69f7d380719906bbff01	#87	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#87)
+claude/activate-0056-v8	7b2438aa14caaa440eba20b5e010cbed3d1adace	#100	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#100)
+claude/activate-0062-and-update-0058	b1b87c8dd27abf6d581994746eb65ce2ed12cbc3	#107	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#107)
+claude/activate-mlp-head-test	b4ac66b7a8882d95ef20c741fa28e0c954c20ef7	#110	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#110)
+claude/activate-pattern-and-bigger-arch	cddc88c49c7e0a1d92b9a039d91ae97d2221bee5	#76	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#76)
+claude/bake-conthist	913ac8dd87a927130dbe8b3f993038e548573892	#321	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#321)
+claude/bench-bootstrap-and-h4-with-bootstrap	3d1ba631769740a6b067e04f91892a40399fab00	#106	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#106)
+claude/bench-cli-threads-flag	c66641f6da4bd42cebb4040cae197ac6d12af14e	#118	MERGED	delete_post_pr_superseded	post-PR commits already integrated or superseded
+claude/bigger-arch-recovery	0188ebe0ea8d7c9edb5fe0c9029122c831d8c38b	#77	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#77)
+claude/boxcox-lmr	ba797419a1bb6fe29ee736e752a35b33e3762d24	#323	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#323)
+claude/custom-checkers-engine-xLttL	b0297fd53609fd31a39f19709651cf97dbdac5c6	#1,#2,#3,#4,#5,#6,#7,#8,#9,#10,#11,#12,#13,#14,#15,#16,#17,#18,#19,#20	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#20)
+claude/cycle9-10M-templates	04baff3c9e206855d8bbc1114c76581e36cc43e7		NONE	delete_no_pr_obsolete	dormant Cycle 9 branch superseded
+claude/cycle9-depth10-experiment	bfe6eb207a743e5558bae49d7f8e5d09b7acfcb8		NONE	delete_no_pr_obsolete	dormant Cycle 9 branch superseded
+claude/d2-base3-encoding	8ecab76738bb930c1f6d9041fe98c8e1df36f641	#90	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#90)
+claude/diag-book-bug	5a613e7ac7b76cc7678af5d17b2518f308b5ec23	#69	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#69)
+claude/docs-add-option-H-hybrid-skeleton	f8d8e5c3b076fba61d60b5cd7274b9323d5166d3	#195	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#195)
+claude/docs-option-f-aux-heads	189ed2e4d0dda7e84deaa7cba28762c5defca8ba	#119,#120	MERGED	delete_post_pr_superseded	documentation superseded
+claude/docs-paradigm-shift-roadmap	cd061d295ffd465816844a06aff30cded06a64f0	#111	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#111)
+claude/docs-perf-journey	12d3bcc64b0ec325f7d27ef058337aaf1896b64b	#160	CLOSED	keep	unique performance history source retained until archive PR merges
+claude/docs-perf-journey-complete	d99632648cc8987f309bea5280c524cb85b0065d	#171	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#171)
+claude/ebf-nps-search-params	98b52e4f9aa01262b444a8006cbda1e46dd0c273	#320	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#320)
+claude/fix-accumulator-doc	c67a91c72a9f449979f17696caaec8fddf8a0a63	#83	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#83)
+claude/g1-lbfgs-pattern	6aac496c18679d2a982d2e836a7571cccaf17e0b	#92	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#92)
+claude/g3b-phase-split-skeleton	eec655c8e1b40a2d2cbef30512f743bbfd901cbe	#96	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#96)
+claude/g3-feature-engineering	8d5a506b61884903efc3557f36fd1e3b0e2751f6	#95	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#95)
+claude/g4-cost-revised	3ad4eb354f836f8af1993b8b5f5dcdd7638d5369	#97	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#97)
+claude/g4-diag-self-play	10727ef1709379a1fd3d614be4f438b5cfa111fd	#98	MERGED	delete_post_pr_superseded	post-PR work already integrated or superseded
+claude/g5-scan-geometry-and-roadmap	ce60062f22bde665a1d66f7df3e1dac1236f20c0	#101	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#101)
+claude/gitignore-perf-journey	7f1f9d17979996d5b552ab52b85b8e508e065644	#161	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#161)
+claude/h1-h3-combined	a58ea7cad287d9ac4079a1971272f775c3b8477e	#104	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#104)
+claude/h2-h3-h5-templates	4969d1540f8be07119bdee22ee4b9c9475578d8c	#102	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#102)
+claude/h4-king-mobility	dccf91edb0f38e8449648a46e84de2766308077c	#105	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#105)
+claude/hier-l2-backoff	2adf52b27569d08dca7b4c6867c4481ff455d96c	#322	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#322)
+claude/jass-migration-job-733d-7bfh27	f696d3324f244e256c259bc703b80111ca079500		NONE	delete_no_pr_obsolete	tip is ancestor of develop
+claude/l1-multi-extraction	5c00cd73916391f227e931cc5bc0d56b5ec9846c	#84	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#84)
+claude/nnue-eval-server	c9267905109f4cd204de0125fe79da044d0a6986		NONE	keep	unique IPC probe source retained until archive PR merges
+claude/nnue-incremental-scaffold	88ac54445524404b218217201db8a4d7bc3002a6	#73	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#73)
+claude/nnue-simd-int8	c86b29ec3e6dc0800ce09c1007ab1b68291f5ad3	#72	CLOSED	delete_closed_pr_superseded	PR #72 content integrated by #73
+claude/othello-phase-pattern-1-prep	08b21836d6aa850b9d14410f5a5e8d2425a1aae4	#145	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#145)
+claude/paradigm-shift-compute-nuances	8c13703453aac344857c9ab35cefe26e597d08e7	#112	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#112)
+claude/pattern-embeddings-mlp-end-to-end	f5a2f2997a248d6622f16073fdb41bfa15ace299	#113	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#113)
+claude/pattern-frozen-and-v7-and-scan-gap	7f162fe269d09fb272c501992c60f70bea022142	#91	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#91)
+claude/pattern-hybrid-mlp-head	ac64e3104d8599e3fff0e31d961c6793626f1bd5	#109	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#109)
+claude/pattern-i-nnue-skeleton-tGSrb	8bd29e7d18e60d6050e4d3139b01063092508c7a	#197,#198,#199,#200,#201,#202,#203,#204,#205,#206,#207,#208,#209,#210,#211,#212,#213,#214,#215,#216,#217,#218,#219,#220,#221,#222,#223,#224,#225,#226,#227,#228,#229,#230,#231,#232,#233,#234,#235,#236,#237,#238,#239,#240,#241,#242,#243,#244,#245,#246,#247,#248,#249,#250,#251,#252,#253,#254,#255,#256,#257,#258,#259,#260,#261,#262,#263,#264,#265,#266,#267,#268,#269,#270,#271,#272,#273,#274,#275,#276,#277,#278,#279,#280,#281,#282,#283,#284,#285,#286,#287,#288,#289,#290,#291,#292,#293,#294,#295,#296,#297,#298,#299,#300,#301,#302,#303,#304,#305,#306,#307,#308,#309,#310,#311,#312,#313,#314,#315,#316,#317	MERGED,CLOSED	delete_post_pr_superseded	post-PR work already integrated or superseded
+claude/pattern-network-prototype	b72f27ceeb5719d1e5ad47650f74598167c84d8e	#75	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#75)
+claude/pattern-network-v2	df0a238edd7e3c72bbe02af3addadbeaae57e73d	#78	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#78)
+claude/pattern-v4-long-and-tdleaf	e1d622d47f85da344119aac4717cfefdb9fb0173	#108	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#108)
+claude/pattern-wdl-only	67e9e08b44893aac5c7cfcc2ba9b84ec016f376f	#79	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#79)
+claude/pcblues-corpus-extraction-2i92bj	ff56c23d79d26d544f3f38a7ee53043f8dd8bbc0		NONE	delete_no_pr_obsolete	useful PC Blues code already present in develop
+claude/phase1-pattern-training	d3da797ba6018816778160db9cbce9ffff173d82	#86	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#86)
+claude/phase-a-plusplus-roadmap	22081b5a12c91d9164b90434f270ab8343e6ce48	#146	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#146)
+claude/phase-H-cmh-lmp	e77411e6741f2af1b0e530180333e59ff923d069	#140	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#140)
+claude/phase-hybrid-eval-plan	17e42c544998132b97aca28717fb97843660254b	#152	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#152)
+claude/reset-0073-results	5ad7ed16072b6f204f16db0f1e2d67c2836d5c04	#122	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#122)
+claude/resume-previous-work-ROyCe	8f1bd2d2523844ac4afab4e40841e3d5792bb3a1	#30,#31,#32,#33,#34,#35,#36,#37,#38,#39,#40,#41,#63,#64,#65,#66,#67,#68,#70,#71	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#71)
+claude/resume-work-5y68W	59ca3955bc941474f151c0541349814469c3da4b		NONE	delete_no_pr_obsolete	obsolete resume branch
+claude/resume-work-Ya19O	094197d64f3a698c296f9158331bb9a9deb0636e	#21,#22,#23,#24,#25,#26,#27,#28,#29	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#29)
+claude/revert-hybrid-eval-tier1	b55dffd2a2dac46c6136d8ac2dee35c6477afae3	#153	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#153)
+claude/revert-lazy-accumulator	646b143bab2d1cb7884e935063d8bf76bb25b0ed	#156	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#156)
+claude/roadmap-phase-H-I-search-cycles	049340662fff01e968f6fe0bbd8d2477f0a41011	#139	MERGED	delete_post_pr_superseded	documentation superseded
+claude/roadmap-plan-B-independence	1a41acbec8027c2bfae7393a2fb1adc223d24a9e	#144	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#144)
+claude/roadmap-revision-post-biblio	fcbd65fc05ff336488aa262ba9868ba2c0a98067	#81	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#81)
+claude/scan-distill-fixes-and-0072	ffc42808ab1d0e238194d9711c18fdd7019b90db	#121	MERGED	delete_post_pr_superseded	post-PR work already integrated or superseded
+claude/scan-notes-and-d3	70a5d6954c63f898b3e842882918e517d489d1c2	#88	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#88)
+claude/scan-notes-refinement	d9af82aab4bdd06687454bb0cfec8f701ed02edd	#94	MERGED	delete_post_pr_superseded	documentation superseded
+claude/scan-sac-quiescence	ecad136112c841c364dc582eb4ae3dfebd4fbbcb		NONE	delete_no_pr_obsolete	useful Scan-sac code already present in develop
+claude/scan-singlereply-lmrasym	c07cd8be6397b47bd9146af226fc34d60683ddd2	#324	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#324)
+claude/session-2026-05-consolidation	cd3fe80ec7ac2d084c6569ac9bfd8a04a6e40f32	#80	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#80)
+claude/setup-github-project-6nmvi	dc3b49fdc2ba911e3b80863b6c9c9b7e27c20a51	#42	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#42)
+claude/ship-v8-and-activate-g5	ecc78eb7e2da0977203e9d523f4c2764d68e5fee	#103	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#103)
+claude/unblock-runner	c21c9207d50acdd1b712349cb4606c96d24cad91	#74	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#74)
+claude/v6-ship-and-d1-hybrid	e7375ce85cd6ebcc3f7c348a34c09cbcc4877228	#89	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#89)
+claude/v7-ship-and-g2-distillation	969ea42961b206e4ed531a4e6f541264572465bb	#93	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#93)
+claude/v8-standby	4a053f290dc98e218d04b12dd638746ff63320ab	#99	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#99)
+codex/jnnw-stats-tool	d6dc5f1f5b76446be33566f8bcae7d02cf46ffdb	#318	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#318)
+codex/safety-rails-docs-ci	99c0c4c09275e24a644973b31adcbd5fd2647b85	#319	MERGED	delete_merged_pr_exact_tip	tip equals merged PR head.sha (#319)
+develop	709fa072b292436a091329d0a38a2bcc677636b6	#43,#44,#45,#46,#47,#48,#49,#50,#51,#52,#53,#54,#55,#56,#57,#58,#59,#60,#61,#62	MERGED	keep	default branch; never delete
+migration/clean-develop-20260717T140558Z	1b907771df97c6cee8de3b7ae41e1888f03685f4		NONE	keep	history rewrite rollback anchor
+migration/clean-main-20260717T140558Z	80e66b56a7138d8aa738e41642818d89a66dd9c1		NONE	keep	history rewrite rollback anchor
