@@ -14,13 +14,13 @@ class Case:
 
 
 class Result:
-    failures=[(Case('suite.Case.test_fail'),'trace')]
-    errors=[(Case('suite.Case.test_error'),'trace')]
+    failures=[(Case('suite.Case.test_fail'), 'Traceback\n  File "/secret/root/jobs/tests/test_x.py", line 57, in test_fail\nAssertionError: secret value')]
+    errors=[(Case('suite.Case.test_error'), 'Traceback\n  File "/other/path/test_y.py", line 91, in test_error\nRuntimeError: private')]
     skipped=[(Case('suite.Case.test_skip'),'reason')]
 
 
 class LaunchRegressionEvidenceTests(unittest.TestCase):
-    def test_failed_test_ids_are_published_without_trace_or_secret(self):
+    def test_failed_test_ids_and_lines_are_published_without_trace_or_secret(self):
         with tempfile.TemporaryDirectory() as td, patch.dict(os.environ, {
             'JASS_ARTEFACT_DIR':td, 'LAUNCH_MODE':'rehearsal'}, clear=False):
             r._publish_failure_evidence(Result(),3)
@@ -29,8 +29,13 @@ class LaunchRegressionEvidenceTests(unittest.TestCase):
         self.assertEqual(value['error_type'],'RegressionSuiteFailed')
         self.assertEqual([x['function'] for x in value['frames']], [
             'suite.Case.test_fail','suite.Case.test_error','suite.Case.test_skip'])
-        self.assertTrue(all(x['line']==0 for x in value['frames']))
-        self.assertNotIn('trace',json.dumps(value))
+        self.assertEqual(value['frames'][0], {'file':'test_x.py','function':'suite.Case.test_fail','line':57})
+        self.assertEqual(value['frames'][1], {'file':'test_y.py','function':'suite.Case.test_error','line':91})
+        self.assertEqual(value['frames'][2]['line'],0)
+        encoded=json.dumps(value)
+        self.assertNotIn('/secret/root',encoded)
+        self.assertNotIn('secret value',encoded)
+        self.assertNotIn('private',encoded)
         self.assertTrue(all(v==0 for v in value['actual_side_effects'].values()))
 
     def test_empty_suite_phase_is_distinct(self):
