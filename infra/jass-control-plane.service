@@ -1,0 +1,28 @@
+[Unit]
+Description=Jass CPX restricted control plane
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/srv/jass/code
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=JASS_CONTROL_BIND=127.0.0.1
+Environment=JASS_CONTROL_PORT=8765
+Environment=JASS_CONTROL_TOKEN_FILE=/etc/jass-control-plane/token
+Environment=JASS_CONTROL_AUDIT_FILE=/var/lib/jass-control-plane/audit.jsonl
+Environment=JASS_CONTROL_ALLOW_REBOOT=0
+EnvironmentFile=-/etc/jass-control-plane/control-plane.env
+ExecStart=/usr/bin/python3 /srv/jass/code/infra/cpx_control_plane.py
+Restart=on-failure
+RestartSec=3s
+NoNewPrivileges=false
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/jass-control-plane
+CapabilityBoundingSet=CAP_KILL CAP_SYS_BOOT CAP_DAC_OVERRIDE CAP_SYS_ADMIN
+
+[Install]
+WantedBy=multi-user.target
