@@ -105,8 +105,12 @@ class RcloneResultStore(ResultStore):
                              "--one-way", "--checksum", *transport], check=False)
                 if check.returncode == 0:
                     marker.write_text(utcnow() + "\n", encoding="utf-8")
-                    final = run([self.cfg.rclone_bin, "copyto", str(marker),
-                                 remote_join(remote, marker_name), *transport], check=False)
+                    # R2 accepted the regular directory copy above but the
+                    # single-object ``copyto`` marker path can return HTTP 501
+                    # on the target endpoint.  Use the same proven ``copy``
+                    # operation for the marker while still writing it last.
+                    final = run([self.cfg.rclone_bin, "copy", str(marker), remote,
+                                 "--checksum", *transport], check=False)
                     if final.returncode == 0:
                         return remote
                     last_error = final.stderr or final.stdout
