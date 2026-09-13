@@ -1,7 +1,9 @@
-"""Actual generic runner -> full synthetic audit -> publisher -> authenticated fetch.
+"""Actual generic runner -> synthetic evidence -> publisher -> authenticated fetch.
 
 Only the network transport is a local fake rclone. The real target-host rehearsal
 must separately exercise the actual R2 backend before production is admissible.
+The generic infrastructure fixture intentionally has no NumPy/SciPy or scientific
+module dependency so target-host admission cannot depend on a scientific runtime.
 """
 from __future__ import annotations
 import copy
@@ -16,10 +18,30 @@ from unittest.mock import patch
 from jobs.tools import launch_gate_v2 as g
 from jobs.tools import launch_regressions_v2 as regress
 from jobs.tools import run_experiment_stage as core
-from jobs.tools.launch_runtime_v2 import atomic_json, EFFECTS
+from jobs.tools.launch_runtime_v2 import atomic_json, EFFECTS, StageEvidence
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'infra'))
 from runner_v3_store import prepare_run_dir, FilesystemResultStore
+
+
+def fixture_run(result: Path, art: Path) -> None:
+    """Hermetic generic stage fixture: infrastructure semantics, zero science."""
+    evidence=StageEvidence(art,os.environ['LAUNCH_MODE'])
+    try:
+        for phase in ('authenticate','load-train-and-replay','measure','publish'):
+            evidence.begin(phase)
+            if phase == 'measure':
+                atomic_json(art/'launch-pipeline-fixture.json',dict(
+                    schema='jass.launch_pipeline_fixture.v1',
+                    synthetic=True,
+                    scientific_reads=0,
+                    scientific_writes=0,
+                ))
+            evidence.complete()
+        evidence.finish()
+    except BaseException as exc:
+        evidence.fail(exc)
+        raise
 
 
 class ActualStageRoundtripTests(unittest.TestCase):
@@ -27,7 +49,7 @@ class ActualStageRoundtripTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td);repo=root/'repo';repo.mkdir();run=root/'run';art=run/'artefacts';art.mkdir(parents=True)
             program=("import sys,os\nfrom pathlib import Path\nsys.path.insert(0,"+repr(str(ROOT))+ ")\n"
-                     "from jobs.tests.test_ed3_label_pressure import fixture_run\n"
+                     "from jobs.tests.test_launch_gate_pipeline_v2 import fixture_run\n"
                      "fixture_run(Path(os.environ['JASS_RESULT_DIR']),Path(os.environ['JASS_ARTEFACT_DIR']))\n")
             (repo/'fixture.py').write_text(program)
             for cmd in (['git','init','-q'],['git','config','user.email','fixture@example.invalid'],
@@ -37,11 +59,11 @@ class ActualStageRoundtripTests(unittest.TestCase):
             profile=dict(schema='jass.launch_profile.v2',campaign='fixture',stage='audit',
                          command=[sys.executable,'fixture.py'],regressions=['jobs.tests.test_launch_gate_v2'],
                          required_phases=['authenticate','load-train-and-replay','measure','publish'],
-                         evidence_outputs=['ed3-label-pressure.json'],rehearsal_max_effects={k:0 for k in EFFECTS})
+                         evidence_outputs=['launch-pipeline-fixture.json'],rehearsal_max_effects={k:0 for k in EFFECTS})
             spec=dict(schema='jass.stage_spec.v1',code_sha=head,campaign='fixture',stage='audit',
                       command=profile['command'],working_directory='.',inputs=[],
                       outputs=[dict(scope='artifact',path=p,required=True,nonempty=True,kind='file')
-                               for p in ('ed3-label-pressure.json','scientific-summary.json','execution-evidence.json')],
+                               for p in ('launch-pipeline-fixture.json','scientific-summary.json','execution-evidence.json')],
                       resources=dict(hostname=None,nproc=None,clean_worktree=True),
                       timeouts=dict(stage_seconds=60,terminate_grace_seconds=1),
                       artifact_directory_contract='empty_or_runner_launch',
@@ -91,7 +113,7 @@ class ActualStageRoundtripTests(unittest.TestCase):
                 from jobs.tools.fetch_result_files import fetch_files
                 dest=root/'download';verified=fetch_files(rclone='rclone',
                     prefix=f'r2:jass-data/runs/{job}/{attempt}',out_dir=dest,expected_state='completed',
-                    selections=[('artefacts/'+p,p) for p in ['launch-receipt.json','execution-evidence.json','launch-regressions.json','ed3-label-pressure.json']]
+                    selections=[('artefacts/'+p,p) for p in ['launch-receipt.json','execution-evidence.json','launch-regressions.json','launch-pipeline-fixture.json']]
                                +[('stage-receipt.json','stage-receipt.json')])
                 self.assertEqual(verified['code_sha'],head)
                 downloaded_hashes={p:g.sha(dest/p) for p in hashes}
