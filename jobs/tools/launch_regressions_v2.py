@@ -18,13 +18,44 @@ def _ids(rows):
     return [case.id() for case, *_ in rows]
 
 
+def _safe_stage_failure(detail):
+    """Extract only bounded generic runner receipt fields from unittest text.
+
+    The full assertion detail may contain paths, commands or exception text, so
+    never publish it. This parser is deliberately narrow and only recognizes the
+    stable repr fields emitted by ``run_experiment_stage.run_stage`` receipts.
+    """
+    text = detail or ''
+    patterns = {
+        'failure_class': r"'failure_class':\s*'([A-Z0-9_]{1,64})'",
+        'failure_stage': r"'failure_stage':\s*'([A-Z0-9_]{1,64})'",
+        'exit_code': r"'exit_code':\s*(None|[0-9]{1,3})",
+        'timed_out': r"'timed_out':\s*(True|False)",
+    }
+    matches = {key: re.search(pattern, text) for key, pattern in patterns.items()}
+    if not all(matches.values()):
+        return None
+    exit_token = matches['exit_code'].group(1)
+    return {
+        'failure_class': matches['failure_class'].group(1),
+        'failure_stage': matches['failure_stage'].group(1),
+        'exit_code': None if exit_token == 'None' else int(exit_token),
+        'timed_out': matches['timed_out'].group(1) == 'True',
+    }
+
+
 def _failure_frame(kind, case, detail):
     """Return test identity plus the last source line, never traceback/message text."""
     matches = re.findall(r'File "([^"]+)", line (\d+)', detail or '')
     if matches:
         path, line = matches[-1]
-        return {'file': Path(path).name, 'function': case.id(), 'line': int(line)}
-    return {'file': kind, 'function': case.id(), 'line': 0}
+        frame = {'file': Path(path).name, 'function': case.id(), 'line': int(line)}
+    else:
+        frame = {'file': kind, 'function': case.id(), 'line': 0}
+    safe_stage = _safe_stage_failure(detail)
+    if safe_stage is not None:
+        frame['stage_failure'] = safe_stage
+    return frame
 
 
 def _publish_failure_evidence(result, count):

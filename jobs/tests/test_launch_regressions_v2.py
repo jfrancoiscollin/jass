@@ -38,6 +38,30 @@ class LaunchRegressionEvidenceTests(unittest.TestCase):
         self.assertNotIn('private',encoded)
         self.assertTrue(all(v==0 for v in value['actual_side_effects'].values()))
 
+    def test_runner_receipt_fields_are_bounded_and_error_text_is_not_published(self):
+        detail=(
+            'Traceback\n  File "/secret/root/jobs/tests/test_launch_gate_pipeline_v2.py", line 55, in test\n'
+            "AssertionError: 2 != 0 : {'failure_class': 'STAGE_EXIT_CODE', "
+            "'failure_stage': 'EXECUTE', 'error': 'secret /credential/path', "
+            "'exit_code': 2, 'timed_out': False}"
+        )
+        frame=r._failure_frame('unittest-failure',Case('suite.Case.test_stage'),detail)
+        self.assertEqual(frame, {
+            'file':'test_launch_gate_pipeline_v2.py',
+            'function':'suite.Case.test_stage',
+            'line':55,
+            'stage_failure':{
+                'failure_class':'STAGE_EXIT_CODE',
+                'failure_stage':'EXECUTE',
+                'exit_code':2,
+                'timed_out':False,
+            },
+        })
+        encoded=json.dumps(frame)
+        self.assertNotIn('credential',encoded)
+        self.assertNotIn('/secret/root',encoded)
+        self.assertNotIn('error',encoded)
+
     def test_empty_suite_phase_is_distinct(self):
         empty=type('Empty',(),{'failures':[],'errors':[],'skipped':[]})()
         with tempfile.TemporaryDirectory() as td, patch.dict(os.environ, {
