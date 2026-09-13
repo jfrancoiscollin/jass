@@ -520,6 +520,16 @@
       "invariant": "Only non-evidence execution scratch may be removed. Preserve every declared artifact/evidence output, frozen W recipe/seed/model identity, stage phases, target barrier and side-effect accounting. Cleanup failure must fail the wrapper rather than silently declaring a clean publication.",
       "evidence": "Code inspection of ed4_fresh_w_sizing_stage.py shows build/source under result/work and CURRICULUM copy under result/inputs; runner_v3_store publishes the entire run directory. This PR adds a wrapper and regression proving both scratch roots are absent before publication while the underlying sizing stage remains unchanged.; PR #952",
       "status": "MITIGATED_PENDING_TARGET_HOST_W_SIZING_RERUN"
+    },
+    {
+      "id": "TI-053",
+      "dedupe_key": "runner-v3-r2-copyto-marker-501-1948",
+      "context": "CPX62 runner-v3 R2 publication after ED4-FRESH W sizing rehearsal 1948",
+      "symptom": "1948 exited 0 and bulk object copy plus checksum verification succeeded, but terminal marker publication failed with HTTP 501 NotImplemented on rclone copyto, leaving status upload_failed and result_uri null while the local pending-upload payload was preserved.",
+      "root_cause": "The R2 endpoint accepts the runner's regular rclone copy path but rejects the marker-only copyto operation used after verification. Marker publication unnecessarily used a distinct transfer primitive from the proven bulk path.",
+      "invariant": "Preserve marker-last publication, pre-marker checksum verification, bounded transport timeouts, local pending-upload recovery and all frozen ED4 scientific contracts. Do not change seed, quotas, candidate, targets, gates, alpha, fit or scoring.",
+      "evidence": "cpx62-1948-l3-ed4-fresh-w-sizing-rehearsal-v2 attempt 20260913T220257Z-7782dc2b completed scientific-summary terminal ED4_FRESH_W_SIZING_COMPLETE_V1 with zero target/candidate/control/fits/alpha; status upload_error reports `_SUCCESS: Failed to copy: NotImplemented` from final copyto after successful bulk copy/check.; PR #953",
+      "status": "MITIGATED_PENDING_TARGET_HOST_RECOVERY"
     }
   ]
 }
