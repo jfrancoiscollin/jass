@@ -500,6 +500,16 @@
       "invariant": "Do not relax/remove/skip the failing generic test. Publish only non-sensitive source basename+line. Preserve Fresh-S reserve seed 202609120413, quotas, target barrier, ED4 candidate, alpha and confirmation corpus.",
       "evidence": "1942 attempt 20260913T184539Z-71e0b1d0 terminal exit2 identified jobs.tests.test_launch_gate_pipeline_v2.ActualStageRoundtripTests.test_actual_stage_publication_fetch_and_fail_closed_marker as unittest-failure; no scientific verdict/read occurred.; PR #946",
       "status": "INVESTIGATING — exact assertion line pending one target-host rerun"
+    },
+    {
+      "id": "TI-051",
+      "dedupe_key": "runner-v3-rclone-unbounded-publish-stall-1946",
+      "context": "CPX62 runner-v3 result publication after ED4-FRESH S rehearsal 1946",
+      "symptom": "The 21:22 runner tick remained active indefinitely; process tree showed runner_v3_hardened.py polling an rclone copy child uploading the already-finished 1946 run to R2.",
+      "root_cause": "RcloneResultStore.publish invoked rclone copy/check/copyto without connection or I/O inactivity bounds. A wedged object-store transport could therefore hold the runner oneshot forever and prevent reap/heartbeat/next-job claim.",
+      "invariant": "Object-store publication must be bounded for transport inactivity without imposing a total healthy-transfer deadline. Preserve immutable copy, checksum verification, marker-last publication, local pending-upload recovery, and the runner-owned outer retry loop.",
+      "evidence": "Target-host process snapshot 2026-09-13: runner PID 102341 child PID 102382 `/usr/bin/rclone copy ...1946... r2:jass-data/runs/... --checksum --immutable`; runner kernel stack blocked in poll. This PR adds 30s connect / 2m I/O inactivity bounds, one internal retry with two low-level retries, and CI proving every publication phase receives the bounds.; PR #951",
+      "status": "MITIGATED_PENDING_TARGET_HOST_ADOPTION"
     }
   ]
 }
