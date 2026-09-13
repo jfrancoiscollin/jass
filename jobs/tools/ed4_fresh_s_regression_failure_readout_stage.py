@@ -2,6 +2,7 @@
 """Read only the runner-owned launch regression diagnostics from failed S rehearsal 1939."""
 from __future__ import annotations
 
+# CI retrigger after automatic incident-ledger update; diagnostic inputs unchanged.
 import json
 import os
 from pathlib import Path
