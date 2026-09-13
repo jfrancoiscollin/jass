@@ -74,4 +74,5 @@ jobs:
           jobs.tests.test_ed4_c0c_full_format_diagnostic_v2
           jobs.tests.test_ed4_c0c_exact_linkage_diagnostic
           jobs.tests.test_ed4_c0c_exact_linkage_transport
+          jobs.tests.test_ed4_fresh_s_regression_failure_readout
           -v

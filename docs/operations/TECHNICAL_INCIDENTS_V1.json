@@ -490,6 +490,16 @@
       "invariant": "Preserve all frozen descriptors and recovery rules; classify only the explicit leaf position and FEN validation failures, and fail closed for unknown ContractError and all authentication, runtime, or catalog errors.",
       "evidence": "Prospective V2 bounded diagnostic with finite leaf-error mapping and no target or identity publication.; V2 rehearsal completed and published; independent authenticated readback verified all 726 descriptors, exact recovery membership, 21 classified failures across six content hashes, 66 regressions and the fixed timing limits. The exact-linkage diagnostic then completed and published with independent authenticated readback; its aggregate results record 21 examined descriptors (15 TSV aliases in four schemas, three FEN aliases and three JNNW aliases), 84 preflight regressions, five completed execution phases, exact linkage/empty-set evidence and three unresolved STM aliases. Artifact causality was not established. See docs/experiments/L3_ED4_C0C_FULL_FORMAT_DIAGNOSTIC_V2_RESULTS_20260912.md and docs/experiments/L3_ED4_C0C_EXACT_LINKAGE_DIAGNOSTIC_V1_RESULTS_20260912.md; PR #933 and PR #935. No exclusion union or scientific confirmation follows.",
       "status": "MITIGATED_LINKAGE_COMPLETE_PROVENANCE_PENDING"
+    },
+    {
+      "id": "TI-050",
+      "dedupe_key": "job:cpx62-1939-l3-ed4-fresh-s-source-rehearsal-v1",
+      "context": "ED4-FRESH S-source rehearsal 1939",
+      "symptom": "Target-host rehearsal exited 2 before stage entry with REGRESSION_SUITE_FAILED and no scientific verdict.",
+      "root_cause": "Unknown pending authenticated readout of runner-owned launch-regressions.json/log from exact failed attempt 20260913T160656Z-04011fd1.",
+      "invariant": "Diagnose and repair only the exact regression failure; preserve S reserve seed 202609120413, source quotas, zero-target barrier, ED4 candidate, alpha, confirmation corpus and all scientific contracts.",
+      "evidence": "1939 status: failed exit2, code 04011fd1c7321021ef0df844517512ef9fa08795, REGRESSION_SUITE_FAILED, target/scientific verdict absent. This PR adds an authenticated bounded readout and CI coverage.; PR #944",
+      "status": "INVESTIGATING — authenticated regression log readout pending"
     }
   ]
 }
