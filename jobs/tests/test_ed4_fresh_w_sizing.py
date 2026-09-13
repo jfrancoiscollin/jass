@@ -7,6 +7,7 @@ import tempfile
 import unittest
 
 from jobs.tools import ed4_fresh_w_sizing_stage as w
+from jobs.tools import ed4_fresh_w_sizing_publishable_stage as publishable
 
 
 class FreshWSizingTests(unittest.TestCase):
@@ -63,6 +64,17 @@ class FreshWSizingTests(unittest.TestCase):
         self.assertEqual(w.RECORD_TARGET, 4096)
         self.assertEqual(w.CURRICULUM_SHA,
                          "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1")
+
+    def test_publishable_wrapper_removes_non_evidence_scratch(self):
+        with tempfile.TemporaryDirectory() as td:
+            result = Path(td)
+            for name in publishable.SCRATCH_NAMES:
+                nested = result / name / "nested"
+                nested.mkdir(parents=True)
+                (nested / "large-build-scratch.bin").write_bytes(b"scratch")
+            publishable.cleanup_result_scratch(result)
+            for name in publishable.SCRATCH_NAMES:
+                self.assertFalse((result / name).exists())
 
 
 if __name__ == "__main__":
