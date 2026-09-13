@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Execute the required regression suite and reject empty or skipped suites."""
 from __future__ import annotations
-# Final CI retrigger after automatic incident-ledger update; gate semantics unchanged.
 import argparse
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import unittest
 ROOT = Path(__file__).resolve().parents[2]
@@ -18,14 +18,17 @@ def _ids(rows):
     return [case.id() for case, *_ in rows]
 
 
-def _publish_failure_evidence(result, count):
-    """Expose only failing unittest identities through the existing V2 failure status.
+def _failure_frame(kind, case, detail):
+    """Return test identity plus the last source line, never traceback/message text."""
+    matches = re.findall(r'File "([^"]+)", line (\d+)', detail or '')
+    if matches:
+        path, line = matches[-1]
+        return {'file': Path(path).name, 'function': case.id(), 'line': int(line)}
+    return {'file': kind, 'function': case.id(), 'line': 0}
 
-    The launch gate already copies phase/error_type/frames from execution-evidence
-    into attempt-diagnostic.json.  Writing this file only after a regression
-    failure makes target-host failures diagnosable without relaxing the gate or
-    reading any scientific payload.
-    """
+
+def _publish_failure_evidence(result, count):
+    """Expose only failing unittest identities/source lines in V2 failure status."""
     root = os.environ.get('JASS_ARTEFACT_DIR')
     if not root:
         return
@@ -35,8 +38,8 @@ def _publish_failure_evidence(result, count):
     for kind, rows in (('unittest-failure', result.failures),
                        ('unittest-error', result.errors),
                        ('unittest-skip', result.skipped)):
-        for case, *_ in rows:
-            frames.append({'file': kind, 'function': case.id(), 'line': 0})
+        for case, detail in rows:
+            frames.append(_failure_frame(kind, case, detail))
     atomic_json(artifact/'execution-evidence.json', dict(
         schema='jass.execution_evidence.v2', state='failed',
         mode=os.environ.get('LAUNCH_MODE'),
