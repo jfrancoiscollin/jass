@@ -50,18 +50,18 @@ class RcloneTransportBoundTests(unittest.TestCase):
             (run_dir / "manifest.json").write_text("{}\n", encoding="utf-8")
             uri = RcloneResultStore(cfg(root)).publish(run_dir, "job", "attempt", True)
 
-        self.assertEqual(uri, "r2:jass-data/runs/job/attempt")
-        self.assertEqual(mocked_run.call_count, 3)
-        commands = [call.args[0] for call in mocked_run.call_args_list]
-        self.assertEqual([cmd[1] for cmd in commands], ["copy", "check", "copyto"])
-        for command in commands:
-            for index in range(0, len(RCLONE_TRANSPORT_ARGS), 2):
-                flag = RCLONE_TRANSPORT_ARGS[index]
-                value = RCLONE_TRANSPORT_ARGS[index + 1]
-                self.assertIn(flag, command)
-                self.assertEqual(command[command.index(flag) + 1], value)
-        self.assertIn("--immutable", commands[0])
-        self.assertTrue((run_dir / "_SUCCESS").exists())
+            self.assertEqual(uri, "r2:jass-data/runs/job/attempt")
+            self.assertEqual(mocked_run.call_count, 3)
+            commands = [call.args[0] for call in mocked_run.call_args_list]
+            self.assertEqual([cmd[1] for cmd in commands], ["copy", "check", "copyto"])
+            for command in commands:
+                for index in range(0, len(RCLONE_TRANSPORT_ARGS), 2):
+                    flag = RCLONE_TRANSPORT_ARGS[index]
+                    value = RCLONE_TRANSPORT_ARGS[index + 1]
+                    self.assertIn(flag, command)
+                    self.assertEqual(command[command.index(flag) + 1], value)
+            self.assertIn("--immutable", commands[0])
+            self.assertTrue((run_dir / "_SUCCESS").exists())
 
 
 if __name__ == "__main__":
