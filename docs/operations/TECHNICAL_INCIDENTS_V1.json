@@ -490,6 +490,16 @@
       "invariant": "Preserve all frozen descriptors and recovery rules; classify only the explicit leaf position and FEN validation failures, and fail closed for unknown ContractError and all authentication, runtime, or catalog errors.",
       "evidence": "Prospective V2 bounded diagnostic with finite leaf-error mapping and no target or identity publication.; V2 rehearsal completed and published; independent authenticated readback verified all 726 descriptors, exact recovery membership, 21 classified failures across six content hashes, 66 regressions and the fixed timing limits. The exact-linkage diagnostic then completed and published with independent authenticated readback; its aggregate results record 21 examined descriptors (15 TSV aliases in four schemas, three FEN aliases and three JNNW aliases), 84 preflight regressions, five completed execution phases, exact linkage/empty-set evidence and three unresolved STM aliases. Artifact causality was not established. See docs/experiments/L3_ED4_C0C_FULL_FORMAT_DIAGNOSTIC_V2_RESULTS_20260912.md and docs/experiments/L3_ED4_C0C_EXACT_LINKAGE_DIAGNOSTIC_V1_RESULTS_20260912.md; PR #933 and PR #935. No exclusion union or scientific confirmation follows.",
       "status": "MITIGATED_LINKAGE_COMPLETE_PROVENANCE_PENDING"
+    },
+    {
+      "id": "TI-050",
+      "dedupe_key": "cpx-1939-1940-orphan-queue-and-stale-route",
+      "context": "CPX62 ED4-FRESH S-source rehearsal 1939 and manually superseded local API bootstrap 1940; jass-control#644",
+      "symptom": "Repeated restarts and Git syncs produced no claim: 1939 and 1940 were directly under queue/ rather than queue/pending/; filter still selected redundant 1940.",
+      "root_cause": "Control job preparation violated the v3 queue layout and canonical dispatcher header; routing remained pinned to bootstrap 1940. Absence of a claim was incorrectly attributed to a broken runner/synchronization without verifying the queue contract.",
+      "invariant": "Every new job must be in queue/pending with canonical nine-line dispatch, matching immutable spec/admission/code/timeout pins and an intentional host route. Run the existing dispatcher regression suite before merge. Do not rerun a superseded installer or fabricate its receipt; oneshot inactive after success is not a crash.",
+      "evidence": "jass-control#644 head f7af7ea5fda19b170209c864f4972286cc06aa36; local 5/5 existing dispatcher tests passed after verified source-blob reconstruction, orphan negative test rejected, bash -n and original spec/admission SHA256 checks passed. Operator /v1/status at 2026-09-13 15:51:39 UTC: ok=true, jobs=[], runner Result=success, ExecMainStatus=0. See docs/operations/CPX_LOCAL_API_VERIFICATION_AND_QUEUE_RECOVERY_20260913.md. No target-host recovery receipt yet.; PR #943",
+      "status": "MITIGATED — target-host claim and terminal publication proof pending; local API manually verified, remote connector not connected"
     }
   ]
 }
