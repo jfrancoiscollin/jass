@@ -510,6 +510,16 @@
       "invariant": "Object-store publication must be bounded for transport inactivity without imposing a total healthy-transfer deadline. Preserve immutable copy, checksum verification, marker-last publication, local pending-upload recovery, and the runner-owned outer retry loop.",
       "evidence": "Target-host process snapshot 2026-09-13: runner PID 102341 child PID 102382 `/usr/bin/rclone copy ...1946... r2:jass-data/runs/... --checksum --immutable`; runner kernel stack blocked in poll. This PR adds 30s connect / 2m I/O inactivity bounds, one internal retry with two low-level retries, and CI proving every publication phase receives the bounds.; PR #951",
       "status": "MITIGATED_PENDING_TARGET_HOST_ADOPTION"
+    },
+    {
+      "id": "TI-052",
+      "dedupe_key": "ed4-fresh-w-sizing-result-scratch-publication",
+      "context": "ED4-FRESH W sizing pre-target publication on CPX62",
+      "symptom": "ED4 stage execution scratch contains a source clone, CMake build tree and authenticated input copies inside JASS_RESULT_DIR, while runner-v3 publishes the complete result directory to R2.",
+      "root_cause": "The W sizing stage correctly placed scientific evidence in JASS_ARTEFACT_DIR but did not remove non-evidence `work/` and `inputs/` scratch before returning; runner-v3 has no stage-specific knowledge to exclude those directories.",
+      "invariant": "Only non-evidence execution scratch may be removed. Preserve every declared artifact/evidence output, frozen W recipe/seed/model identity, stage phases, target barrier and side-effect accounting. Cleanup failure must fail the wrapper rather than silently declaring a clean publication.",
+      "evidence": "Code inspection of ed4_fresh_w_sizing_stage.py shows build/source under result/work and CURRICULUM copy under result/inputs; runner_v3_store publishes the entire run directory. This PR adds a wrapper and regression proving both scratch roots are absent before publication while the underlying sizing stage remains unchanged.; PR #952",
+      "status": "MITIGATED_PENDING_TARGET_HOST_W_SIZING_RERUN"
     }
   ]
 }
