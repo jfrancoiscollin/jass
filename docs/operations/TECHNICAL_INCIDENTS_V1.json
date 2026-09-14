@@ -540,6 +540,16 @@
       "invariant": "Preserve exact marker bytes, marker-last publication, immutable bulk copy, pre-marker checksum verification, bounded transport, pending-upload recovery, and every frozen ED4 scientific contract. No seed, quota, candidate, target, gate, alpha, fit or scoring changes.",
       "evidence": "cpx62-1950-runner-r2-recovery-probe-at-6f5d2813-v1 attempt 20260914T003944Z-6f5d2813 exited 0 then upload_failed with `_SUCCESS: Failed to copy: NotImplemented`; 1948 W sizing and 1949 S production are independently exit-0 with preserved pending uploads and zero target/alpha/fits. This PR uses rclone rcat only for the final marker object and adds exact-byte/key regression coverage.; PR #954",
       "status": "MITIGATED_PENDING_TARGET_HOST_RECOVERY"
+    },
+    {
+      "id": "TI-055",
+      "dedupe_key": "runner-v3-r2-rcat-marker-501-1951",
+      "context": "CPX62 runner-v3 pending-upload recovery after ED4-FRESH 1948/1949",
+      "symptom": "Recovery probe 1951 exited 0 but terminal marker publication again failed HTTP 501 NotImplemented, now on rclone rcat; 1948 W sizing and 1949 S production local pending uploads remain preserved and scientifically unconsumed.",
+      "root_cause": "The configured Cloudflare R2 endpoint accepts the runner's normal directory bulk copy/check path but all tested rclone marker-only transfer paths (copyto, one-file copy, rcat) enter an unsupported operation/path for the final tiny marker. R2 itself supports S3 PutObject, so the marker does not need another rclone transfer primitive.",
+      "invariant": "Preserve immutable rclone bulk copy, checksum verification before marker, marker-last semantics, exact marker bytes, bounded transport, pending-upload recovery, secret non-disclosure, and every frozen ED4 scientific contract. The direct request is restricted to Cloudflare R2 terminal markers only; other providers keep the generic fallback.",
+      "evidence": "1948 terminal ED4_FRESH_W_SIZING_COMPLETE_V1 with 4096 records, 118 games, 65 openings and zero target/candidate/control/fits/alpha; 1949 terminal ED4_FRESH_S_SOURCE_SEALED_V1 with 512 confirmation roots and zero target reads/alpha; 1950 marker copy and 1951 marker rcat each returned HTTP 501 after successful runner execution. Cloudflare R2 documents S3 PutObject support and rclone bulk upload remains proven on the same endpoint.; PR #955",
+      "status": "MITIGATED_PENDING_TARGET_HOST_RECOVERY"
     }
   ]
 }

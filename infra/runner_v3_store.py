@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import datetime as dt
 import gzip
 import hashlib
+import hmac
+import os
 import shutil
 import subprocess
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 from runner_v3_common import Config, run, utcnow, write_json
 
 
 # The runner is a five-minute oneshot and must never be held indefinitely by a
-# wedged object-store socket.  These are rclone inactivity/connection bounds,
+# wedged object-store socket. These are rclone inactivity/connection bounds,
 # not total transfer deadlines: healthy large uploads may continue for as long
-# as bytes keep flowing.  Internal rclone retries are deliberately minimized
+# as bytes keep flowing. Internal rclone retries are deliberately minimized
 # because RcloneResultStore already owns the bounded outer retry loop.
 RCLONE_TRANSPORT_ARGS = (
     "--contimeout", "30s",
@@ -68,14 +74,7 @@ def remote_join(base: str, *parts: str) -> str:
 
 
 def rclone_rcat_file(cfg: Config, source: Path, remote: str) -> subprocess.CompletedProcess:
-    """Stream one tiny terminal marker to an exact object key.
-
-    The CPX62 R2 endpoint accepts the runner's normal directory copy/check path
-    but returned HTTP 501 for both ``copyto`` and a one-file ``copy`` used only
-    for the terminal marker.  ``rcat`` uses a direct streamed object upload and
-    therefore avoids the source-file comparison/metadata path while preserving
-    the exact marker bytes and marker-last publication semantics.
-    """
+    """Generic fallback for non-Cloudflare object stores."""
     with source.open("rb") as handle:
         return subprocess.run(
             [cfg.rclone_bin, "rcat", remote, *RCLONE_TRANSPORT_ARGS],
@@ -85,6 +84,103 @@ def rclone_rcat_file(cfg: Config, source: Path, remote: str) -> subprocess.Compl
             text=True,
             check=False,
         )
+
+
+def _sigv4_sign(key: bytes, value: str) -> bytes:
+    return hmac.new(key, value.encode("utf-8"), hashlib.sha256).digest()
+
+
+def cloudflare_r2_put_file(source: Path, remote: str) -> subprocess.CompletedProcess:
+    """PUT one small object directly to Cloudflare R2 using AWS SigV4.
+
+    CPX62 proved that rclone directory copy/check succeeds against the configured
+    R2 endpoint, while three marker-only paths (copyto, one-file copy and rcat)
+    return HTTP 501. The terminal marker is deliberately tiny and append-last,
+    so use R2's supported S3 PutObject operation directly instead of another
+    rclone transfer primitive. Credentials remain only in headers and are never
+    included in returned diagnostics.
+    """
+    endpoint = os.environ.get("RCLONE_CONFIG_R2_ENDPOINT", "").rstrip("/")
+    access_key = os.environ.get("RCLONE_CONFIG_R2_ACCESS_KEY_ID", "")
+    secret_key = os.environ.get("RCLONE_CONFIG_R2_SECRET_ACCESS_KEY", "")
+    if not endpoint or not access_key or not secret_key:
+        return subprocess.CompletedProcess([], 2, "", "missing Cloudflare R2 marker credentials")
+
+    parsed_endpoint = urllib.parse.urlsplit(endpoint)
+    if parsed_endpoint.scheme != "https" or not parsed_endpoint.netloc:
+        return subprocess.CompletedProcess([], 2, "", "invalid Cloudflare R2 endpoint")
+    if ":" not in remote:
+        return subprocess.CompletedProcess([], 2, "", "invalid rclone remote")
+    remote_path = remote.split(":", 1)[1].lstrip("/")
+    bucket, separator, key = remote_path.partition("/")
+    if not separator or not bucket or not key:
+        return subprocess.CompletedProcess([], 2, "", "invalid R2 bucket/object path")
+
+    payload = source.read_bytes()
+    payload_hash = hashlib.sha256(payload).hexdigest()
+    now = dt.datetime.now(dt.timezone.utc)
+    amz_date = now.strftime("%Y%m%dT%H%M%SZ")
+    date_stamp = now.strftime("%Y%m%d")
+    region = os.environ.get("RCLONE_CONFIG_R2_REGION", "auto") or "auto"
+    service = "s3"
+    host = parsed_endpoint.netloc
+    canonical_uri = "/" + urllib.parse.quote(bucket, safe="-_.~") + "/" + urllib.parse.quote(
+        key, safe="/-_.~"
+    )
+    canonical_headers = (
+        f"host:{host}\n"
+        f"x-amz-content-sha256:{payload_hash}\n"
+        f"x-amz-date:{amz_date}\n"
+    )
+    signed_headers = "host;x-amz-content-sha256;x-amz-date"
+    canonical_request = (
+        "PUT\n" + canonical_uri + "\n\n" + canonical_headers + "\n" +
+        signed_headers + "\n" + payload_hash
+    )
+    credential_scope = f"{date_stamp}/{region}/{service}/aws4_request"
+    string_to_sign = (
+        "AWS4-HMAC-SHA256\n" + amz_date + "\n" + credential_scope + "\n" +
+        hashlib.sha256(canonical_request.encode("utf-8")).hexdigest()
+    )
+    date_key = _sigv4_sign(("AWS4" + secret_key).encode("utf-8"), date_stamp)
+    region_key = _sigv4_sign(date_key, region)
+    service_key = _sigv4_sign(region_key, service)
+    signing_key = _sigv4_sign(service_key, "aws4_request")
+    signature = hmac.new(signing_key, string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+    authorization = (
+        "AWS4-HMAC-SHA256 "
+        f"Credential={access_key}/{credential_scope}, "
+        f"SignedHeaders={signed_headers}, Signature={signature}"
+    )
+    url = endpoint + canonical_uri
+    request = urllib.request.Request(
+        url,
+        data=payload,
+        method="PUT",
+        headers={
+            "Authorization": authorization,
+            "Host": host,
+            "X-Amz-Content-Sha256": payload_hash,
+            "X-Amz-Date": amz_date,
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            status = int(getattr(response, "status", 200))
+        if 200 <= status < 300:
+            return subprocess.CompletedProcess([], 0, "", "")
+        return subprocess.CompletedProcess([], 1, "", f"R2 PutObject HTTP {status}")
+    except urllib.error.HTTPError as exc:
+        return subprocess.CompletedProcess([], 1, "", f"R2 PutObject HTTP {exc.code}")
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        return subprocess.CompletedProcess([], 1, "", f"R2 PutObject {type(exc).__name__}")
+
+
+def publish_terminal_marker(cfg: Config, source: Path, remote: str) -> subprocess.CompletedProcess:
+    provider = os.environ.get("RCLONE_CONFIG_R2_PROVIDER", "").strip().lower()
+    if provider == "cloudflare" and remote.startswith("r2:"):
+        return cloudflare_r2_put_file(source, remote)
+    return rclone_rcat_file(cfg, source, remote)
 
 
 class ResultStore:
@@ -126,7 +222,7 @@ class RcloneResultStore(ResultStore):
                              "--one-way", "--checksum", *transport], check=False)
                 if check.returncode == 0:
                     marker.write_text(utcnow() + "\n", encoding="utf-8")
-                    final = rclone_rcat_file(
+                    final = publish_terminal_marker(
                         self.cfg, marker, remote_join(remote, marker_name)
                     )
                     if final.returncode == 0:
