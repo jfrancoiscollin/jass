@@ -550,6 +550,16 @@
       "invariant": "Preserve immutable rclone bulk copy, checksum verification before marker, marker-last semantics, exact marker bytes, bounded transport, pending-upload recovery, secret non-disclosure, and every frozen ED4 scientific contract. The direct request is restricted to Cloudflare R2 terminal markers only; other providers keep the generic fallback.",
       "evidence": "1948 terminal ED4_FRESH_W_SIZING_COMPLETE_V1 with 4096 records, 118 games, 65 openings and zero target/candidate/control/fits/alpha; 1949 terminal ED4_FRESH_S_SOURCE_SEALED_V1 with 512 confirmation roots and zero target reads/alpha; 1950 marker copy and 1951 marker rcat each returned HTTP 501 after successful runner execution. Cloudflare R2 documents S3 PutObject support and rclone bulk upload remains proven on the same endpoint.; PR #955",
       "status": "MITIGATED_PENDING_TARGET_HOST_RECOVERY"
+    },
+    {
+      "id": "TI-056",
+      "dedupe_key": "job:cpx62-1956-l3-ed4-fresh-w-source-production-v2",
+      "context": "ED4-FRESH W production 1956 Launch V2 production admission",
+      "symptom": "1956 failed immediately with TECHNICAL / STALE_REHEARSAL_SPEC before W source execution; no confirmation target was read.",
+      "root_cause": "Authenticated rehearsal 1953 used the deliberately small 4096-record / 32-opening / 512-position W rehearsal shape, whereas production 1956 used the preregistered 40960-record / 512-opening / 8192-position shape. Launch V2 common_spec permits only LAUNCH_MODE to differ, so the smaller rehearsal cannot admit the production spec.",
+      "invariant": "Do not relax Launch V2 common-spec authentication. Preserve W seed 202609120402, CURRICULUM identity, 40960 initial production budget and preregistered completion ladder, 512 opening clusters, 1024 game groups, 8 rows/game, exact score-free selection, blind zeroing of WDL/game_result, zero target/candidate/control reads and alpha. The fix must obtain a new rehearsal with the exact production common spec and only LAUNCH_MODE differing for production.",
+      "evidence": "1956 attempt 20260914T062646Z-80167252 ended exit2 with failure_code STALE_REHEARSAL_SPEC. Launch V2 code validates rehearsal proof common_spec_sha256 against production common_spec. This PR adds a production-shaped rehearsal wrapper and focused tests while leaving the underlying W source stage/science unchanged.; PR #959",
+      "status": "MITIGATED_PENDING_FULL_SHAPE_REHEARSAL"
     }
   ]
 }
