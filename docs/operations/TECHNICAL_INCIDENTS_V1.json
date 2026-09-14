@@ -560,6 +560,16 @@
       "invariant": "Do not relax Launch V2 common-spec authentication. Preserve W seed 202609120402, CURRICULUM identity, 40960 initial production budget and preregistered completion ladder, 512 opening clusters, 1024 game groups, 8 rows/game, exact score-free selection, blind zeroing of WDL/game_result, zero target/candidate/control reads and alpha. The fix must obtain a new rehearsal with the exact production common spec and only LAUNCH_MODE differing for production.",
       "evidence": "1956 attempt 20260914T062646Z-80167252 ended exit2 with failure_code STALE_REHEARSAL_SPEC. Launch V2 code validates rehearsal proof common_spec_sha256 against production common_spec. This PR adds a production-shaped rehearsal wrapper and focused tests while leaving the underlying W source stage/science unchanged.; PR #959",
       "status": "MITIGATED_PENDING_FULL_SHAPE_REHEARSAL"
+    },
+    {
+      "id": "TI-057",
+      "dedupe_key": "job:cpx62-1961-l3-ed4-fresh-d-confirmation-rehearsal-v1",
+      "context": "ED4-FRESH D confirmation rehearsal 1961 Launch V2 regressions on CPX62",
+      "symptom": "1961 failed TECHNICAL / REGRESSION_SUITE_FAILED before stage execution; the bounded failure frame points to the synthetic constant-gain test at its NumPy array-construction line. No confirmation target, Scan confirmation search or alpha was consumed.",
+      "root_cause": "The newly added D confirmation profile required a focused regression that was not yet executed by build.yml, and that regression introduced an extra target-host NumPy constructor in the test harness before entering the frozen bootstrap function. The CPX launch gate therefore exposed a target-host-only harness dependency that PR CI had not exercised.",
+      "invariant": "Do not change D confirmation science, source/candidate/control identities, Scan Q200k budget, 512-parent/64-cell grouping, bootstrap implementation, alpha accounting, gates, target cohort, candidate bytes, promotion or bake. Repair only the regression harness/CI coverage and require a fresh zero-target rehearsal before production.",
+      "evidence": "cpx62-1961-l3-ed4-fresh-d-confirmation-rehearsal-v1 attempt 20260914T084509Z-a1d4ec05 ended exit2 with failure_code REGRESSION_SUITE_FAILED, last_phase launch-regressions, scientific_verdict null. GitHub #960 CI was green, but build.yml did not explicitly run jobs.tests.test_ed4_fresh_d_confirmation. This PR removes the redundant test-only NumPy constructor and adds that focused module to build CI.; PR #961",
+      "status": "MITIGATED_PENDING_TARGET_HOST_REHEARSAL"
     }
   ]
 }
