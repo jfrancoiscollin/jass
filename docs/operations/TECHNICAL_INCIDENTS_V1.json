@@ -600,6 +600,16 @@
       "invariant": "Preserve exact D source/candidate/control identities, Scan Q200k budget, 512 parents / 64 per phase×STM cell, bootstrap seed 202609140901, RNG draw order, 20000 replicates, quantile definition, block alpha 0.025/3, all gates, confirmation cohort and candidate bytes. Change only the executable runtime and require a fresh zero-target rehearsal before production.",
       "evidence": "cpx62-1965-ed4-d-bootstrap-target-host-diagnostic-v1 attempt 20260914T130739Z-3c81a090 completed TECHNICAL_ONLY with incomplete numeric-venv NumPy. cpx62-1966-ed4-d-python-runtime-diagnostic-v1 attempt 20260914T132938Z-3c81a090 completed exit0; /usr/bin/python3 reports NumPy 2.5.1/SciPy 1.18.0 and focused_returncode=0, while the numeric venv focused_returncode=1 with AttributeError numpy.empty.; PR #965",
       "status": "MITIGATED_PENDING_TARGET_HOST_REHEARSAL"
+    },
+    {
+      "id": "TI-061",
+      "dedupe_key": "job:cpx62-1967-l3-ed4-fresh-d-confirmation-rehearsal-v5",
+      "context": "ED4-FRESH D confirmation rehearsal 1967 stage execute on CPX62",
+      "symptom": "1967 failed TECHNICAL / STAGE_FAILED:EXECUTE after Launch V2 regressions. Diagnostic 1968 reproduced direct execution of ed4_fresh_d_confirmation_target_host.py failing at line 24 with ModuleNotFoundError: No module named 'jobs'. No target reads, Scan searches or alpha were consumed.",
+      "root_cause": "The target-host adapter is launched as a script path. Python sets sys.path[0] to jobs/tools rather than the repository root, but the adapter imported jobs.tools before bootstrapping the repo root onto sys.path. Package-style unit imports therefore passed while direct stage execution failed.",
+      "invariant": "Preserve the exact frozen D confirmation contract: D source 1937, ED4_CHOICE bytes, BASE/HARD/SOFT roles, Scan Q200k, 512 parents/64 per phase×STM, bootstrap seed/RNG/20000 replicates/quantiles, block alpha 0.025/3, all gates and cohort identities. Repair only direct-script import plumbing and require a fresh zero-target rehearsal before production.",
+      "evidence": "cpx62-1968-ed4-d-stage-execute-diagnostic-v1 attempt 20260914T142636Z-6e203eea completed TECHNICAL_ONLY exit0; probe returncode=1 and stderr is ModuleNotFoundError at target-host adapter import. target_reads=0, scan_searches=0, alpha_spent=0.; PR #967",
+      "status": "MITIGATED_PENDING_TARGET_HOST_REHEARSAL"
     }
   ]
 }

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -55,6 +58,26 @@ class FreshDConfirmationTests(unittest.TestCase):
         self.assertAlmostEqual(report["mean"], -0.0041852678571428535, places=15)
         self.assertAlmostEqual(report["lower"], -0.07840401785714285, places=15)
         self.assertAlmostEqual(report["upper"], 0.06873372395833346, places=15)
+
+    def test_target_host_direct_script_bootstraps_repo_import_path(self):
+        adapter = Path(compat.__file__).resolve()
+        env = os.environ.copy()
+        env.pop("PYTHONPATH", None)
+        with tempfile.TemporaryDirectory() as td:
+            probe = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    "import runpy,sys; runpy.run_path(sys.argv[1], run_name='ed4_direct_import_probe')",
+                    str(adapter),
+                ],
+                cwd=td,
+                env=env,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertEqual(probe.returncode, 0, probe.stderr)
 
     def test_decision_groups_requires_exact_64_per_cell(self):
         with tempfile.TemporaryDirectory() as td:
