@@ -1,0 +1,51 @@
+{
+  "schema": "jass.launch_profile.v2",
+  "campaign": "ed5-q200k-choice-fit-k2",
+  "stage": "ed5-q200k-choice-fit-v1",
+  "command": ["/usr/bin/python3", "jobs/tools/ed5_q200k_choice_fit.py"],
+  "regressions": [
+    "jobs.tests.test_launch_gate_v2",
+    "jobs.tests.test_launch_gate_pipeline_v2",
+    "jobs.tests.test_ed4_choice_math",
+    "jobs.tests.test_ed4_choice_derivative_cache",
+    "jobs.tests.test_ed5_q200k_teacher",
+    "jobs.tests.test_ed5_q200k_choice_fit"
+  ],
+  "required_phases": [
+    "authenticate",
+    "verify-inputs",
+    "native-base",
+    "fit-choice-set",
+    "serialize-and-reload",
+    "seal-and-publish"
+  ],
+  "evidence_outputs": [
+    "ED5_Q200K_CHOICE.pjtw",
+    "beta.npy",
+    "solver-diagnostic.json",
+    "fit-report.json",
+    "train-contract.json",
+    "native-roundtrip.json",
+    "candidate-seal.json"
+  ],
+  "rehearsal_max_effects": {
+    "fits": 1,
+    "new_scan_searches": 0,
+    "new_jass_searches": 0,
+    "strength_games": 0,
+    "selfplay_games": 0,
+    "promotions": 0,
+    "bakes": 0,
+    "test_target_reads": 0
+  },
+  "production_max_effects": {
+    "fits": 1,
+    "new_scan_searches": 0,
+    "new_jass_searches": 0,
+    "strength_games": 0,
+    "selfplay_games": 0,
+    "promotions": 0,
+    "bakes": 0,
+    "test_target_reads": 0
+  }
+}
