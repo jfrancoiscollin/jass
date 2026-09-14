@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -55,6 +57,19 @@ class FreshDConfirmationTests(unittest.TestCase):
         self.assertAlmostEqual(report["mean"], -0.0041852678571428535, places=15)
         self.assertAlmostEqual(report["lower"], -0.07840401785714285, places=15)
         self.assertAlmostEqual(report["upper"], 0.06873372395833346, places=15)
+
+    def test_target_host_direct_script_resolves_repo_package(self):
+        root = Path(__file__).resolve().parents[2]
+        script = root / "jobs/tools/ed4_fresh_d_confirmation_target_host.py"
+        proc = subprocess.run(
+            [sys.executable, str(script), "--help"],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("usage:", proc.stdout.lower())
 
     def test_decision_groups_requires_exact_64_per_cell(self):
         with tempfile.TemporaryDirectory() as td:
