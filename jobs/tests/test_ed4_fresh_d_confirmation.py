@@ -6,6 +6,7 @@ import tempfile
 import unittest
 
 from jobs.tools import ed4_fresh_d_confirmation_stage as d
+from jobs.tools import ed4_fresh_d_confirmation_target_host as compat
 
 
 class FreshDConfirmationTests(unittest.TestCase):
@@ -22,18 +23,23 @@ class FreshDConfirmationTests(unittest.TestCase):
 
     def test_stratified_one_sided_bootstrap_constant_gain(self):
         cells = [f"P{phase}_stm{stm}" for phase in range(4) for stm in (0, 1) for _ in range(64)]
-        # Keep the regression fixture runtime-neutral: the production function
-        # owns NumPy coercion, while this test supplies only immutable numeric
-        # inputs. This exercises the exact bootstrap path without depending on
-        # a second NumPy constructor in the test harness itself.
         delta = [1.0] * 512
-        report = d.bootstrap_parent_one_sided(delta, cells, 202609140901)
+        report = compat.bootstrap_parent_one_sided(delta, cells, 202609140901)
         self.assertEqual(report["cluster_unit"], "parent")
         self.assertEqual(report["strata"], "phase_x_stm")
         self.assertAlmostEqual(report["mean"], 1.0)
         self.assertAlmostEqual(report["lower"], 1.0)
         self.assertAlmostEqual(report["upper"], 1.0)
         self.assertAlmostEqual(report["one_sided_alpha"], 0.025 / 3.0)
+
+    def test_target_host_bootstrap_matches_frozen_expected_fixture(self):
+        cells = [f"P{phase}_stm{stm}" for phase in range(4) for stm in (0, 1) for _ in range(64)]
+        delta = [((index % 17) - 8) / 7 for index in range(512)]
+        report = compat.bootstrap_parent_one_sided(delta, cells, 202609140901)
+        self.assertAlmostEqual(report["mean"], -0.0041852678571428535, places=15)
+        self.assertAlmostEqual(report["lower"], -0.07840401785714285, places=15)
+        self.assertAlmostEqual(report["upper"], 0.06873372395833346, places=15)
+        self.assertEqual(report["bootstrap_replicates"], 20000)
 
     def test_decision_groups_requires_exact_64_per_cell(self):
         with tempfile.TemporaryDirectory() as td:
@@ -60,7 +66,7 @@ class FreshDConfirmationTests(unittest.TestCase):
     def test_launch_profile_has_zero_target_rehearsal(self):
         root = Path(__file__).resolve().parents[2]
         profile = json.loads((root / "jobs/launch_profiles/ed4-fresh-d-confirmation-v1.json").read_text())
-        self.assertEqual(profile["command"][1], "jobs/tools/ed4_fresh_d_confirmation_stage.py")
+        self.assertEqual(profile["command"][1], "jobs/tools/ed4_fresh_d_confirmation_target_host.py")
         self.assertEqual(profile["rehearsal_max_effects"]["test_target_reads"], 0)
         self.assertEqual(profile["rehearsal_max_effects"]["new_scan_searches"], 0)
         self.assertEqual(profile["production_max_effects"]["test_target_reads"], 8192)
