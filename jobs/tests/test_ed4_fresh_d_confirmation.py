@@ -5,8 +5,6 @@ from pathlib import Path
 import tempfile
 import unittest
 
-import numpy as np
-
 from jobs.tools import ed4_fresh_d_confirmation_stage as d
 
 
@@ -24,7 +22,11 @@ class FreshDConfirmationTests(unittest.TestCase):
 
     def test_stratified_one_sided_bootstrap_constant_gain(self):
         cells = [f"P{phase}_stm{stm}" for phase in range(4) for stm in (0, 1) for _ in range(64)]
-        delta = np.ones(512, dtype=float)
+        # Keep the regression fixture runtime-neutral: the production function
+        # owns NumPy coercion, while this test supplies only immutable numeric
+        # inputs. This exercises the exact bootstrap path without depending on
+        # a second NumPy constructor in the test harness itself.
+        delta = [1.0] * 512
         report = d.bootstrap_parent_one_sided(delta, cells, 202609140901)
         self.assertEqual(report["cluster_unit"], "parent")
         self.assertEqual(report["strata"], "phase_x_stm")
