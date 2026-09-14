@@ -92,6 +92,9 @@ jobs:
       - name: Run ED4-FRESH D/W/S disjointness tests
         run: python -m unittest jobs.tests.test_ed4_fresh_dws_disjointness -v
 
+      - name: Run ED4-FRESH D confirmation tests
+        run: python -m unittest jobs.tests.test_ed4_fresh_d_confirmation -v
+
   # ---------------------------------------------------------------------------
   # WASM build: install emsdk, run the project's own wasm/build.sh, package
   # the artefacts.
