@@ -2,22 +2,26 @@
 """Launch-V2-compatible full-shape wrapper for ED4-FRESH W source.
 
 Launch V2 permits only LAUNCH_MODE to differ between a rehearsal and the
-production spec it admits.  The original W source stage intentionally used a
+production spec it admits. The original W source stage intentionally used a
 small 4096-record / 32-opening rehearsal shape and a 40960-record / 512-opening
 production shape, which makes their normalized specs different and therefore
 cannot admit production.
 
-This wrapper changes no W science.  It makes *rehearsal mode* execute the exact
+This wrapper changes no W science. It makes *rehearsal mode* execute the exact
 production source shape while retaining rehearsal evidence/side-effect
-classification.  Production mode is unchanged.  Both modes therefore use the
+classification. Production mode is unchanged. Both modes therefore use the
 same command, seed, record budget, source-selection rule, outputs and time
-contract; only LAUNCH_MODE differs, as required by Launch V2.  Outcomes remain
+contract; only LAUNCH_MODE differs, as required by Launch V2. Outcomes remain
 unread and target bytes remain zeroed by the underlying stage.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
-import subprocess
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from jobs.tools import ed4_fresh_w_source_stage as base
 
@@ -54,7 +58,7 @@ def configure_full_rehearsal_shape() -> None:
     base.REHEARSAL_OPENINGS = contract["opening_groups"]
     base.REHEARSAL_POSITIONS = contract["positions"]
     # Only the `--gen-data-wdl` call has a mode-dependent timeout in the base
-    # stage.  Keep every other subprocess timeout untouched.
+    # stage. Keep every other subprocess timeout untouched.
     base.subprocess.run = _run_with_full_rehearsal_timeout
 
 
