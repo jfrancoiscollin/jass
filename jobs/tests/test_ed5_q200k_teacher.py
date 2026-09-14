@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import unittest
 import numpy as np
 
@@ -91,6 +93,18 @@ class Q200KChoiceTests(unittest.TestCase):
         self.assertLessEqual(sizing["stage_hard_cap_seconds"], 45 * 60)
         self.assertLessEqual(sizing["workers"], sizing["cpu_max"])
         self.assertEqual(stage.PHASES[1], "verify-train-boundary")
+
+    def test_launch_profile_is_target_blind(self):
+        root = Path(__file__).resolve().parents[2]
+        profile = json.loads((root / "jobs/launch_profiles/ed5-q200k-teacher-v1.json").read_text())
+        self.assertEqual(profile["schema"], "jass.launch_profile.v2")
+        self.assertEqual(profile["command"], ["/usr/bin/python3", "jobs/tools/ed5_q200k_teacher_stage.py"])
+        self.assertEqual(profile["required_phases"], stage.PHASES)
+        self.assertEqual(profile["rehearsal_max_effects"]["new_scan_searches"], 0)
+        self.assertEqual(profile["rehearsal_max_effects"]["test_target_reads"], 0)
+        self.assertEqual(profile["production_max_effects"]["test_target_reads"], 0)
+        self.assertEqual(profile["production_max_effects"]["fits"], 0)
+        self.assertLessEqual(profile["production_max_effects"]["new_scan_searches"], stage.TRAIN_ROWS)
 
 
 if __name__ == "__main__":
