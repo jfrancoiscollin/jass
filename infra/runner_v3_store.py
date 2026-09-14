@@ -4,6 +4,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import shutil
+import subprocess
 import time
 from pathlib import Path
 
@@ -66,6 +67,26 @@ def remote_join(base: str, *parts: str) -> str:
     return base.rstrip("/") + "/" + "/".join(p.strip("/") for p in parts if p)
 
 
+def rclone_rcat_file(cfg: Config, source: Path, remote: str) -> subprocess.CompletedProcess:
+    """Stream one tiny terminal marker to an exact object key.
+
+    The CPX62 R2 endpoint accepts the runner's normal directory copy/check path
+    but returned HTTP 501 for both ``copyto`` and a one-file ``copy`` used only
+    for the terminal marker.  ``rcat`` uses a direct streamed object upload and
+    therefore avoids the source-file comparison/metadata path while preserving
+    the exact marker bytes and marker-last publication semantics.
+    """
+    with source.open("rb") as handle:
+        return subprocess.run(
+            [cfg.rclone_bin, "rcat", remote, *RCLONE_TRANSPORT_ARGS],
+            stdin=handle,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+
+
 class ResultStore:
     def publish(self, run_dir: Path, job_id: str, attempt_id: str, success: bool) -> str:
         raise NotImplementedError
@@ -105,12 +126,9 @@ class RcloneResultStore(ResultStore):
                              "--one-way", "--checksum", *transport], check=False)
                 if check.returncode == 0:
                     marker.write_text(utcnow() + "\n", encoding="utf-8")
-                    # R2 accepted the regular directory copy above but the
-                    # single-object ``copyto`` marker path can return HTTP 501
-                    # on the target endpoint.  Use the same proven ``copy``
-                    # operation for the marker while still writing it last.
-                    final = run([self.cfg.rclone_bin, "copy", str(marker), remote,
-                                 "--checksum", *transport], check=False)
+                    final = rclone_rcat_file(
+                        self.cfg, marker, remote_join(remote, marker_name)
+                    )
                     if final.returncode == 0:
                         return remote
                     last_error = final.stderr or final.stdout
