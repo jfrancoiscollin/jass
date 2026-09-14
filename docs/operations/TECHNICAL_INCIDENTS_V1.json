@@ -590,6 +590,16 @@
       "invariant": "Preserve exact D source/candidate/control identities, Scan Q200k budget, 512 parents / 64 per phase×STM cell, bootstrap seed 202609140901, NumPy default_rng draw order, 20000 replicates, quantile definition, block alpha 0.025/3, all gates, target cohort, candidate bytes, promotion and bake. Repair only target-host sequence materialization and require another zero-target rehearsal before production.",
       "evidence": "cpx62-1963-l3-ed4-fresh-d-confirmation-rehearsal-v3 attempt 20260914T101610Z-72bd93b7 ended exit2 with failure_code REGRESSION_SUITE_FAILED and scientific_verdict null; failure frames are the constant-gain and frozen heterogeneous bootstrap fixtures. This PR retains their exact expected outputs and forbids array/asarray/fromiter sequence conversion in the adapter.; PR #963",
       "status": "MITIGATED_PENDING_TARGET_HOST_REHEARSAL"
+    },
+    {
+      "id": "TI-060",
+      "dedupe_key": "job:cpx62-1964-l3-ed4-fresh-d-confirmation-rehearsal-v4",
+      "context": "ED4-FRESH D confirmation rehearsal target-host runtime on CPX62",
+      "symptom": "1964 failed TECHNICAL / REGRESSION_SUITE_FAILED before stage execution; 1965 showed the configured numeric venv imports a NumPy module with no __version__, empty or random; 1966 reproduced that failure and proved /usr/bin/python3 passes the exact focused D-confirmation module.",
+      "root_cause": "The mutable CPX62 numeric venv is currently corrupted/incomplete: NumPy resolves as a namespace path without its package initializer/API. The D confirmation profile hardcoded that runtime even though the host system Python has a complete NumPy/SciPy stack.",
+      "invariant": "Change only the target-host Python interpreter. Preserve D source/candidate/control identities, Scan Q200k, 512 parents / 64 per phase×STM, bootstrap seed/RNG/20000 replicates/quantiles, block alpha 0.025/3, all gates, target cohort, candidate bytes, promotion and bake. Require a fresh zero-target rehearsal before production.",
+      "evidence": "1966 attempt 20260914T132938Z-3c81a090: /usr/bin/python3 NumPy 2.5.1 + SciPy 1.18.0, focused_returncode=0 (6/6 tests); broken venv focused_returncode=1 with AttributeError numpy.empty. Both 1965/1966 report target_reads=0, scan_searches=0, alpha_spent=0.; PR #964",
+      "status": "MITIGATED_PENDING_ZERO_TARGET_REHEARSAL"
     }
   ]
 }
