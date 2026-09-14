@@ -16,10 +16,19 @@ share one command/common spec and differ only by LAUNCH_MODE.
 """
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 import traceback
 from typing import Iterable, Sequence
 
 import numpy as np
+
+# Launch V2 executes this file by repository-relative path.  In that mode
+# CPython sets sys.path[0] to jobs/tools rather than the repository root, so the
+# absolute `jobs.*` import below would fail before any stage evidence exists.
+# Restore only the package import root; scientific execution is unchanged.
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from jobs.tools import ed4_fresh_d_confirmation_stage as base
 
