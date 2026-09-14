@@ -29,6 +29,12 @@ D = (
 )
 D_DIGEST = "8a94d101a1a439e710d9dfefbc3cb0f17cc78deee0c5905d20ac0d29b4c1bf71"
 D_UNIQUE = 8022
+ED4_W1959 = (
+    "cpx62-1959-l3-ed4-fresh-w-source-production-v3",
+    "20260914T065838Z-4a610fc0",
+    "4a610fc0976cbb5d016cfbda6d1800b4d65fd8ce",
+)
+ED4_W1959_DIGEST = "25dc7654ff5423fb132d2060f137c077bf4f326a55b26218ef06736178d2361a"
 JNNW_REC = 38
 EMPTY_DIGEST = hashlib.sha256(b"").hexdigest()
 
@@ -99,6 +105,24 @@ def fetch_d(result: Path) -> set[str]:
     values = canonical_set(root / "source/parents.jnnw") | canonical_set(root / "source/children.jnnw")
     if len(values) != D_UNIQUE or digest(values) != D_DIGEST:
         raise ValueError("d_canonical_identity")
+    return values
+
+
+def fetch_ed4_w1959(result: Path) -> set[str]:
+    root = result / "ed5-w-historical-ed4-w1959"
+    receipt = fetch_files(
+        rclone="rclone",
+        prefix=f"r2:jass-data/runs/{ED4_W1959[0]}/{ED4_W1959[1]}",
+        selections=[("artefacts/source/positions.jnnw", "source/positions.jnnw")],
+        out_dir=root,
+        expected_state="completed",
+    )
+    observed = (receipt.get("job_id"), receipt.get("attempt_id"), receipt.get("code_sha"), receipt.get("result_state"), receipt.get("exit_code"))
+    if observed != (ED4_W1959[0], ED4_W1959[1], ED4_W1959[2], "completed", 0):
+        raise ValueError("ed4_w1959_result_identity")
+    values = canonical_set(root / "source/positions.jnnw")
+    if digest(values) != ED4_W1959_DIGEST:
+        raise ValueError("ed4_w1959_canonical_identity")
     return values
 
 
@@ -176,7 +200,31 @@ def generate_seed(seed: int, work: Path) -> tuple[Path, int]:
     raise ValueError("w_source_ladder_exhausted")
 
 
-def promote_ed5(root: Path, *, seed: int, reserve_used: bool, overlap: set[str], extra_selfplay: int) -> None:
+def reserve_reason(d_overlap: set[str], historical_overlap: set[str]) -> str | None:
+    if d_overlap and historical_overlap:
+        return "PRIMARY_W_CANONICAL_COLLISION_WITH_ED5_D_AND_HISTORICAL_PRE_TARGET"
+    if d_overlap:
+        return "PRIMARY_W_CANONICAL_COLLISION_WITH_ED5_D_PRE_TARGET"
+    if historical_overlap:
+        return "PRIMARY_W_CANONICAL_COLLISION_WITH_HISTORICAL_PRE_TARGET"
+    return None
+
+
+def promote_ed5(
+    root: Path,
+    *,
+    seed: int,
+    reserve_used: bool,
+    d_overlap: set[str],
+    historical_overlap: set[str],
+    extra_selfplay: int,
+) -> None:
+    reason = reserve_reason(d_overlap, historical_overlap) if reserve_used else None
+    historical_entry = {
+        "source": "ED4_W1959",
+        "count": len(historical_overlap),
+        "digest": digest(historical_overlap),
+    }
     source_json = root / "source/source.json"
     meta = json.loads(source_json.read_text())
     meta.update({
@@ -185,8 +233,9 @@ def promote_ed5(root: Path, *, seed: int, reserve_used: bool, overlap: set[str],
         "master_seed": seed,
         "reserve_seed": RESERVE,
         "reserve_seed_used": reserve_used,
-        "reserve_reason": "PRIMARY_W_CANONICAL_COLLISION_WITH_ED5_D_PRE_TARGET" if reserve_used else None,
-        "pre_target_d_collision": {"count": len(overlap), "digest": digest(overlap)},
+        "reserve_reason": reason,
+        "pre_target_d_collision": {"count": len(d_overlap), "digest": digest(d_overlap)},
+        "pre_target_historical_collision": historical_entry,
         "scan_searches": 0,
         "jass_searches": 0,
         "target_reads": 0,
@@ -204,8 +253,9 @@ def promote_ed5(root: Path, *, seed: int, reserve_used: bool, overlap: set[str],
         "parent_preregistered_seed": PRIMARY,
         "master_seed": seed,
         "reserve_seed_used": reserve_used,
-        "reserve_reason": "PRIMARY_W_CANONICAL_COLLISION_WITH_ED5_D_PRE_TARGET" if reserve_used else None,
-        "pre_target_d_collision": {"count": len(overlap), "digest": digest(overlap)},
+        "reserve_reason": reason,
+        "pre_target_d_collision": {"count": len(d_overlap), "digest": digest(d_overlap)},
+        "pre_target_historical_collision": historical_entry,
         "scan_searches": 0,
         "jass_searches": 0,
         "target_reads": 0,
@@ -241,22 +291,41 @@ def main() -> int:
         if mode not in ("rehearsal", "production"):
             raise ValueError("launch_mode")
         d_ids = fetch_d(result)
+        historical_w_ids = fetch_ed4_w1959(result)
         work = Path(tempfile.mkdtemp(prefix="ed5-w-source-", dir=str(result)))
         try:
             primary_root, primary_effects = generate_seed(PRIMARY, work)
             primary_ids = canonical_set(primary_root / "source/positions.jnnw")
-            primary_overlap = primary_ids & d_ids
-            if primary_overlap:
+            primary_d_overlap = primary_ids & d_ids
+            primary_historical_overlap = primary_ids & historical_w_ids
+            if primary_d_overlap or primary_historical_overlap:
                 selected_root, reserve_effects = generate_seed(RESERVE, work)
                 selected_ids = canonical_set(selected_root / "source/positions.jnnw")
-                reserve_overlap = selected_ids & d_ids
-                if reserve_overlap:
+                reserve_d_overlap = selected_ids & d_ids
+                reserve_historical_overlap = selected_ids & historical_w_ids
+                if reserve_d_overlap:
                     raise ValueError("w_reserve_canonical_collision_with_d")
-                promote_ed5(selected_root, seed=RESERVE, reserve_used=True, overlap=primary_overlap, extra_selfplay=primary_effects)
+                if reserve_historical_overlap:
+                    raise ValueError("w_reserve_canonical_collision_with_historical")
+                promote_ed5(
+                    selected_root,
+                    seed=RESERVE,
+                    reserve_used=True,
+                    d_overlap=primary_d_overlap,
+                    historical_overlap=primary_historical_overlap,
+                    extra_selfplay=primary_effects,
+                )
             else:
                 selected_root = primary_root
                 reserve_effects = 0
-                promote_ed5(selected_root, seed=PRIMARY, reserve_used=False, overlap=primary_overlap, extra_selfplay=0)
+                promote_ed5(
+                    selected_root,
+                    seed=PRIMARY,
+                    reserve_used=False,
+                    d_overlap=primary_d_overlap,
+                    historical_overlap=primary_historical_overlap,
+                    extra_selfplay=0,
+                )
             copy_outputs(selected_root, art)
         finally:
             shutil.rmtree(work, ignore_errors=True)
