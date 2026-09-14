@@ -590,6 +590,16 @@
       "invariant": "Preserve exact D source/candidate/control identities, Scan Q200k budget, 512 parents / 64 per phase×STM cell, bootstrap seed 202609140901, NumPy default_rng draw order, 20000 replicates, quantile definition, block alpha 0.025/3, all gates, target cohort, candidate bytes, promotion and bake. Repair only target-host sequence materialization and require another zero-target rehearsal before production.",
       "evidence": "cpx62-1963-l3-ed4-fresh-d-confirmation-rehearsal-v3 attempt 20260914T101610Z-72bd93b7 ended exit2 with failure_code REGRESSION_SUITE_FAILED and scientific_verdict null; failure frames are the constant-gain and frozen heterogeneous bootstrap fixtures. This PR retains their exact expected outputs and forbids array/asarray/fromiter sequence conversion in the adapter.; PR #963",
       "status": "MITIGATED_PENDING_TARGET_HOST_REHEARSAL"
+    },
+    {
+      "id": "TI-060",
+      "dedupe_key": "job:cpx62-1964-l3-ed4-fresh-d-confirmation-rehearsal-v4",
+      "context": "ED4-FRESH D confirmation rehearsal 1964 Launch V2 regressions on CPX62",
+      "symptom": "1964 failed TECHNICAL / REGRESSION_SUITE_FAILED before stage execution. Diagnostic 1965 showed the configured numeric venv imports an incomplete namespace numpy lacking __version__, empty, random, quantile and float64; zero target reads, Scan searches and alpha were consumed.",
+      "root_cause": "The D launch profile pointed at /var/tmp/jass-l3-numeric-venv-current-v1/bin/python, whose site-packages contains a broken/incomplete namespace installation of NumPy/SciPy on CPX62. The stage/bootstrap code is not the failure: diagnostic 1966 proved /usr/bin/python3 loads NumPy 2.5.1 + SciPy 1.18.0 and passes all six frozen D confirmation tests exactly, while the numeric venv reproduces the three bootstrap errors.",
+      "invariant": "Preserve exact D source/candidate/control identities, Scan Q200k budget, 512 parents / 64 per phase×STM cell, bootstrap seed 202609140901, RNG draw order, 20000 replicates, quantile definition, block alpha 0.025/3, all gates, confirmation cohort and candidate bytes. Change only the executable runtime and require a fresh zero-target rehearsal before production.",
+      "evidence": "cpx62-1965-ed4-d-bootstrap-target-host-diagnostic-v1 attempt 20260914T130739Z-3c81a090 completed TECHNICAL_ONLY with incomplete numeric-venv NumPy. cpx62-1966-ed4-d-python-runtime-diagnostic-v1 attempt 20260914T132938Z-3c81a090 completed exit0; /usr/bin/python3 reports NumPy 2.5.1/SciPy 1.18.0 and focused_returncode=0, while the numeric venv focused_returncode=1 with AttributeError numpy.empty.; PR #965",
+      "status": "MITIGATED_PENDING_TARGET_HOST_REHEARSAL"
     }
   ]
 }
