@@ -8,6 +8,17 @@
 
 ## 0. Décision
 
+> **Amendement du 9 septembre 2026 (JFC).** L'interdiction du relabel adjugé est
+> levée pour la cible d'entraînement, dans le périmètre strict de la
+> preregistration [R1](experiments/L3_R1_ADJUDICATED_RELABEL_V1_20260909.md) :
+> arbitre interne (recherche Jass profondeur fixe `14` + EGDB), bande de nulle
+> `50 cp`, blend `0,5/0,5` avec le WDL terminal, un seul facteur. La lignée reste
+> autonome : aucun agent externe ne fournit position, coup, score ou résultat.
+> Motif : la classe contient le point de Scan (port exact `600/600`) alors que le
+> fit n'identifie que `≈ 24 k` ddl effectifs sur `2,1 M` (JFI finding C) ; le label
+> WDL terminal d'un pilote `d8` à `8 %` d'exploration est la source d'information la
+> plus pauvre du pipeline. Tout le reste du contrat §2 reste en vigueur.
+
 La cible reste une lignée linéaire autonome, sans professeur externe :
 graine matérielle, autojeu, résultat terminal WDL, fit, puis nouvelle
 génération. Scan, Gen2, les maîtres, d14 et MMTO peuvent mesurer la lignée mais
@@ -67,7 +78,12 @@ Ces choix définissent l'expérience et ne sont pas des facteurs de tuning :
 - perte : logistique WDL ; aucune cible score, ranking ou préférence ;
 - terminaison EGDB exacte seulement après atteinte naturelle de la tablebase ;
 - partie au ply-cap entièrement censurée ;
-- aucune adjudication matérielle, deep relabel, TB relabel par sample ou MMTO ;
+- **amendé le 9 septembre 2026 (décision JFC)** : l'adjudication de la cible par
+  l'**arbitre interne gelé** (recherche Jass à profondeur fixe + EGDB, sans agent
+  externe) est **autorisée comme cible d'entraînement**, uniquement sous
+  preregistration ([R1](experiments/L3_R1_ADJUDICATED_RELABEL_V1_20260909.md)) ;
+  restent interdits : adjudication matérielle, MMTO, cibles de ranking ou de
+  préférence, et toute cible produite par Scan, Gen2, d14 externe ou des maîtres ;
 - aucune position externe, partie humaine, politique ou poids Scan/Gen2 ;
 - paires d'ouvertures, provenance par partie et holdout par ouverture complète ;
 - aucun PV extrait : seules les positions réellement jouées sont entraînées ;
@@ -102,7 +118,8 @@ Une violation donne le statut `invalid_science`, indépendamment du code retour.
 | géométrie 8cf | **figée pour les écrans, non close à long terme** | comparer 8cf/32cf dans un fork depuis G0 quand le volume cumulé nourrit réellement 32cf |
 | king-patterns | **différé** | uniquement si un résidu roi mesuré persiste au scale |
 | frontière mobile | **close, v1 retirée** | C0 `0795` : Δglobal −0,023 et P3 −0,070, sans signal positif |
-| quiet-only, PV extraction, adjudication, teacher | **OFF par contrat** | changeraient la population ou la vérité des trajectoires |
+| quiet-only, PV extraction, teacher externe | **OFF par contrat** | changeraient la population ou la vérité des trajectoires |
+| adjudication interne de la cible (arbitre Jass + EGDB) | **autorisée depuis le 9 sept. 2026, sous prereg R1** | ne change ni la population ni les trajectoires : seule la cible change ; décision JFC après le diagnostic d'identification (JFI finding C, port exact Scan 600/600) |
 
 ## 4. D0 — hygiène causale avant tout DoE
 
