@@ -81,6 +81,7 @@ class FreshDConfirmationTests(unittest.TestCase):
     def test_launch_profile_has_zero_target_rehearsal(self):
         root = Path(__file__).resolve().parents[2]
         profile = json.loads((root / "jobs/launch_profiles/ed4-fresh-d-confirmation-v1.json").read_text())
+        # CPX62 diagnostic 1966 proved this runtime executes the exact frozen fixtures.
         self.assertEqual(profile["command"][0], "/usr/bin/python3")
         self.assertEqual(profile["command"][1], "jobs/tools/ed4_fresh_d_confirmation_target_host.py")
         self.assertEqual(profile["rehearsal_max_effects"]["test_target_reads"], 0)
