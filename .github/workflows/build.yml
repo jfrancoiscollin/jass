@@ -86,6 +86,9 @@ jobs:
       - name: Run ED4-FRESH W sizing tests
         run: python -m unittest jobs.tests.test_ed4_fresh_w_sizing -v
 
+      - name: Run ED4-FRESH W source tests
+        run: python -m unittest jobs.tests.test_ed4_fresh_w_source -v
+
   # ---------------------------------------------------------------------------
   # WASM build: install emsdk, run the project's own wasm/build.sh, package
   # the artefacts.
