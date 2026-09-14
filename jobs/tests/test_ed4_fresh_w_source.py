@@ -7,6 +7,7 @@ import tempfile
 import unittest
 
 from jobs.tools import ed4_fresh_w_source_stage as w
+from jobs.tools import ed4_fresh_w_source_full_stage as full
 
 
 class FreshWSourceTests(unittest.TestCase):
@@ -131,6 +132,21 @@ class FreshWSourceTests(unittest.TestCase):
         self.assertEqual(w.ROWS_PER_GAME, 8)
         self.assertEqual(w.PRODUCTION_OPENINGS, 512)
         self.assertEqual(w.PRODUCTION_POSITIONS, 8192)
+
+    def test_full_rehearsal_wrapper_is_production_shaped(self):
+        contract = full.production_shape_contract()
+        self.assertEqual(contract["record_budget"], 40960)
+        self.assertEqual(contract["opening_groups"], 512)
+        self.assertEqual(contract["positions"], 8192)
+        self.assertEqual(contract["generator_timeout_seconds"], 2100)
+        self.assertEqual(full.adjusted_timeout(["jass", "--gen-data-wdl"], 900), 2100)
+        self.assertEqual(full.adjusted_timeout(["cmake", "--build"], 900), 900)
+
+        root = Path(__file__).resolve().parents[2]
+        profile = json.loads((root / "jobs/launch_profiles/ed4-fresh-w-source-v1.json").read_text())
+        self.assertEqual(profile["command"][1], "jobs/tools/ed4_fresh_w_source_full_stage.py")
+        self.assertEqual(profile["rehearsal_max_effects"]["selfplay_games"], 4096)
+        self.assertEqual(profile["production_max_effects"]["selfplay_games"], 4096)
 
 
 if __name__ == "__main__":
