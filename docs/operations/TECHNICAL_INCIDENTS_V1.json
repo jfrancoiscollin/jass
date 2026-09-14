@@ -550,6 +550,16 @@
       "invariant": "Preserve immutable rclone bulk copy, checksum verification before marker, marker-last semantics, exact marker bytes, bounded transport, pending-upload recovery, secret non-disclosure, and every frozen ED4 scientific contract. The direct request is restricted to Cloudflare R2 terminal markers only; other providers keep the generic fallback.",
       "evidence": "1948 terminal ED4_FRESH_W_SIZING_COMPLETE_V1 with 4096 records, 118 games, 65 openings and zero target/candidate/control/fits/alpha; 1949 terminal ED4_FRESH_S_SOURCE_SEALED_V1 with 512 confirmation roots and zero target reads/alpha; 1950 marker copy and 1951 marker rcat each returned HTTP 501 after successful runner execution. Cloudflare R2 documents S3 PutObject support and rclone bulk upload remains proven on the same endpoint.; PR #955",
       "status": "MITIGATED_PENDING_TARGET_HOST_RECOVERY"
+    },
+    {
+      "id": "TI-056",
+      "dedupe_key": "job:cpx62-1954-l3-ed4-fresh-w-source-production-v1",
+      "context": "ED4-FRESH W production 1954 launch admission on CPX62",
+      "symptom": "1954 failed immediately with TECHNICAL / OUTER_TIMEOUT_CONTRACT before the W production stage executed; scientific-summary contains no scientific verdict and no target consumption.",
+      "root_cause": "The frozen stage spec had stage_seconds=2700, while the queue wrapper set EXPECTED_LAUNCH_TIMEOUT_SECONDS=3000. Launch Gate V2 requires the outer timeout to equal stage_seconds+600, i.e. 3300, so admission failed before stage execution.",
+      "invariant": "Retry must preserve the exact W production science: Jass 80167252, record budget 40960, seed 202609120402, authenticated rehearsal 1953, target-zero/source-only generation, candidate/control/target reads zero and alpha zero. Only job/admission identity and the outer runner timeout may change.",
+      "evidence": "1954 attempt 20260914T061056Z-80167252 ended exit2 with failure_code OUTER_TIMEOUT_CONTRACT. Its spec has stage_seconds=2700 and its queue script had EXPECTED_LAUNCH_TIMEOUT_SECONDS=3000. Control PR #658 queues 1956 with the same scientific spec and corrected outer timeout 3300; 1956 is currently running on CPX62.; PR #958",
+      "status": "MITIGATED_PENDING_TARGET_HOST_VALIDATION_1956"
     }
   ]
 }
