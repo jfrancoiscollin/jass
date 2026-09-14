@@ -41,6 +41,21 @@ class FreshDConfirmationTests(unittest.TestCase):
         self.assertAlmostEqual(report["upper"], 0.06873372395833346, places=15)
         self.assertEqual(report["bootstrap_replicates"], 20000)
 
+    # Keep this direct guard in the focused module so CPX launch regressions exercise
+    # the same adapter source before any confirmation target can be opened.  Static
+    # call detection avoids monkeypatching NumPy internals used by default_rng itself.
+    def test_target_host_bootstrap_does_not_use_python_sequence_converters(self):
+        source = Path(compat.__file__).read_text(encoding="utf-8")
+        self.assertNotIn("np.asarray(", source)
+        self.assertNotIn("np.array(", source)
+        self.assertNotIn("np.fromiter(", source)
+        cells = [f"P{phase}_stm{stm}" for phase in range(4) for stm in (0, 1) for _ in range(64)]
+        delta = [((index % 17) - 8) / 7 for index in range(512)]
+        report = compat.bootstrap_parent_one_sided(delta, cells, 202609140901)
+        self.assertAlmostEqual(report["mean"], -0.0041852678571428535, places=15)
+        self.assertAlmostEqual(report["lower"], -0.07840401785714285, places=15)
+        self.assertAlmostEqual(report["upper"], 0.06873372395833346, places=15)
+
     def test_decision_groups_requires_exact_64_per_cell(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

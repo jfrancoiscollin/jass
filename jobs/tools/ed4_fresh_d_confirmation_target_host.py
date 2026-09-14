@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Target-host adapter for the frozen ED4-FRESH D confirmation stage.
 
-CPX62 launch regressions exposed a target-host failure at ``numpy.asarray``
-on a small synthetic Python sequence before any confirmation target was opened.
-This adapter changes no confirmation identities, gates, bootstrap seed, strata,
-replicate count, alpha or target protocol.  It only materializes Python numeric
-sequences through ``numpy.fromiter`` and groups cells with Python indices before
-executing the exact same NumPy RNG/resampling/quantile recipe.
+CPX62 launch regressions exposed failures in NumPy's Python-sequence conversion
+paths before any confirmation target was opened.  This adapter changes no
+confirmation identities, gates, bootstrap seed, strata, replicate count, alpha
+or target protocol.  It materializes numeric vectors by allocating fixed-size
+NumPy arrays and assigning scalar values one-by-one, avoiding ``asarray``,
+``array`` and ``fromiter`` conversion of Python sequences.  All bootstrap RNG,
+vectorized resampling, reductions and quantiles remain the frozen NumPy recipe.
 
 The base stage remains the scientific source of truth.  The adapter installs
 only the two sequence-materialization entry points used by D statistics and
@@ -24,8 +25,22 @@ from jobs.tools import ed4_fresh_d_confirmation_stage as base
 
 
 def _float_vector(values: Iterable[float], size: int) -> np.ndarray:
-    """Materialize an exact float64 vector without the CPX62 asarray path."""
-    return np.fromiter((float(value) for value in values), dtype=np.float64, count=size)
+    """Materialize an exact float64 vector without Python-sequence conversion."""
+    out = np.empty(size, dtype=np.float64)
+    observed = 0
+    for observed, value in enumerate(values, start=1):
+        base.need(observed <= size, "float_vector_overflow")
+        out[observed - 1] = float(value)
+    base.need(observed == size, "float_vector_size")
+    return out
+
+
+def _gather_float(values: np.ndarray, indices: Sequence[int]) -> np.ndarray:
+    """Gather float64 values without NumPy converting a Python index sequence."""
+    out = np.empty(len(indices), dtype=np.float64)
+    for offset, index in enumerate(indices):
+        out[offset] = values[int(index)]
+    return out
 
 
 def bootstrap_parent_one_sided(
@@ -41,7 +56,7 @@ def bootstrap_parent_one_sided(
     for cell in sorted(set(cells)):
         indices = [index for index, label in enumerate(cells) if label == cell]
         base.need(len(indices) == base.CELL_QUOTA, "bootstrap_cell_quota")
-        x = values[indices]
+        x = _gather_float(values, indices)
         for start in range(0, base.BOOTSTRAPS, 250):
             end = min(start + 250, base.BOOTSTRAPS)
             sample = rng.integers(0, len(x), size=(end - start, len(x)))
