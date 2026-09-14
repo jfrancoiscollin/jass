@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest import mock
 
 from jobs.tools import ed4_fresh_d_confirmation_stage as d
 from jobs.tools import ed4_fresh_d_confirmation_target_host as compat
@@ -43,14 +42,16 @@ class FreshDConfirmationTests(unittest.TestCase):
         self.assertEqual(report["bootstrap_replicates"], 20000)
 
     # Keep this direct guard in the focused module so CPX launch regressions exercise
-    # the same host-compatibility path before any confirmation target can be opened.
+    # the same adapter source before any confirmation target can be opened.  Static
+    # call detection avoids monkeypatching NumPy internals used by default_rng itself.
     def test_target_host_bootstrap_does_not_use_python_sequence_converters(self):
+        source = Path(compat.__file__).read_text(encoding="utf-8")
+        self.assertNotIn("np.asarray(", source)
+        self.assertNotIn("np.array(", source)
+        self.assertNotIn("np.fromiter(", source)
         cells = [f"P{phase}_stm{stm}" for phase in range(4) for stm in (0, 1) for _ in range(64)]
         delta = [((index % 17) - 8) / 7 for index in range(512)]
-        with mock.patch.object(compat.np, "asarray", side_effect=AssertionError("asarray forbidden")), \
-             mock.patch.object(compat.np, "array", side_effect=AssertionError("array forbidden")), \
-             mock.patch.object(compat.np, "fromiter", side_effect=AssertionError("fromiter forbidden")):
-            report = compat.bootstrap_parent_one_sided(delta, cells, 202609140901)
+        report = compat.bootstrap_parent_one_sided(delta, cells, 202609140901)
         self.assertAlmostEqual(report["mean"], -0.0041852678571428535, places=15)
         self.assertAlmostEqual(report["lower"], -0.07840401785714285, places=15)
         self.assertAlmostEqual(report["upper"], 0.06873372395833346, places=15)
