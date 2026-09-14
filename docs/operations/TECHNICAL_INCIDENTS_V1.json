@@ -530,6 +530,16 @@
       "invariant": "Preserve marker-last publication, pre-marker checksum verification, bounded transport timeouts, local pending-upload recovery and all frozen ED4 scientific contracts. Do not change seed, quotas, candidate, targets, gates, alpha, fit or scoring.",
       "evidence": "cpx62-1948-l3-ed4-fresh-w-sizing-rehearsal-v2 attempt 20260913T220257Z-7782dc2b completed scientific-summary terminal ED4_FRESH_W_SIZING_COMPLETE_V1 with zero target/candidate/control/fits/alpha; status upload_error reports `_SUCCESS: Failed to copy: NotImplemented` from final copyto after successful bulk copy/check.; PR #953",
       "status": "MITIGATED_PENDING_TARGET_HOST_RECOVERY"
+    },
+    {
+      "id": "TI-054",
+      "dedupe_key": "runner-v3-r2-marker-copy-501-1950",
+      "context": "CPX62 runner-v3 R2 pending-upload recovery probe 1950 after marker-copy repair",
+      "symptom": "1950 exited 0 on Jass 6f5d2813 but its terminal _SUCCESS publication again returned HTTP 501 NotImplemented, now from the one-file rclone copy path; preserved 1948/1949 pending uploads remain unrecovered.",
+      "root_cause": "On this target R2 endpoint, file-oriented copy/copyto marker publication enters an unsupported S3 operation or metadata path even though the directory bulk copy and checksum verification succeed. The marker is a tiny append-last object and does not require file comparison semantics.",
+      "invariant": "Preserve exact marker bytes, marker-last publication, immutable bulk copy, pre-marker checksum verification, bounded transport, pending-upload recovery, and every frozen ED4 scientific contract. No seed, quota, candidate, target, gate, alpha, fit or scoring changes.",
+      "evidence": "cpx62-1950-runner-r2-recovery-probe-at-6f5d2813-v1 attempt 20260914T003944Z-6f5d2813 exited 0 then upload_failed with `_SUCCESS: Failed to copy: NotImplemented`; 1948 W sizing and 1949 S production are independently exit-0 with preserved pending uploads and zero target/alpha/fits. This PR uses rclone rcat only for the final marker object and adds exact-byte/key regression coverage.; PR #954",
+      "status": "MITIGATED_PENDING_TARGET_HOST_RECOVERY"
     }
   ]
 }
