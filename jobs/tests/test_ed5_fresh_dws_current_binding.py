@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import os
-import unittest
 from pathlib import Path
+import subprocess
+import sys
+import unittest
 from unittest import mock
 
 from jobs.tools import ed5_fresh_dws_disjointness_current_stage as stage
@@ -29,6 +31,33 @@ class Ed5FreshDwsCurrentBindingTests(unittest.TestCase):
                 run.assert_called_once_with()
         finally:
             stage.barrier.D = original
+
+    def test_direct_script_import_bootstraps_repo_root_before_jobs_import(self):
+        # Reproduce Launch V2's script-path import conditions without executing science.
+        repo = Path(__file__).resolve().parents[2]
+        script = repo / "jobs/tools/ed5_fresh_dws_disjointness_current_stage.py"
+        probe = (
+            "import importlib.util, pathlib, sys\n"
+            f"repo = pathlib.Path({str(repo)!r})\n"
+            f"script = pathlib.Path({str(script)!r})\n"
+            "sys.path[:] = [str(script.parent)] + [p for p in sys.path if p not in ('', str(repo))]\n"
+            "spec = importlib.util.spec_from_file_location('ed5_direct_probe', script)\n"
+            "module = importlib.util.module_from_spec(spec)\n"
+            "spec.loader.exec_module(module)\n"
+            "print('DIRECT_IMPORT_OK')\n"
+        )
+        env = dict(os.environ)
+        env.pop("PYTHONPATH", None)
+        completed = subprocess.run(
+            [sys.executable, "-c", probe],
+            cwd="/",
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(completed.stdout.strip(), "DIRECT_IMPORT_OK")
 
     def test_profile_is_read_only_and_uses_current_d_wrapper(self):
         profile = Path(__file__).resolve().parents[1] / "launch_profiles/ed5-fresh-dws-historical-disjointness-v2.json"
