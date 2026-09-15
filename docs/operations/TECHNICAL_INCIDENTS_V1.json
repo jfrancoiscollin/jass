@@ -614,12 +614,12 @@
     {
       "id": "TI-062",
       "dedupe_key": "ed5-dws:execute-failure-1991",
-      "context": "cpx62-1991-l3-ed5-fresh-dws-historical-disjointness-rehearsal-v2 / 20260915T173419Z-ae1fdd65",
-      "symptom": "Launch V2 failed TECHNICALLY at EXECUTE with exit2, scientific_verdict=null, before any ED5 confirmation target read.",
-      "root_cause": "UNDER INVESTIGATION — bounded failed-attempt evidence readout required before changing behavior.",
-      "invariant": "Repair mechanics only; keep D1990/W1988/S1984 identities, frozen candidate/controls/budgets/bootstrap/alpha/gates unchanged, and permit no confirmation target read until pairwise plus historical canonical disjointness passes.",
-      "evidence": "1991 status is failed with STAGE_FAILED:EXECUTE; PR #981 adds an authenticated read-only fetch of only artefacts/attempt-diagnostic.json with all scientific side-effect budgets zero.",
-      "status": "MITIGATED — exact failure evidence readout pending"
+      "context": "cpx62-1991-l3-ed5-fresh-dws-historical-disjointness-rehearsal-v2 / 20260915T173419Z-ae1fdd65; diagnostic 1992 / 20260915T180450Z-701c5f91",
+      "symptom": "1991 failed TECHNICALLY at EXECUTE; diagnostic 1992 also failed because artefacts/attempt-diagnostic.json had no last_phase/error_type/frames, so it could not identify the inner stage exception.",
+      "root_cause": "1992 selected the Launch V2 wrapper diagnostic, but 1991 failed before execution-evidence fields were available there. The runner-owned stage-receipt.json and stage.stderr.log are the minimal authenticated evidence that contain the EXECUTE outcome and inner Python traceback.",
+      "invariant": "Repair diagnostics/mechanics only; keep D1990/W1988/S1984 identities and all frozen candidate/controls/budgets/bootstrap/alpha/gates unchanged. No confirmation target read before pairwise plus historical disjointness passes.",
+      "evidence": "1991 status is failed STAGE_FAILED:EXECUTE with no bounded inner frames; 1992 failed at validate_source_diagnostic line 60 on missing wrapper fields. This PR switches the read-only diagnostic to authenticated runner receipt+stderr and keeps every science side-effect budget at zero.; PR #982",
+      "status": "MITIGATED_PENDING_RUNNER_STDERR_DIAGNOSTIC"
     }
   ]
 }
