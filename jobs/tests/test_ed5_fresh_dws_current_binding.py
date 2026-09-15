@@ -33,6 +33,7 @@ class Ed5FreshDwsCurrentBindingTests(unittest.TestCase):
             stage.barrier.D = original
 
     def test_direct_script_import_bootstraps_repo_root_before_jobs_import(self):
+        # Reproduce Launch V2's script-path import conditions without executing science.
         repo = Path(__file__).resolve().parents[2]
         script = repo / "jobs/tools/ed5_fresh_dws_disjointness_current_stage.py"
         probe = (
