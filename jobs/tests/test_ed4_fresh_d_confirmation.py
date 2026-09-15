@@ -10,6 +10,7 @@ import unittest
 
 from jobs.tools import ed4_fresh_d_confirmation_stage as d
 from jobs.tools import ed4_fresh_d_confirmation_target_host as compat
+from jobs.tools import ed5_fresh_d_confirmation_stage as ed5
 
 
 class FreshDConfirmationTests(unittest.TestCase):
@@ -107,6 +108,51 @@ class FreshDConfirmationTests(unittest.TestCase):
         # CPX62 diagnostic 1966 proved this runtime executes the exact frozen fixtures.
         self.assertEqual(profile["command"][0], "/usr/bin/python3")
         self.assertEqual(profile["command"][1], "jobs/tools/ed4_fresh_d_confirmation_target_host.py")
+        self.assertEqual(profile["rehearsal_max_effects"]["test_target_reads"], 0)
+        self.assertEqual(profile["rehearsal_max_effects"]["new_scan_searches"], 0)
+        self.assertEqual(profile["production_max_effects"]["test_target_reads"], 8192)
+        self.assertEqual(profile["production_max_effects"]["new_scan_searches"], 8192)
+
+
+class Ed5FreshDConfirmationBindingsTests(unittest.TestCase):
+    def test_ed5_frozen_identities_and_multiplicity(self):
+        self.assertEqual(ed5.D_SOURCE, (
+            "cpx62-1990-l3-ed5-fresh-d-source-production-v2",
+            "20260915T155218Z-f746408f",
+            "f746408fcd8aaaa046bdeb479fe54c6b7edca39e",
+        ))
+        self.assertEqual(ed5.CANDIDATE_SHA256, "f4e35ad02704f822614eb5a0be6ce33fa21f7187c452cbef7819f91242812ea5")
+        self.assertEqual(ed5.DISJOINTNESS_SOURCE[0], "cpx62-1995-l3-ed5-fresh-dws-historical-disjointness-rehearsal-v3")
+        self.assertEqual(ed5.D_MASTER_SEED, 202609140511)
+        self.assertEqual(ed5.BOOTSTRAP_BASE, 202609141101)
+        self.assertEqual(ed5.BOOTSTRAP_HARD, 202609141102)
+        self.assertEqual(ed5.BOOTSTRAP_SOFT, 202609141103)
+        self.assertEqual(ed5.FAMILY_ALPHA_K, 0.0125)
+        self.assertEqual(ed5.BLOCK_ALPHA, 0.004166666666666667)
+        self.assertEqual(ed5.ONE_SIDED_LEVEL, 0.9958333333333333)
+
+    def test_ed5_barrier_is_fail_closed_before_target(self):
+        source = Path(ed5.__file__).read_text(encoding="utf-8")
+        self.assertIn("ED5_FRESH_DWS_HISTORICAL_DISJOINTNESS_ESTABLISHED_V1", source)
+        self.assertIn('barrier.get("pairwise_and_historical_disjoint") is True', source)
+        self.assertIn('barrier.get("target_reads") == 0', source)
+        self.assertIn('barrier.get("alpha_spent") == 0', source)
+        self.assertIn("ed5_pairwise_overlap", source)
+        self.assertIn("ed5_historical_overlap", source)
+
+    def test_ed5_statistics_use_only_preregistered_bootstrap_seeds(self):
+        source = Path(ed5.__file__).read_text(encoding="utf-8")
+        self.assertIn('base.comparison(rows["BASE"], rows["CANDIDATE"], BOOTSTRAP_BASE)', source)
+        self.assertIn('base.comparison(rows["HARD"], rows["CANDIDATE"], BOOTSTRAP_HARD)', source)
+        self.assertIn('base.comparison(rows["SOFT"], rows["CANDIDATE"], BOOTSTRAP_SOFT)', source)
+        self.assertNotIn("202609140901", source)
+        self.assertNotIn("202609140902", source)
+        self.assertNotIn("202609140903", source)
+
+    def test_ed5_launch_profile_rehearsal_is_zero_target(self):
+        root = Path(__file__).resolve().parents[2]
+        profile = json.loads((root / "jobs/launch_profiles/ed5-fresh-d-confirmation-v1.json").read_text())
+        self.assertEqual(profile["command"], ["/usr/bin/python3", "jobs/tools/ed5_fresh_d_confirmation_stage.py"])
         self.assertEqual(profile["rehearsal_max_effects"]["test_target_reads"], 0)
         self.assertEqual(profile["rehearsal_max_effects"]["new_scan_searches"], 0)
         self.assertEqual(profile["production_max_effects"]["test_target_reads"], 8192)
