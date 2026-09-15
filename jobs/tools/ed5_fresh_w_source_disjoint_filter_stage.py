@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Mechanical ED5 W repair: make the single preregistered reserve disjoint.
+"""Mechanical ED5 W repair: make the preregistered reserve fully disjoint.
 
 ED5 preregisters one W reserve seed for a pre-target canonical collision. 1979
 proved that, after the 64-bit seed repair, the reserve stream itself can still
-contain positions from the already-sealed D source. This wrapper changes no
-candidate, target, population, seed, quota, opening/game shape, row quota or
-statistical gate. It only applies the already-required canonical-disjointness
-constraint while selecting openings from the *same* reserve-seed score-free
-stream: an opening is ineligible if any of its otherwise-selected 16 rows is in
-the frozen forbidden identity set. Selection remains first-appearance order.
+contain positions from the already-sealed D source. 1985/1986 then proved that
+the selected reserve W source was current-source disjoint but still intersected
+two older consumed confirmation universes (ED2_P0 and ED3_CONFIRMATION_1884).
+
+This wrapper changes no candidate, target, population, seed, quota,
+opening/game shape, row quota or statistical gate. It extends the already
+required canonical-disjointness constraint to the full authenticated forbidden
+universe while selecting openings from the *same* preregistered reserve-seed
+score-free stream. An opening is ineligible if any of its otherwise-selected 16
+rows is in that frozen universe. Selection remains first-appearance order.
 
 Primary-seed behavior is byte-for-byte delegated to the existing ED5 W stage;
 the filter activates only when the preregistered reserve seed is being used.
@@ -28,13 +32,43 @@ if str(ROOT) not in sys.path:
 
 from jobs.tools import ed4_fresh_w_source_stage as base
 from jobs.tools import ed5_fresh_w_source_stage as stage
+from jobs.tools import ed5_fresh_dws_disjointness_stage as barrier
 # Import installs the already-proven uint64 seed repair by replacing
 # stage.configure_base before stage.main() is called below.
 from jobs.tools import ed5_fresh_w_source_seedfix_stage as seedfix
 from jobs.tools.launch_runtime_v2 import atomic_json
 
 _ORIGINAL_SELECT_ROWS = base.select_rows
-_LAST_FILTER_STATS: dict[str, int | str | bool] = {}
+_LAST_FILTER_STATS: dict[str, object] = {}
+_LAST_FORBIDDEN_SOURCES: dict[str, dict[str, object]] = {}
+_FORBIDDEN_CACHE: set[str] | None = None
+
+S1984 = (
+    "cpx62-1984-l3-ed5-fresh-s-source-production-v2",
+    "20260915T084337Z-9e8eb2a3",
+    "9e8eb2a32d80f15491ef1ff6bb5aa3b95edcdc49",
+)
+S1984_DIGEST = "90a84f2452a67722fd7514737a2b382ef20b992050b0c1ee6ce3c5464e9c983d"
+S1984_UNIQUE = 8208
+
+# Digests were authenticated by the read-only 1986 recovery of the exact
+# failed-1985 disjointness artifact. ED4 digests are additionally preregistered.
+HISTORICAL_DIGESTS = {
+    "ED2_P0": "cdeb5ceb5232f560addaed3202112084c9985078a4dd582e246cfdb6ca35c9ec",
+    "ED3_CONFIRMATION_1884": "15a64da084b98f314c27d2f5487a689b109d7f378f9a461b3ad7a3ebc5a26463",
+    "ED4_D1937": "6a3194f0ca6d0db95a87d3c01bcce33f6cfb2c35e4b55dd7f43c7568125b3634",
+    "ED4_W1959": "25dc7654ff5423fb132d2060f137c077bf4f326a55b26218ef06736178d2361a",
+    "ED4_S1949": "6bee36811ced2b4622169a67a3a2e4c0b6b737ded6633070c1041d0ba96e5615",
+}
+REQUIRED_FORBIDDEN_SOURCES = (
+    "ED5_D1976",
+    "ED5_S1984",
+    "ED2_P0",
+    "ED3_CONFIRMATION_1884",
+    "ED4_D1937",
+    "ED4_W1959",
+    "ED4_S1949",
+)
 
 
 def _record_at(raw: bytes, index: int) -> bytes:
@@ -135,24 +169,76 @@ def select_rows_with_forbidden(
     return selected, groups, support
 
 
-def _frozen_forbidden_set() -> set[str]:
-    result = Path(os.environ["JASS_RESULT_DIR"])
-    d_root = result / "ed5-w-d-source/source"
-    historical_root = result / "ed5-w-historical-ed4-w1959/source"
-    required = (
-        d_root / "parents.jnnw",
-        d_root / "children.jnnw",
-        historical_root / "positions.jnnw",
-    )
-    if not all(path.is_file() for path in required):
-        raise ValueError("reserve_filter_authenticated_sources_missing")
-    forbidden = (
-        stage.canonical_set(required[0])
-        | stage.canonical_set(required[1])
-        | stage.canonical_set(required[2])
-    )
+def build_forbidden_universe(source_sets: dict[str, set[str]]) -> set[str]:
+    """Fail closed unless the complete authenticated forbidden universe is present."""
+    missing = [name for name in REQUIRED_FORBIDDEN_SOURCES if name not in source_sets]
+    if missing:
+        raise ValueError("reserve_filter_forbidden_sources_missing:" + ",".join(missing))
+    empty = [name for name in REQUIRED_FORBIDDEN_SOURCES if not source_sets[name]]
+    if empty:
+        raise ValueError("reserve_filter_forbidden_sources_empty:" + ",".join(empty))
+    forbidden: set[str] = set()
+    for name in REQUIRED_FORBIDDEN_SOURCES:
+        forbidden |= source_sets[name]
     if not forbidden:
         raise ValueError("reserve_filter_empty_forbidden_set")
+    return forbidden
+
+
+def _verify_source(name: str, values: set[str], *, expected_digest: str, expected_unique: int | None = None) -> None:
+    observed_digest = stage.digest(values)
+    if observed_digest != expected_digest:
+        raise ValueError(f"reserve_filter_authenticated_digest_{name}")
+    if expected_unique is not None and len(values) != expected_unique:
+        raise ValueError(f"reserve_filter_authenticated_count_{name}")
+
+
+def _frozen_forbidden_set() -> set[str]:
+    global _FORBIDDEN_CACHE, _LAST_FORBIDDEN_SOURCES
+    if _FORBIDDEN_CACHE is not None:
+        return _FORBIDDEN_CACHE
+
+    result = Path(os.environ["JASS_RESULT_DIR"])
+    sources: dict[str, set[str]] = {}
+
+    # D1976 was already fetched and authenticated by the parent ED5 W stage
+    # before reserve selection starts; consume that exact local copy.
+    d_root = result / "ed5-w-d-source" / "source"
+    d_required = (d_root / "parents.jnnw", d_root / "children.jnnw")
+    if not all(path.is_file() for path in d_required):
+        raise ValueError("reserve_filter_authenticated_d_missing")
+    d_values = stage.canonical_set(d_required[0]) | stage.canonical_set(d_required[1])
+    _verify_source("ED5_D1976", d_values, expected_digest=stage.D_DIGEST, expected_unique=stage.D_UNIQUE)
+    sources["ED5_D1976"] = d_values
+
+    # S1984 is frozen and remains byte-identical; authenticate its production
+    # seal and canonical identities before using it as a forbidden set.
+    _, s_values = barrier.fetch_ds(
+        result / "ed5-w-full-forbidden" / "ED5_S1984",
+        S1984,
+        current_role="S",
+    )
+    _verify_source("ED5_S1984", s_values, expected_digest=S1984_DIGEST, expected_unique=S1984_UNIQUE)
+    sources["ED5_S1984"] = s_values
+
+    # Fetch every consumed historical confirmation source by exact immutable
+    # identity. The digests below are the values authenticated by diagnosis 1986.
+    for name, descriptor in barrier.HISTORICAL.items():
+        root = result / "ed5-w-full-forbidden" / "historical" / name
+        identity = descriptor["identity"]
+        if descriptor["kind"] == "w":
+            _, values = barrier.fetch_w(root, identity, current=False)
+        else:
+            _, values = barrier.fetch_ds(root, identity, current_role=None)
+        _verify_source(name, values, expected_digest=HISTORICAL_DIGESTS[name])
+        sources[name] = values
+
+    forbidden = build_forbidden_universe(sources)
+    _LAST_FORBIDDEN_SOURCES = {
+        name: {"count": len(values), "digest": stage.digest(values)}
+        for name, values in sources.items()
+    }
+    _FORBIDDEN_CACHE = forbidden
     return forbidden
 
 
@@ -166,11 +252,12 @@ def _runtime_select_rows(rows: list[dict], opening_target: int):
     safe_jnnw = Path("/var/tmp") / f"jass-ed4-w-source-{job}-{attempt}" / "safe-full.jnnw"
     if not safe_jnnw.is_file():
         raise ValueError("reserve_filter_safe_jnnw_missing")
+    forbidden = _frozen_forbidden_set()
     selected, groups, support = select_rows_with_forbidden(
         rows,
         safe_jnnw,
         opening_target,
-        _frozen_forbidden_set(),
+        forbidden,
     )
     _LAST_FILTER_STATS = {
         "enabled": True,
@@ -179,6 +266,7 @@ def _runtime_select_rows(rows: list[dict], opening_target: int):
         "forbidden_openings_skipped": int(support["forbidden_openings_skipped"]),
         "forbidden_selected_rows_seen": int(support["forbidden_selected_rows_seen"]),
         "selection_repair": str(support["selection_repair"]),
+        "forbidden_sources": dict(_LAST_FORBIDDEN_SOURCES),
     }
     return selected, groups, support
 
@@ -205,11 +293,13 @@ def _publish_repair_receipt() -> None:
     atomic_json(seal_json, seal)
     atomic_json(art / "scientific-summary.json", seal)
     atomic_json(art / "reserve-disjoint-filter.json", {
-        "schema": "jass.ed5.w_reserve_disjoint_filter.v1",
+        "schema": "jass.ed5.w_reserve_disjoint_filter.v2",
         "classification": "TECHNICAL_SOURCE_RECOVERY",
         "target_reads": 0,
         "candidate_reads": 0,
         "control_evaluations": 0,
+        "scan_searches": 0,
+        "jass_searches": 0,
         "fits": 0,
         "alpha_spent": 0,
         **_LAST_FILTER_STATS,
