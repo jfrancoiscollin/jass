@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Authenticate and republish the bounded Launch V2 failure evidence from ED5 D/W/S barrier 1991.
+"""Authenticate the minimal runner evidence needed to diagnose ED5 barrier 1991.
 
-Pre-target technical diagnostic only. It fetches exactly ``artefacts/attempt-diagnostic.json``
-from the failed immutable 1991 attempt. No confirmation target, candidate, control, search,
-fit, or alpha-bearing artifact is selected or decoded.
+Pre-target technical diagnostic only. The failed Launch V2 wrapper diagnostic did not
+contain stage frames because the stage failed before execution evidence was created.
+This readout therefore fetches only the runner-owned ``stage-receipt.json`` and
+``stage.stderr.log`` from the exact failed immutable attempt. It never selects or
+decodes confirmation targets, candidates, controls, search outputs, fits, or alpha.
 """
 from __future__ import annotations
 
@@ -11,6 +13,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,12 +27,14 @@ SOURCE_JOB = "cpx62-1991-l3-ed5-fresh-dws-historical-disjointness-rehearsal-v2"
 SOURCE_ATTEMPT = "20260915T173419Z-ae1fdd65"
 SOURCE_CODE_SHA = "ae1fdd65bfdedf024562536fca1da842272ea14c"
 SOURCE_PREFIX = f"r2:jass-data/runs/{SOURCE_JOB}/{SOURCE_ATTEMPT}"
-SOURCE_REMOTE_PATH = "artefacts/attempt-diagnostic.json"
-LOCAL_NAME = "recovered-attempt-diagnostic-1991.json"
+SOURCE_RECEIPT_REMOTE = "stage-receipt.json"
+SOURCE_STDERR_REMOTE = "stage.stderr.log"
+RECEIPT_LOCAL = "recovered-stage-receipt-1991.json"
+STDERR_LOCAL = "recovered-stage-stderr-1991.log"
 PHASES = [
-    "authenticate-failed-1991",
-    "validate-bounded-execute-failure-evidence",
-    "republish-exact-execution-diagnostic",
+    "authenticate-failed-1991-runner-evidence",
+    "validate-execute-stderr",
+    "republish-bounded-exception",
 ]
 ZERO_FIELDS = {
     "target_reads": 0,
@@ -41,37 +46,66 @@ ZERO_FIELDS = {
     "alpha_spent": 0,
     "confirmation_target_consumed": False,
 }
+FRAME_RE = re.compile(r'^\s*File "(?P<file>[^"]+)", line (?P<line>[1-9][0-9]*), in (?P<function>.+?)\s*$')
+EXCEPTION_RE = re.compile(r'^(?P<type>[A-Za-z_][A-Za-z0-9_.]*(?:Error|Exception))(?:: (?P<message>.*))?$')
 
 
-def validate_source_diagnostic(value: dict) -> None:
+def validate_stage_receipt(value: dict, stderr_raw: bytes) -> None:
     required = {
-        "schema": "jass.launch_failure.v2",
-        "classification": "TECHNICAL",
+        "schema": "jass.stage_receipt.v1",
         "state": "failed",
-        "failure_code": "STAGE_FAILED:EXECUTE",
-        "scientific_verdict": None,
-        "job_id": SOURCE_JOB,
-        "attempt_id": SOURCE_ATTEMPT,
+        "failure_stage": "EXECUTE",
+        "code_sha": SOURCE_CODE_SHA,
+        "outputs_authenticated": False,
     }
     for key, expected in required.items():
         if value.get(key) != expected:
-            raise RuntimeError(f"source_diagnostic_{key}")
-    if not isinstance(value.get("last_phase"), str) or not value["last_phase"]:
-        raise RuntimeError("source_diagnostic_last_phase")
-    if not isinstance(value.get("error_type"), str) or not value["error_type"]:
-        raise RuntimeError("source_diagnostic_error_type")
-    frames = value.get("frames")
-    if not isinstance(frames, list) or not frames:
-        raise RuntimeError("source_diagnostic_frames")
-    for frame in frames:
-        if not isinstance(frame, dict):
-            raise RuntimeError("source_diagnostic_frame_object")
-        if not isinstance(frame.get("file"), str) or not frame["file"]:
-            raise RuntimeError("source_diagnostic_frame_file")
-        if not isinstance(frame.get("line"), int) or frame["line"] <= 0:
-            raise RuntimeError("source_diagnostic_frame_line")
-        if not isinstance(frame.get("function"), str) or not frame["function"]:
-            raise RuntimeError("source_diagnostic_frame_function")
+            raise RuntimeError(f"source_receipt_{key}")
+    exit_code = value.get("exit_code")
+    if not isinstance(exit_code, int) or exit_code == 0:
+        raise RuntimeError("source_receipt_exit_code")
+    descriptor = value.get("stderr")
+    if not isinstance(descriptor, dict):
+        raise RuntimeError("source_receipt_stderr_descriptor")
+    if descriptor.get("sha256") != hashlib.sha256(stderr_raw).hexdigest():
+        raise RuntimeError("source_receipt_stderr_sha256")
+    if descriptor.get("size_bytes") != len(stderr_raw):
+        raise RuntimeError("source_receipt_stderr_size")
+
+
+def parse_exception(stderr_raw: bytes) -> dict:
+    if not stderr_raw or len(stderr_raw) > 1_000_000:
+        raise RuntimeError("source_stderr_size")
+    try:
+        text = stderr_raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise RuntimeError("source_stderr_utf8") from exc
+    lines = [line.rstrip("\r") for line in text.splitlines()]
+    nonempty = [line for line in lines if line.strip()]
+    if not nonempty:
+        raise RuntimeError("source_stderr_empty")
+    match = EXCEPTION_RE.fullmatch(nonempty[-1].strip())
+    if match is None:
+        raise RuntimeError("source_stderr_exception_line")
+    message = match.group("message") or ""
+    if len(message) > 500 or any(ord(ch) < 32 and ch not in "\t" for ch in message):
+        raise RuntimeError("source_stderr_exception_message")
+    frames = []
+    for line in lines:
+        frame = FRAME_RE.fullmatch(line)
+        if frame is not None:
+            frames.append({
+                "file": Path(frame.group("file")).name,
+                "line": int(frame.group("line")),
+                "function": frame.group("function")[:120],
+            })
+    if not frames:
+        raise RuntimeError("source_stderr_frames")
+    return {
+        "error_type": match.group("type"),
+        "error_message": message,
+        "frames": frames[-6:],
+    }
 
 
 def main() -> int:
@@ -86,42 +120,53 @@ def main() -> int:
         recovered_dir = result / "recovered-1991"
 
         evidence.begin(PHASES[0])
-        receipt = fetch_files(
+        selections = [
+            (SOURCE_RECEIPT_REMOTE, RECEIPT_LOCAL),
+            (SOURCE_STDERR_REMOTE, STDERR_LOCAL),
+        ]
+        fetched = fetch_files(
             rclone="rclone",
             prefix=SOURCE_PREFIX,
-            selections=[(SOURCE_REMOTE_PATH, LOCAL_NAME)],
+            selections=selections,
             out_dir=recovered_dir,
             expected_state="failed",
         )
         observed = (
-            receipt.get("job_id"), receipt.get("attempt_id"), receipt.get("code_sha"),
-            receipt.get("result_state"), receipt.get("exit_code"),
+            fetched.get("job_id"), fetched.get("attempt_id"), fetched.get("code_sha"),
+            fetched.get("result_state"), fetched.get("exit_code"),
         )
         if observed != (SOURCE_JOB, SOURCE_ATTEMPT, SOURCE_CODE_SHA, "failed", 2):
             raise RuntimeError("failed_1991_identity")
-        files = receipt.get("files", [])
-        if len(files) != 1 or files[0].get("path") != SOURCE_REMOTE_PATH:
+        files = fetched.get("files", [])
+        if [entry.get("path") for entry in files] != [SOURCE_RECEIPT_REMOTE, SOURCE_STDERR_REMOTE]:
             raise RuntimeError("failed_1991_selection")
         evidence.complete()
 
         evidence.begin(PHASES[1])
-        source_path = recovered_dir / LOCAL_NAME
-        raw = source_path.read_bytes()
-        value = json.loads(raw.decode("utf-8"))
-        if not isinstance(value, dict):
-            raise RuntimeError("source_diagnostic_object")
-        validate_source_diagnostic(value)
-        source_sha256 = hashlib.sha256(raw).hexdigest()
-        if files[0].get("sha256") != source_sha256 or files[0].get("size_bytes") != len(raw):
-            raise RuntimeError("failed_1991_artifact_identity")
+        receipt_raw = (recovered_dir / RECEIPT_LOCAL).read_bytes()
+        stderr_raw = (recovered_dir / STDERR_LOCAL).read_bytes()
+        receipt = json.loads(receipt_raw.decode("utf-8"))
+        if not isinstance(receipt, dict):
+            raise RuntimeError("source_receipt_object")
+        validate_stage_receipt(receipt, stderr_raw)
+        exception = parse_exception(stderr_raw)
+        expected_files = {
+            SOURCE_RECEIPT_REMOTE: receipt_raw,
+            SOURCE_STDERR_REMOTE: stderr_raw,
+        }
+        for entry in files:
+            raw = expected_files[entry["path"]]
+            if entry.get("sha256") != hashlib.sha256(raw).hexdigest() or entry.get("size_bytes") != len(raw):
+                raise RuntimeError("failed_1991_artifact_identity")
         evidence.complete()
 
         evidence.begin(PHASES[2])
-        tmp = artifact / (LOCAL_NAME + ".tmp")
-        tmp.write_bytes(raw)
-        os.replace(tmp, artifact / LOCAL_NAME)
+        for local_name, raw in ((RECEIPT_LOCAL, receipt_raw), (STDERR_LOCAL, stderr_raw)):
+            tmp = artifact / (local_name + ".tmp")
+            tmp.write_bytes(raw)
+            os.replace(tmp, artifact / local_name)
         summary = {
-            "schema": "jass.ed5.dws_1991_execute_failure_diagnostic.v1",
+            "schema": "jass.ed5.dws_1991_execute_failure_diagnostic.v2",
             "state": "completed",
             "classification": "TECHNICAL_DIAGNOSTIC_ONLY",
             "source_job_id": SOURCE_JOB,
@@ -129,10 +174,13 @@ def main() -> int:
             "source_code_sha": SOURCE_CODE_SHA,
             "source_expected_state": "failed",
             "source_exit_code": 2,
-            "source_artifact_path": SOURCE_REMOTE_PATH,
-            "source_artifact_sha256": source_sha256,
-            "source_artifact_size_bytes": len(raw),
-            "recovered": value,
+            "stage_exit_code": receipt["exit_code"],
+            "stage_failure_class": receipt.get("failure_class"),
+            "stage_failure_stage": receipt["failure_stage"],
+            "stage_receipt_sha256": hashlib.sha256(receipt_raw).hexdigest(),
+            "stage_stderr_sha256": hashlib.sha256(stderr_raw).hexdigest(),
+            "stage_stderr_size_bytes": len(stderr_raw),
+            "exception": exception,
             **ZERO_FIELDS,
             "scientific_verdict": None,
             "confirmation_authorized": False,
@@ -145,7 +193,7 @@ def main() -> int:
     except Exception as exc:
         evidence.fail(exc)
         atomic_json(artifact / "scientific-summary.json", {
-            "schema": "jass.ed5.dws_1991_execute_failure_diagnostic_failure.v1",
+            "schema": "jass.ed5.dws_1991_execute_failure_diagnostic_failure.v2",
             "state": "failed",
             "classification": "TECHNICAL",
             "error_type": type(exc).__name__,
