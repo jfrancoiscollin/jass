@@ -44,6 +44,10 @@ def write_jnnw(path: Path, count: int) -> list[bytes]:
     return recs
 
 
+def complete_forbidden_sources() -> dict[str, set[str]]:
+    return {name: {f"unrelated-{name}"} for name in repair.REQUIRED_FORBIDDEN_SOURCES}
+
+
 class Ed5WReserveDisjointFilterTests(unittest.TestCase):
     def test_skips_colliding_opening_and_preserves_shape_and_order(self) -> None:
         rows = rows_for_openings(3)
@@ -85,6 +89,29 @@ class Ed5WReserveDisjointFilterTests(unittest.TestCase):
             jnnw.write_bytes(b"JNNW" + struct.pack("<I", len(recs)) + b"".join(recs))
             with self.assertRaisesRegex(ValueError, "target_bytes_nonzero"):
                 repair.select_rows_with_forbidden(rows, jnnw, 1, set())
+
+    def test_ed2_and_ed3_historical_collisions_are_both_excluded(self) -> None:
+        rows = rows_for_openings(4)
+        with tempfile.TemporaryDirectory() as tmp:
+            jnnw = Path(tmp) / "safe-full.jnnw"
+            recs = write_jnnw(jnnw, len(rows))
+            sources = complete_forbidden_sources()
+            sources["ED2_P0"] = {base.canonical_position(recs[0])}
+            sources["ED3_CONFIRMATION_1884"] = {base.canonical_position(recs[16])}
+            forbidden = repair.build_forbidden_universe(sources)
+            selected, groups, support = repair.select_rows_with_forbidden(
+                rows, jnnw, 2, forbidden
+            )
+        self.assertEqual(selected, list(range(32, 64)))
+        self.assertEqual({row["opening_id"] for row in groups}, {102, 103})
+        self.assertEqual(support["forbidden_openings_skipped"], 2)
+
+    def test_missing_ed2_or_ed3_source_fails_closed(self) -> None:
+        for missing in ("ED2_P0", "ED3_CONFIRMATION_1884"):
+            sources = complete_forbidden_sources()
+            del sources[missing]
+            with self.assertRaisesRegex(ValueError, "forbidden_sources_missing"):
+                repair.build_forbidden_universe(sources)
 
 
 if __name__ == "__main__":
