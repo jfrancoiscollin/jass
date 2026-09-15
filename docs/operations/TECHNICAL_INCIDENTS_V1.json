@@ -610,6 +610,16 @@
       "invariant": "Preserve the exact frozen D confirmation contract: D source 1937, ED4_CHOICE bytes, BASE/HARD/SOFT roles, Scan Q200k, 512 parents/64 per phase×STM, bootstrap seed/RNG/20000 replicates/quantiles, block alpha 0.025/3, all gates and cohort identities. Repair only direct-script import plumbing and require a fresh zero-target rehearsal before production.",
       "evidence": "cpx62-1968-ed4-d-stage-execute-diagnostic-v1 attempt 20260914T142636Z-6e203eea completed TECHNICAL_ONLY exit0; probe returncode=1 and stderr is ModuleNotFoundError at target-host adapter import. target_reads=0, scan_searches=0, alpha_spent=0.; PR #967",
       "status": "MITIGATED_PENDING_TARGET_HOST_REHEARSAL"
+    },
+    {
+      "id": "TI-062",
+      "dedupe_key": "ed5-dws:execute-failure-1991",
+      "context": "cpx62-1991-l3-ed5-fresh-dws-historical-disjointness-rehearsal-v2 / 20260915T173419Z-ae1fdd65",
+      "symptom": "Launch V2 failed TECHNICALLY at EXECUTE with exit2, scientific_verdict=null, before any ED5 confirmation target read.",
+      "root_cause": "UNDER INVESTIGATION — bounded failed-attempt evidence readout required before changing behavior.",
+      "invariant": "Repair mechanics only; keep D1990/W1988/S1984 identities, frozen candidate/controls/budgets/bootstrap/alpha/gates unchanged, and permit no confirmation target read until pairwise plus historical canonical disjointness passes.",
+      "evidence": "1991 status is failed with STAGE_FAILED:EXECUTE; PR #981 adds an authenticated read-only fetch of only artefacts/attempt-diagnostic.json with all scientific side-effect budgets zero.",
+      "status": "MITIGATED — exact failure evidence readout pending"
     }
   ]
 }
