@@ -614,12 +614,12 @@
     {
       "id": "TI-062",
       "dedupe_key": "ed5-dws:execute-failure-1991",
-      "context": "cpx62-1991-l3-ed5-fresh-dws-historical-disjointness-rehearsal-v2 / 20260915T173419Z-ae1fdd65; diagnostic 1992 / 20260915T180450Z-701c5f91",
-      "symptom": "1991 failed TECHNICALLY at EXECUTE; diagnostic 1992 also failed because artefacts/attempt-diagnostic.json had no last_phase/error_type/frames, so it could not identify the inner stage exception.",
-      "root_cause": "1992 selected the Launch V2 wrapper diagnostic, but 1991 failed before execution-evidence fields were available there. The runner-owned stage-receipt.json and stage.stderr.log are the minimal authenticated evidence that contain the EXECUTE outcome and inner Python traceback.",
-      "invariant": "Repair diagnostics/mechanics only; keep D1990/W1988/S1984 identities and all frozen candidate/controls/budgets/bootstrap/alpha/gates unchanged. No confirmation target read before pairwise plus historical disjointness passes.",
-      "evidence": "1991 status is failed STAGE_FAILED:EXECUTE with no bounded inner frames; 1992 failed at validate_source_diagnostic line 60 on missing wrapper fields. This PR switches the read-only diagnostic to authenticated runner receipt+stderr and keeps every science side-effect budget at zero.; PR #982",
-      "status": "MITIGATED_PENDING_RUNNER_STDERR_DIAGNOSTIC"
+      "context": "cpx62-1991-l3-ed5-fresh-dws-historical-disjointness-rehearsal-v2 / 20260915T173419Z-ae1fdd65; diagnostic 1994 / 20260915T183613Z-b7fb9028",
+      "symptom": "1991 failed TECHNICALLY at Launch V2 EXECUTE with stage exit 1 and no scientific verdict; authenticated runner stderr shows ModuleNotFoundError: No module named 'jobs' at ed5_fresh_dws_disjointness_current_stage.py line 12.",
+      "root_cause": "The v2 wrapper is executed by script path. Python sets sys.path[0] to jobs/tools, but the wrapper imported jobs.tools before adding the repository root to sys.path. Package-import unit coverage therefore passed while direct Launch V2 execution failed.",
+      "invariant": "Repair import plumbing only. Preserve exact D1990/W1988/S1984 identities, pairwise+historical canonical barrier, zero confirmation reads before barrier PASS, and all frozen candidate/controls/search/bootstrap/alpha/gates.",
+      "evidence": "1994 completed TECHNICAL_DIAGNOSTIC_ONLY exit0 with target_reads=0,candidate_reads=0,control_evaluations=0,scan_searches=0,jass_searches=0,fits=0,alpha_spent=0; stage stderr SHA ce0c3030938cd476d6d3d0ad8768583888d91629c0ae41d546ba61b186f9a868; focused regression isolates sys.path as direct script execution does.; PR #983",
+      "status": "MITIGATED_PENDING_DISJOINTNESS_RERUN"
     }
   ]
 }
