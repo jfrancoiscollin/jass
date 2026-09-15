@@ -94,6 +94,7 @@ class Ed5Dws1991ExecuteFailureDiagnosticTests(unittest.TestCase):
 
     def test_profile_is_read_only_and_binds_this_stage(self):
         profile = json.loads((Path(__file__).resolve().parents[1] / "launch_profiles" / "ed5-dws-1991-execute-failure-diagnostic-v1.json").read_text())
+        self.assertEqual(stage.SOURCE_REMOTE_PATH, "artefacts/attempt-diagnostic.json")
         self.assertEqual(profile["command"], ["/usr/bin/python3", "jobs/tools/ed5_dws_1991_execute_failure_diagnostic_stage.py"])
         self.assertEqual(profile["required_phases"], stage.PHASES)
         self.assertEqual(profile["evidence_outputs"], [stage.LOCAL_NAME])
