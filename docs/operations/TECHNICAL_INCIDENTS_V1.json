@@ -610,6 +610,16 @@
       "invariant": "Preserve the exact frozen D confirmation contract: D source 1937, ED4_CHOICE bytes, BASE/HARD/SOFT roles, Scan Q200k, 512 parents/64 per phase×STM, bootstrap seed/RNG/20000 replicates/quantiles, block alpha 0.025/3, all gates and cohort identities. Repair only direct-script import plumbing and require a fresh zero-target rehearsal before production.",
       "evidence": "cpx62-1968-ed4-d-stage-execute-diagnostic-v1 attempt 20260914T142636Z-6e203eea completed TECHNICAL_ONLY exit0; probe returncode=1 and stderr is ModuleNotFoundError at target-host adapter import. target_reads=0, scan_searches=0, alpha_spent=0.; PR #967",
       "status": "MITIGATED_PENDING_TARGET_HOST_REHEARSAL"
+    },
+    {
+      "id": "TI-062",
+      "dedupe_key": "ed5-s-source:outer-timeout-contract-1982",
+      "context": "cpx62-1982-l3-ed5-fresh-s-source-rehearsal-v1",
+      "symptom": "Launch V2 failed before science with OUTER_TIMEOUT_CONTRACT; scientific_verdict=null and no confirmation target was read.",
+      "root_cause": "The immutable S stage spec declares stage_seconds=1200, but the 1982 control-plane queue script exported EXPECTED_LAUNCH_TIMEOUT_SECONDS=1500 instead of the required stage_seconds+600=1800.",
+      "invariant": "Every Launch V2 queue script must bind EXPECTED_LAUNCH_TIMEOUT_SECONDS exactly to its hash-pinned spec timeouts.stage_seconds + 600; frozen ED5 S science remains byte/semantics unchanged across the mechanical requeue.",
+      "evidence": "1982 status: TECHNICAL OUTER_TIMEOUT_CONTRACT; jass-control PR #686 merged with CI green; existing test_launch_dispatcher_v2 timeout-binding regression; immutable rerun cpx62-1983-l3-ed5-fresh-s-source-rehearsal-v2 pending/running.; PR #976",
+      "status": "MITIGATED — 1983 terminal rehearsal proof pending"
     }
   ]
 }
