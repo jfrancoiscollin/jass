@@ -97,6 +97,9 @@ class Ed5Dws1991ExecuteFailureDiagnosticTests(unittest.TestCase):
             self.assertEqual((artifact / stage.STDERR_LOCAL).read_bytes(), stderr_raw)
             summary = json.loads((artifact / "scientific-summary.json").read_text())
             self.assertEqual(summary["classification"], "TECHNICAL_DIAGNOSTIC_ONLY")
+            self.assertEqual(summary["stage_failure_class"], "STAGE_EXIT_CODE")
+            self.assertEqual(summary["stage_failure_stage"], "EXECUTE")
+            self.assertEqual(summary["stage_exit_code"], 1)
             self.assertEqual(summary["exception"]["error_type"], "ModuleNotFoundError")
             self.assertEqual(summary["exception"]["error_message"], "No module named 'jobs'")
             self.assertEqual(summary["exception"]["frames"][-1], {
