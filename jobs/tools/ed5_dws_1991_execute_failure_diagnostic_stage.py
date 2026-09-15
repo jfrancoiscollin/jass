@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Authenticate and republish the bounded Launch V2 failure evidence from ED5 D/W/S barrier 1991.
+"""Authenticate ED5 barrier 1991 failure evidence and reproduce its direct entrypoint failure.
 
 Pre-target technical diagnostic only. It fetches exactly ``artefacts/attempt-diagnostic.json``
-from the failed immutable 1991 attempt. No confirmation target, candidate, control, search,
-fit, or alpha-bearing artifact is selected or decoded.
+from failed immutable attempt 1991, republishes those exact bytes, and if the Launch V2
+failure has no StageEvidence traceback, executes only the byte-identical barrier wrapper
+with all ED5 source identity variables removed. That probe cannot progress to source fetches,
+confirmation targets, candidate/control evaluation, search, fitting, or alpha accounting.
 """
 from __future__ import annotations
 
@@ -11,6 +13,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,10 +29,14 @@ SOURCE_CODE_SHA = "ae1fdd65bfdedf024562536fca1da842272ea14c"
 SOURCE_PREFIX = f"r2:jass-data/runs/{SOURCE_JOB}/{SOURCE_ATTEMPT}"
 SOURCE_REMOTE_PATH = "artefacts/attempt-diagnostic.json"
 LOCAL_NAME = "recovered-attempt-diagnostic-1991.json"
+PROBE_NAME = "direct-script-probe-1991.json"
+WRAPPER_REL = "jobs/tools/ed5_fresh_dws_disjointness_current_stage.py"
+WRAPPER_GIT_BLOB_SHA = "548dde8f84458f41c0e18d7bef2c374b7fc55f99"
 PHASES = [
     "authenticate-failed-1991",
-    "validate-bounded-execute-failure-evidence",
-    "republish-exact-execution-diagnostic",
+    "republish-exact-launch-failure",
+    "reproduce-direct-script-entrypoint",
+    "classify-proven-mechanical-cause",
 ]
 ZERO_FIELDS = {
     "target_reads": 0,
@@ -56,22 +63,55 @@ def validate_source_diagnostic(value: dict) -> None:
     for key, expected in required.items():
         if value.get(key) != expected:
             raise RuntimeError(f"source_diagnostic_{key}")
-    if not isinstance(value.get("last_phase"), str) or not value["last_phase"]:
-        raise RuntimeError("source_diagnostic_last_phase")
-    if not isinstance(value.get("error_type"), str) or not value["error_type"]:
-        raise RuntimeError("source_diagnostic_error_type")
-    frames = value.get("frames")
-    if not isinstance(frames, list) or not frames:
-        raise RuntimeError("source_diagnostic_frames")
-    for frame in frames:
-        if not isinstance(frame, dict):
-            raise RuntimeError("source_diagnostic_frame_object")
-        if not isinstance(frame.get("file"), str) or not frame["file"]:
-            raise RuntimeError("source_diagnostic_frame_file")
-        if not isinstance(frame.get("line"), int) or frame["line"] <= 0:
-            raise RuntimeError("source_diagnostic_frame_line")
-        if not isinstance(frame.get("function"), str) or not frame["function"]:
-            raise RuntimeError("source_diagnostic_frame_function")
+
+
+def git_blob_sha(data: bytes) -> str:
+    return hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
+
+
+def direct_entrypoint_probe(result: Path) -> dict:
+    wrapper = ROOT / WRAPPER_REL
+    wrapper_raw = wrapper.read_bytes()
+    observed_blob = git_blob_sha(wrapper_raw)
+    if observed_blob != WRAPPER_GIT_BLOB_SHA:
+        raise RuntimeError("wrapper_not_byte_identical_to_1991")
+
+    probe_art = result / "probe-art"
+    probe_result = result / "probe-result"
+    probe_art.mkdir(parents=True, exist_ok=True)
+    probe_result.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    for key in list(env):
+        if key.startswith("ED5_FRESH_"):
+            env.pop(key, None)
+    env["LAUNCH_MODE"] = "rehearsal"
+    env["JASS_ARTEFACT_DIR"] = str(probe_art)
+    env["JASS_RESULT_DIR"] = str(probe_result)
+    completed = subprocess.run(
+        ["/usr/bin/python3", WRAPPER_REL],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    return {
+        "schema": "jass.ed5.dws_1991_direct_script_probe.v1",
+        "wrapper_rel": WRAPPER_REL,
+        "wrapper_git_blob_sha": observed_blob,
+        "python": "/usr/bin/python3",
+        "cwd": str(ROOT),
+        "ed5_identity_environment_removed": True,
+        "pythonpath_removed": True,
+        "returncode": completed.returncode,
+        "stdout": completed.stdout,
+        "stderr": completed.stderr,
+        **ZERO_FIELDS,
+        "scientific_verdict": None,
+        "confirmation_authorized": False,
+    }
 
 
 def main() -> int:
@@ -114,14 +154,29 @@ def main() -> int:
         source_sha256 = hashlib.sha256(raw).hexdigest()
         if files[0].get("sha256") != source_sha256 or files[0].get("size_bytes") != len(raw):
             raise RuntimeError("failed_1991_artifact_identity")
-        evidence.complete()
-
-        evidence.begin(PHASES[2])
         tmp = artifact / (LOCAL_NAME + ".tmp")
         tmp.write_bytes(raw)
         os.replace(tmp, artifact / LOCAL_NAME)
+        evidence.complete()
+
+        evidence.begin(PHASES[2])
+        probe = direct_entrypoint_probe(result)
+        atomic_json(artifact / PROBE_NAME, probe)
+        evidence.complete()
+
+        evidence.begin(PHASES[3])
+        stderr = probe["stderr"]
+        import_failure = (
+            probe["returncode"] != 0
+            and "ModuleNotFoundError" in stderr
+            and "No module named 'jobs'" in stderr
+            and WRAPPER_REL in stderr
+        )
+        if not import_failure:
+            raise RuntimeError("direct_entrypoint_failure_not_reproduced")
+        bounded_frames_available = all(value.get(key) for key in ("last_phase", "error_type", "frames"))
         summary = {
-            "schema": "jass.ed5.dws_1991_execute_failure_diagnostic.v1",
+            "schema": "jass.ed5.dws_1991_execute_failure_diagnostic.v2",
             "state": "completed",
             "classification": "TECHNICAL_DIAGNOSTIC_ONLY",
             "source_job_id": SOURCE_JOB,
@@ -132,11 +187,16 @@ def main() -> int:
             "source_artifact_path": SOURCE_REMOTE_PATH,
             "source_artifact_sha256": source_sha256,
             "source_artifact_size_bytes": len(raw),
+            "source_stage_evidence_available": bounded_frames_available,
             "recovered": value,
+            "probe": probe,
+            "proven_root_cause": "DIRECT_SCRIPT_IMPORT_PATH",
+            "proven_exception": "ModuleNotFoundError: No module named 'jobs'",
+            "repair_scope": "bootstrap repository root in ed5_fresh_dws_disjointness_current_stage.py before importing jobs.tools",
             **ZERO_FIELDS,
             "scientific_verdict": None,
             "confirmation_authorized": False,
-            "next_stage": "PATCH_PROVEN_MECHANICAL_CAUSE_ONLY",
+            "next_stage": "PATCH_DIRECT_SCRIPT_IMPORT_PLUMBING_ONLY",
         }
         atomic_json(artifact / "scientific-summary.json", summary)
         evidence.complete()
@@ -145,7 +205,7 @@ def main() -> int:
     except Exception as exc:
         evidence.fail(exc)
         atomic_json(artifact / "scientific-summary.json", {
-            "schema": "jass.ed5.dws_1991_execute_failure_diagnostic_failure.v1",
+            "schema": "jass.ed5.dws_1991_execute_failure_diagnostic_failure.v2",
             "state": "failed",
             "classification": "TECHNICAL",
             "error_type": type(exc).__name__,
