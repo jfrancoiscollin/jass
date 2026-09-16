@@ -82,12 +82,15 @@ class LaunchGateTests(unittest.TestCase):
         p,s,a,e,r,c,v,h,f=self.fixture()
         with self.assertRaisesRegex(g.GateError,'PUBLISHED_OUTPUT_ROUNDTRIP'):g.validate_proof(f,c,e,r,p,s,v,{})
 
-    def test_launch_decorated_scientific_summary_roundtrips_original_payload(self):
+    def test_compact_stage_summary_survives_launch_decoration_roundtrip(self):
         with tempfile.TemporaryDirectory() as d:
             path=Path(d)/'scientific-summary.json'
             original=dict(schema='jass.test.v1',state='completed',roots=512,scientific_verdict=None)
-            atomic_json(path,original)
+            compact=(json.dumps(original,sort_keys=True,ensure_ascii=True,allow_nan=False,
+                                separators=(',',':'))+'\n').encode('ascii')
+            path.write_bytes(compact)
             expected=g.sha(path)
+            self.assertEqual(g.published_output_sha(path,'scientific-summary.json'),expected)
             decorated=copy.deepcopy(original)
             decorated['launch']=dict(mode='rehearsal',receipt_sha256='a'*64,
                                      common_spec_sha256='b'*64,production_admitted=False,
