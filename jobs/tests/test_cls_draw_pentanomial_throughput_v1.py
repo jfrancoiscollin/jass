@@ -110,7 +110,7 @@ class CLSDrawPentanomialThroughputV1Tests(unittest.TestCase):
         self.assertIn("strength_games=0", doc)
         self.assertIn("Historical candidate identity", doc)
         self.assertIn("Authenticated technical correction after 2011", doc)
-        self.assertNotIn("run_jass_gate_bounded", code)
+        self.assertNotIn("subprocess", code)
         self.assertNotIn("jass_vs_jass", code)
         self.assertIn('"final_bottleneck_classification": None', code)
         self.assertIn('"classification": None', code)
