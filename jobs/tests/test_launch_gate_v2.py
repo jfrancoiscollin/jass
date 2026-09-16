@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 from jobs.tools import launch_gate_v2 as g
-from jobs.tools.launch_runtime_v2 import EFFECTS, StageEvidence, available_cpus
+from jobs.tools.launch_runtime_v2 import EFFECTS, StageEvidence, atomic_json, available_cpus
 
 
 class LaunchGateTests(unittest.TestCase):
@@ -81,6 +81,23 @@ class LaunchGateTests(unittest.TestCase):
     def test_replayed_artifact_hash_mismatch_rejected(self):
         p,s,a,e,r,c,v,h,f=self.fixture()
         with self.assertRaisesRegex(g.GateError,'PUBLISHED_OUTPUT_ROUNDTRIP'):g.validate_proof(f,c,e,r,p,s,v,{})
+
+    def test_launch_decorated_scientific_summary_roundtrips_original_payload(self):
+        with tempfile.TemporaryDirectory() as d:
+            path=Path(d)/'scientific-summary.json'
+            original=dict(schema='jass.test.v1',state='completed',roots=512,scientific_verdict=None)
+            atomic_json(path,original)
+            expected=g.sha(path)
+            decorated=copy.deepcopy(original)
+            decorated['launch']=dict(mode='rehearsal',receipt_sha256='a'*64,
+                                     common_spec_sha256='b'*64,production_admitted=False,
+                                     publisher_roundtrip_verified=False)
+            atomic_json(path,decorated)
+            self.assertNotEqual(g.sha(path),expected)
+            self.assertEqual(g.published_output_sha(path,'scientific-summary.json'),expected)
+            decorated['roots']=511
+            atomic_json(path,decorated)
+            self.assertNotEqual(g.published_output_sha(path,'scientific-summary.json'),expected)
 
     def test_cpu_guard_ignores_openmp_only_in_probe(self):
         with patch.dict(os.environ,{'OMP_NUM_THREADS':'1','OMP_THREAD_LIMIT':'1','KEEP':'yes'}):
