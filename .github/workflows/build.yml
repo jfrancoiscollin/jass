@@ -55,6 +55,9 @@ jobs:
       - name: Build
         run: cmake --build build -j
 
+      - name: Syntax-check CLS-G0 native probe
+        run: c++ -std=c++20 -fsyntax-only -Isrc -Ipattern_jass/src jobs/tools/cls_g0_runtime_probe.cpp
+
       - name: Run tests
         run: ./build/jass_tests
 
@@ -103,6 +106,15 @@ jobs:
 
       - name: Run CLS draw/pentanomial/throughput focused tests
         run: python -m unittest jobs.tests.test_cls_draw_pentanomial_throughput_v1 -v
+
+      - name: Run CLS-G0 contract tests
+        run: python -m unittest jobs.tests.test_cls_g0_runtime_contract_v1 -v
+
+      - name: Run CLS-G0 runtime gate tests
+        run: python -m unittest jobs.tests.test_cls_g0_runtime_gate_v1 -v
+
+      - name: Run CLS-G0 identity preflight tests
+        run: python -m unittest jobs.tests.test_cls_g0_runtime_preflight_v1 -v
 
   # ---------------------------------------------------------------------------
   # WASM build: install emsdk, run the project's own wasm/build.sh, package
