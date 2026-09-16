@@ -38,11 +38,17 @@ class CLSG0RuntimeContractV1Tests(unittest.TestCase):
         runtime = self.contract["runtime"]
         self.assertTrue(runtime["same_search_nodes_to_depth_required"])
         self.assertEqual(runtime["nodes_to_depth_source"], "SearchDecisionTrace")
+        self.assertEqual(
+            runtime["nodes_to_depth_attempt_rule"],
+            "LAST_COMPLETED_EXACT_ALL_ACTIONS_SEARCHED_AT_TARGET_DEPTH",
+        )
         self.assertTrue(runtime["depth_n_surrogate_forbidden"])
         search_hpp = (ROOT / "src/search.hpp").read_text(encoding="utf-8")
         self.assertIn("struct SearchDecisionAttemptTrace", search_hpp)
         self.assertIn("std::uint64_t nodes_before", search_hpp)
         self.assertIn("std::uint64_t nodes_after", search_hpp)
+        self.assertIn("bool all_actions_searched", search_hpp)
+        self.assertIn("SearchDecisionBound bound", search_hpp)
         self.assertIn("SearchDecisionTrace* search_decision_trace", search_hpp)
 
     def test_zero_alpha_no_promotion_boundary(self) -> None:
@@ -53,24 +59,22 @@ class CLSG0RuntimeContractV1Tests(unittest.TestCase):
         self.assertFalse(decision["same_candidate_retry_after_failure"])
         self.assertFalse(self.contract["strength_boundary"]["automatic_promotion"])
 
-    def test_upstream_is_fail_closed_until_terminal_pin(self) -> None:
+    def test_upstream_is_exactly_pinned(self) -> None:
+        self.assertEqual(self.contract["status"], "ACTIVE")
         upstream = self.contract["upstream"]
         self.assertEqual(
             upstream["job_id"],
             "cpx62-2015-l3-cls-bottleneck-classification-production-v1",
         )
+        self.assertEqual(upstream["attempt_id"], "20260916T205944Z-07fb94cc")
+        self.assertEqual(upstream["code_sha"], "07fb94cc99798e1532abe276c287b7a3b19458ad")
+        self.assertEqual(
+            upstream["launch_receipt_sha256"],
+            "779c3123983682e7ff1650286bd57f869bb513c0bc2aa74d0e6f8d5689bb133a",
+        )
         self.assertEqual(upstream["required_terminal"], "CLS_DIAGNOSIS_COMPLETE_V1")
         self.assertEqual(upstream["required_classification"], "mixed")
         self.assertEqual(upstream["required_supported_axes"], ["SEARCH", "DECISION-EVAL"])
-        if self.contract["status"] == "ACTIVE":
-            self.assertRegex(upstream["attempt_id"], r"^20260916T\d{6}Z-[0-9a-f]{8}$")
-            self.assertRegex(upstream["code_sha"], r"^[0-9a-f]{40}$")
-            self.assertRegex(upstream["launch_receipt_sha256"], r"^[0-9a-f]{64}$")
-        else:
-            self.assertEqual(self.contract["status"], "DRAFT_PENDING_CLS_DIAGNOSIS_PRODUCTION_PIN")
-            self.assertIsNone(upstream["attempt_id"])
-            self.assertIsNone(upstream["code_sha"])
-            self.assertIsNone(upstream["launch_receipt_sha256"])
 
 
 if __name__ == "__main__":
