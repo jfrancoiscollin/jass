@@ -101,6 +101,9 @@ jobs:
       - name: Run CLS search-profile focused tests
         run: python -m unittest jobs.tests.test_cls_search_profile_v1 -v
 
+      - name: Run CLS draw/pentanomial/throughput focused tests
+        run: python -m unittest jobs.tests.test_cls_draw_pentanomial_throughput_v1 -v
+
   # ---------------------------------------------------------------------------
   # WASM build: install emsdk, run the project's own wasm/build.sh, package
   # the artefacts.
