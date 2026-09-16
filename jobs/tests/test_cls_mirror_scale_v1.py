@@ -92,6 +92,13 @@ class CLSMirrorScaleV1Tests(unittest.TestCase):
         self.assertNotIn("go depth", code)
         self.assertNotIn("LAUNCH_MODE ==", code)
 
+    def test_depth_growth_reuse_has_dedicated_main_guard(self):
+        mirror = (ROOT / "jobs/tools/cls_mirror_scale_jass.cpp").read_text()
+        depth = (ROOT / "jobs/tools/cls_depth_growth_jass.cpp").read_text()
+        self.assertIn("#define CLS_DEPTH_GROWTH_JASS_NO_MAIN 1", mirror)
+        self.assertIn("#ifndef CLS_DEPTH_GROWTH_JASS_NO_MAIN", depth)
+        self.assertNotIn("#define main cls_depth_growth_jass_original_main_disabled", mirror)
+
     def test_native_mirror_profiler_syntax(self):
         subprocess.run([
             "/usr/bin/c++", "-std=c++20", "-Isrc", "-Ipattern_jass/src",
