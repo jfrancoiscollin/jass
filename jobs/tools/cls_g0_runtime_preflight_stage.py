@@ -134,8 +134,19 @@ def verify_identity(probe_rows: list[dict[str, str]], roots: Sequence[str]) -> N
 def run_stage(work: Path, artifacts: Path) -> dict[str, object]:
     work.mkdir(parents=True, exist_ok=True)
     artifacts.mkdir(parents=True, exist_ok=True)
-    parents, _parents_meta, deep512, curriculum, _scan = base.fetch_inputs(work / "base-inputs")
-    _depth_per_root, deep_reference = profile.authenticate_sources(work / "source-auth", artifacts)
+
+    # The authenticated fetch helpers write their verification logs directly
+    # under the supplied work directory before creating their own output
+    # subdirectories. Job 2016 proved these parents must exist first: the
+    # FileNotFoundError occurred in Path.open() for that log, before any
+    # scientific input was fetched or any search was executed.
+    base_inputs = work / "base-inputs"
+    source_auth = work / "source-auth"
+    base_inputs.mkdir(parents=True, exist_ok=True)
+    source_auth.mkdir(parents=True, exist_ok=True)
+
+    parents, _parents_meta, deep512, curriculum, _scan = base.fetch_inputs(base_inputs)
+    _depth_per_root, deep_reference = profile.authenticate_sources(source_auth, artifacts)
 
     ids = work / "preflight-root-ids.txt"
     subset = work / "preflight-deep512.tsv"
