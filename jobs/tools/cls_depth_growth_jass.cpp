@@ -147,6 +147,7 @@ TimedSearch run_one(const jass::Position& root, const jass::INetwork* network,
 
 }  // namespace
 
+#ifndef CLS_DEPTH_GROWTH_JASS_NO_MAIN
 int main(int argc, char** argv) {
     try {
         static_assert(std::endian::native == std::endian::little);
@@ -254,3 +255,4 @@ int main(int argc, char** argv) {
         return 3;
     }
 }
+#endif  // CLS_DEPTH_GROWTH_JASS_NO_MAIN
