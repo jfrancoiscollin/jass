@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 from jobs.tools import cls_g0_runtime_preflight_launch_stage as launch
 from jobs.tools import cls_g0_runtime_preflight_stage as stage
@@ -66,6 +67,29 @@ class CLSG0RuntimePreflightV1Tests(unittest.TestCase):
         self.assertIn('"candidate_reads": 0', text)
         self.assertIn('"next_stage": "OPEN_CLS_L_LEARNING_OBJECTIVE_ATTRIBUTION_PREREG"', text)
         self.assertNotIn("train.py", text)
+
+    def test_2016_fetch_workdirs_exist_before_authenticated_fetch_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            work = root / "work"
+            artifacts = root / "artifacts"
+
+            def fake_fetch_inputs(path: Path):
+                self.assertEqual(path, work / "base-inputs")
+                self.assertTrue(path.is_dir())
+                placeholder = root / "placeholder"
+                return placeholder, placeholder, placeholder, placeholder, placeholder
+
+            def fake_authenticate_sources(path: Path, out: Path):
+                self.assertEqual(path, work / "source-auth")
+                self.assertTrue(path.is_dir())
+                self.assertEqual(out, artifacts)
+                raise RuntimeError("stop-after-workdir-proof")
+
+            with mock.patch.object(stage.base, "fetch_inputs", side_effect=fake_fetch_inputs), \
+                    mock.patch.object(stage.profile, "authenticate_sources", side_effect=fake_authenticate_sources):
+                with self.assertRaisesRegex(RuntimeError, "stop-after-workdir-proof"):
+                    stage.run_stage(work, artifacts)
 
 
 if __name__ == "__main__":
