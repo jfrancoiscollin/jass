@@ -98,6 +98,9 @@ jobs:
       - name: Run CLS mirror-scale focused tests
         run: python -m unittest jobs.tests.test_cls_mirror_scale_v1 -v
 
+      - name: Run CLS search-profile focused tests
+        run: python -m unittest jobs.tests.test_cls_search_profile_v1 -v
+
   # ---------------------------------------------------------------------------
   # WASM build: install emsdk, run the project's own wasm/build.sh, package
   # the artefacts.
