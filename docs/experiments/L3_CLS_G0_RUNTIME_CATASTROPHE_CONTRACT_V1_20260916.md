@@ -1,18 +1,21 @@
 # L3 CLS-G0 — Runtime catastrophe + CURRICULUM anchor contract V1
 
-Date: 2026-09-16. Status: **prospective freeze before the first CLS generation-1 candidate is trained, selected, runtime-scored or strength-tested**.
+Date: 2026-09-16. Status: **prospectively frozen before the first CLS generation-1 candidate is trained, selected, runtime-scored or strength-tested**.
 
 ## 1. Upstream and purpose
 
-This contract implements step 5 of `L3_CLOSED_LOOP_STRENGTH_CAMPAIGN_V1_20260910.md` after the terminal CLS-D bottleneck classification. The upstream production is fixed to:
+This contract implements step 5 of `L3_CLOSED_LOOP_STRENGTH_CAMPAIGN_V1_20260910.md` after the terminal CLS-D bottleneck classification. The authenticated upstream production is fixed to:
 
 - job: `cpx62-2015-l3-cls-bottleneck-classification-production-v1`;
-- required terminal: `CLS_DIAGNOSIS_COMPLETE_V1`;
-- required classification: `mixed`;
-- required supported axes: exactly `SEARCH` and `DECISION-EVAL`;
-- required scientific side effects: zero fits, zero target reads, zero strength games, zero alpha, zero promotion and zero bake.
+- attempt: `20260916T205944Z-07fb94cc`;
+- code SHA: `07fb94cc99798e1532abe276c287b7a3b19458ad`;
+- launch receipt SHA256: `779c3123983682e7ff1650286bd57f869bb513c0bc2aa74d0e6f8d5689bb133a`;
+- terminal: `CLS_DIAGNOSIS_COMPLETE_V1`;
+- classification: `mixed`;
+- supported axes: exactly `SEARCH` and `DECISION-EVAL`;
+- scientific side effects: zero fits, zero target reads, zero strength games, zero alpha, zero promotion and zero bake.
 
-The exact production attempt, code SHA and launch receipt are pinned in the machine-readable companion contract after authenticated completion and before merge. Any mismatch is technical failure and this contract remains inactive.
+Any upstream identity, receipt, terminal, classification, supported-axis or side-effect drift is a technical failure and invalidates admission under this contract.
 
 The purpose of CLS-G0 is not to prove strength. It is a hard engineering/scientific screen that prevents a candidate with attractive offline fidelity from entering a fresh strength cohort if it catastrophically degrades runtime/search behavior.
 
