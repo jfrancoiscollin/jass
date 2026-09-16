@@ -10,6 +10,7 @@ import numpy as np
 from jobs.tools import cls_draw_pentanomial_throughput_launch_stage as launch
 from jobs.tools import cls_draw_pentanomial_throughput_stage as legacy
 from jobs.tools import cls_draw_pentanomial_throughput_stage_v2 as repaired
+from jobs.tools import cls_bottleneck_classification_stage as clsdiag
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -116,6 +117,16 @@ class CLSDrawPentanomialThroughputV1Tests(unittest.TestCase):
         self.assertIn('"classification": None', code)
         self.assertIn('"strength_games": 0', code)
         self.assertIn("sprt_boundaries_frozen_here", code)
+
+    def test_terminal_classifier_is_wired_into_existing_ci(self):
+        self.assertEqual(clsdiag.BUDGET, 200000)
+        search = {"q025": -2.0, "median": -1.0, "q975": -0.1}
+        decision = {"q025": 0.01, "median": 0.05, "q975": 0.1}
+        neutral = {"q025": -0.1, "median": 0.0, "q975": 0.1}
+        label, supported, reason = clsdiag.classify(search_ci=search, decision_ci=decision, cost_ci=neutral)
+        self.assertEqual(label, "mixed")
+        self.assertEqual(supported, ["SEARCH", "DECISION-EVAL"])
+        self.assertEqual(reason, "MULTIPLE_SUPPORTED_AXES")
 
 
 if __name__ == "__main__":
