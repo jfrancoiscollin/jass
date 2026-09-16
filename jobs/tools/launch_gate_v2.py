@@ -44,6 +44,27 @@ def sha(path):
     return h.hexdigest()
 
 
+def published_output_sha(path, name):
+    """Hash published evidence while ignoring only Launch-V2 summary decoration.
+
+    The stage writes scientific-summary.json before launch-receipt.json exists.
+    Launch-V2 then adds a top-level ``launch`` annotation containing that receipt
+    hash.  Profiles may still require the scientific summary as round-trip
+    evidence, so production reconstructs the exact pre-decoration atomic_json
+    bytes rather than weakening authentication of the scientific payload.
+    """
+    path = Path(path)
+    if name != 'scientific-summary.json':
+        return sha(path)
+    value = read(path)
+    if 'launch' not in value:
+        return sha(path)
+    value = dict(value)
+    value.pop('launch', None)
+    raw = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + '\n').encode()
+    return hashlib.sha256(raw).hexdigest()
+
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'),
                                     allow_nan=False).encode()).hexdigest()
@@ -172,7 +193,8 @@ def authenticate_published(admission, spec, profile, runtime, result):
     need(sha(root/'launch-receipt.json') == r['receipt_sha256'], 'REHEARSAL_RECEIPT_HASH')
     proof = read(root/'launch-receipt.json')
     need(proof.get('job_id') == r['job_id'] and proof.get('attempt_id') == r['attempt_id'], 'RECEIPT_JOB_IDENTITY')
-    hashes = {p: sha(root/p) for p in ['execution-evidence.json', 'launch-regressions.json'] + profile['evidence_outputs']}
+    hashes = {p: published_output_sha(root/p, p)
+              for p in ['execution-evidence.json', 'launch-regressions.json'] + profile['evidence_outputs']}
     validate_proof(proof, read(root/'stage-receipt.json'), read(root/'execution-evidence.json'),
                    read(root/'launch-regressions.json'), profile, spec, runtime, hashes)
     atomic_json(result/'launch-prerequisite.json', dict(verdict='FULL_PIPELINE_REHEARSAL_PASS',
@@ -217,7 +239,8 @@ def execute(args):
         raise GateError('STAGE_FAILED:' + str(receipt.get('failure_stage', 'UNKNOWN')))
     evidence = read(args.artifact_dir/'execution-evidence.json')
     validate_evidence(evidence, profile, mode)
-    output_hashes = {p: sha(args.artifact_dir/p) for p in ['execution-evidence.json', 'launch-regressions.json'] + profile['evidence_outputs']}
+    output_hashes = {p: published_output_sha(args.artifact_dir/p, p)
+                     for p in ['execution-evidence.json', 'launch-regressions.json'] + profile['evidence_outputs']}
     proof = dict(schema='jass.launch_receipt.v2', mode=mode,
                  verdict='REHEARSAL_EXECUTION_COMPLETE_V2' if mode == 'rehearsal' else 'ADMITTED_STAGE_COMPLETE_V2',
                  code_sha=spec['code_sha'], common_spec_sha256=common_spec(spec),
