@@ -3,9 +3,9 @@
 // Reuses the proven depth-growth root profiler implementation, but fixes the
 // requested node cap prospectively to the historical DEEP512 Jass1M budget.
 
-#define main cls_depth_growth_jass_original_main_disabled
+#define CLS_DEPTH_GROWTH_JASS_NO_MAIN 1
 #include "cls_depth_growth_jass.cpp"
-#undef main
+#undef CLS_DEPTH_GROWTH_JASS_NO_MAIN
 
 int main(int argc, char** argv) {
     try {
