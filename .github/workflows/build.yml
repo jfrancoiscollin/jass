@@ -113,6 +113,9 @@ jobs:
       - name: Run CLS-G0 runtime gate tests
         run: python -m unittest jobs.tests.test_cls_g0_runtime_gate_v1 -v
 
+      - name: Run CLS-G0 identity preflight tests
+        run: python -m unittest jobs.tests.test_cls_g0_runtime_preflight_v1 -v
+
   # ---------------------------------------------------------------------------
   # WASM build: install emsdk, run the project's own wasm/build.sh, package
   # the artefacts.
