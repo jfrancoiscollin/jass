@@ -70,13 +70,13 @@ The candidate evaluator SHA is sealed before the G0 cohort is opened. Once G0 st
 
 True nodes-to-depth is mandatory and must come from the **same iterative-deepening search**, never from independent `go depth N` searches or interpolation.
 
-Jass already exposes passive `SearchDecisionTrace` attempts with `depth`, `nodes_before`, `nodes_after`, completion state and the final public search receipt. G0 shall use that passive trace and must prove trace-on / trace-off parity for best move, score, completed depth, effective depth, node count and stop reason before any candidate is measured.
+Jass already exposes passive `SearchDecisionTrace` attempts with `depth`, `nodes_before`, `nodes_after`, completion state, fail-soft bound and root-action completion, plus the final public search receipt. G0 shall use that passive trace and must prove trace-on / trace-off parity for best move, score, completed depth, effective depth, node count and stop reason before any candidate is measured.
 
 For each root, define the parent target depth prospectively as:
 
 `d* = max(1, parent_completed_depth_at_200k - 1)`.
 
-`nodes_to_d*` is the cumulative `nodes_after` of the first fully completed same-search iteration at depth `d*`. If either arm does not complete `d*`, that root is a hard nodes-to-depth failure. No surrogate is permitted.
+`nodes_to_d*` is the cumulative `nodes_after` of the **last** attempt at depth `d*` satisfying all of: `completed=true`, `bound=Exact`, and `all_actions_searched=true`. This excludes aspiration fail-high/fail-low attempts that finish a narrow window without completing the full root decision. If either arm has no such receipt for `d*`, that root is a hard nodes-to-depth failure. No surrogate is permitted.
 
 ## 6. Frozen statistical unit
 
