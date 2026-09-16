@@ -34,6 +34,20 @@ The pooled score-rate uncertainty uses a pool-stratified paired-opening bootstra
 
 A separate conservative context may report the two historical full-stage wall times (5,364s and 5,588s). Those full-stage durations include authentication, build, runtime profiling, native games, q00 games and readout, so they are not the primary native throughput estimator.
 
+## Authenticated technical correction after 2011
+
+Rehearsal `cpx62-2011-l3-cls-draw-pentanomial-throughput-rehearsal-v1` failed **TECHNICALLY** before producing a diagnostic verdict. Exact source-code inspection of the frozen producer `jobs/tools/run_jass_gate_bounded.py` at Jass `146f34647dae489c6d2817748fd767aa65b93d87` established that the invocation did use the frozen `max_plies=160`, `game_timeout=180`, CURRICULUM pattern and 8-way parallelism, but the historical `force-native.json` schema did **not** serialize `max_plies`, `game_timeout`, pattern SHA fields or engine-search wall telemetry.
+
+This is a source-schema capability fact, not a scientific result and not permission to change the source population, time control, pair cardinality, bootstrap seed or any gate. The repair therefore:
+
+- authenticates only fields that the frozen producer actually serialized, while keeping exact job/attempt/code, exact artifact sizes, scientific-summary CURRICULUM/policy identity and paired-opening cardinality fail-closed;
+- continues to publish the frozen W/D/L, draw rate, pentanomial counts, pair variance and bootstrap exactly as preregistered;
+- reports the primary native search-wall throughput as **unavailable**, rather than reconstructing, imputing or inventing telemetry that was never persisted;
+- may publish the already-frozen combined historical full-stage wall-time context as explicitly non-primary context only;
+- sets future SPRT sizing readiness to false until a future prospective harness records the required native search-wall telemetry.
+
+The original three throughput bullets above are therefore unobservable from these immutable historical artifacts. They are retained as the preregistered intent; this correction records the fail-closed outcome after the technical source-schema defect was proven.
+
 ## Pentanomial boundary
 
 The stage may report whether the existing harness provides valid pentanomial inputs for future CLS strength sizing. It **does not** freeze an SPRT H0/H1 boundary, alpha, beta, game count or continuation threshold. Those values belong to the later prospective CLS strength-at-time contract and must be frozen before that future experiment.

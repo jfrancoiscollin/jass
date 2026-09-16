@@ -11,7 +11,7 @@ if __package__ in (None, ""):
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
 
-from jobs.tools import cls_draw_pentanomial_throughput_stage as stage  # noqa: E402
+from jobs.tools import cls_draw_pentanomial_throughput_stage_v2 as stage  # noqa: E402
 from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json  # noqa: E402
 
 PHASES = ["execute-cls-draw-pentanomial-throughput"]
