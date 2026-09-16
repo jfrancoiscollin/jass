@@ -47,21 +47,23 @@ def sha(path):
 def published_output_sha(path, name):
     """Hash published evidence while ignoring only Launch-V2 summary decoration.
 
-    The stage writes scientific-summary.json before launch-receipt.json exists.
-    Launch-V2 then adds a top-level ``launch`` annotation containing that receipt
-    hash.  Profiles may still require the scientific summary as round-trip
-    evidence, so production reconstructs the exact pre-decoration atomic_json
-    bytes rather than weakening authentication of the scientific payload.
+    Launch-V2 rewrites ``scientific-summary.json`` after the rehearsal receipt is
+    created in order to add the top-level ``launch`` annotation.  The underlying
+    stages are allowed to use different JSON whitespace while expressing the same
+    payload, so byte reconstruction after decoration is not reliable.  Authenticate
+    the scientific payload with one fail-closed canonical JSON representation on
+    both sides of the round trip; every non-summary evidence output remains
+    byte-hashed unchanged.
     """
     path = Path(path)
     if name != 'scientific-summary.json':
         return sha(path)
     value = read(path)
-    if 'launch' not in value:
-        return sha(path)
-    value = dict(value)
-    value.pop('launch', None)
-    raw = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + '\n').encode()
+    if 'launch' in value:
+        value = dict(value)
+        value.pop('launch', None)
+    raw = (json.dumps(value, sort_keys=True, ensure_ascii=True, allow_nan=False,
+                      separators=(',', ':')) + '\n').encode('ascii')
     return hashlib.sha256(raw).hexdigest()
 
 
