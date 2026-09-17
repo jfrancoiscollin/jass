@@ -1,6 +1,6 @@
 # L3 CLS-L — Learning-objective attribution V1
 
-Date: 2026-09-16. Status: **DRAFT / prospective preregistration; no CLS-L fit is authorized until the CLS-G0 identity tooling preflight is authenticated green and pinned into the machine contract.**
+Date: 2026-09-16. Status: **ACTIVE prospective preregistration. The CLS-G0 identity tooling preflight is authenticated green and pinned; this document now authorizes implementation/execution of the frozen three-arm attribution block, but no strength claim, promotion or bake.**
 
 ## 1. Why this experiment is now justified
 
@@ -14,7 +14,7 @@ The terminal CLS diagnosis is fixed to:
 - classification `mixed`;
 - supported axes exactly `SEARCH` and `DECISION-EVAL`.
 
-Therefore evaluation is a meaningful actionable lever and the master plan authorizes preregistration of CLS-L. Teacher fidelity remains a training/diagnostic signal, never the terminal strength judge.
+Therefore evaluation is a meaningful actionable lever and the master plan authorizes CLS-L. Teacher fidelity remains a training/diagnostic signal, never the terminal strength judge.
 
 Before any fit, the already-merged `L3_CLS_G0_RUNTIME_CATASTROPHE_CONTRACT_V1_20260916` remains binding. Every arm produced here must later pass that exact gate before a strength cohort may be opened.
 
@@ -165,15 +165,22 @@ All technically valid sealed arms proceed independently to the already-frozen CL
 
 Any later CLS-S / CLS-E comparison must use the exact sealed arm bytes, direct parent CURRICULUM, common paired cohorts/openings and prospectively frozen multiplicity accounting. No automatic promotion is allowed.
 
-## 9. Preflight dependency
+## 9. Authenticated CLS-G0 tooling dependency
 
-CLS-L V1 remains blocked until the tooling identity job:
+The tooling identity prerequisite is now satisfied and pinned exactly:
 
-`cpx62-2016-l3-cls-g0-runtime-tooling-preflight-v1`
+- job `cpx62-2018-l3-cls-g0-runtime-tooling-preflight-v3`;
+- attempt `20260917T001938Z-ad151a09`;
+- code `ad151a0961a077e5c95a5503a8ee734f5c4cf0b6`;
+- launch receipt `887f9f46adc3bf2cd014dd3a5cd8361ebe8c6ad84833f14099beba3e1e165d52`;
+- terminal `CLS_G0_RUNTIME_TOOLING_PREFLIGHT_READY_V1`;
+- identity candidate PASS = `true`;
+- trace-semantic mismatches = `0`;
+- roots = `32` (`8` per phase), seed `2026091606`, budget `200000` nodes;
+- Jass searches = `96`, Scan searches = `0`;
+- target reads, fits, strength games, alpha, promotions and bakes = `0`.
 
-returns `CLS_G0_RUNTIME_TOOLING_PREFLIGHT_READY_V1` with identity candidate PASS, zero trace-semantic mismatches, zero fit, zero strength game, zero alpha, zero promotion and zero bake.
-
-Its exact attempt, code SHA and launch receipt must be pinned in the machine-readable CLS-L contract before this preregistration can become ACTIVE or merge as an execution authorization.
+The preflight completed with exit code 0 and preserved the zero-target/no-strength boundary. Its prior technical failures remain immutable historical evidence; only the authenticated 2018 green identity terminal activates this preregistration.
 
 ## 10. Explicit non-claims
 
