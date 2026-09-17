@@ -21,12 +21,14 @@ if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
 import fetch_result_files as fetch  # noqa: E402
+from launch_runtime_v2 import StageEvidence, atomic_json as runtime_atomic_json  # noqa: E402
 
 FAILED_JOB = "cpx62-2020-l3-cls-l-source-normalization-preflight-v2"
 FAILED_ATTEMPT = "20260917T023839Z-68301b10"
 FAILED_CODE = "68301b1027ef37e3c829eccadd42f4ba9cb86ce9"
 FAILED_PREFIX = f"r2:jass-data/runs/{FAILED_JOB}/{FAILED_ATTEMPT}"
 TERMINAL = "CLS_L_2020_TECHNICAL_DIAGNOSTIC_COMPLETE_V1"
+PHASE = "execute-cls-l-2020-failure-diagnostic"
 ERROR_RE = re.compile(
     r"ABORT line=|Traceback|error:|error\b|failed|usage:|No such file|CMake Error|ninja:|make(?:\[|:)",
     re.IGNORECASE,
@@ -69,9 +71,12 @@ def atomic_json(path: Path, payload: dict) -> None:
 def main() -> int:
     result_dir = Path(os.environ["JASS_RESULT_DIR"])
     art = Path(os.environ["JASS_ARTEFACT_DIR"])
+    mode = os.environ["LAUNCH_MODE"]
     work = result_dir / "work" / "failed-2020"
     work.mkdir(parents=True, exist_ok=False)
     art.mkdir(parents=True, exist_ok=True)
+    evidence = StageEvidence(art, mode)
+    evidence.begin(PHASE)
 
     report = fetch.fetch_files(
         rclone=os.environ.get("RCLONE_BIN", "rclone"),
@@ -103,7 +108,7 @@ def main() -> int:
         raise RuntimeError("2020 was not a quarantined technical failure")
 
     parsed = bounded_lines(read_gzip(work / "output.log.gz"))
-    evidence = {
+    diagnostic = {
         "schema": "jass.cls_l_2020_failure_diagnostic.v1",
         "terminal": TERMINAL,
         "state": "completed",
@@ -134,7 +139,7 @@ def main() -> int:
             "bakes": 0,
         },
     }
-    atomic_json(art / "failure-evidence.json", evidence)
+    atomic_json(art / "failure-evidence.json", diagnostic)
     atomic_json(art / "source-authentication.json", {
         "schema": "jass.cls_l_2020_failed_source_authentication.v1",
         "authenticated": True,
@@ -165,7 +170,9 @@ def main() -> int:
         "bakes": 0,
         "next_stage": "REPAIR_PROVEN_2020_MECHANICS_ONLY",
     }
-    atomic_json(art / "scientific-summary.json", summary)
+    # StageEvidence owns the progress summary while the stage is running. Replace
+    # only that transport/progress record with the final diagnostic summary.
+    runtime_atomic_json(art / "scientific-summary.json", summary)
     atomic_json(art / "manifest.json", {
         "schema": "jass.cls_l_2020_failure_diagnostic_manifest.v1",
         "terminal": TERMINAL,
@@ -182,6 +189,8 @@ def main() -> int:
         "- scientific payload reads/fits/searches/games/alpha/promotion/bake: 0\n",
         encoding="utf-8",
     )
+    evidence.complete()
+    evidence.finish()
     return 0
 
 
