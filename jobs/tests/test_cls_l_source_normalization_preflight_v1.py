@@ -10,6 +10,7 @@ import numpy as np
 
 from jobs.tools import cls_l_normalization_preflight as stage
 from jobs.tools import cls_l_source_normalization_preflight_launch as launch
+from jobs.tools import launch_runtime_v2 as launch_runtime
 from jobs.tools import run_experiment_stage as runner
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -64,6 +65,35 @@ class CLSLSourceNormalizationPreflightV1Tests(unittest.TestCase):
         self.assertIn("cls_l_normalization_preflight.py", shell)
         self.assertNotIn("train_stream.py --", shell)
         self.assertNotIn("--max-iter", shell)
+
+    def test_host_nproc_check_ignores_scientific_openmp_caps(self):
+        shell = (ROOT / "jobs/templates/l3-cls-l-source-normalization-preflight-v1.sh").read_text()
+        self.assertIn(
+            'HOST_NPROC="$(env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc)"',
+            shell,
+        )
+        self.assertIn('[ "$HOST_NPROC" -eq 16 ] || die "nproc must be 16"', shell)
+        self.assertNotIn('[ "$(nproc)" -eq 16 ] || die "nproc must be 16"', shell)
+
+        observed: dict[str, object] = {}
+
+        def fake_check_output(argv, **kwargs):
+            observed["argv"] = argv
+            observed["env"] = kwargs["env"]
+            return "16\n"
+
+        with mock.patch.dict(
+            launch_runtime.os.environ,
+            {"OMP_NUM_THREADS": "1", "OMP_THREAD_LIMIT": "1", "KEEP_ME": "yes"},
+            clear=True,
+        ), mock.patch.object(launch_runtime.subprocess, "check_output", side_effect=fake_check_output):
+            self.assertEqual(launch_runtime.available_cpus(), 16)
+
+        self.assertEqual(observed["argv"], ["nproc"])
+        runtime_env = observed["env"]
+        self.assertNotIn("OMP_NUM_THREADS", runtime_env)
+        self.assertNotIn("OMP_THREAD_LIMIT", runtime_env)
+        self.assertEqual(runtime_env["KEEP_ME"], "yes")
 
     def test_profile_is_zero_effect_rehearsal_and_uses_python_runtime_entrypoint(self):
         profile = json.loads((ROOT / "jobs/launch_profiles/cls-l-source-normalization-preflight-v1.json").read_text())
