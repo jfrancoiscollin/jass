@@ -680,6 +680,16 @@
       "invariant": "reconstruct defense-in-depth code identity only from authenticated JASS_STAGE_SPEC, verify against HEAD, then exec unchanged scientific shell; preserve all CLS-L scientific constants and zero-effect boundary",
       "evidence": "2020 status + 2024 authenticated zero-work-log diagnostic + run_experiment_stage sanitized env + shell pre-trap requirement + established D1 1846/1847 identical failure class; focused regressions in this PR; PR #1008",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-069",
+      "dedupe_key": "job:cpx62-2025-l3-cls-l-source-normalization-preflight-v3",
+      "context": "CLS-L source/gradient-normalization preflight 2025 / attempt 20260917T072337Z-16e199f6",
+      "symptom": "STAGE_FAILED:EXECUTE; bounded diagnostic 2026 proves work/RESULTS.md abort `nproc must be 16`, no scientific verdict and zero side effects",
+      "root_cause": "stage spec sets OMP_NUM_THREADS=1 for scientific execution; GNU nproc honors OpenMP caps, but the shell used bare nproc while Launch-V2 available_cpus deliberately strips OMP_NUM_THREADS/OMP_THREAD_LIMIT, so the shell measured the thread cap instead of host CPU availability",
+      "invariant": "preserve exact 16-CPU host requirement and all scientific thread caps; ignore only OpenMP caps for the resource identity check, matching Launch-V2 semantics; preserve all CLS-L science and zero-effect boundary",
+      "evidence": "2025 status + authenticated 2026 diagnostic + 2025 stage spec resources/environment + launch_runtime_v2.available_cpus + focused regression in this PR; PR #1010",
+      "status": "MITIGATED — fresh immutable successor proof pending"
     }
   ]
 }
