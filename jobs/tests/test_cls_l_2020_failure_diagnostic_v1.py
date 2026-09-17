@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import inspect
+import json
+from pathlib import Path
 import unittest
 
 from jobs.tools import cls_l_2020_failure_diagnostic as diag
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class CLSL2020FailureDiagnosticTests(unittest.TestCase):
@@ -11,6 +16,7 @@ class CLSL2020FailureDiagnosticTests(unittest.TestCase):
         self.assertEqual(diag.FAILED_ATTEMPT, "20260917T023839Z-68301b10")
         self.assertEqual(diag.FAILED_CODE, "68301b1027ef37e3c829eccadd42f4ba9cb86ce9")
         self.assertEqual(diag.TERMINAL, "CLS_L_2020_TECHNICAL_DIAGNOSTIC_COMPLETE_V1")
+        self.assertEqual(diag.PHASE, "execute-cls-l-2020-failure-diagnostic")
 
     def test_bounded_parser_keeps_last_abort_and_tail(self):
         text = "\n".join([
@@ -34,7 +40,6 @@ class CLSL2020FailureDiagnosticTests(unittest.TestCase):
         self.assertTrue(any("Traceback" in line for line in got["error_lines"]))
 
     def test_diagnostic_code_has_zero_scientific_actions(self):
-        import inspect
         code = inspect.getsource(diag)
         self.assertNotIn("train_stream.py --", code)
         self.assertNotIn("jass_vs_jass", code)
@@ -44,6 +49,20 @@ class CLSL2020FailureDiagnosticTests(unittest.TestCase):
         self.assertIn('"strength_games": 0', code)
         self.assertIn('"promotions": 0', code)
         self.assertIn('"bakes": 0', code)
+
+    def test_stage_emits_launch_v2_execution_evidence_required_by_control_spec(self):
+        code = inspect.getsource(diag)
+        profile = json.loads((ROOT / "jobs/launch_profiles/cls-l-2020-failure-diagnostic-v1.json").read_text())
+        self.assertEqual(profile["required_phases"], [diag.PHASE])
+        self.assertEqual(
+            profile["evidence_outputs"],
+            ["failure-evidence.json", "source-authentication.json", "manifest.json", "RESULTS.md", "scientific-summary.json"],
+        )
+        self.assertIn("StageEvidence(art, mode)", code)
+        self.assertIn("evidence.begin(PHASE)", code)
+        self.assertIn("evidence.complete()", code)
+        self.assertIn("evidence.finish()", code)
+        self.assertNotIn("execution-evidence.json", profile["evidence_outputs"])
 
 
 if __name__ == "__main__":
