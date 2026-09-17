@@ -4,10 +4,12 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 
 from jobs.tools import cls_l_normalization_preflight as stage
+from jobs.tools import cls_l_source_normalization_preflight_launch as launch
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -62,14 +64,28 @@ class CLSLSourceNormalizationPreflightV1Tests(unittest.TestCase):
         self.assertNotIn("train_stream.py --", shell)
         self.assertNotIn("--max-iter", shell)
 
-    def test_profile_is_zero_effect_rehearsal(self):
+    def test_profile_is_zero_effect_rehearsal_and_uses_python_runtime_entrypoint(self):
         profile = json.loads((ROOT / "jobs/launch_profiles/cls-l-source-normalization-preflight-v1.json").read_text())
         self.assertEqual(profile["campaign"], "cls-v1")
         self.assertEqual(profile["stage"], "cls-l-source-normalization-preflight-v1")
+        self.assertEqual(
+            profile["command"],
+            ["/usr/bin/python3", "jobs/tools/cls_l_source_normalization_preflight_launch.py"],
+        )
         self.assertEqual(profile["rehearsal_max_effects"], profile["production_max_effects"])
         self.assertTrue(all(value == 0 for value in profile["rehearsal_max_effects"].values()))
         self.assertIn("normalization-receipt.json", profile["evidence_outputs"])
         self.assertIn("source-authentication.json", profile["evidence_outputs"])
+
+    def test_python_entrypoint_execs_unchanged_frozen_shell(self):
+        self.assertEqual(
+            launch.SCRIPT,
+            ROOT / "jobs/templates/l3-cls-l-source-normalization-preflight-v1.sh",
+        )
+        with mock.patch.object(launch.os, "execv", side_effect=RuntimeError("exec intercepted")) as execv:
+            with self.assertRaisesRegex(RuntimeError, "exec intercepted"):
+                launch.main()
+        execv.assert_called_once_with("/usr/bin/bash", ["/usr/bin/bash", str(launch.SCRIPT)])
 
     def test_merged_cls_l_contract_is_active(self):
         contract = json.loads((ROOT / "docs/experiments/L3_CLS_L_OBJECTIVE_ATTRIBUTION_V1_20260916.json").read_text())
