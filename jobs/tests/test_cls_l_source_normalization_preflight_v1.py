@@ -108,17 +108,61 @@ class CLSLSourceNormalizationPreflightV1Tests(unittest.TestCase):
         self.assertIn("normalization-receipt.json", profile["evidence_outputs"])
         self.assertIn("source-authentication.json", profile["evidence_outputs"])
 
+    def test_numeric_runtime_probe_covers_2029_failure_and_fit_api(self):
+        self.assertIn("hasattr(np, 'ndarray')", launch.NUMERIC_PROBE)
+        self.assertIn("from scipy import sparse", launch.NUMERIC_PROBE)
+        self.assertIn("from scipy.optimize import minimize", launch.NUMERIC_PROBE)
+        self.assertEqual(launch.NUMPY_PIN, "1.26.4")
+        self.assertEqual(launch.SCIPY_PIN, "1.14.1")
+
+    def test_malformed_numeric_runtime_is_rebuilt_with_frozen_tooling_pins(self):
+        with tempfile.TemporaryDirectory() as d:
+            venv = Path(d) / "numeric"
+            with mock.patch.dict(
+                launch.os.environ,
+                {"JASS_L3_NUMERIC_VENV": str(venv)},
+                clear=True,
+            ), mock.patch.object(
+                launch, "numeric_runtime_healthy", side_effect=[False, True]
+            ) as healthy, mock.patch.object(launch.subprocess, "run") as run:
+                got = launch.ensure_numeric_runtime()
+
+        self.assertEqual(got, venv)
+        self.assertEqual(healthy.call_args_list, [mock.call(venv), mock.call(venv)])
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(
+            run.call_args_list[0].args[0],
+            ["/usr/bin/python3", "-m", "venv", "--clear", str(venv)],
+        )
+        pip_argv = run.call_args_list[1].args[0]
+        self.assertEqual(pip_argv[:5], [str(venv / "bin/python"), "-m", "pip", "install", "--disable-pip-version-check"])
+        self.assertIn("--only-binary=:all:", pip_argv)
+        self.assertIn("numpy==1.26.4", pip_argv)
+        self.assertIn("scipy==1.14.1", pip_argv)
+
+    def test_healthy_numeric_runtime_is_not_rebuilt(self):
+        requested = Path("/var/tmp/already-healthy")
+        with mock.patch.dict(
+            launch.os.environ,
+            {"JASS_L3_NUMERIC_VENV": str(requested)},
+            clear=True,
+        ), mock.patch.object(launch, "numeric_runtime_healthy", return_value=True), \
+                mock.patch.object(launch.subprocess, "run") as run:
+            self.assertEqual(launch.ensure_numeric_runtime(), requested)
+        run.assert_not_called()
+
     def test_2020_failure_shape_matches_sanitized_expected_code_sha_incident(self):
         self.assertNotIn("EXPECTED_CODE_SHA", runner.SAFE_RUNNER_JASS_ENV)
         shell = (ROOT / "jobs/templates/l3-cls-l-source-normalization-preflight-v1.sh").read_text()
         self.assertLess(shell.index(': "${EXPECTED_CODE_SHA:?}"'), shell.index("trap finalize EXIT"))
 
-    def test_python_entrypoint_reconstructs_code_sha_and_execs_unchanged_frozen_shell(self):
+    def test_python_entrypoint_reconstructs_code_sha_repairs_runtime_and_execs_frozen_shell(self):
         self.assertEqual(
             launch.SCRIPT,
             ROOT / "jobs/templates/l3-cls-l-source-normalization-preflight-v1.sh",
         )
         expected = "a" * 40
+        numeric = Path("/var/tmp/cls-l-test-numeric")
         captured: dict[str, object] = {}
         with tempfile.TemporaryDirectory() as d:
             spec = Path(d) / "stage.json"
@@ -128,10 +172,12 @@ class CLSLSourceNormalizationPreflightV1Tests(unittest.TestCase):
                 captured["path"] = path
                 captured["argv"] = argv
                 captured["expected_code_sha"] = launch.os.environ.get("EXPECTED_CODE_SHA")
+                captured["numeric_venv"] = launch.os.environ.get("JASS_L3_NUMERIC_VENV")
                 raise RuntimeError("exec intercepted")
 
             with mock.patch.dict(launch.os.environ, {"JASS_STAGE_SPEC": str(spec)}, clear=True), \
                     mock.patch.object(launch.subprocess, "check_output", return_value=expected + "\n"), \
+                    mock.patch.object(launch, "ensure_numeric_runtime", return_value=numeric), \
                     mock.patch.object(launch.os, "execv", side_effect=fake_exec):
                 with self.assertRaisesRegex(RuntimeError, "exec intercepted"):
                     launch.main()
@@ -139,6 +185,7 @@ class CLSLSourceNormalizationPreflightV1Tests(unittest.TestCase):
         self.assertEqual(captured["path"], "/usr/bin/bash")
         self.assertEqual(captured["argv"], ["/usr/bin/bash", str(launch.SCRIPT)])
         self.assertEqual(captured["expected_code_sha"], expected)
+        self.assertEqual(captured["numeric_venv"], str(numeric))
 
     def test_python_entrypoint_fails_closed_on_stage_spec_head_mismatch(self):
         with tempfile.TemporaryDirectory() as d:
@@ -146,9 +193,11 @@ class CLSLSourceNormalizationPreflightV1Tests(unittest.TestCase):
             spec.write_text(json.dumps({"code_sha": "b" * 40}), encoding="ascii")
             with mock.patch.dict(launch.os.environ, {"JASS_STAGE_SPEC": str(spec)}, clear=True), \
                     mock.patch.object(launch.subprocess, "check_output", return_value="a" * 40 + "\n"), \
+                    mock.patch.object(launch, "ensure_numeric_runtime") as ensure, \
                     mock.patch.object(launch.os, "execv") as execv:
                 with self.assertRaisesRegex(RuntimeError, "stage/spec code mismatch"):
                     launch.main()
+        ensure.assert_not_called()
         execv.assert_not_called()
 
     def test_merged_cls_l_contract_is_active(self):
