@@ -50,17 +50,29 @@ class CLSLObjectiveAttributionV1Tests(unittest.TestCase):
         self.assertTrue(mixed["holdout_for_norm_forbidden"])
         self.assertTrue(mixed["lambda_sweep_forbidden"])
 
-    def test_execution_remains_blocked_until_g0_preflight_pin(self) -> None:
+    def test_execution_is_active_only_with_exact_green_g0_preflight_pin(self) -> None:
+        self.assertEqual(self.c["status"], "ACTIVE")
         pre = self.c["g0_tooling_preflight"]
-        if self.c["status"] == "ACTIVE":
-            self.assertRegex(pre["attempt_id"], r"^20260916T\d{6}Z-[0-9a-f]{8}$")
-            self.assertRegex(pre["code_sha"], r"^[0-9a-f]{40}$")
-            self.assertRegex(pre["launch_receipt_sha256"], r"^[0-9a-f]{64}$")
-        else:
-            self.assertEqual(self.c["status"], "DRAFT_PENDING_G0_TOOLING_PREFLIGHT_PIN")
-            self.assertIsNone(pre["attempt_id"])
-            self.assertIsNone(pre["code_sha"])
-            self.assertIsNone(pre["launch_receipt_sha256"])
+        self.assertEqual(pre["job_id"], "cpx62-2018-l3-cls-g0-runtime-tooling-preflight-v3")
+        self.assertEqual(pre["attempt_id"], "20260917T001938Z-ad151a09")
+        self.assertEqual(pre["code_sha"], "ad151a0961a077e5c95a5503a8ee734f5c4cf0b6")
+        self.assertEqual(
+            pre["launch_receipt_sha256"],
+            "887f9f46adc3bf2cd014dd3a5cd8361ebe8c6ad84833f14099beba3e1e165d52",
+        )
+        self.assertEqual(pre["required_terminal"], "CLS_G0_RUNTIME_TOOLING_PREFLIGHT_READY_V1")
+        self.assertTrue(pre["required_identity_pass"])
+        self.assertEqual(pre["required_trace_parity_mismatches"], 0)
+        self.assertEqual(pre["authenticated_state"], "completed")
+        self.assertEqual(pre["authenticated_exit_code"], 0)
+        self.assertTrue(pre["authenticated_g0_identity_pass"])
+        self.assertEqual(pre["authenticated_trace_parity_mismatches"], 0)
+        self.assertEqual(pre["authenticated_target_reads"], 0)
+        self.assertEqual(pre["authenticated_fits"], 0)
+        self.assertEqual(pre["authenticated_strength_games"], 0)
+        self.assertEqual(pre["authenticated_alpha_spent"], 0)
+        self.assertEqual(pre["authenticated_promotions"], 0)
+        self.assertEqual(pre["authenticated_bakes"], 0)
 
     def test_no_proxy_can_promote(self) -> None:
         fit = self.c["fit_boundary"]
