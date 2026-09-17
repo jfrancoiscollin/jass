@@ -1,0 +1,31 @@
+name: CLS-L 2031 numeric runtime repair
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/cls_l_source_normalization_preflight_launch.py'
+      - 'jobs/tests/test_cls_l_numeric_runtime_2031_repair_v1.py'
+      - 'jobs/launch_profiles/cls-l-source-normalization-preflight-v1.json'
+      - '.github/workflows/cls-l-2031-numeric-runtime-repair.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'jobs/tools/cls_l_source_normalization_preflight_launch.py'
+      - 'jobs/tests/test_cls_l_numeric_runtime_2031_repair_v1.py'
+      - 'jobs/launch_profiles/cls-l-source-normalization-preflight-v1.json'
+      - '.github/workflows/cls-l-2031-numeric-runtime-repair.yml'
+
+jobs:
+  focused-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run 2031 wheel compatibility regression
+        run: python -m unittest jobs.tests.test_cls_l_numeric_runtime_2031_repair_v1 -v
+      - name: Run frozen CLS-L preflight regression
+        run: |
+          python -m pip install --disable-pip-version-check numpy scipy
+          python -m unittest jobs.tests.test_cls_l_source_normalization_preflight_v1 -v
