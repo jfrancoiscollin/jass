@@ -69,6 +69,10 @@ def select_roots(deep512: Path, ids: Path, subset: Path) -> list[dict[str, str]]
 
 
 def build_probe(work: Path) -> Path:
+    # Job 2017 proved the inherited build helper opens its configure log directly
+    # under this parent before CMake creates build-parity.  Preserve every build
+    # flag and scientific constant; only create the missing mechanical parent.
+    work.mkdir(parents=True, exist_ok=True)
     # Reuse the exact CLS-D parity configuration to build the production engine
     # libraries, then link only the new G0 probe against those frozen objects.
     (void_exe := base.build_jass(work, profile=False))

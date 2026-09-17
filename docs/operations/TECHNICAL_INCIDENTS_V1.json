@@ -640,6 +640,16 @@
       "invariant": "repair workdir creation only; preserve frozen G0 science and zero-target/no-strength boundary",
       "evidence": "2016 status stack + focused workdir-before-fetch regression in this PR; PR #999",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-065",
+      "dedupe_key": "job:cpx62-2017-l3-cls-g0-runtime-tooling-preflight-v2",
+      "context": "CLS-G0 runtime tooling identity preflight 2017 / attempt 20260916T230408Z-d7705267",
+      "symptom": "STAGE_FAILED:EXECUTE FileNotFoundError in inherited build helper log open after authenticated source fetch and before CMake/search execution",
+      "root_cause": "build_probe passed absent work/build parent to base.build_jass, whose run helper opens cmake-parity-configure.log directly under that parent before CMake creates build-parity",
+      "invariant": "repair directory creation only; preserve frozen G0 science, 96-search identity contract and zero-target/no-strength boundary",
+      "evidence": "2017 status stack; source inspection of build_probe + base.run/build_jass; focused build-parent-before-builder regression in this PR; PR #1000",
+      "status": "MITIGATED — fresh immutable successor proof pending"
     }
   ]
 }
