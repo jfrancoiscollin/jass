@@ -41,7 +41,11 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a
 trap 'exit 143' TERM; trap 'exit 130' INT
 
 [ "$(hostname)" = cpx62 ] || die "host must be cpx62"
-[ "$(nproc)" -eq 16 ] || die "nproc must be 16"
+# GNU nproc honors OpenMP thread caps. Launch-V2 deliberately sets
+# OMP_NUM_THREADS=1 for scientific execution, so resource identity must ignore
+# those caps exactly as launch_runtime_v2.available_cpus() does.
+HOST_NPROC="$(env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc)"
+[ "$HOST_NPROC" -eq 16 ] || die "nproc must be 16"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] && [ -z "$(git status --porcelain)" ] || die "worktree must be detached and clean"
 [ -x "$PY" ] || die "numeric venv missing"
