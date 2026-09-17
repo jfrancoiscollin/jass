@@ -660,6 +660,16 @@
       "invariant": "repair entrypoint/runtime identity only; execute the unchanged frozen shell and preserve all CLS-L source, split, objective, normalization and zero-effect constants",
       "evidence": "2019 authenticated status plus launch_gate_v2 runtime_identity/execute source and profile command identity; focused wrapper/profile regression in this PR; PR #1003",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-067",
+      "dedupe_key": "job:cpx62-2021-l3-cls-l-2020-failure-diagnostic-v1",
+      "context": "CLS-L bounded 2020 failure diagnostic 2021 / attempt 20260917T033155Z-1c944ba4",
+      "symptom": "STAGE_FAILED:OUTPUTS after stage published diagnostic payloads; no scientific verdict",
+      "root_cause": "control spec required execution-evidence.json but direct diagnostic stage never instantiated Launch-V2 StageEvidence, so the required output was absent",
+      "invariant": "repair only Launch-V2 execution-evidence transport; preserve exact 2020 failed-source identity, bounded log extraction and zero-scientific-action boundary",
+      "evidence": "2021 authenticated status artefact list + 2021 control spec outputs + diagnostic source; focused StageEvidence/required-phase regression in this PR; PR #1005",
+      "status": "MITIGATED — fresh immutable successor proof pending"
     }
   ]
 }
