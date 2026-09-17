@@ -700,6 +700,16 @@
       "invariant": "optimizer dependency must be loaded only by actual fit_mixed execution; preserve exact normalization algebra, sources, lambda and zero-effect boundary",
       "evidence": "2028 authenticated status + normalization.log error + cls_l_objective source + focused optimizer-unavailable import regression in this PR; PR #1012",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-071",
+      "dedupe_key": "job:cpx62-2029-l3-cls-l-source-normalization-preflight-v5",
+      "context": "CLS-L source/gradient-normalization preflight 2029 / attempt 20260917T113739Z-4f164f9c",
+      "symptom": "STAGE_FAILED:EXECUTE; bounded diagnostic 2030 proves normalization.log AttributeError: module 'numpy' has no attribute 'ndarray'; no scientific verdict and zero side effects",
+      "root_cause": "persistent Level-3 numeric venv passed the executable-only shell guard but its imported NumPy module lacked the core ndarray API, so malformed host tooling reached the zero-fit normalization subprocess",
+      "invariant": "validate numerical host tooling before reading scientific sources; healthy runtime is untouched, malformed runtime alone is rebuilt with established historical NumPy/SciPy pins; preserve all CLS-L scientific constants and zero-effect boundary",
+      "evidence": "2030 authenticated status + normalization.log bounded error + current executable-only shell guard + focused runtime repair/no-op regressions in this PR; PR #1014",
+      "status": "MITIGATED — fresh immutable successor proof pending"
     }
   ]
 }
