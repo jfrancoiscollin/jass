@@ -54,6 +54,10 @@ class CLSL2020FailureDiagnosticTests(unittest.TestCase):
         code = inspect.getsource(diag)
         profile = json.loads((ROOT / "jobs/launch_profiles/cls-l-2020-failure-diagnostic-v1.json").read_text())
         self.assertEqual(profile["required_phases"], [diag.PHASE])
+        self.assertEqual(
+            profile["evidence_outputs"],
+            ["failure-evidence.json", "source-authentication.json", "manifest.json", "RESULTS.md", "scientific-summary.json"],
+        )
         self.assertIn("StageEvidence(art, mode)", code)
         self.assertIn("evidence.begin(PHASE)", code)
         self.assertIn("evidence.complete()", code)
