@@ -30,7 +30,7 @@ FAILED_PREFIX = f"r2:jass-data/runs/{FAILED_JOB}/{FAILED_ATTEMPT}"
 TERMINAL = "CLS_L_2020_TECHNICAL_DIAGNOSTIC_COMPLETE_V1"
 PHASE = "execute-cls-l-2020-failure-diagnostic"
 ERROR_RE = re.compile(
-    r"ABORT line=|Traceback|error:|error\b|failed|usage:|No such file|CMake Error|ninja:|make(?:\[|:)",
+    r"ABORT(?: line=|:)|Traceback|error:|error\b|failed|usage:|No such file|CMake Error|ninja:|make(?:\[|:)",
     re.IGNORECASE,
 )
 
@@ -51,7 +51,7 @@ def read_gzip(path: Path) -> str:
 def bounded_lines(text: str, limit: int = 80) -> dict[str, object]:
     lines = text.splitlines()
     matches = [line[-1000:] for line in lines if ERROR_RE.search(line)]
-    aborts = [line[-1000:] for line in lines if "ABORT line=" in line]
+    aborts = [line[-1000:] for line in lines if "ABORT line=" in line or line.startswith("ABORT:")]
     return {
         "line_count": len(lines),
         "tail": [line[-1000:] for line in lines[-limit:]],
@@ -159,6 +159,8 @@ def main() -> int:
         "failed_job_id": FAILED_JOB,
         "failed_attempt_id": FAILED_ATTEMPT,
         "last_abort": parsed["last_abort"],
+        "bounded_error_lines": parsed["error_lines"][-12:],
+        "bounded_tail": parsed["tail"][-12:],
         "target_reads": 0,
         "fits": 0,
         "new_jass_searches": 0,
