@@ -31,6 +31,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "jobs" / "templates" / "l3-cls-l-source-normalization-preflight-v1.sh"
 SHA40_RE = re.compile(r"[0-9a-f]{40}\Z")
 DEFAULT_NUMERIC_VENV = Path("/var/tmp/jass-l3-numeric-venv-current-v1")
+# Tooling pins already used by the Level-3 training/preflight runtime; they are
+# not a CLS-L scientific axis and are exercised only after the runtime probe fails.
 NUMPY_PIN = "1.26.4"
 SCIPY_PIN = "1.14.1"
 NUMERIC_PROBE = (
