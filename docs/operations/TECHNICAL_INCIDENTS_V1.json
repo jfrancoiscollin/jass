@@ -670,6 +670,16 @@
       "invariant": "repair only Launch-V2 execution-evidence transport; preserve exact 2020 failed-source identity, bounded log extraction and zero-scientific-action boundary",
       "evidence": "2021 authenticated status artefact list + 2021 control spec outputs + diagnostic source; focused StageEvidence/required-phase regression in this PR; PR #1005",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-068",
+      "dedupe_key": "job:cpx62-2020-l3-cls-l-source-normalization-preflight-v2",
+      "context": "CLS-L source/gradient-normalization preflight 2020 / attempt 20260917T023839Z-68301b10",
+      "symptom": "STAGE_FAILED:EXECUTE with no template RESULTS/work logs and no scientific verdict; bounded diagnostics 2021-2024 expose only the outer Launch-V2 failure",
+      "root_cause": "run_experiment_stage.py intentionally sanitizes stage env and does not propagate outer EXPECTED_CODE_SHA; the frozen CLS-L shell requires ${EXPECTED_CODE_SHA:?} before creating RESULTS or installing traps, so it exits immediately on stage entry",
+      "invariant": "reconstruct defense-in-depth code identity only from authenticated JASS_STAGE_SPEC, verify against HEAD, then exec unchanged scientific shell; preserve all CLS-L scientific constants and zero-effect boundary",
+      "evidence": "2020 status + 2024 authenticated zero-work-log diagnostic + run_experiment_stage sanitized env + shell pre-trap requirement + established D1 1846/1847 identical failure class; focused regressions in this PR; PR #1008",
+      "status": "MITIGATED — fresh immutable successor proof pending"
     }
   ]
 }
