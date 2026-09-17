@@ -109,6 +109,9 @@ jobs:
       - name: Run CLS-L source normalization preflight tests
         run: python -m unittest jobs.tests.test_cls_l_source_normalization_preflight_v1 -v
 
+      - name: Run CLS-L three-arm fit contract tests
+        run: python -m unittest jobs.tests.test_cls_l_three_arm_fit_v1 -v
+
   wasm:
     name: Build WASM
     runs-on: ubuntu-latest

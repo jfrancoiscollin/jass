@@ -66,6 +66,15 @@ class StageEvidence:
         self.value['phase'] = name
         self.save()
 
+    def record_effect(self, name: str, count: int = 1):
+        """Record an observed bounded side effect and persist it immediately."""
+        if name not in EFFECTS:
+            raise ValueError('invalid side effect')
+        if type(count) is not int or count < 0:
+            raise ValueError('invalid side effect count')
+        self.value['actual_side_effects'][name] += count
+        self.save()
+
     def complete(self):
         name = self.value['phase']
         if name in self.value['completed_phases']:
