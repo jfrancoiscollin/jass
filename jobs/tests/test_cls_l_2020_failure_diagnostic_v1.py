@@ -39,12 +39,23 @@ class CLSL2020FailureDiagnosticTests(unittest.TestCase):
         )
         self.assertTrue(any("Traceback" in line for line in got["error_lines"]))
 
-    def test_diagnostic_code_has_zero_scientific_actions(self):
+    def test_bounded_parser_surfaces_explicit_die_abort(self):
+        text = "\n".join([
+            "# CLS-L source / normalization preflight",
+            "ABORT: numeric venv missing",
+        ])
+        got = diag.bounded_lines(text)
+        self.assertEqual(got["last_abort"], "ABORT: numeric venv missing")
+        self.assertIn("ABORT: numeric venv missing", got["error_lines"])
+
+    def test_diagnostic_code_has_zero_scientific_actions_and_surfaces_bounded_context(self):
         code = inspect.getsource(diag)
         self.assertNotIn("train_stream.py --", code)
         self.assertNotIn("jass_vs_jass", code)
         self.assertNotIn("--dump-eval-features", code)
         self.assertIn('("output.log.gz", "output.log.gz")', code)
+        self.assertIn('"bounded_error_lines": parsed["error_lines"][-12:]', code)
+        self.assertIn('"bounded_tail": parsed["tail"][-12:]', code)
         self.assertIn('"confirmation_target_reads": 0', code)
         self.assertIn('"strength_games": 0', code)
         self.assertIn('"promotions": 0', code)
