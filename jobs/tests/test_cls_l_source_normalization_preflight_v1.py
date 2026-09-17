@@ -10,6 +10,7 @@ import numpy as np
 
 from jobs.tools import cls_l_normalization_preflight as stage
 from jobs.tools import cls_l_source_normalization_preflight_launch as launch
+from jobs.tools import run_experiment_stage as runner
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -77,15 +78,48 @@ class CLSLSourceNormalizationPreflightV1Tests(unittest.TestCase):
         self.assertIn("normalization-receipt.json", profile["evidence_outputs"])
         self.assertIn("source-authentication.json", profile["evidence_outputs"])
 
-    def test_python_entrypoint_execs_unchanged_frozen_shell(self):
+    def test_2020_failure_shape_matches_sanitized_expected_code_sha_incident(self):
+        self.assertNotIn("EXPECTED_CODE_SHA", runner.SAFE_RUNNER_JASS_ENV)
+        shell = (ROOT / "jobs/templates/l3-cls-l-source-normalization-preflight-v1.sh").read_text()
+        self.assertLess(shell.index(': "${EXPECTED_CODE_SHA:?}"'), shell.index("trap finalize EXIT"))
+
+    def test_python_entrypoint_reconstructs_code_sha_and_execs_unchanged_frozen_shell(self):
         self.assertEqual(
             launch.SCRIPT,
             ROOT / "jobs/templates/l3-cls-l-source-normalization-preflight-v1.sh",
         )
-        with mock.patch.object(launch.os, "execv", side_effect=RuntimeError("exec intercepted")) as execv:
-            with self.assertRaisesRegex(RuntimeError, "exec intercepted"):
-                launch.main()
-        execv.assert_called_once_with("/usr/bin/bash", ["/usr/bin/bash", str(launch.SCRIPT)])
+        expected = "a" * 40
+        captured: dict[str, object] = {}
+        with tempfile.TemporaryDirectory() as d:
+            spec = Path(d) / "stage.json"
+            spec.write_text(json.dumps({"code_sha": expected}), encoding="ascii")
+
+            def fake_exec(path: str, argv: list[str]) -> None:
+                captured["path"] = path
+                captured["argv"] = argv
+                captured["expected_code_sha"] = launch.os.environ.get("EXPECTED_CODE_SHA")
+                raise RuntimeError("exec intercepted")
+
+            with mock.patch.dict(launch.os.environ, {"JASS_STAGE_SPEC": str(spec)}, clear=True), \
+                    mock.patch.object(launch.subprocess, "check_output", return_value=expected + "\n"), \
+                    mock.patch.object(launch.os, "execv", side_effect=fake_exec):
+                with self.assertRaisesRegex(RuntimeError, "exec intercepted"):
+                    launch.main()
+
+        self.assertEqual(captured["path"], "/usr/bin/bash")
+        self.assertEqual(captured["argv"], ["/usr/bin/bash", str(launch.SCRIPT)])
+        self.assertEqual(captured["expected_code_sha"], expected)
+
+    def test_python_entrypoint_fails_closed_on_stage_spec_head_mismatch(self):
+        with tempfile.TemporaryDirectory() as d:
+            spec = Path(d) / "stage.json"
+            spec.write_text(json.dumps({"code_sha": "b" * 40}), encoding="ascii")
+            with mock.patch.dict(launch.os.environ, {"JASS_STAGE_SPEC": str(spec)}, clear=True), \
+                    mock.patch.object(launch.subprocess, "check_output", return_value="a" * 40 + "\n"), \
+                    mock.patch.object(launch.os, "execv") as execv:
+                with self.assertRaisesRegex(RuntimeError, "stage/spec code mismatch"):
+                    launch.main()
+        execv.assert_not_called()
 
     def test_merged_cls_l_contract_is_active(self):
         contract = json.loads((ROOT / "docs/experiments/L3_CLS_L_OBJECTIVE_ATTRIBUTION_V1_20260916.json").read_text())
