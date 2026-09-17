@@ -1,0 +1,26 @@
+name: CLS-L 2027 failure diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/cls_l_2027_failure_diagnostic.py'
+      - 'jobs/tests/test_cls_l_2027_failure_diagnostic_v1.py'
+      - 'jobs/launch_profiles/cls-l-2027-failure-diagnostic-v1.json'
+      - '.github/workflows/cls-l-2027-failure-diagnostic.yml'
+  push:
+    paths:
+      - 'jobs/tools/cls_l_2027_failure_diagnostic.py'
+      - 'jobs/tests/test_cls_l_2027_failure_diagnostic_v1.py'
+      - 'jobs/launch_profiles/cls-l-2027-failure-diagnostic-v1.json'
+      - '.github/workflows/cls-l-2027-failure-diagnostic.yml'
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile jobs/tools/cls_l_2027_failure_diagnostic.py
+      - run: python -m unittest jobs.tests.test_cls_l_2027_failure_diagnostic_v1 -v
