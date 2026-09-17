@@ -14,10 +14,14 @@ then exec the frozen shell.
 
 The persistent Level-3 numeric venv is host tooling, not a scientific input.  A
 2029 bounded diagnostic proved that its NumPy import was malformed (the imported
-module had no ``ndarray``).  Validate the complete numeric API needed by the
-normalization and later fit path before any scientific source is read; only when
-that tooling probe fails, rebuild the same venv with the repository's historical
-numeric stack pins.
+module had no ``ndarray``).  The follow-up 2033 stage-log diagnostic then proved
+a narrower host-compatibility failure: the current /usr/bin/python3 package
+index has no binary wheel for the historical NumPy 1.26.4 pin.  Preserve the
+historical pair whenever it is installable; only that exact non-zero pip failure
+may select a current-compatible NumPy/SciPy pair.  The first compatible pair is
+immediately frozen in a host-tooling lock and any later repair must reinstall
+that exact pair rather than re-resolve it.  This happens before any scientific
+source is read.
 """
 from __future__ import annotations
 
@@ -30,11 +34,13 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "jobs" / "templates" / "l3-cls-l-source-normalization-preflight-v1.sh"
 SHA40_RE = re.compile(r"[0-9a-f]{40}\Z")
+VERSION_RE = re.compile(r"[0-9][0-9A-Za-z.+_-]*\Z")
 DEFAULT_NUMERIC_VENV = Path("/var/tmp/jass-l3-numeric-venv-current-v1")
 # Tooling pins already used by the Level-3 training/preflight runtime; they are
-# not a CLS-L scientific axis and are exercised only after the runtime probe fails.
+# not a CLS-L scientific axis and remain the first-choice repair stack.
 NUMPY_PIN = "1.26.4"
 SCIPY_PIN = "1.14.1"
+RUNTIME_LOCK_SCHEMA = "jass.cls_l_numeric_runtime_lock.v1"
 NUMERIC_PROBE = (
     "import numpy as np; "
     "from scipy import sparse; "
@@ -82,17 +88,84 @@ def numeric_runtime_healthy(venv: Path) -> bool:
     return True
 
 
-def ensure_numeric_runtime() -> Path:
-    """Return a healthy numeric venv, repairing only a failed tooling probe."""
-    venv = Path(os.environ.get("JASS_L3_NUMERIC_VENV", str(DEFAULT_NUMERIC_VENV)))
-    if numeric_runtime_healthy(venv):
-        return venv
+def runtime_lock_path(venv: Path) -> Path:
+    return venv.with_name(f"{venv.name}.cls-l-runtime-lock.json")
 
+
+def read_runtime_lock(venv: Path) -> tuple[str, str] | None:
+    path = runtime_lock_path(venv)
+    if not path.is_file():
+        return None
+    try:
+        value = json.loads(path.read_text(encoding="ascii"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"CLS-L numeric runtime lock unreadable: {exc}") from exc
+    if not isinstance(value, dict) or value.get("schema") != RUNTIME_LOCK_SCHEMA:
+        raise RuntimeError("CLS-L numeric runtime lock schema mismatch")
+    numpy_version = value.get("numpy")
+    scipy_version = value.get("scipy")
+    if (
+        not isinstance(numpy_version, str)
+        or VERSION_RE.fullmatch(numpy_version) is None
+        or not isinstance(scipy_version, str)
+        or VERSION_RE.fullmatch(scipy_version) is None
+    ):
+        raise RuntimeError("CLS-L numeric runtime lock versions invalid")
+    return numpy_version, scipy_version
+
+
+def write_runtime_lock(venv: Path, numpy_version: str, scipy_version: str) -> None:
+    if VERSION_RE.fullmatch(numpy_version) is None or VERSION_RE.fullmatch(scipy_version) is None:
+        raise RuntimeError("CLS-L resolved numeric versions invalid")
+    path = runtime_lock_path(venv)
+    payload = {
+        "schema": RUNTIME_LOCK_SCHEMA,
+        "source": "current-compatible-after-historical-unavailable",
+        "numpy": numpy_version,
+        "scipy": scipy_version,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="ascii")
+    tmp.replace(path)
+
+
+def resolved_numeric_versions(venv: Path) -> tuple[str, str]:
+    python = venv / "bin" / "python"
+    raw = subprocess.check_output(
+        [
+            str(python),
+            "-c",
+            "import json,numpy,scipy; print(json.dumps({'numpy': numpy.__version__, 'scipy': scipy.__version__}, sort_keys=True))",
+        ],
+        text=True,
+        timeout=30,
+    )
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("CLS-L numeric runtime version probe returned invalid JSON") from exc
+    numpy_version = value.get("numpy") if isinstance(value, dict) else None
+    scipy_version = value.get("scipy") if isinstance(value, dict) else None
+    if (
+        not isinstance(numpy_version, str)
+        or VERSION_RE.fullmatch(numpy_version) is None
+        or not isinstance(scipy_version, str)
+        or VERSION_RE.fullmatch(scipy_version) is None
+    ):
+        raise RuntimeError("CLS-L numeric runtime version probe returned invalid versions")
+    return numpy_version, scipy_version
+
+
+def clear_numeric_venv(venv: Path) -> None:
     subprocess.run(
         ["/usr/bin/python3", "-m", "venv", "--clear", str(venv)],
         check=True,
         timeout=120,
     )
+
+
+def install_numeric_stack(venv: Path, requirements: list[str]) -> None:
     python = venv / "bin" / "python"
     subprocess.run(
         [
@@ -102,14 +175,51 @@ def ensure_numeric_runtime() -> Path:
             "install",
             "--disable-pip-version-check",
             "--only-binary=:all:",
-            f"numpy=={NUMPY_PIN}",
-            f"scipy=={SCIPY_PIN}",
+            *requirements,
         ],
         check=True,
         timeout=900,
     )
+
+
+def ensure_numeric_runtime() -> Path:
+    """Return a healthy numeric venv, repairing only proven host-tooling faults."""
+    venv = Path(os.environ.get("JASS_L3_NUMERIC_VENV", str(DEFAULT_NUMERIC_VENV)))
+    if numeric_runtime_healthy(venv):
+        return venv
+
+    locked = read_runtime_lock(venv)
+    clear_numeric_venv(venv)
+    if locked is not None:
+        numpy_version, scipy_version = locked
+        install_numeric_stack(
+            venv,
+            [f"numpy=={numpy_version}", f"scipy=={scipy_version}"],
+        )
+        if not numeric_runtime_healthy(venv):
+            raise RuntimeError("CLS-L locked numeric runtime did not produce required NumPy/SciPy API")
+        return venv
+
+    try:
+        install_numeric_stack(
+            venv,
+            [f"numpy=={NUMPY_PIN}", f"scipy=={SCIPY_PIN}"],
+        )
+    except subprocess.CalledProcessError:
+        # 2033 proves exactly this failure mode on CPX62: binary resolution of
+        # NumPy 1.26.4 fails under the current /usr/bin/python3.  Resolve one
+        # compatible pair once, validate it, and immediately freeze its exact
+        # versions for all later repairs on this host.
+        clear_numeric_venv(venv)
+        install_numeric_stack(venv, ["numpy", "scipy"])
+        if not numeric_runtime_healthy(venv):
+            raise RuntimeError("CLS-L compatible numeric runtime lacks required NumPy/SciPy API")
+        numpy_version, scipy_version = resolved_numeric_versions(venv)
+        write_runtime_lock(venv, numpy_version, scipy_version)
+        return venv
+
     if not numeric_runtime_healthy(venv):
-        raise RuntimeError("CLS-L numeric runtime repair did not produce required NumPy/SciPy API")
+        raise RuntimeError("CLS-L historical numeric runtime lacks required NumPy/SciPy API")
     return venv
 
 
