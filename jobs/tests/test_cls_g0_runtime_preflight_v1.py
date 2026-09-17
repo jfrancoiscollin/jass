@@ -91,6 +91,20 @@ class CLSG0RuntimePreflightV1Tests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "stop-after-workdir-proof"):
                     stage.run_stage(work, artifacts)
 
+    def test_2017_probe_build_parent_exists_before_inherited_builder(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp) / "missing-parent" / "build"
+
+            def fake_build(path: Path, *, profile: bool):
+                self.assertEqual(path, work)
+                self.assertFalse(profile)
+                self.assertTrue(path.is_dir())
+                raise RuntimeError("stop-after-build-workdir-proof")
+
+            with mock.patch.object(stage.base, "build_jass", side_effect=fake_build):
+                with self.assertRaisesRegex(RuntimeError, "stop-after-build-workdir-proof"):
+                    stage.build_probe(work)
+
 
 if __name__ == "__main__":
     unittest.main()
