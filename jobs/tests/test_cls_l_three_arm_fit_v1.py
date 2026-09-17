@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FIT = ROOT / "jobs" / "tools" / "cls_l_three_arm_fit.py"
 SHELL = ROOT / "jobs" / "templates" / "l3-cls-l-three-arm-fit-v1.sh"
 PROFILE = ROOT / "jobs" / "launch_profiles" / "cls-l-three-arm-fit-v1.json"
+RUNTIME = ROOT / "jobs" / "tools" / "launch_runtime_v2.py"
 
 
 class ClsLThreeArmFitContractTest(unittest.TestCase):
@@ -65,8 +66,16 @@ class ClsLThreeArmFitContractTest(unittest.TestCase):
         self.assertIn('HOLDOUT_MOD=10; SPLIT_SEED=577215', text)
         self.assertIn('CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"', text)
         self.assertIn("execute-cls-l-three-arm-fit", text)
+        self.assertIn("evidence.record_effect('fits',3)", text)
         self.assertIn("no search, strength, alpha, promotion or bake", text)
-        self.assertNotIn("record_effect(", text)
+
+    def test_launch_evidence_has_validated_effect_recorder(self):
+        text = RUNTIME.read_text(encoding="utf-8")
+        self.assertIn("def record_effect(self, name: str, count: int = 1):", text)
+        self.assertIn("if name not in EFFECTS:", text)
+        self.assertIn("if type(count) is not int or count < 0:", text)
+        self.assertIn("self.value['actual_side_effects'][name] += count", text)
+        self.assertIn("self.save()", text)
 
 
 if __name__ == "__main__":
