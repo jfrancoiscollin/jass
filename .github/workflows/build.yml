@@ -32,10 +32,7 @@ concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: false
 
-# Opt every JavaScript-based action into the Node.js 24 runtime ahead of
-# the June 2026 forced default, silencing the deprecation warning the
-# runner emits otherwise. Safe to remove once all the actions we use
-# have shipped a release that targets Node 24 by default.
+# Opt every JavaScript-based action into the Node.js 24 runtime ahead of the June 2026 forced default, silencing the deprecation warning the runner emits otherwise. Safe to remove once all the actions we use have shipped a release that targets Node 24 by default.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
@@ -116,9 +113,11 @@ jobs:
       - name: Run CLS-G0 identity preflight tests
         run: python -m unittest jobs.tests.test_cls_g0_runtime_preflight_v1 -v
 
+      - name: Run CLS-L objective attribution contract tests
+        run: python -m unittest jobs.tests.test_cls_l_objective_attribution_v1 -v
+
   # ---------------------------------------------------------------------------
-  # WASM build: install emsdk, run the project's own wasm/build.sh, package
-  # the artefacts.
+  # WASM build: install emsdk, uploads `jass.js` / `jass.wasm` / example.html as workflow artifact.
   # ---------------------------------------------------------------------------
   wasm:
     name: Build WASM
@@ -126,7 +125,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # First-run installs are slow (~3 min); subsequent runs hit the cache.
       - name: Cache Emscripten SDK
         id: cache-emsdk
         uses: actions/cache@v4
@@ -159,8 +157,6 @@ jobs:
             build-wasm/example.html
           if-no-files-found: error
 
-      # Stage a Pages-ready bundle: the demo page acts as index.html so the
-      # site is usable straight out of the root URL.
       - name: Stage Pages bundle
         run: |
           mkdir -p _site
@@ -174,16 +170,9 @@ jobs:
         with:
           path: _site
 
-  # ---------------------------------------------------------------------------
-  # GitHub Pages deploy: only on `develop` pushes. The demo URL is then
-  # printed at the end of the run and shown in the Environments panel.
-  # ---------------------------------------------------------------------------
   deploy-pages:
     name: Deploy demo to GitHub Pages
     needs: wasm
-    # Off by default: only deploys on develop pushes AND when the repo variable
-    # DEPLOY_DEMO_PAGES is set to 'true'. Without it the job is skipped (neutral),
-    # so the pipeline never goes red just because Pages is not configured.
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.DEPLOY_DEMO_PAGES == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -193,8 +182,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      # Enables Pages on first run so a fresh repo does not need the one-time
-      # Settings → Pages toggle before the deploy can succeed.
       - name: Enable & configure Pages
         uses: actions/configure-pages@v5
         with:
