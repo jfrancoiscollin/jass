@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
 from jobs.tools import cls_l_2020_failure_diagnostic as diag
@@ -48,12 +49,45 @@ class CLSL2020FailureDiagnosticTests(unittest.TestCase):
         self.assertEqual(got["last_abort"], "ABORT: numeric venv missing")
         self.assertIn("ABORT: numeric venv missing", got["error_lines"])
 
+    def test_work_log_selection_is_allowlisted_small_and_never_scientific_payload(self):
+        verified = {
+            "files": [
+                {"path": "work/fetch-abc.log", "size_bytes": 321, "sha256": "a" * 64},
+                {"path": "work/features.log", "size_bytes": diag.WORK_LOG_MAX_BYTES + 1, "sha256": "b" * 64},
+                {"path": "work/current.jnnw", "size_bytes": 999, "sha256": "c" * 64},
+                {"path": "work/current-context30.npy", "size_bytes": 999, "sha256": "d" * 64},
+            ]
+        }
+        got = diag.bounded_work_log_selections(verified)
+        self.assertEqual(got, [("work/fetch-abc.log", "worklogs/fetch-abc.log")])
+        selected = {remote for remote, _ in got}
+        self.assertNotIn("work/current.jnnw", selected)
+        self.assertNotIn("work/current-context30.npy", selected)
+        self.assertNotIn("work/features.log", selected)
+
+    def test_work_log_summary_surfaces_inner_mechanical_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "worklogs" / "fetch-abc.log"
+            path.parent.mkdir(parents=True)
+            path.write_text(
+                "start\nfetch_result_files: missing/empty result file: artefacts/current_2m-context30.npy.gz\n",
+                encoding="utf-8",
+            )
+            got = diag.summarize_work_logs(root, [("work/fetch-abc.log", "worklogs/fetch-abc.log")])
+        self.assertIsNone(got["last_abort"])
+        self.assertIn("missing/empty result file", got["primary_mechanical_error"])
+        self.assertTrue(got["error_lines"][0].startswith("work/fetch-abc.log:"))
+
     def test_diagnostic_code_has_zero_scientific_actions_and_surfaces_bounded_context(self):
         code = inspect.getsource(diag)
         self.assertNotIn("train_stream.py --", code)
         self.assertNotIn("jass_vs_jass", code)
         self.assertNotIn("--dump-eval-features", code)
         self.assertIn('("output.log.gz", "output.log.gz")', code)
+        self.assertIn("inspect_result_inventory", code)
+        self.assertIn("WORK_LOG_ALLOWLIST", code)
+        self.assertIn('"bounded_work_log_error_lines": work_logs["error_lines"][-12:]', code)
         self.assertIn('"bounded_error_lines": parsed["error_lines"][-12:]', code)
         self.assertIn('"bounded_tail": parsed["tail"][-12:]', code)
         self.assertIn('"confirmation_target_reads": 0', code)
