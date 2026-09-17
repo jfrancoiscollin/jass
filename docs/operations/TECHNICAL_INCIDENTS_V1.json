@@ -720,6 +720,16 @@
       "invariant": "prefer historical tooling pins; only proven pip-resolution failure may select one current-compatible pair, immediately freeze its exact versions, and reuse that lock; preserve all CLS-L scientific constants and zero-effect boundary",
       "evidence": "2033 authenticated stage.stderr.log + stage-receipt + focused fallback/lock/fail-closed regressions in this PR; PR #1017",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-073",
+      "dedupe_key": "job:cpx62-2034-l3-cls-l-source-normalization-preflight-v7",
+      "context": "CLS-L source/gradient-normalization preflight 2034 / attempt 20260917T161809Z-8f54469e",
+      "symptom": "STAGE_FAILED:OUTPUTS after all scientific receipts and normalization receipt were published; no scientific verdict",
+      "root_cause": "the direct normalization shell completed the frozen preflight but never emitted Launch-V2 execution-evidence.json required by the generated stage spec",
+      "invariant": "emit only the required execution-evidence transport after frozen scientific outputs are sealed; preserve exact sources, normalization algebra, zero-effect boundary and final scientific summary",
+      "evidence": "2034 authenticated status artefact list + generated 2034 stage spec outputs + focused StageEvidence regression in this PR; PR #1018",
+      "status": "MITIGATED — fresh immutable successor proof pending"
     }
   ]
 }

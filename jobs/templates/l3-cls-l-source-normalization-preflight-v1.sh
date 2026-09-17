@@ -141,6 +141,21 @@ manifest={'schema':'jass.cls_l_source_normalization_manifest.v1','terminal':summ
 open(f'{art}/manifest.json','w').write(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
 PY
 
+# 2034 completed the frozen normalization and published all scientific receipts,
+# but Launch-V2 rejected the run at OUTPUTS because this direct shell stage did
+# not emit the required execution-evidence.json. Record the already-completed
+# required phase only after all frozen scientific outputs have been sealed.
+"$PY" - "$ART" "$LAUNCH_MODE" <<'PY'
+import sys
+from pathlib import Path
+from jobs.tools.launch_runtime_v2 import StageEvidence
+
+evidence = StageEvidence(Path(sys.argv[1]), sys.argv[2])
+evidence.begin('execute-cls-l-source-normalization-preflight')
+evidence.complete()
+evidence.finish()
+PY
+
 say "terminal=CLS_L_SOURCE_NORMALIZATION_PREFLIGHT_READY_V1"
 say "sealed TRAIN-only LOCAL/WDL gradient norms at projected CURRICULUM; no fit, search, strength, alpha, promotion or bake"
 cp "$RES" "$ART/RESULTS.md"
