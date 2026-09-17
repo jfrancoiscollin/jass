@@ -650,6 +650,16 @@
       "invariant": "repair directory creation only; preserve frozen G0 science, 96-search identity contract and zero-target/no-strength boundary",
       "evidence": "2017 status stack; source inspection of build_probe + base.run/build_jass; focused build-parent-before-builder regression in this PR; PR #1000",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-066",
+      "dedupe_key": "job:cpx62-2019-l3-cls-l-source-normalization-preflight-v1",
+      "context": "CLS-L source/gradient-normalization preflight 2019 / attempt 20260917T014428Z-48f23ae1",
+      "symptom": "Launch-V2 TECHNICAL failure CalledProcessError exit 2 before stage evidence; only failure artefacts published",
+      "root_cause": "profile command[0] was /usr/bin/bash, but launch_gate_v2.runtime_identity executes Python fingerprint code through command[0], so bash receives Python source via -c and exits 2 before regressions/stage execution",
+      "invariant": "repair entrypoint/runtime identity only; execute the unchanged frozen shell and preserve all CLS-L source, split, objective, normalization and zero-effect constants",
+      "evidence": "2019 authenticated status plus launch_gate_v2 runtime_identity/execute source and profile command identity; focused wrapper/profile regression in this PR; PR #1003",
+      "status": "MITIGATED — fresh immutable successor proof pending"
     }
   ]
 }
