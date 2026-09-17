@@ -730,6 +730,16 @@
       "invariant": "emit only the required execution-evidence transport after frozen scientific outputs are sealed; preserve exact sources, normalization algebra, zero-effect boundary and final scientific summary",
       "evidence": "2034 authenticated status artefact list + generated 2034 stage spec outputs + focused StageEvidence regression in this PR; PR #1018",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-074",
+      "dedupe_key": "job:cpx62-2036-l3-cls-l-three-arm-fit-rehearsal-v1",
+      "context": "CLS-L frozen three-arm fit rehearsal 2036 / attempt 20260917T183209Z-4b46d3fc",
+      "symptom": "STAGE_FAILED:EXECUTE; authenticated 2037 runner stage log proves ModuleNotFoundError: No module named 'jobs'; no scientific verdict",
+      "root_cause": "Launch-V2 executes the fit launcher by file path, making jobs/tools the Python import root while the launcher used an absolute jobs.tools package import",
+      "invariant": "bootstrap only the repository import root before the existing helper import; preserve the complete frozen three-arm scientific contract and downstream zero-effect boundary",
+      "evidence": "2037 authenticated stage.stderr.log + focused isolated direct-file import regression in this PR; PR #1021",
+      "status": "MITIGATED — fresh immutable rehearsal successor proof pending"
     }
   ]
 }
