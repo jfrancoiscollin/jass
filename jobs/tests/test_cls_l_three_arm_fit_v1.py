@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
 FIT = ROOT / "jobs" / "tools" / "cls_l_three_arm_fit.py"
+LAUNCH = ROOT / "jobs" / "tools" / "cls_l_three_arm_fit_launch.py"
 SHELL = ROOT / "jobs" / "templates" / "l3-cls-l-three-arm-fit-v1.sh"
 PROFILE = ROOT / "jobs" / "launch_profiles" / "cls-l-three-arm-fit-v1.json"
 RUNTIME = ROOT / "jobs" / "tools" / "launch_runtime_v2.py"
@@ -68,6 +70,22 @@ class ClsLThreeArmFitContractTest(unittest.TestCase):
         self.assertIn("execute-cls-l-three-arm-fit", text)
         self.assertIn("evidence.record_effect('fits',3)", text)
         self.assertIn("no search, strength, alpha, promotion or bake", text)
+
+    def test_direct_file_launcher_bootstraps_jobs_package_without_running_stage(self):
+        probe = (
+            "import runpy; "
+            f"runpy.run_path({str(LAUNCH)!r}, run_name='cls_l_three_arm_fit_import_probe')"
+        )
+        completed = subprocess.run(
+            ["/usr/bin/python3", "-I", "-c", probe],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(completed.stdout, "")
 
     def test_launch_evidence_has_validated_effect_recorder(self):
         text = RUNTIME.read_text(encoding="utf-8")
