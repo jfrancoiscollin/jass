@@ -25,7 +25,6 @@ import math
 from typing import Callable, Mapping, Sequence
 
 import numpy as np
-from scipy.optimize import minimize
 
 Array = np.ndarray
 BuildFn = Callable[[Array], object]
@@ -207,6 +206,10 @@ def fit_mixed(
     gtol: float,
 ) -> tuple[Array, dict[str, object]]:
     """Fit the frozen MIXED V1 objective from the projected CURRICULUM point."""
+    # The zero-fit normalization preflight must not depend on optimizer import
+    # availability.  Load scipy.optimize only when an actual fit is requested.
+    from scipy.optimize import minimize
+
     tr = _rows(train_rows)
     w0 = np.asarray(parent, dtype=np.float64)
     if w0.ndim != 1 or len(w0) == 0 or not bool(np.all(np.isfinite(w0))):
