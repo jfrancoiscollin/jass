@@ -690,6 +690,16 @@
       "invariant": "preserve exact 16-CPU host requirement and all scientific thread caps; ignore only OpenMP caps for the resource identity check, matching Launch-V2 semantics; preserve all CLS-L science and zero-effect boundary",
       "evidence": "2025 status + authenticated 2026 diagnostic + 2025 stage spec resources/environment + launch_runtime_v2.available_cpus + focused regression in this PR; PR #1010",
       "status": "MITIGATED — fresh immutable successor proof pending"
+    },
+    {
+      "id": "TI-070",
+      "dedupe_key": "job:cpx62-2027-l3-cls-l-source-normalization-preflight-v4",
+      "context": "CLS-L source/gradient-normalization preflight 2027 / attempt 20260917T085939Z-cf8c63d8",
+      "symptom": "STAGE_FAILED:EXECUTE; bounded diagnostic 2028 proves normalization.log ImportError for scipy.optimize.minimize; no scientific verdict and zero side effects",
+      "root_cause": "zero-fit preflight imports cls_l_objective, whose module-level scipy.optimize.minimize import is unnecessary for frozen_gradient_norms and fails before normalization can run",
+      "invariant": "optimizer dependency must be loaded only by actual fit_mixed execution; preserve exact normalization algebra, sources, lambda and zero-effect boundary",
+      "evidence": "2028 authenticated status + normalization.log error + cls_l_objective source + focused optimizer-unavailable import regression in this PR; PR #1012",
+      "status": "MITIGATED — fresh immutable successor proof pending"
     }
   ]
 }
