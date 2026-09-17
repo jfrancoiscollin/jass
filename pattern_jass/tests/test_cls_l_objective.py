@@ -2,6 +2,8 @@
 """Synthetic proofs required by the frozen CLS-L V1 preregistration."""
 from __future__ import annotations
 
+import builtins
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -144,3 +146,30 @@ def test_mixed_contract_is_exactly_two_terms_with_frozen_half_weight():
     assert [term.scale for term in terms] == [0.25, 0.125]
     with pytest.raises(cls_l.ObjectiveError):
         cls_l.mixed_terms(local, wdl, {"LOCAL": 2.0, "WDL": 4.0, "EXTRA": 1.0})
+
+
+def test_normalization_kernel_import_does_not_require_scipy_optimize(monkeypatch):
+    """The zero-fit preflight may compute norms even if optimizer import is unavailable."""
+    original_import = builtins.__import__
+
+    def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "scipy.optimize" or name.startswith("scipy.optimize."):
+            raise ImportError("optimizer intentionally unavailable in preflight proof")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+    name = "cls_l_objective_without_optimizer"
+    spec = importlib.util.spec_from_file_location(name, TOOLS / "cls_l_objective.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    try:
+        spec.loader.exec_module(module)
+        X, local, wdl, rows, parent, _probe = fixture()
+        norms = module.frozen_gradient_norms(
+            lambda selected: X[selected], rows, local, wdl, parent, batch=2
+        )
+        assert set(norms) == {"LOCAL", "WDL"}
+        assert norms["LOCAL"] > 0.0 and norms["WDL"] > 0.0
+    finally:
+        sys.modules.pop(name, None)
