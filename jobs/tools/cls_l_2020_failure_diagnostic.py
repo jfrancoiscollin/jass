@@ -30,7 +30,7 @@ FAILED_PREFIX = f"r2:jass-data/runs/{FAILED_JOB}/{FAILED_ATTEMPT}"
 TERMINAL = "CLS_L_2020_TECHNICAL_DIAGNOSTIC_COMPLETE_V1"
 PHASE = "execute-cls-l-2020-failure-diagnostic"
 ERROR_RE = re.compile(
-    r"ABORT(?: line=|:)|Traceback|error:|error\b|failed|usage:|No such file|CMake Error|ninja:|make(?:\[|:)|mismatch|drift",
+    r"ABORT(?: line=|:)|Traceback|error:|error\b|failed|usage:|No such file|missing(?:/empty)?|CMake Error|ninja:|make(?:\[|:)|mismatch|drift",
     re.IGNORECASE,
 )
 WORK_LOG_MAX_BYTES = 2 * 1024 * 1024
