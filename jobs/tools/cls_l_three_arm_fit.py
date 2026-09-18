@@ -35,7 +35,16 @@ import train_stream as stream  # noqa: E402
 
 SCHEMA = "jass.cls_l_three_arm_fit.v1"
 TERMINAL = "CLS_L_THREE_ARM_FITS_READY_V1"
+RECOVERY_TERMINAL = "CLS_L_VALID_ARMS_RECOVERED_V1"
 ARMS = ("LOCAL", "WDL", "MIXED")
+RECOVERY_ARMS = ("LOCAL", "WDL")
+RECOVERY_2038_JOB = "cpx62-2038-l3-cls-l-three-arm-fit-rehearsal-v2"
+RECOVERY_2038_ATTEMPT = "20260917T201315Z-d29e2c49"
+RECOVERY_2040_TERMINAL = "CLS_L_2038_FIT_LOG_DIAGNOSTIC_COMPLETE_V1"
+RECOVERY_2038_ERROR = (
+    "FitError: MIXED optimizer failure status=1 "
+    "message=STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT"
+)
 RECORDS = 2_000_000
 TRAIN_RECORDS = 1_800_796
 HOLDOUT_RECORDS = 199_204
@@ -174,6 +183,34 @@ def validate_normalization_receipt(
     return out
 
 
+def validate_recovery_2038_summary(path: Path) -> dict[str, Any]:
+    summary = load_json(path)
+    required = {
+        "terminal": RECOVERY_2040_TERMINAL,
+        "state": "completed",
+        "classification": "TECHNICAL_DIAGNOSTIC",
+        "scientific_verdict": None,
+        "failed_job_id": RECOVERY_2038_JOB,
+        "failed_attempt_id": RECOVERY_2038_ATTEMPT,
+        "primary_mechanical_error": RECOVERY_2038_ERROR,
+        "target_reads": 0,
+        "fits": 0,
+        "new_jass_searches": 0,
+        "new_scan_searches": 0,
+        "strength_games": 0,
+        "selfplay_games": 0,
+        "alpha_spent": 0,
+        "promotions": 0,
+        "bakes": 0,
+    }
+    for key, expected in required.items():
+        if summary.get(key) != expected:
+            raise FitError(f"2038 recovery evidence drift:{key}")
+    if summary.get("next_stage") != "REPAIR_PROVEN_2038_FIT_MECHANICS_ONLY":
+        raise FitError("2038 recovery next-stage drift")
+    return summary
+
+
 def serialize_weights(
     out: Path, fitted: np.ndarray, folder: Any, remap: np.ndarray,
     pat_n: int, extras_n: int,
@@ -200,6 +237,12 @@ def serialize_weights(
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    recovery = (
+        validate_recovery_2038_summary(args.recovery_2038_summary)
+        if args.recovery_2038_summary is not None else None
+    )
+    fit_arms = RECOVERY_ARMS if recovery is not None else ARMS
+    terminal = RECOVERY_TERMINAL if recovery is not None else TERMINAL
     out_dir = args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     mm, records = stream.open_jnnw(str(args.data))
@@ -283,7 +326,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "MIXED": objective.mixed_terms(local, wdl_targets, norms),
     }
     arms: dict[str, Any] = {}
-    for arm in ARMS:
+    for arm in fit_arms:
         terms = arm_terms[arm]
         evaluations = 0
 
@@ -352,19 +395,29 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         }
         atomic_json(out_dir / f"{arm}-fit-receipt.json", arms[arm])
 
-    if {arms[a]["coordinate_identity_sha256"] for a in ARMS} != {coord_sha}:
+    if {arms[a]["coordinate_identity_sha256"] for a in fit_arms} != {coord_sha}:
         raise FitError("cross-arm coordinate identity drift")
-    if len({arms[a]["trainable_coordinates"] for a in ARMS}) != 1:
+    if len({arms[a]["trainable_coordinates"] for a in fit_arms}) != 1:
         raise FitError("cross-arm trainable-coordinate count drift")
 
     report = {
         "schema": SCHEMA,
-        "terminal": TERMINAL,
+        "terminal": terminal,
         "state": "completed",
         "arms": arms,
-        "arm_order": list(ARMS),
+        "arm_order": list(fit_arms),
         "varied_factor": "learning_objective",
         "all_other_axes_fixed": True,
+        "attribution_complete": recovery is None,
+        "technical_failed_arms": [] if recovery is None else ["MIXED"],
+        "recovery_2038": None if recovery is None else {
+            "failed_job_id": RECOVERY_2038_JOB,
+            "failed_attempt_id": RECOVERY_2038_ATTEMPT,
+            "diagnostic_terminal": recovery["terminal"],
+            "primary_mechanical_error": recovery["primary_mechanical_error"],
+            "max_iterations_unchanged": MAX_ITER,
+            "retuning_performed": False,
+        },
         "records": RECORDS,
         "train_records": TRAIN_RECORDS,
         "holdout_records": HOLDOUT_RECORDS,
@@ -397,7 +450,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "local_targets_sha256": local_sha,
             "parent_sha256": parent_sha,
         },
-        "fits": 3,
+        "fits": len(fit_arms),
         "new_jass_searches": 0,
         "new_scan_searches": 0,
         "strength_games": 0,
@@ -421,6 +474,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--parent", required=True, type=Path)
     ap.add_argument("--normalization-receipt", required=True, type=Path)
     ap.add_argument("--out-dir", required=True, type=Path)
+    ap.add_argument("--recovery-2038-summary", type=Path)
     args = ap.parse_args(argv)
     report = run(args)
     print(json.dumps({"terminal": report["terminal"], "arms": report["arm_order"]}, sort_keys=True))
