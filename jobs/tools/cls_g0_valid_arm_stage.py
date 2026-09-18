@@ -73,6 +73,94 @@ def _write_tsv(path: Path, rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
+def hard_nodes_to_depth_failure_result(report: dict, root_ids: list[str]) -> dict[str, object] | None:
+    """Map preregistered missing same-search d* receipts to terminal scientific FAIL.
+
+    Section 5/7 of the frozen G0 contract says a missing exact/full-root d* receipt
+    in either arm is a hard G0-C failure and forbids any surrogate. Invalid numeric
+    receipts remain technical failures in the native probe.
+    """
+    root_set = set(root_ids)
+
+    def checked_roots(name: str) -> list[str]:
+        raw = report.get(name)
+        if not isinstance(raw, list):
+            raise StageError(f"probe missing-root inventory drift:{name}")
+        values = [str(value) for value in raw]
+        if len(values) != len(set(values)) or not set(values).issubset(root_set):
+            raise StageError(f"probe missing-root identity drift:{name}")
+        return values
+
+    parent_missing = checked_roots("parent_nodes_to_depth_missing_roots")
+    candidate_missing = checked_roots("candidate_nodes_to_depth_missing_roots")
+    hard_reported = checked_roots("hard_nodes_to_depth_failure_roots")
+    hard = [root for root in root_ids if root in set(parent_missing) | set(candidate_missing)]
+    if hard_reported != hard:
+        raise StageError("probe hard nodes-to-depth root-order drift")
+    if report.get("hard_nodes_to_depth_failure_count") != len(hard):
+        raise StageError("probe hard nodes-to-depth count drift")
+    if report.get("nodes_to_depth_surrogate_used") is not False:
+        raise StageError("probe nodes-to-depth surrogate drift")
+    if not hard:
+        return None
+
+    reason = "missing_same_search_exact_full_root_receipt_no_surrogate"
+    return {
+        "schema": "jass.cls_g0_runtime_gate.v1",
+        "state": "completed",
+        "terminal": gate.FAIL_TERMINAL,
+        "pass": False,
+        "gates": {
+            "nps": {
+                "evaluated": False,
+                "pass": None,
+                "reason": "terminal_hard_nodes_to_depth_failure",
+            },
+            "completed_nominal_depth": {
+                "evaluated": False,
+                "pass": None,
+                "reason": "terminal_hard_nodes_to_depth_failure",
+            },
+            "nodes_to_depth": {
+                "evaluated": True,
+                "value": None,
+                "operator": "<=",
+                "threshold": gate.NODES_TO_DEPTH_CEILING,
+                "pass": False,
+                "reason": reason,
+                "hard_failure_roots": hard,
+                "parent_missing_roots": parent_missing,
+                "candidate_missing_roots": candidate_missing,
+                "surrogate_used": False,
+            },
+            "search_transfer": {
+                "evaluated": False,
+                "pass": None,
+                "reason": "terminal_hard_nodes_to_depth_failure",
+            },
+        },
+        "bootstrap": {
+            "performed": False,
+            "replicates": gate.BOOTSTRAP_REPLICATES,
+            "seed": gate.BOOTSTRAP_SEED,
+            "unit": "root_id",
+            "phase_stratified": True,
+            "quantile": "numpy_type_7",
+            "reason": reason,
+        },
+        "hard_nodes_to_depth_failure": {
+            "count": len(hard),
+            "roots": hard,
+            "parent_missing_roots": parent_missing,
+            "candidate_missing_roots": candidate_missing,
+            "surrogate_used": False,
+        },
+        "alpha_spent": 0,
+        "promotion_authorized": False,
+        "bake_authorized": False,
+    }
+
+
 def freeze_full_root_order(deep512: Path, root_selection: Path, deep_reference: Path,
                            ids_out: Path, deep512_out: Path, deep_out: Path) -> list[str]:
     selection = _json(root_selection)
@@ -279,11 +367,13 @@ def run_stage(work: Path, artifacts: Path, arm: str, mode: str) -> dict[str, obj
         if report.get(key) != expected:
             raise StageError(f"probe contract drift:{key}")
 
-    vectors = gate.paired_vectors(
-        gate.read_tsv(probe_tsv), gate.read_tsv(ordered_deep512), gate.read_tsv(ordered_deep)
-    )
-    metrics = gate.bootstrap(vectors)
-    gate_result = gate.decide(metrics)
+    gate_result = hard_nodes_to_depth_failure_result(report, root_ids)
+    if gate_result is None:
+        vectors = gate.paired_vectors(
+            gate.read_tsv(probe_tsv), gate.read_tsv(ordered_deep512), gate.read_tsv(ordered_deep)
+        )
+        metrics = gate.bootstrap(vectors)
+        gate_result = gate.decide(metrics)
 
     for name, source in {
         "g0-root-ids.txt": ids,
@@ -352,13 +442,21 @@ def run_stage(work: Path, artifacts: Path, arm: str, mode: str) -> dict[str, obj
         "bake_authorized": False,
     }
     base.atomic_write(artifacts / "scientific-summary.json", base.canonical_json(summary))
+    hard = gate_result.get("hard_nodes_to_depth_failure")
+    hard_note = ""
+    if isinstance(hard, dict) and hard.get("count"):
+        hard_note = (
+            f"\nG0-C hard failure roots: {hard['count']}; at least one arm had no exact "
+            "same-search full-root receipt at parent-defined d*. No surrogate was used.\n"
+        )
     results = (
         "# CLS-G0 runtime catastrophe gate — sealed valid arm\n\n"
         f"Arm: `{arm}`  \n"
         f"Candidate SHA256: `{ARM_MODEL_SHA[arm]}`  \n"
         f"Parent / fixed anchor SHA256: `{CURRICULUM_SHA}`  \n"
         f"Roots: {gate.ROOTS} ({gate.ROOTS_PER_PHASE}/phase), exact node budget: {gate.PRIMARY_BUDGET}.  \n"
-        f"Terminal: `{gate_result['terminal']}`.\n\n"
+        f"Terminal: `{gate_result['terminal']}`.\n"
+        f"{hard_note}\n"
         "The same executable/search configuration was used for parent and candidate; evaluator bytes "
         "were the only semantic difference. SearchDecisionTrace passivity was proved on all parent "
         "roots before candidate measurement, and nodes-to-depth came only from the same search.\n\n"
