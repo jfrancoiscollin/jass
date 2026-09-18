@@ -2,6 +2,7 @@
 """Launch-V2 wrapper for one frozen CLS-G0 sealed valid arm."""
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 import sys
@@ -15,6 +16,63 @@ from jobs.tools import cls_g0_valid_arm_stage as stage  # noqa: E402
 from jobs.tools.launch_runtime_v2 import StageEvidence, atomic_json  # noqa: E402
 
 PHASES = [stage.PHASE]
+MANIFEST_EVIDENCE = (
+    "g0-root-ids.txt",
+    "g0-deep512.tsv",
+    "g0-deep-reference.tsv",
+    "probe.tsv",
+    "probe-report.json",
+    "gate-readout.json",
+    "source-authentication.json",
+    "candidate-authentication.json",
+    "scientific-summary.json",
+    "RESULTS.md",
+)
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _write_manifest(art: Path, arm: str, mode: str, summary: dict[str, object]) -> None:
+    sealed: dict[str, dict[str, object]] = {}
+    for name in MANIFEST_EVIDENCE:
+        path = art / name
+        if not path.is_file() or path.stat().st_size <= 0:
+            raise RuntimeError(f"manifest evidence missing/nonempty:{name}")
+        sealed[name] = {"sha256": _sha256(path), "size_bytes": path.stat().st_size}
+    atomic_json(art / "manifest.json", {
+        "schema": "jass.cls_g0_valid_arm_runtime_manifest.v1",
+        "state": "completed",
+        "terminal": summary.get("terminal"),
+        "scientific_verdict": summary.get("scientific_verdict"),
+        "mode": mode,
+        "candidate_arm": arm,
+        "candidate_sha256": stage.ARM_MODEL_SHA[arm],
+        "direct_parent_sha256": stage.CURRICULUM_SHA,
+        "fixed_curriculum_anchor_sha256": stage.CURRICULUM_SHA,
+        "roots": summary.get("roots"),
+        "budget_nodes": summary.get("budget_nodes"),
+        "evidence": sealed,
+        "scientific_side_effects": {
+            "target_reads": 0,
+            "confirmation_target_reads": 0,
+            "fits": 0,
+            "new_scan_searches": 0,
+            "new_jass_searches": int(summary["new_jass_searches"]),
+            "strength_games": 0,
+            "selfplay_games": 0,
+            "alpha_spent": 0,
+            "promotions": 0,
+            "bakes": 0,
+        },
+        "promotion_authorized": False,
+        "bake_authorized": False,
+    })
 
 
 def main() -> int:
@@ -27,6 +85,7 @@ def main() -> int:
     try:
         evidence.begin(PHASES[0])
         summary = stage.run_stage(result / f"cls-g0-{arm.lower()}-work", art, arm, mode)
+        _write_manifest(art, arm, mode, summary)
         evidence.value["actual_side_effects"].update({
             "fits": 0,
             "new_scan_searches": 0,
