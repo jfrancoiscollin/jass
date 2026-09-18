@@ -172,7 +172,8 @@ std::vector<RootRecord> load_roots(const std::string& parents_path,
 }
 
 void write_row(std::ofstream& out, std::uint32_t root_id, const char* arm,
-               const Observation& obs, int target_depth, std::uint64_t nodes_to_target) {
+               const Observation& obs, int target_depth,
+               const std::optional<std::uint64_t>& nodes_to_target) {
     const double nps = obs.elapsed_us == 0 ? 0.0
         : static_cast<double>(obs.result.nodes) * 1'000'000.0
             / static_cast<double>(obs.elapsed_us);
@@ -180,8 +181,18 @@ void write_row(std::ofstream& out, std::uint32_t root_id, const char* arm,
     out << root_id << '\t' << arm << '\t' << obs.result.nodes << '\t'
         << obs.result.completed_depth << '\t' << obs.result.effective_depth << '\t'
         << canonical_move(obs.result.best_move) << '\t' << obs.result.score << '\t'
-        << obs.elapsed_us << '\t' << nps << '\t' << target_depth << '\t'
-        << nodes_to_target << '\t' << obs.trace.attempts.size() << '\n';
+        << obs.elapsed_us << '\t' << nps << '\t' << target_depth << '\t';
+    if (nodes_to_target.has_value()) out << *nodes_to_target;
+    out << '\t' << obs.trace.attempts.size() << '\n';
+}
+
+void write_id_array(std::ofstream& out, const std::vector<std::uint32_t>& ids) {
+    out << '[';
+    for (std::size_t i = 0; i < ids.size(); ++i) {
+        if (i != 0) out << ',';
+        out << ids[i];
+    }
+    out << ']';
 }
 
 }  // namespace
@@ -216,7 +227,8 @@ int main(int argc, char** argv) {
         // before any candidate root is measured.
         std::vector<Observation> parent_obs;
         std::vector<int> target_depths;
-        std::vector<std::uint64_t> parent_nodes_to_target;
+        std::vector<std::optional<std::uint64_t>> parent_nodes_to_target;
+        std::vector<std::uint32_t> parent_missing_roots;
         parent_obs.reserve(roots.size());
         target_depths.reserve(roots.size());
         parent_nodes_to_target.reserve(roots.size());
@@ -227,25 +239,38 @@ int main(int argc, char** argv) {
                 throw std::runtime_error("trace-on/off public search mismatch");
             const int target = std::max(1, on.result.completed_depth - 1);
             const auto nodes = exact_nodes_to_depth(on.trace, target);
-            if (!nodes.has_value() || *nodes == 0 || *nodes > on.result.nodes)
-                throw std::runtime_error("missing/invalid parent same-search nodes-to-depth");
+            if (nodes.has_value() && (*nodes == 0 || *nodes > on.result.nodes))
+                throw std::runtime_error("invalid parent same-search nodes-to-depth");
+            if (!nodes.has_value()) parent_missing_roots.push_back(root.id);
             parent_obs.push_back(std::move(on));
             target_depths.push_back(target);
-            parent_nodes_to_target.push_back(*nodes);
+            parent_nodes_to_target.push_back(nodes);
         }
 
         // Phase 2: only after all trace passivity checks succeed, measure candidate.
+        // A missing exact/full-root d* receipt is a preregistered hard G0-C FAIL,
+        // not a technical exception. Preserve it as missing; never fabricate a surrogate.
         std::vector<Observation> candidate_obs;
-        std::vector<std::uint64_t> candidate_nodes_to_target;
+        std::vector<std::optional<std::uint64_t>> candidate_nodes_to_target;
+        std::vector<std::uint32_t> candidate_missing_roots;
         candidate_obs.reserve(roots.size());
         candidate_nodes_to_target.reserve(roots.size());
         for (std::size_t i = 0; i < roots.size(); ++i) {
             auto obs = run_one(roots[i].position, candidate.get(), true);
             const auto nodes = exact_nodes_to_depth(obs.trace, target_depths[i]);
-            if (!nodes.has_value() || *nodes == 0 || *nodes > obs.result.nodes)
-                throw std::runtime_error("missing/invalid candidate same-search nodes-to-depth");
+            if (nodes.has_value() && (*nodes == 0 || *nodes > obs.result.nodes))
+                throw std::runtime_error("invalid candidate same-search nodes-to-depth");
+            if (!nodes.has_value()) candidate_missing_roots.push_back(roots[i].id);
             candidate_obs.push_back(std::move(obs));
-            candidate_nodes_to_target.push_back(*nodes);
+            candidate_nodes_to_target.push_back(nodes);
+        }
+
+        std::unordered_set<std::uint32_t> hard_missing_set;
+        for (const auto id : parent_missing_roots) hard_missing_set.insert(id);
+        for (const auto id : candidate_missing_roots) hard_missing_set.insert(id);
+        std::vector<std::uint32_t> hard_missing_roots;
+        for (const auto& root : roots) {
+            if (hard_missing_set.count(root.id)) hard_missing_roots.push_back(root.id);
         }
 
         std::ofstream out(argv[3]);
@@ -275,6 +300,14 @@ int main(int argc, char** argv) {
                << "  \"nodes_to_depth_rule\": \"LAST_COMPLETED_EXACT_ALL_ACTIONS_SEARCHED_AT_TARGET_DEPTH\",\n"
                << "  \"parent_searches\": " << roots.size() * 2 << ",\n"
                << "  \"candidate_searches\": " << roots.size() << ",\n"
+               << "  \"parent_nodes_to_depth_missing_roots\": ";
+        write_id_array(report, parent_missing_roots);
+        report << ",\n  \"candidate_nodes_to_depth_missing_roots\": ";
+        write_id_array(report, candidate_missing_roots);
+        report << ",\n  \"hard_nodes_to_depth_failure_count\": " << hard_missing_roots.size()
+               << ",\n  \"hard_nodes_to_depth_failure_roots\": ";
+        write_id_array(report, hard_missing_roots);
+        report << ",\n  \"nodes_to_depth_surrogate_used\": false,\n"
                << "  \"alpha_spent\": 0,\n"
                << "  \"promotion_authorized\": false\n"
                << "}\n";
