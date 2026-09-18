@@ -770,6 +770,16 @@
       "invariant": "preserve exact LOCAL bytes, CURRICULUM anchor, FULL-512 roots/order, 200k node semantics, same-search parent-defined d*, bootstrap seed/thresholds and terminal mapping; diagnostic reads zero scientific payloads",
       "evidence": "fresh 2044 control status plus bounded diagnostic introduced in this PR; PR #1028",
       "status": "OPEN — exact mechanical witness pending 2044 diagnostic"
+    },
+    {
+      "id": "TI-078",
+      "dedupe_key": "job:cpx62-2044-l3-cls-g0-local-runtime-rehearsal-v2:root-order",
+      "context": "CLS-G0 LOCAL rehearsal 2044 / diagnostic 2045",
+      "symptom": "repaired G0 harness failed TECHNICAL with probe hard nodes-to-depth root-order drift after search completion",
+      "root_cause": "native probe discarded the frozen root_ids.txt order by parsing into unordered_set and scanning parents.jnnw in ascending corpus index order",
+      "invariant": "preserve exact FULL-512 set AND order, 200k node semantics, parent-defined same-search d*, bootstrap seed/thresholds, CURRICULUM anchor and LOCAL candidate bytes",
+      "evidence": "2045 authenticated stage.stderr.log plus native load_ids/load_roots implementation and focused regressions; PR #1029",
+      "status": "MITIGATED — fresh immutable same-code LOCAL rehearsal required"
     }
   ]
 }
