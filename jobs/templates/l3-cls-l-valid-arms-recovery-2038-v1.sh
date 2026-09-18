@@ -179,6 +179,8 @@ source={
  'verified_turnover':json.load(open(f'{art}/verified-turnover.json')),
  'verified_curriculum':json.load(open(f'{art}/verified-curriculum.json')),
  'verified_preflight':json.load(open(f'{art}/verified-preflight.json')),
+ 'verified_recovery':json.load(open(f'{art}/verified-recovery.json')),
+ 'recovery_summary_sha256':sha(f'{art}/../inputs/recovery-2038-summary.json') if False else None,
  'confirmation_target_reads':0,
 }
 open(f'{art}/source-authentication.json','w').write(json.dumps(source,indent=2,sort_keys=True)+'\n')
