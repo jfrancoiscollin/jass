@@ -800,6 +800,16 @@
       "invariant": "repair only candidate identity pin; preserve exact WDL bytes, frozen G0 contract, FULL-512 cohort/order, runtime/search settings, bootstrap and zero-strength boundary",
       "evidence": "2041 scientific summary exact WDL model_sha256 + 2048 stack ending in authenticate_candidate + focused constant regression; PR #1031",
       "status": "MITIGATED — fresh immutable WDL rehearsal pending"
+    },
+    {
+      "id": "TI-081",
+      "dedupe_key": "job:cpx62-2050-l3-cls-hier-l2-control-reproduction-rehearsal-v1",
+      "context": "CLS HIER-L2 CONTROL reproduction rehearsal 2050 / attempt 20260918T201651Z-1c8de5ca",
+      "symptom": "Launch-V2 failed TECHNICAL / STAGE_FAILED:EXECUTE, exit 2, after publishing partial CONTROL fit evidence; no scientific verdict",
+      "root_cause": "PENDING — exact bounded runner-owned stage stderr/receipt diagnostic required before repair",
+      "invariant": "diagnose only bounded runner-owned stage logs; preserve exact historical sources, CURRENT_2M split, CONTEXT_30 target, model-C prior, 8cf geometry, L2=1e-5, frozen optimizer/serialization, CONTROL hier_l2=0 byte-reproduction requirement and zero-search/strength/promotion/bake boundary",
+      "evidence": "fresh 2050 control status plus bounded diagnostic introduced in this PR; PR #1034",
+      "status": "OPEN — exact mechanical witness pending 2050 diagnostic"
     }
   ]
 }
