@@ -118,6 +118,9 @@ jobs:
       - name: Run CLS-L 2038 valid-arm recovery tests
         run: python -m unittest jobs.tests.test_cls_l_valid_arms_recovery_2038_v1 -v
 
+      - name: Run CLS HIER-L2 next-candidate contract tests
+        run: python -m unittest jobs.tests.test_cls_hier_l2_next_candidate_v1 -v
+
   wasm:
     name: Build WASM
     runs-on: ubuntu-latest
