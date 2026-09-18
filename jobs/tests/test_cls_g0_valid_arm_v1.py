@@ -20,7 +20,7 @@ class CLSG0ValidArmV1Tests(unittest.TestCase):
         self.assertEqual(stage.CURRICULUM_SHA, "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1")
         self.assertEqual(stage.ARM_MODEL_SHA, {
             "LOCAL": "197998003db3d221d38e81577cfa381e8227d67705efc1c86b87205ddebbe450",
-            "WDL": "eabe71068dbc6aeb519a61c730d18586e75c8b72308fe2e18deed6",
+            "WDL": "eabe71068dbc6aeb519a61c730d18586e75c8b72308ecd340de08fe2e18deed6",
         })
         self.assertEqual(stage.EXPECTED_SEARCHES, 1536)
         self.assertEqual(gate.ROOTS, 512)
