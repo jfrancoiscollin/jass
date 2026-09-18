@@ -103,6 +103,9 @@ jobs:
       - name: Run CLS-G0 identity preflight tests
         run: python -m unittest jobs.tests.test_cls_g0_runtime_preflight_v1 -v
 
+      - name: Run CLS-G0 valid-arm gate tests
+        run: python -m unittest jobs.tests.test_cls_g0_valid_arm_v1 -v
+
       - name: Run CLS-L objective attribution contract tests
         run: python -m unittest jobs.tests.test_cls_l_objective_attribution_v1 -v
 
