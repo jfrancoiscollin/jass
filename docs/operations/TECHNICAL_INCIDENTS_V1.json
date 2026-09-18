@@ -780,6 +780,16 @@
       "invariant": "preserve exact FULL-512 set AND order, 200k node semantics, parent-defined same-search d*, bootstrap seed/thresholds, CURRICULUM anchor and LOCAL candidate bytes",
       "evidence": "2045 authenticated stage.stderr.log plus native load_ids/load_roots implementation and focused regressions; PR #1029",
       "status": "MITIGATED — fresh immutable same-code LOCAL rehearsal required"
+    },
+    {
+      "id": "TI-079",
+      "dedupe_key": "job:cpx62-2046-l3-cls-g0-local-runtime-rehearsal-v3:missing-manifest",
+      "context": "CLS-G0 LOCAL runtime rehearsal 2046 / attempt 20260918T160010Z-e4eea0d5",
+      "symptom": "Launch-V2 STAGE_FAILED:OUTPUTS after stage evidence and execution-evidence were published",
+      "root_cause": "generated stage spec requires manifest.json but cls_g0_valid_arm_launch_stage.py never emitted it; authenticated 2046 artefact inventory contains every other required output and no manifest.json",
+      "invariant": "repair only output sealing; preserve exact LOCAL bytes, CURRICULUM anchor, FULL-512 root set/order, 200k same-search semantics, bootstrap seed/thresholds and terminal mapping",
+      "evidence": "2046 control status artefact inventory + 2046 generated stage spec outputs + focused manifest regression in this PR; PR #1030",
+      "status": "MITIGATED — fresh immutable same-science LOCAL rehearsal required after green CI"
     }
   ]
 }
