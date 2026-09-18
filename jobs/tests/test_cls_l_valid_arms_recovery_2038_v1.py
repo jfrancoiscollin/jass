@@ -70,6 +70,17 @@ class CLSLValidArmsRecovery2038Tests(unittest.TestCase):
         self.assertIn("MIXED remains technical-failed at frozen cap", text)
         self.assertIn("evidence.record_effect('fits',2)", text)
 
+    def test_recovery_shell_is_bash_syntax_valid(self):
+        completed = subprocess.run(
+            ["/usr/bin/bash", "-n", str(SHELL)],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
     def test_launch_profile_allows_two_recovery_fits_only(self):
         profile = json.loads(PROFILE.read_text(encoding="utf-8"))
         self.assertEqual(profile["stage"], "cls-l-valid-arms-recovery-2038-v1")
