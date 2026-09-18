@@ -88,11 +88,50 @@ class CLSG0ValidArmV1Tests(unittest.TestCase):
         self.assertIn("SearchDecisionBound::Exact", probe)
         self.assertIn("attempt.all_actions_searched", probe)
         self.assertNotIn("go depth", probe.lower())
+        self.assertIn("std::vector<std::optional<std::uint64_t>> candidate_nodes_to_target", probe)
+        self.assertIn("candidate_missing_roots", probe)
+        self.assertIn('\\"nodes_to_depth_surrogate_used\\": false', probe)
+        self.assertNotIn("missing/invalid candidate same-search nodes-to-depth", probe)
+        self.assertIn("invalid candidate same-search nodes-to-depth", probe)
         self.assertIn("str(parent), str(candidate)", candidate)
         self.assertIn('"new_scan_searches": 0', candidate)
         self.assertIn('"strength_games": 0', candidate)
         self.assertIn('"promotion_authorized": False', candidate)
         self.assertIn('"bake_authorized": False', candidate)
+
+    def test_missing_same_search_receipt_is_terminal_fail_without_surrogate(self) -> None:
+        report = {
+            "parent_nodes_to_depth_missing_roots": [],
+            "candidate_nodes_to_depth_missing_roots": [20],
+            "hard_nodes_to_depth_failure_count": 1,
+            "hard_nodes_to_depth_failure_roots": [20],
+            "nodes_to_depth_surrogate_used": False,
+        }
+        result = stage.hard_nodes_to_depth_failure_result(report, ["10", "20"])
+        self.assertIsNotNone(result)
+        assert result is not None
+        self.assertEqual(result["terminal"], gate.FAIL_TERMINAL)
+        self.assertFalse(result["pass"])
+        self.assertFalse(result["gates"]["nodes_to_depth"]["pass"])
+        self.assertEqual(result["gates"]["nodes_to_depth"]["threshold"], gate.NODES_TO_DEPTH_CEILING)
+        self.assertEqual(result["hard_nodes_to_depth_failure"]["roots"], ["20"])
+        self.assertFalse(result["hard_nodes_to_depth_failure"]["surrogate_used"])
+        self.assertFalse(result["bootstrap"]["performed"])
+        self.assertEqual(result["bootstrap"]["seed"], gate.BOOTSTRAP_SEED)
+        self.assertEqual(result["alpha_spent"], 0)
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["bake_authorized"])
+
+    def test_missing_receipt_inventory_drift_fails_technically(self) -> None:
+        bad = {
+            "parent_nodes_to_depth_missing_roots": [],
+            "candidate_nodes_to_depth_missing_roots": [30],
+            "hard_nodes_to_depth_failure_count": 1,
+            "hard_nodes_to_depth_failure_roots": [30],
+            "nodes_to_depth_surrogate_used": False,
+        }
+        with self.assertRaises(stage.StageError):
+            stage.hard_nodes_to_depth_failure_result(bad, ["10", "20"])
 
 
 if __name__ == "__main__":
