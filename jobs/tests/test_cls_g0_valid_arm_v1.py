@@ -82,6 +82,7 @@ class CLSG0ValidArmV1Tests(unittest.TestCase):
                 self.assertEqual([r["root_id"] for r in csv.DictReader(stream, delimiter="\t")], ids)
 
     def test_native_probe_executes_exact_frozen_id_file_order(self) -> None:
+        # Regression for 2045: consume the frozen ID file in its exact ordinal order.
         probe = (ROOT / "jobs/tools/cls_g0_runtime_probe.cpp").read_text(encoding="utf-8")
         self.assertIn("std::vector<std::uint32_t> load_ids", probe)
         self.assertIn("out.push_back(id);", probe)
