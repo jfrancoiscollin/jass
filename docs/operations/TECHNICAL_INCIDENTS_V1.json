@@ -740,6 +740,16 @@
       "invariant": "bootstrap only the repository import root before the existing helper import; preserve the complete frozen three-arm scientific contract and downstream zero-effect boundary",
       "evidence": "2037 authenticated stage.stderr.log + focused isolated direct-file import regression in this PR; PR #1021",
       "status": "MITIGATED — fresh immutable rehearsal successor proof pending"
+    },
+    {
+      "id": "TI-075",
+      "dedupe_key": "job:cpx62-2038-l3-cls-l-three-arm-fit-rehearsal-v2:mixed-maxiter",
+      "context": "CLS-L three-arm rehearsal 2038 / diagnostic 2040",
+      "symptom": "MIXED optimizer reached frozen L-BFGS max_iterations=2000; bundle aborted and ephemeral LOCAL/WDL outputs were not published",
+      "root_cause": "the harness treated one arm optimization limit as fatal to the entire bundle and finalizer removed already-successful LOCAL/WDL work outputs",
+      "invariant": "do not change max_iterations=2000, lambda, L2, source, targets, architecture or optimizer recipe; recover only technically valid LOCAL/WDL under identical frozen science and keep MIXED technical-failed",
+      "evidence": "2040 attempt 20260918T063103Z-d04b96d8 terminal CLS_L_2038_FIT_LOG_DIAGNOSTIC_COMPLETE_V1, exact primary error MIXED optimizer limit; PR #1024",
+      "status": "MITIGATED — fresh immutable LOCAL/WDL recovery rehearsal pending"
     }
   ]
 }
