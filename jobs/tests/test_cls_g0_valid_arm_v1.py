@@ -81,6 +81,15 @@ class CLSG0ValidArmV1Tests(unittest.TestCase):
             with out_deep.open(newline="", encoding="utf-8") as stream:
                 self.assertEqual([r["root_id"] for r in csv.DictReader(stream, delimiter="\t")], ids)
 
+    def test_native_probe_executes_exact_frozen_id_file_order(self) -> None:
+        probe = (ROOT / "jobs/tools/cls_g0_runtime_probe.cpp").read_text(encoding="utf-8")
+        self.assertIn("std::vector<std::uint32_t> load_ids", probe)
+        self.assertIn("out.push_back(id);", probe)
+        self.assertIn("const std::vector<std::uint32_t>& ids", probe)
+        self.assertIn("ordered_positions[static_cast<std::size_t>(where - ids.begin())] = position;", probe)
+        self.assertIn("roots.push_back({ids[ordinal], *ordered_positions[ordinal]});", probe)
+        self.assertNotIn("std::unordered_set<std::uint32_t> load_ids", probe)
+
     def test_candidate_probe_keeps_same_search_and_no_depth_surrogate(self) -> None:
         probe = (ROOT / "jobs/tools/cls_g0_runtime_probe.cpp").read_text(encoding="utf-8")
         candidate = (ROOT / "jobs/tools/cls_g0_valid_arm_stage.py").read_text(encoding="utf-8")
@@ -121,6 +130,19 @@ class CLSG0ValidArmV1Tests(unittest.TestCase):
         self.assertEqual(result["alpha_spent"], 0)
         self.assertFalse(result["promotion_authorized"])
         self.assertFalse(result["bake_authorized"])
+
+    def test_missing_receipt_hard_inventory_uses_frozen_root_order(self) -> None:
+        report = {
+            "parent_nodes_to_depth_missing_roots": [10],
+            "candidate_nodes_to_depth_missing_roots": [20],
+            "hard_nodes_to_depth_failure_count": 2,
+            "hard_nodes_to_depth_failure_roots": [20, 10],
+            "nodes_to_depth_surrogate_used": False,
+        }
+        result = stage.hard_nodes_to_depth_failure_result(report, ["20", "10"])
+        self.assertIsNotNone(result)
+        assert result is not None
+        self.assertEqual(result["hard_nodes_to_depth_failure"]["roots"], ["20", "10"])
 
     def test_missing_receipt_inventory_drift_fails_technically(self) -> None:
         bad = {
