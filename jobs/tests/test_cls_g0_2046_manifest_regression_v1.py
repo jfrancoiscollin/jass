@@ -12,6 +12,7 @@ from jobs.tools import cls_g0_valid_arm_stage as stage
 
 class CLSG02046ManifestRegressionV1Tests(unittest.TestCase):
     def test_required_launch_manifest_is_sealed_without_changing_science(self) -> None:
+        # Regression boundary: seal transport evidence only; never reinterpret the 2046 readout.
         with tempfile.TemporaryDirectory() as tmp:
             art = Path(tmp)
             for index, name in enumerate(launch.MANIFEST_EVIDENCE, start=1):
