@@ -760,6 +760,16 @@
       "invariant": "preserve exact FULL-512 roots/order, 200k search semantics, parent-defined d*, SearchDecisionTrace parity, bootstrap seed/thresholds, CURRICULUM anchor and candidate bytes; missing receipt is scientific FAIL, invalid numeric receipt remains technical",
       "evidence": "2043 authenticated stage.stderr.log plus frozen G0 contract sections 5/7 and focused regression; PR #1027",
       "status": "MITIGATED — fresh immutable same-code LOCAL rehearsal pending"
+    },
+    {
+      "id": "TI-077",
+      "dedupe_key": "job:cpx62-2044-l3-cls-g0-local-runtime-rehearsal-v2",
+      "context": "CLS-G0 LOCAL runtime rehearsal 2044 / attempt 20260918T133310Z-a0aa3c5c",
+      "symptom": "Launch-V2 failed TECHNICAL / STAGE_FAILED:EXECUTE inside hard_nodes_to_depth_failure_result after the 2042 classification repair; no scientific verdict",
+      "root_cause": "PENDING — exact bounded runner-owned stage stderr/receipt diagnostic required before repair",
+      "invariant": "preserve exact LOCAL bytes, CURRICULUM anchor, FULL-512 roots/order, 200k node semantics, same-search parent-defined d*, bootstrap seed/thresholds and terminal mapping; diagnostic reads zero scientific payloads",
+      "evidence": "fresh 2044 control status plus bounded diagnostic introduced in this PR; PR #1028",
+      "status": "OPEN — exact mechanical witness pending 2044 diagnostic"
     }
   ]
 }
