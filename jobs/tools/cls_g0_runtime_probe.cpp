@@ -11,6 +11,7 @@
 #undef main
 #undef load_pattern_jass_network
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <chrono>
@@ -32,16 +33,19 @@ constexpr std::uint64_t PRIMARY_BUDGET = 200'000;
 constexpr std::size_t TT_MB = 16;
 constexpr int EGDB_CACHE_MB = 256;
 
-std::unordered_set<std::uint32_t> load_ids(const std::string& path) {
+std::vector<std::uint32_t> load_ids(const std::string& path) {
     std::ifstream in(path);
     if (!in) throw std::runtime_error("cannot open root id file");
-    std::unordered_set<std::uint32_t> out;
+    std::vector<std::uint32_t> out;
+    std::unordered_set<std::uint32_t> seen;
     std::uint64_t value = 0;
     while (in >> value) {
         if (value > std::numeric_limits<std::uint32_t>::max())
             throw std::runtime_error("root id overflow");
-        if (!out.insert(static_cast<std::uint32_t>(value)).second)
+        const auto id = static_cast<std::uint32_t>(value);
+        if (!seen.insert(id).second)
             throw std::runtime_error("duplicate root id");
+        out.push_back(id);
     }
     if (!in.eof() || out.empty()) throw std::runtime_error("invalid/empty root id file");
     return out;
@@ -139,7 +143,7 @@ struct RootRecord {
 };
 
 std::vector<RootRecord> load_roots(const std::string& parents_path,
-                                   const std::unordered_set<std::uint32_t>& ids) {
+                                   const std::vector<std::uint32_t>& ids) {
     std::ifstream in(parents_path, std::ios::binary);
     if (!in) throw std::runtime_error("cannot open parents.jnnw");
     std::array<char, 8> header{};
@@ -150,12 +154,12 @@ std::vector<RootRecord> load_roots(const std::string& parents_path,
     for (const auto id : ids) if (id >= declared)
         throw std::runtime_error("root id outside parent corpus");
 
-    std::vector<RootRecord> roots;
-    roots.reserve(ids.size());
+    const std::unordered_set<std::uint32_t> wanted(ids.begin(), ids.end());
+    std::vector<std::optional<jass::Position>> ordered_positions(ids.size());
     DiskRow row{};
     for (std::uint32_t idx = 0; idx < declared; ++idx) {
         if (!read_row(in, row)) throw std::runtime_error("truncated parents JNNW");
-        if (!ids.count(idx)) continue;
+        if (!wanted.count(idx)) continue;
         if (!valid_row(row) || row.score != 0 || row.wdl != 0)
             throw std::runtime_error("invalid or labelled CLS-G0 parent row");
         jass::MoveList legal;
@@ -163,11 +167,20 @@ std::vector<RootRecord> load_roots(const std::string& parents_path,
         jass::generate_legal_moves(position, legal);
         if (legal.size() < 2 || legal.size() > 16)
             throw std::runtime_error("CLS-G0 root branching outside frozen support");
-        roots.push_back({idx, position});
+        const auto where = std::find(ids.begin(), ids.end(), idx);
+        if (where == ids.end()) throw std::runtime_error("requested root order lookup drift");
+        ordered_positions[static_cast<std::size_t>(where - ids.begin())] = position;
     }
     if (in.read(reinterpret_cast<char*>(&row), 1))
         throw std::runtime_error("trailing parent bytes");
-    if (roots.size() != ids.size()) throw std::runtime_error("root cardinality drift");
+
+    std::vector<RootRecord> roots;
+    roots.reserve(ids.size());
+    for (std::size_t ordinal = 0; ordinal < ids.size(); ++ordinal) {
+        if (!ordered_positions[ordinal].has_value())
+            throw std::runtime_error("root cardinality drift");
+        roots.push_back({ids[ordinal], *ordered_positions[ordinal]});
+    }
     return roots;
 }
 
