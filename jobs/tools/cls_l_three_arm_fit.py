@@ -238,8 +238,8 @@ def serialize_weights(
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
     recovery = (
-        validate_recovery_2038_summary(args.recovery_2038_summary)
-        if args.recovery_2038_summary is not None else None
+        validate_recovery_2038_summary(getattr(args, "recovery_2038_summary", None))
+        if getattr(args, "recovery_2038_summary", None) is not None else None
     )
     fit_arms = RECOVERY_ARMS if recovery is not None else ARMS
     terminal = RECOVERY_TERMINAL if recovery is not None else TERMINAL
