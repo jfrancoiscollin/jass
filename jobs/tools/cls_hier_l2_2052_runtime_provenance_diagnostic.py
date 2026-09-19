@@ -6,14 +6,15 @@ This diagnostic follows the authenticated 2053 finding that CONTROL still produc
 source recipe was materialized. It reads only two small technical runtime receipts:
 
 * 2052 ``runtime-authentication.json`` (created by the repaired historical recipe),
-* 1330 ``python-runtime.json`` (the Aug-14 current-compatible CPX runtime witness).
+* 1340 ``python-runtime.json`` (the completed Aug-14 CPX run immediately preceding
+  the authoritative 1341 CURRICULUM fit).
 
-It also authenticates the immutable source templates at their exact commits to
-show that both jobs name the same persistent numeric-venv path. It does not read
-corpora, targets, model bytes, optimizer/fit logs, searches, games, alpha,
+It also authenticates the immutable 1340 and 1341 source templates at their exact
+commits to show that both name the same persistent numeric-venv path. It does not
+read corpora, targets, model bytes, optimizer/fit logs, searches, games, alpha,
 promotion or bake state. A package-version difference is technical evidence only;
 it is not treated as a scientific conclusion or, by itself, as proof that the
-1330 host runtime remained unchanged through 1341.
+1340 host runtime remained unchanged through the 1341 start.
 """
 from __future__ import annotations
 
@@ -37,14 +38,14 @@ FAILED_ATTEMPT = "20260919T004808Z-a10f9217"
 FAILED_CODE = "a10f921715674eca7decfc76714637264fa4d6d2"
 FAILED_PREFIX = f"r2:jass-data/runs/{FAILED_JOB}/{FAILED_ATTEMPT}"
 
-HIST_RUNTIME_JOB = "cpx62-1330-jass-megacorpus-smoke-fit-v1"
-HIST_RUNTIME_ATTEMPT = "20260814T063409Z-80f38787"
-HIST_RUNTIME_CODE = "80f3878709da5df0fa449e348f8a713b399a453e"
+HIST_RUNTIME_JOB = "cpx62-1340-jass-megacorpus-comparative-fit-v1"
+HIST_RUNTIME_ATTEMPT = "20260814T123246Z-2ce07222"
+HIST_RUNTIME_CODE = "2ce07222f86c1468a1081fbdc53e9e17a0c5326e"
 HIST_RUNTIME_PREFIX = f"r2:jass-data/runs/{HIST_RUNTIME_JOB}/{HIST_RUNTIME_ATTEMPT}"
 
 CURRICULUM_CODE = "18c38a33ae78c9c2e8e2df62fca266da28dacead"
 CURRICULUM_TEMPLATE = "jobs/templates/jass-megacorpus-arm-d-fit-v1.sh"
-SMOKE_TEMPLATE = "jobs/templates/jass-megacorpus-smoke-fit-v1.sh"
+HIST_RUNTIME_TEMPLATE = "jobs/templates/jass-megacorpus-comparative-fit-v1.sh"
 VENV_PATH = "/var/tmp/jass-l3-numeric-venv-current-v1"
 
 TERMINAL = "CLS_HIER_L2_2052_RUNTIME_PROVENANCE_DIAGNOSTIC_COMPLETE_V1"
@@ -67,29 +68,29 @@ def git_blob(commit: str, path: str) -> bytes:
 
 
 def authenticate_template_contracts() -> dict[str, object]:
-    smoke = git_blob(HIST_RUNTIME_CODE, SMOKE_TEMPLATE)
+    historical = git_blob(HIST_RUNTIME_CODE, HIST_RUNTIME_TEMPLATE)
     curriculum = git_blob(CURRICULUM_CODE, CURRICULUM_TEMPLATE)
-    smoke_text = smoke.decode("utf-8", errors="strict")
+    historical_text = historical.decode("utf-8", errors="strict")
     curriculum_text = curriculum.decode("utf-8", errors="strict")
-    if VENV_PATH not in smoke_text or VENV_PATH not in curriculum_text:
+    if VENV_PATH not in historical_text or VENV_PATH not in curriculum_text:
         raise RuntimeError("historical numeric venv path drift")
-    if "python3 -m venv --clear" not in smoke_text:
-        raise RuntimeError("1330 runtime-creation contract drift")
-    if ".jass-runtime-ready-v1" not in smoke_text or ".jass-runtime-ready-v1" not in curriculum_text:
+    if "python3 -m venv --clear" not in historical_text:
+        raise RuntimeError("1340 runtime-creation contract drift")
+    if ".jass-runtime-ready-v1" not in historical_text or ".jass-runtime-ready-v1" not in curriculum_text:
         raise RuntimeError("historical READY-marker contract drift")
     if "persistent numeric runtime absent; do not reinstall in this job" not in curriculum_text:
         raise RuntimeError("1341 persistent-runtime-only contract drift")
     return {
         "venv_path": VENV_PATH,
-        "smoke_code_sha": HIST_RUNTIME_CODE,
-        "smoke_template": SMOKE_TEMPLATE,
-        "smoke_template_sha256": sha_bytes(smoke),
-        "smoke_creates_persistent_runtime_if_missing": True,
+        "historical_runtime_code_sha": HIST_RUNTIME_CODE,
+        "historical_runtime_template": HIST_RUNTIME_TEMPLATE,
+        "historical_runtime_template_sha256": sha_bytes(historical),
+        "historical_runtime_can_create_persistent_runtime_if_missing": True,
         "curriculum_code_sha": CURRICULUM_CODE,
         "curriculum_template": CURRICULUM_TEMPLATE,
         "curriculum_template_sha256": sha_bytes(curriculum),
         "curriculum_requires_ready_runtime_without_reinstall": True,
-        "continuity_from_1330_to_1341_proven": False,
+        "continuity_from_1340_to_1341_proven": False,
     }
 
 
@@ -139,10 +140,10 @@ def compare_runtime_versions(historical: dict, current: dict) -> dict[str, objec
         "package_version_drift_observed": drift,
         "causal_runtime_drift_proven": False,
         "reason": (
-            "package versions differ between the immutable 1330 runtime witness and 2052; "
-            "host-runtime continuity from 1330 through 1341 remains to be established before replay"
+            "package versions differ between the immutable completed 1340 runtime witness and 2052; "
+            "host-runtime continuity across the short 1340-to-1341 boundary still must be authenticated before replay"
             if drift
-            else "NumPy/SciPy versions match the immutable 1330 witness; package-version drift is not the mismatch witness"
+            else "NumPy/SciPy versions match the adjacent completed 1340 witness; package-version drift is not the mismatch witness"
         ),
     }
 
@@ -198,7 +199,7 @@ def main() -> int:
         job=HIST_RUNTIME_JOB,
         attempt=HIST_RUNTIME_ATTEMPT,
         code=HIST_RUNTIME_CODE,
-        state="failed",
+        state="completed",
     )
 
     failed_files = {item.get("path"): item for item in failed_inventory.get("files", [])}
@@ -206,7 +207,7 @@ def main() -> int:
     if "artefacts/runtime-authentication.json" not in failed_files:
         raise RuntimeError("2052 runtime-authentication artifact missing")
     if "artefacts/python-runtime.json" not in historical_files:
-        raise RuntimeError("1330 python-runtime artifact missing")
+        raise RuntimeError("1340 python-runtime artifact missing")
 
     current_fetch = base.fetch.fetch_files(
         rclone=rclone,
@@ -218,23 +219,23 @@ def main() -> int:
     historical_fetch = base.fetch.fetch_files(
         rclone=rclone,
         prefix=HIST_RUNTIME_PREFIX,
-        expected_state="failed",
-        selections=[("artefacts/python-runtime.json", "runtime-1330.json")],
+        expected_state="completed",
+        selections=[("artefacts/python-runtime.json", "runtime-1340.json")],
         out_dir=work,
     )
 
     current = json.loads((work / "runtime-2052.json").read_text(encoding="utf-8"))
-    historical = json.loads((work / "runtime-1330.json").read_text(encoding="utf-8"))
+    historical = json.loads((work / "runtime-1340.json").read_text(encoding="utf-8"))
     if current.get("historical_recipe_code_sha") != CURRICULUM_CODE:
         raise RuntimeError("2052 historical recipe code authentication drift")
     if historical.get("venv") != VENV_PATH:
-        raise RuntimeError("1330 persistent numeric venv path drift")
+        raise RuntimeError("1340 persistent numeric venv path drift")
 
     templates = authenticate_template_contracts()
     comparison = compare_runtime_versions(historical, current)
     drift = bool(comparison["package_version_drift_observed"])
     next_stage = (
-        "PROVE_1330_TO_1341_RUNTIME_CONTINUITY_BEFORE_NUMERIC_REPLAY"
+        "PROVE_1340_TO_1341_RUNTIME_CONTINUITY_BEFORE_NUMERIC_REPLAY"
         if drift
         else "RECOVER_NONPACKAGE_NUMERIC_ENVIRONMENT_PROVENANCE"
     )
@@ -255,7 +256,7 @@ def main() -> int:
             "job_id": HIST_RUNTIME_JOB,
             "attempt_id": HIST_RUNTIME_ATTEMPT,
             "code_sha": HIST_RUNTIME_CODE,
-            "runtime_receipt_sha256": base.sha256(work / "runtime-1330.json"),
+            "runtime_receipt_sha256": base.sha256(work / "runtime-1340.json"),
         },
         "template_contracts": templates,
         "runtime_comparison": comparison,
@@ -281,7 +282,7 @@ def main() -> int:
         {
             "schema": "jass.cls_hier_l2_2052_runtime_provenance_authentication.v1",
             "failed_2052": current_fetch,
-            "historical_1330": historical_fetch,
+            "historical_1340": historical_fetch,
             "technical_source_only": True,
         },
     )
@@ -325,10 +326,10 @@ def main() -> int:
     (art / "RESULTS.md").write_text(
         "# CLS HIER-L2 2052 runtime provenance diagnostic\n\n"
         f"- terminal: `{TERMINAL}`\n"
-        f"- 1330 runtime NumPy/SciPy: `{comparison['historical_runtime']['numpy']}` / `{comparison['historical_runtime']['scipy']}`\n"
+        f"- 1340 runtime NumPy/SciPy: `{comparison['historical_runtime']['numpy']}` / `{comparison['historical_runtime']['scipy']}`\n"
         f"- 2052 runtime NumPy/SciPy: `{comparison['failed_2052_runtime']['numpy']}` / `{comparison['failed_2052_runtime']['scipy']}`\n"
         f"- package version drift observed: `{drift}`\n"
-        "- causal runtime drift proven: `False` (1330->1341 host continuity is not assumed)\n"
+        "- causal runtime drift proven: `False` (1340->1341 host continuity is not assumed)\n"
         f"- next stage: `{next_stage}`\n"
         "- scientific payload reads/fits/searches/games/targets/alpha/promotion/bake: `0`\n",
         encoding="utf-8",
