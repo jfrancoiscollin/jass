@@ -814,12 +814,12 @@
     {
       "id": "TI-082",
       "dedupe_key": "job:cpx62-2052-l3-cls-hier-l2-control-reproduction-rehearsal-v2",
-      "context": "CLS HIER-L2 CONTROL reproduction rehearsal 2052 / diagnostic 2053",
-      "symptom": "CONTROL still produced 499a213cbc96fdd43956a9b2f757104970b5afe0817979126c1f7eb92b0aa504 instead of immutable CURRICULUM 319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1 after exact historical-1341 source recipe replay; no scientific verdict",
-      "root_cause": "Historical source-code/feature/trainer drift is ruled out as sufficient explanation; exact numeric runtime provenance remains unproven. This PR compares the sealed 2052 runtime receipt with the immutable completed 1340 CPX runtime witness immediately preceding 1341, without assuming cross-run host continuity.",
-      "invariant": "read only bounded technical runtime receipts and immutable source-template contracts; preserve exact TURNOVER/CURRENT_2M split, CONTEXT_30 target, C prior, 8cf geometry, L2/optimizer settings, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, CURRICULUM byte target and zero-search/strength/promotion/bake boundary",
-      "evidence": "2053 authenticated exact residual CONTROL_BYTE_IDENTITY_MISMATCH; 1340 completed status publishes python-runtime.json; runtime-provenance diagnostic and focused zero-effect regressions in PR #1037",
-      "status": "OPEN — bounded numeric-runtime provenance diagnostic required before any further CONTROL replay"
+      "context": "CLS HIER-L2 CONTROL reproduction 2052 / runtime provenance diagnostic 2054",
+      "symptom": "CONTROL remained byte-mismatched after historical source-recipe replay; 2054 observed NumPy/SciPy drift 2.5.2/1.18.0 historical vs 2.5.3/1.18.1 in 2052, without a scientific verdict",
+      "root_cause": "PENDING — prove authenticated runner-managed 1340→1341 persistent numeric-runtime continuity before attributing the residual mismatch or replaying CONTROL",
+      "invariant": "read only bounded technical runtime/control/template provenance; preserve exact TURNOVER/CURRENT_2M split, CONTEXT_30 target, C prior, 8cf geometry, L2/optimizer settings, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, immutable CURRICULUM target and zero-search/strength/promotion/bake boundary",
+      "evidence": "2054 terminal TECHNICAL_DIAGNOSTIC plus exact historical jass-control first-parent chain and frozen 1340/1341 runtime contracts exercised by this PR; PR #1038",
+      "status": "OPEN — bounded 1340→1341 runtime continuity diagnostic required before numeric replay"
     }
   ]
 }
