@@ -21,13 +21,33 @@ class CLSG0ValidArmV1Tests(unittest.TestCase):
         self.assertEqual(stage.ARM_MODEL_SHA, {
             "LOCAL": "197998003db3d221d38e81577cfa381e8227d67705efc1c86b87205ddebbe450",
             "WDL": "eabe71068dbc6aeb519a61c730d18586e75c8b72308ecd340de08fe2e18deed6",
+            "HIER": "95bed3ac9fac4368809609fb1a981ee863401a30ca623fb7bfa3caf7eaddf628",
         })
+        self.assertEqual(stage.HIER_SOURCE_JOB, "cpx62-2062-l3-cls-hier-l2-hier-candidate-rehearsal-v1")
+        self.assertEqual(stage.HIER_SOURCE_ATTEMPT, "20260919T142226Z-a28f1049")
+        self.assertEqual(stage.HIER_SOURCE_CODE, "a28f10491d94ca451932b0e7b46df7cdf3b7e1c8")
+        self.assertEqual(
+            stage.HIER_SOURCE_LAUNCH_RECEIPT,
+            "68203e5cd3fe40ea92c24bc2dfdc83c94cc52c257bbea871ed4e149b0873194e",
+        )
         self.assertEqual(stage.EXPECTED_SEARCHES, 1536)
         self.assertEqual(gate.ROOTS, 512)
         self.assertEqual(gate.ROOTS_PER_PHASE, 128)
         self.assertEqual(gate.PRIMARY_BUDGET, 200_000)
         self.assertEqual(gate.BOOTSTRAP_REPLICATES, 100_000)
         self.assertEqual(gate.BOOTSTRAP_SEED, 2026091605)
+
+
+    def test_hier_source_authentication_is_fail_closed_and_one_factor(self) -> None:
+        source = (ROOT / "jobs/tools/cls_g0_valid_arm_stage.py").read_text(encoding="utf-8")
+        self.assertIn('"terminal": "CLS_HIER_CANDIDATE_FIT_READY_V1"', source)
+        self.assertIn('"hier_l2": 1e-5', source)
+        self.assertIn('"l2": 1e-5', source)
+        self.assertIn('"varied_factor": "hier_l2"', source)
+        self.assertIn('"next_stage": "RUN_FROZEN_CLS_G0"', source)
+        self.assertIn('"promotion_authorized": False', source)
+        self.assertIn('"bake_authorized": False', source)
+        self.assertIn('return authenticate_hier_candidate(work)', source)
 
     def test_green_tooling_preflight_is_pinned(self) -> None:
         self.assertEqual(stage.TOOLING_JOB, "cpx62-2018-l3-cls-g0-runtime-tooling-preflight-v3")
