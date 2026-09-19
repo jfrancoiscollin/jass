@@ -814,12 +814,12 @@
     {
       "id": "TI-082",
       "dedupe_key": "job:cpx62-2052-l3-cls-hier-l2-control-reproduction-rehearsal-v2",
-      "context": "CLS HIER-L2 CONTROL reproduction 2052 / runtime provenance diagnostic 2054",
-      "symptom": "CONTROL remained byte-mismatched after historical source-recipe replay; 2054 observed NumPy/SciPy drift 2.5.2/1.18.0 historical vs 2.5.3/1.18.1 in 2052, without a scientific verdict",
-      "root_cause": "PENDING — prove authenticated runner-managed 1340→1341 persistent numeric-runtime continuity before attributing the residual mismatch or replaying CONTROL",
-      "invariant": "read only bounded technical runtime/control/template provenance; preserve exact TURNOVER/CURRENT_2M split, CONTEXT_30 target, C prior, 8cf geometry, L2/optimizer settings, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, immutable CURRICULUM target and zero-search/strength/promotion/bake boundary",
-      "evidence": "2054 terminal TECHNICAL_DIAGNOSTIC plus exact historical jass-control first-parent chain and frozen 1340/1341 runtime contracts exercised by this PR; PR #1038",
-      "status": "OPEN — bounded 1340→1341 runtime continuity diagnostic required before numeric replay"
+      "context": "CLS HIER-L2 residual CONTROL byte mismatch after terminal runtime diagnostics 2054/2055",
+      "symptom": "2052 CONTROL byte mismatch persisted under exact historical source recipe while using NumPy/SciPy 2.5.3/1.18.1; historical authoritative runtime witness used 2.5.2/1.18.0",
+      "root_cause": "Authenticated runner-managed numeric-runtime drift is now the remaining proven reproduction mechanic: 2055 proves the 1340 persistent 2.5.2/1.18.0 runtime continued unchanged through 1341",
+      "invariant": "repair only HIER-L2 numeric runtime package pins; preserve exact TURNOVER/CURRENT_2M split, CONTEXT_30 target, C prior, historical 1341 feature/trainer mechanics, 8cf geometry, L2=1e-5, maxiter=2000/maxcor=20/gtol=1e-4/chunk=20000, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, immutable CURRICULUM byte target and zero-search/strength/promotion/bake boundary",
+      "evidence": "2054 terminal runtime-provenance diagnostic plus 2055 terminal runtime-continuity proof: 318s boundary, zero intervening runner jobs, same cpx62 host, historical NumPy/SciPy 2.5.2/1.18.0; PR #1039",
+      "status": "MITIGATED — fresh immutable same-science CONTROL rehearsal required under exact historical package pins"
     }
   ]
 }
