@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Frozen CLS-G0 runtime catastrophe gate for one sealed CLS-L valid arm.
+"""Frozen CLS-G0 runtime catastrophe gate for one sealed valid candidate.
 
 Consumes only the already-authenticated FULL-512 diagnostic cohort/deep reference,
 the immutable CURRICULUM parent, the authenticated green G0 tooling preflight,
-and one exact sealed LOCAL/WDL model from CLS-L recovery 2041.  The only runtime
-semantic difference between parent and candidate is evaluator bytes.
+and one exact sealed LOCAL/WDL model from CLS-L recovery 2041 or HIER model from
+the prospectively frozen HIER-L2 candidate fit 2062. The runtime gate itself is
+unchanged; the only semantic difference between parent and candidate is evaluator bytes.
 """
 from __future__ import annotations
 
@@ -37,9 +38,17 @@ SOURCE_ATTEMPT = "20260918T065139Z-c5067fce"
 SOURCE_CODE = "c5067fcefddb48b49313686473d7b0c057a14028"
 SOURCE_PREFIX = f"r2:jass-data/runs/{SOURCE_JOB}/{SOURCE_ATTEMPT}"
 SOURCE_LAUNCH_RECEIPT = "0925f7e1bcf537e26b22a91a151c438fae70f14a770b8324c5b708a3ae9e1ef2"
+
+HIER_SOURCE_JOB = "cpx62-2062-l3-cls-hier-l2-hier-candidate-rehearsal-v1"
+HIER_SOURCE_ATTEMPT = "20260919T142226Z-a28f1049"
+HIER_SOURCE_CODE = "a28f10491d94ca451932b0e7b46df7cdf3b7e1c8"
+HIER_SOURCE_PREFIX = f"r2:jass-data/runs/{HIER_SOURCE_JOB}/{HIER_SOURCE_ATTEMPT}"
+HIER_SOURCE_LAUNCH_RECEIPT = "68203e5cd3fe40ea92c24bc2dfdc83c94cc52c257bbea871ed4e149b0873194e"
+
 ARM_MODEL_SHA = {
     "LOCAL": "197998003db3d221d38e81577cfa381e8227d67705efc1c86b87205ddebbe450",
     "WDL": "eabe71068dbc6aeb519a61c730d18586e75c8b72308ecd340de08fe2e18deed6",
+    "HIER": "95bed3ac9fac4368809609fb1a981ee863401a30ca623fb7bfa3caf7eaddf628",
 }
 
 TOOLING_JOB = "cpx62-2018-l3-cls-g0-runtime-tooling-preflight-v3"
@@ -234,9 +243,86 @@ def authenticate_tooling(work: Path) -> dict:
     }
 
 
+def authenticate_hier_candidate(work: Path) -> tuple[Path, dict]:
+    out = work / "candidate-2062"
+    report = work / "verified-candidate-2062.json"
+    model_name = "model.pjtw.gz"
+    receipt_name = "fit-receipt.json"
+    base.fetch_completed(
+        HIER_SOURCE_PREFIX,
+        job=HIER_SOURCE_JOB,
+        attempt=HIER_SOURCE_ATTEMPT,
+        code=HIER_SOURCE_CODE,
+        mappings=[
+            (f"artefacts/{model_name}", model_name),
+            (f"artefacts/{receipt_name}", receipt_name),
+            ("artefacts/scientific-summary.json", "scientific-summary.json"),
+            ("artefacts/launch-receipt.json", "launch-receipt.json"),
+        ],
+        out_dir=out,
+        report=report,
+    )
+    if base.sha_file(out / "launch-receipt.json") != HIER_SOURCE_LAUNCH_RECEIPT:
+        raise StageError("2062 launch receipt drift")
+
+    summary = _json(out / "scientific-summary.json")
+    required = {
+        "state": "completed",
+        "terminal": "CLS_HIER_CANDIDATE_FIT_READY_V1",
+        "arm": "HIER",
+        "mode": "rehearsal",
+        "fits": 1,
+        "hier_l2": 1e-5,
+        "l2": 1e-5,
+        "model_sha256": ARM_MODEL_SHA["HIER"],
+        "direct_parent_sha256": CURRICULUM_SHA,
+        "fixed_curriculum_anchor_sha256": CURRICULUM_SHA,
+        "varied_factor": "hier_l2",
+        "next_stage": "RUN_FROZEN_CLS_G0",
+        "target_reads": 0,
+        "confirmation_target_reads": 0,
+        "new_jass_searches": 0,
+        "new_scan_searches": 0,
+        "strength_games": 0,
+        "selfplay_games": 0,
+        "alpha_spent": 0,
+        "promotions": 0,
+        "bakes": 0,
+        "promotion_authorized": False,
+        "bake_authorized": False,
+    }
+    for key, expected in required.items():
+        if summary.get(key) != expected:
+            raise StageError(f"2062 HIER candidate source drift:{key}")
+
+    model = work / "HIER.pjtw"
+    with gzip.open(out / model_name, "rb") as source, model.open("wb") as dest:
+        shutil.copyfileobj(source, dest)
+    if base.sha_file(model) != ARM_MODEL_SHA["HIER"]:
+        raise StageError("2062 HIER raw model SHA drift")
+
+    fit_receipt = _json(out / receipt_name)
+    return model, {
+        "job_id": HIER_SOURCE_JOB,
+        "attempt_id": HIER_SOURCE_ATTEMPT,
+        "code_sha": HIER_SOURCE_CODE,
+        "launch_receipt_sha256": HIER_SOURCE_LAUNCH_RECEIPT,
+        "terminal": summary["terminal"],
+        "arm": "HIER",
+        "model_sha256": ARM_MODEL_SHA["HIER"],
+        "fit_receipt_sha256": base.sha_file(out / receipt_name),
+        "fit_receipt_terminal": fit_receipt.get("terminal"),
+        "source_mode": summary.get("mode"),
+        "hier_l2": summary.get("hier_l2"),
+        "direct_parent_sha256": summary.get("direct_parent_sha256"),
+    }
+
+
 def authenticate_candidate(work: Path, arm: str) -> tuple[Path, dict]:
     if arm not in ARM_MODEL_SHA:
         raise StageError(f"unsupported CLS-G0 candidate arm:{arm}")
+    if arm == "HIER":
+        return authenticate_hier_candidate(work)
     out = work / "candidate-2041"
     report = work / "verified-candidate-2041.json"
     model_name = f"{arm}.pjtw.gz"
