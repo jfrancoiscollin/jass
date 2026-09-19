@@ -824,12 +824,12 @@
     {
       "id": "TI-083",
       "dedupe_key": "job:cpx62-2056-l3-cls-hier-l2-control-reproduction-rehearsal-v3",
-      "context": "CLS HIER-L2 CONTROL reproduction rehearsal 2056 / attempt 20260919T043639Z-4ed47cc5",
-      "symptom": "Launch-V2 failed TECHNICAL / STAGE_FAILED:EXECUTE, exit 2, under the exact historical NumPy/SciPy 2.5.2/1.18.0 replay; no scientific verdict",
-      "root_cause": "PENDING — exact bounded runner-owned stage stderr/receipt diagnostic required before repair",
-      "invariant": "diagnose only bounded runner-owned stage logs; preserve exact historical sources, CURRENT_2M split, CONTEXT_30 target, model-C prior, 8cf geometry, L2=1e-5, frozen optimizer/serialization, exact historical numeric runtime, CONTROL hier_l2=0 byte-reproduction requirement and zero-search/strength/promotion/bake boundary",
-      "evidence": "fresh 2056 control status plus bounded diagnostic introduced in this PR; PR #1040",
-      "status": "OPEN — exact mechanical witness pending 2056 diagnostic"
+      "context": "CLS HIER-L2 CONTROL reproduction 2056 / terminal stage-log diagnostic 2057",
+      "symptom": "CONTROL still produced 499a213cbc96fdd43956a9b2f757104970b5afe0817979126c1f7eb92b0aa504 instead of immutable CURRICULUM 319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1 under exact historical NumPy/SciPy 2.5.2/1.18.0; no scientific verdict",
+      "root_cause": "PENDING — historical source recipe and NumPy/SciPy package versions are no longer sufficient explanations; bounded authoritative-1341 vs failed-2056 fit metadata provenance is required before any further repair",
+      "invariant": "diagnose only small published target-consumption/optimizer/convergence/runtime metadata; preserve exact historical source, CURRENT_2M split, CONTEXT_30 target, C prior, 8cf geometry, L2/optimizer settings, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, immutable CURRICULUM target and zero-search/strength/promotion/bake boundary",
+      "evidence": "2057 terminal diagnostic exact CONTROL_BYTE_IDENTITY_MISMATCH after #1039 exact historical package replay; bounded fit-provenance diagnostic introduced in this PR; PR #1041",
+      "status": "OPEN — bounded 1341-vs-2056 fit provenance diagnostic required before further repair"
     }
   ]
 }
