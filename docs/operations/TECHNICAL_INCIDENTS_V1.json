@@ -816,9 +816,9 @@
       "dedupe_key": "job:cpx62-2052-l3-cls-hier-l2-control-reproduction-rehearsal-v2",
       "context": "CLS HIER-L2 CONTROL reproduction rehearsal 2052 / diagnostic 2053",
       "symptom": "CONTROL still produced 499a213cbc96fdd43956a9b2f757104970b5afe0817979126c1f7eb92b0aa504 instead of immutable CURRICULUM 319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1 after exact historical-1341 source recipe replay; no scientific verdict",
-      "root_cause": "Historical source-code/feature/trainer drift is ruled out as sufficient explanation; exact numeric runtime provenance remains unproven. This PR compares the sealed 2052 runtime receipt with the immutable Aug-14 1330 CPX runtime witness without assuming 1330-to-1341 host continuity.",
+      "root_cause": "Historical source-code/feature/trainer drift is ruled out as sufficient explanation; exact numeric runtime provenance remains unproven. This PR compares the sealed 2052 runtime receipt with the immutable completed 1340 CPX runtime witness immediately preceding 1341, without assuming cross-run host continuity.",
       "invariant": "read only bounded technical runtime receipts and immutable source-template contracts; preserve exact TURNOVER/CURRENT_2M split, CONTEXT_30 target, C prior, 8cf geometry, L2/optimizer settings, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, CURRICULUM byte target and zero-search/strength/promotion/bake boundary",
-      "evidence": "2053 authenticated exact residual CONTROL_BYTE_IDENTITY_MISMATCH; runtime-provenance diagnostic and focused zero-effect regressions in PR #1037",
+      "evidence": "2053 authenticated exact residual CONTROL_BYTE_IDENTITY_MISMATCH; 1340 completed status publishes python-runtime.json; runtime-provenance diagnostic and focused zero-effect regressions in PR #1037",
       "status": "OPEN — bounded numeric-runtime provenance diagnostic required before any further CONTROL replay"
     }
   ]
