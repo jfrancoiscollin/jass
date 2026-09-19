@@ -82,12 +82,23 @@ class CLSHierL2NextCandidateV1Tests(unittest.TestCase):
         ):
             self.assertIn(literal, text)
 
+    def test_launch_v2_execution_evidence_is_sealed_after_outputs(self) -> None:
+        text = SHELL.read_text()
+        evidence_marker = "from jobs.tools.launch_runtime_v2 import StageEvidence"
+        self.assertIn(evidence_marker, text)
+        self.assertIn("evidence.begin('execute-cls-hier-l2-next-candidate')", text)
+        self.assertIn("evidence.record_effect('fits', 1)", text)
+        self.assertIn("evidence.complete()", text)
+        self.assertIn("evidence.finish()", text)
+        self.assertGreater(text.index(evidence_marker), text.index("open(f'{art}/manifest.json'"))
+
     def test_launch_profile_is_fail_closed(self) -> None:
         p = json.loads(PROFILE.read_text())
         self.assertEqual(p["schema"], "jass.launch_profile.v2")
         self.assertEqual(p["stage"], "cls-hier-l2-next-candidate-v1")
         self.assertEqual(p["command"], ["/usr/bin/python3", "jobs/tools/cls_hier_l2_next_candidate_launch.py"])
         self.assertIn("jobs.tests.test_cls_hier_l2_next_candidate_v1", p["regressions"])
+        self.assertEqual(p["required_phases"], ["execute-cls-hier-l2-next-candidate"])
         for mode in ("rehearsal_max_effects", "production_max_effects"):
             effects = p[mode]
             self.assertEqual(effects["fits"], 1)

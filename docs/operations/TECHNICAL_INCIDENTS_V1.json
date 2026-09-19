@@ -830,6 +830,16 @@
       "invariant": "diagnose only small published target-consumption/optimizer/convergence/runtime metadata; preserve exact historical source, CURRENT_2M split, CONTEXT_30 target, C prior, 8cf geometry, L2/optimizer settings, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, immutable CURRICULUM target and zero-search/strength/promotion/bake boundary",
       "evidence": "2057 terminal diagnostic exact CONTROL_BYTE_IDENTITY_MISMATCH after #1039 exact historical package replay; bounded fit-provenance diagnostic introduced in this PR; PR #1041",
       "status": "OPEN — bounded 1341-vs-2056 fit provenance diagnostic required before further repair"
+    },
+    {
+      "id": "TI-084",
+      "dedupe_key": "job:cpx62-2059-l3-cls-hier-l2-control-reproduction-rehearsal-v4",
+      "context": "CLS HIER-L2 CONTROL reproduction rehearsal 2059 / attempt 20260919T080007Z-dd5d513c",
+      "symptom": "Launch-V2 TECHNICAL / STAGE_FAILED:OUTPUTS, exit 2, after fit/model/scientific receipts were published; no scientific verdict",
+      "root_cause": "Generated stage spec requires execution-evidence.json, but the direct HIER-L2 shell stage never instantiated Launch-V2 StageEvidence; authenticated 2059 artefact inventory contains every other required output and omits exactly execution-evidence.json",
+      "invariant": "emit only required Launch-V2 execution evidence after frozen scientific outputs are sealed; record exactly one fit; preserve exact historical source/target/prior/runtime/thread/optimizer/serialization/CURRICULUM contract and zero search/strength/promotion/bake boundary; HIER remains closed",
+      "evidence": "2059 status artefact inventory + generated 2059 stage spec output contract + focused regression in this PR; PR #1042",
+      "status": "MITIGATED — fresh immutable same-science CONTROL rehearsal required after green CI"
     }
   ]
 }
