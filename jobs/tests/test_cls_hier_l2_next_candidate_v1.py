@@ -11,6 +11,8 @@ PROFILE = ROOT / "jobs" / "launch_profiles" / "cls-hier-l2-next-candidate-v1.jso
 LAUNCH = ROOT / "jobs" / "tools" / "cls_hier_l2_next_candidate_launch.py"
 CONTRACT = ROOT / "docs" / "experiments" / "L3_CLS_HIER_L2_NEXT_CANDIDATE_V1_20260918.md"
 CURRICULUM = "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
+HISTORICAL_CODE = "18c38a33ae78c9c2e8e2df62fca266da28dacead"
+HISTORICAL_TRAIN_STREAM_BLOB = "12ed5f0f743dadc07ebaab6de1dd9a837297b6c0"
 
 
 class CLSHierL2NextCandidateV1Tests(unittest.TestCase):
@@ -30,6 +32,8 @@ class CLSHierL2NextCandidateV1Tests(unittest.TestCase):
         text = SHELL.read_text()
         for literal in (
             'CURRICULUM_SHA="' + CURRICULUM + '"',
+            'CURRICULUM_CODE="' + HISTORICAL_CODE + '"',
+            'HIST_TRAIN_STREAM_BLOB="' + HISTORICAL_TRAIN_STREAM_BLOB + '"',
             'ABC_ATTEMPT="20260814T123246Z-2ce07222"',
             'CURRICULUM_ATTEMPT="20260814T191555Z-18c38a33"',
             'HOLDOUT_MOD=10; SPLIT_SEED=577215',
@@ -40,6 +44,18 @@ class CLSHierL2NextCandidateV1Tests(unittest.TestCase):
             '--lbfgs-maxcor 20 --lbfgs-gtol 1e-4 --prune',
         ):
             self.assertIn(literal, text)
+
+    def test_historical_recipe_mechanics_are_fail_closed(self) -> None:
+        text = SHELL.read_text()
+        self.assertIn('git archive --format=tar "$CURRICULUM_CODE"', text)
+        self.assertIn('git rev-parse "$CURRICULUM_CODE:pattern_jass/tools/train_stream.py"', text)
+        self.assertIn('python3 "$HIST/tools/selfplay_frontier.py" split', text)
+        self.assertIn('cmake -S "$HIST" -B "$W/build"', text)
+        self.assertIn('"$PY" "$HIST/pattern_jass/tools/train_stream.py"', text)
+        self.assertIn('PYTHONPATH="$GEOM:$HIST/pattern_jass/tools:$HIST"', text)
+        self.assertNotIn("current-code production feature geometry", text)
+        self.assertIn("historical_recipe_code_sha", text)
+        self.assertIn("runtime-authentication.json", text)
 
     def test_control_is_byte_exact_and_hier_is_gated(self) -> None:
         text = SHELL.read_text()
