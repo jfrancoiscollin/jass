@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import subprocess
 import unittest
+from unittest import mock
+
+from jobs.tools import cls_hier_l2_next_candidate_launch as launch_mod
 
 ROOT = Path(__file__).resolve().parents[2]
 SHELL = ROOT / "jobs" / "templates" / "l3-cls-hier-l2-next-candidate-v1.sh"
@@ -93,11 +97,36 @@ class CLSHierL2NextCandidateV1Tests(unittest.TestCase):
             self.assertEqual(effects["promotions"], 0)
             self.assertEqual(effects["bakes"], 0)
 
-    def test_launch_entrypoint_uses_authenticated_sha_and_numeric_runtime(self) -> None:
+    def test_launch_entrypoint_uses_authenticated_sha_and_exact_historical_numeric_runtime(self) -> None:
         text = LAUNCH.read_text()
         self.assertIn("authenticated_code_sha()", text)
-        self.assertIn("ensure_numeric_runtime()", text)
+        self.assertIn('HISTORICAL_NUMPY = "2.5.2"', text)
+        self.assertIn('HISTORICAL_SCIPY = "1.18.0"', text)
+        self.assertIn('DEFAULT_HISTORICAL_VENV = Path("/var/tmp/jass-cls-hier-l2-historical-1340-v1")', text)
+        self.assertIn("ensure_historical_numeric_runtime()", text)
+        self.assertIn('"--only-binary=:all:"', text)
+        self.assertNotIn("ensure_numeric_runtime()", text)
+        self.assertNotIn('install_numeric_stack(venv, ["numpy", "scipy"])', text)
         self.assertIn("os.execv", text)
+
+    def test_exact_runtime_rebuild_is_one_bounded_repair_without_fallback(self) -> None:
+        path = "/tmp/jass-cls-hier-test-runtime"
+        with mock.patch.dict(os.environ, {"JASS_CLS_HIER_HISTORICAL_NUMERIC_VENV": path}, clear=False), \
+             mock.patch.object(launch_mod, "historical_runtime_healthy", side_effect=[False, True]) as healthy, \
+             mock.patch.object(launch_mod, "rebuild_historical_runtime") as rebuild:
+            got = launch_mod.ensure_historical_numeric_runtime()
+        self.assertEqual(got, Path(path))
+        self.assertEqual(healthy.call_count, 2)
+        rebuild.assert_called_once_with(Path(path))
+
+    def test_exact_runtime_reuses_only_already_exact_runtime(self) -> None:
+        path = "/tmp/jass-cls-hier-test-runtime-exact"
+        with mock.patch.dict(os.environ, {"JASS_CLS_HIER_HISTORICAL_NUMERIC_VENV": path}, clear=False), \
+             mock.patch.object(launch_mod, "historical_runtime_healthy", return_value=True), \
+             mock.patch.object(launch_mod, "rebuild_historical_runtime") as rebuild:
+            got = launch_mod.ensure_historical_numeric_runtime()
+        self.assertEqual(got, Path(path))
+        rebuild.assert_not_called()
 
 
 if __name__ == "__main__":
