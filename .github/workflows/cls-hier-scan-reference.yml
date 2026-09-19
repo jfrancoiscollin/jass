@@ -1,0 +1,28 @@
+name: cls-hier-scan-reference
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/cls_hier_scan_reference_diagnostic.py'
+      - 'jobs/tests/test_cls_hier_scan_reference_diagnostic.py'
+      - 'jobs/launch_profiles/cls-hier-scan-reference-diagnostic-v1.json'
+      - '.github/workflows/cls-hier-scan-reference.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'jobs/tools/cls_hier_scan_reference_diagnostic.py'
+      - 'jobs/tests/test_cls_hier_scan_reference_diagnostic.py'
+      - 'jobs/launch_profiles/cls-hier-scan-reference-diagnostic-v1.json'
+      - '.github/workflows/cls-hier-scan-reference.yml'
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile jobs/tools/cls_hier_scan_reference_diagnostic.py jobs/tests/test_cls_hier_scan_reference_diagnostic.py
+      - run: python -m unittest jobs.tests.test_cls_hier_scan_reference_diagnostic -v
