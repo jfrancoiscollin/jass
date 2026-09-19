@@ -810,6 +810,16 @@
       "invariant": "repair only reproduction mechanics; preserve exact TURNOVER/CURRENT_2M split, CONTEXT_30 target, model-C prior, 8cf exact-fold tempo 120-extra geometry, L2=1e-5, maxiter=2000/maxcor=20/gtol=1e-4/chunk=20000, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, immutable CURRICULUM byte target and zero-search/strength/promotion/bake boundary",
       "evidence": "2051 authenticated stage.stdout exact CONTROL_BYTE_IDENTITY_MISMATCH plus merged HIER-L2 contract requiring historical 1341 recipe; PR #1035 pins and materializes code 18c38a33 for both arms and seals runtime identity",
       "status": "MITIGATED — fresh immutable same-science CONTROL rehearsal required; residual byte mismatch remains TECHNICAL"
+    },
+    {
+      "id": "TI-082",
+      "dedupe_key": "job:cpx62-2052-l3-cls-hier-l2-control-reproduction-rehearsal-v2",
+      "context": "CLS HIER-L2 CONTROL reproduction rehearsal 2052 / attempt 20260919T004808Z-a10f9217",
+      "symptom": "Launch-V2 failed TECHNICAL / STAGE_FAILED:EXECUTE, exit 2, after historical-recipe reproduction repair; no scientific verdict",
+      "root_cause": "PENDING — exact bounded runner-owned stage stderr/receipt diagnostic required before repair",
+      "invariant": "diagnose only bounded runner-owned stage logs; preserve exact historical sources, CURRENT_2M split, CONTEXT_30 target, model-C prior, 8cf geometry, L2=1e-5, frozen optimizer/serialization, CONTROL hier_l2=0 byte-reproduction requirement and zero-search/strength/promotion/bake boundary",
+      "evidence": "fresh 2052 control status plus bounded diagnostic introduced in this PR; PR #1036",
+      "status": "OPEN — exact mechanical witness pending 2052 diagnostic"
     }
   ]
 }
