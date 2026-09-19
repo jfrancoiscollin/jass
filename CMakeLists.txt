@@ -409,6 +409,14 @@ add_test(
         -DSMOKE_DIR=${CMAKE_CURRENT_BINARY_DIR}/node-budget-smoke
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/node_budget_selfplay_smoke.cmake
 )
+add_test(
+    NAME deep_relabel_source_tags_smoke
+    COMMAND ${CMAKE_COMMAND}
+        -DJASS_EXE=$<TARGET_FILE:jass>
+        -DSMOKE_DIR=${CMAKE_CURRENT_BINARY_DIR}/deep-relabel-tags-smoke
+        -DTESTS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/tests
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/deep_relabel_source_tags_smoke.cmake
+)
 
 if(NOT EMSCRIPTEN)
     add_executable(t3_f6_runtime_probe jobs/tools/t3_f6_runtime_probe.cpp

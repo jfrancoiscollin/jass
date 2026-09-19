@@ -2996,9 +2996,11 @@ int run_egdb_relabel_mode(int argc, char** argv) {
 // -----------------------------------------------------------------------------
 int run_deep_relabel_mode(int argc, char** argv) {
     std::string in_path, out_path, nnue_path, label_spec, egdb_dir, search_spec;
+    std::string source_tags_path;             // --source-tags-out PATH (opt-in; OFF by default)
     int depth = 18, cache_mb = 1024;
     std::int32_t draw_band = 50;             // |score| <= band → wdl 0 (draw-ish) ; override via --draw-band
     constexpr std::int32_t EG_SAT = 10000;  // saturated value for egdb-exact win/loss
+    bool clear_tt_each = false;              // --clear-tt (opt-in; OFF by default)
     std::vector<std::string> pos;
     for (int i = 2; i < argc; ++i) {
         const std::string a = argv[i];
@@ -3008,11 +3010,14 @@ int run_deep_relabel_mode(int argc, char** argv) {
         else if (a == "--cache-mb" && i + 1 < argc)             cache_mb   = parse_int_or(argv[++i], 1024);
         else if (a == "--search-params" && i + 1 < argc)        search_spec = argv[++i];  // e.g. pruning OFF (catch hidden shots)
         else if (a == "--draw-band" && i + 1 < argc)            draw_band  = parse_int_or(argv[++i], 50);
+        else if (a == "--clear-tt")                             clear_tt_each = true;
+        else if (a == "--source-tags-out" && i + 1 < argc)      source_tags_path = argv[++i];
         else pos.push_back(a);
     }
     if (pos.size() < 2) {
         std::cerr << "usage: --deep-relabel <in.jnnw> <out.jnnw> [depth=18] "
-                     "[--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N] [--search-params SPEC] [--draw-band N]\n";
+                     "[--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N] [--search-params SPEC] [--draw-band N]"
+                     " [--clear-tt] [--source-tags-out PATH]\n";
         return 2;
     }
     in_path = pos[0]; out_path = pos[1];
@@ -3053,12 +3058,17 @@ int run_deep_relabel_mode(int argc, char** argv) {
     f.close();
     const std::size_t nrec = buf.size() / 38;
 
-    long egdb_exact = 0;
+    const bool tag_terminal = !source_tags_path.empty();  // TERMINAL detection is opt-in only
+    std::vector<std::uint8_t> tags;
+    if (tag_terminal) tags.assign(nrec, 0);
+
+    long egdb_exact = 0, terminal_n = 0, search_n = 0, wdl_changed = 0;
     const auto t0 = std::chrono::steady_clock::now();
     for (std::size_t i = 0; i < nrec; ++i) {
         char* rec = buf.data() + i * 38;
         const Position p = position_from_record(rec);
         const std::uint8_t stm = static_cast<std::uint8_t>(rec[32]);
+        const std::int8_t wdl_before = static_cast<std::int8_t>(rec[37]);
         std::int32_t score;
         if (have_egdb) {
             const jass::EndgameResult tb = jass::egdb::probe(p);
@@ -3068,9 +3078,29 @@ int run_deep_relabel_mode(int argc, char** argv) {
                 std::memcpy(rec + 33, &score, 4);
                 rec[37] = static_cast<char>(w);
                 ++egdb_exact;
+                if (tag_terminal) tags[i] = 1;                     // TB, EGDB precedence over TERMINAL
+                if (static_cast<std::int8_t>(rec[37]) != wdl_before) ++wdl_changed;
                 continue;
             }
         }
+        // TERMINAL (no legal move for STM) only checked when the caller asked
+        // for source tags — keeps the legacy (no-flags) path byte-identical,
+        // since without --source-tags-out a terminal record still falls
+        // through to e.search() below exactly as before.
+        if (tag_terminal) {
+            jass::MoveList root_moves;
+            jass::generate_legal_moves(p, root_moves);
+            if (root_moves.empty()) {
+                score = -EG_SAT;
+                std::memcpy(rec + 33, &score, 4);
+                rec[37] = static_cast<char>(-1);                   // loss for STM: the rule of the game
+                tags[i] = 2;
+                ++terminal_n;
+                if (static_cast<std::int8_t>(rec[37]) != wdl_before) ++wdl_changed;
+                continue;
+            }
+        }
+        if (clear_tt_each) e.clear_tt();
         e.set_position(p);
         const int phase_ovr = label_depth[phase_index_of(popcount(p.occupied()))];
         SearchLimits lim;
@@ -3081,6 +3111,9 @@ int run_deep_relabel_mode(int argc, char** argv) {
         std::memcpy(rec + 33, &score, 4);
         const std::int8_t wdl = (score > draw_band) ? 1 : (score < -draw_band ? -1 : 0);
         rec[37] = static_cast<char>(wdl);
+        if (tag_terminal) tags[i] = 0;
+        ++search_n;
+        if (static_cast<std::int8_t>(rec[37]) != wdl_before) ++wdl_changed;
         if (((i + 1) % 2000) == 0) {
             const double el = std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - t0).count();
@@ -3089,6 +3122,14 @@ int run_deep_relabel_mode(int argc, char** argv) {
         }
     }
     if (have_egdb) jass::egdb::shutdown();
+
+    if (tag_terminal) {
+        std::ofstream tagf(source_tags_path, std::ios::binary);
+        if (!tagf) { std::cerr << "error: cannot write " << source_tags_path << "\n"; return 1; }
+        tagf.write(reinterpret_cast<const char*>(tags.data()),
+                   static_cast<std::streamsize>(tags.size()));
+        tagf.close();
+    }
 
     std::ofstream o(out_path, std::ios::binary);
     if (!o) { std::cerr << "error: cannot write " << out_path << "\n"; return 1; }
@@ -3102,6 +3143,12 @@ int run_deep_relabel_mode(int argc, char** argv) {
     std::cout << "deep-relabel: " << nrec << " records, depth=" << depth
               << ", egdb-exact=" << egdb_exact << ", " << el << "s ("
               << (el > 0 ? nrec / el : 0.0) << " pos/s) → " << out_path << "\n";
+    std::cout << "deep-relabel summary: records=" << nrec
+              << " search=" << search_n
+              << " tb=" << egdb_exact
+              << " terminal=" << terminal_n
+              << " wdl_changed=" << wdl_changed
+              << " clear_tt=" << (clear_tt_each ? 1 : 0) << "\n";
     return 0;
 }
 
@@ -5695,10 +5742,16 @@ int main(int argc, char** argv) {
                 "  --egdb-relabel <in.jnnw> <db_dir> [out.jnnw] [cache_mb]\n"
                 "                                   rewrite WDL labels of <=7-piece\n"
                 "                                   positions with the EXACT egdb result.\n"
-                "  --deep-relabel <in.jnnw> <out.jnnw> [depth=18] [--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR]\n"
+                "  --deep-relabel <in.jnnw> <out.jnnw> [depth=18] [--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N] [--search-params SPEC] [--draw-band N] [--clear-tt] [--source-tags-out PATH]\n"
                 "                                   rewrite the SCORE field with a DEEP\n"
                 "                                   search value (independent value-target\n"
                 "                                   distillation) ; --egdb anchors endgames exactly.\n"
+                "                                   --clear-tt clears the TT before each\n"
+                "                                   searched record (per-position independence).\n"
+                "                                   --source-tags-out PATH writes one uint8 per\n"
+                "                                   record (0=SEARCH, 1=TB, 2=TERMINAL) ; enabling\n"
+                "                                   it also activates TERMINAL handling (no legal\n"
+                "                                   move for STM -> score=-EG_SAT, wdl=-1, no search).\n"
                 "  --gen-egdb-wld <N> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb] [seed]\n"
                 "                                   emit N random quiet endgame positions\n"
                 "                                   labelled with the exact egdb WLD.\n"
