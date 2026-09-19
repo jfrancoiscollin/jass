@@ -820,6 +820,16 @@
       "invariant": "repair only HIER-L2 numeric runtime package pins; preserve exact TURNOVER/CURRENT_2M split, CONTEXT_30 target, C prior, historical 1341 feature/trainer mechanics, 8cf geometry, L2=1e-5, maxiter=2000/maxcor=20/gtol=1e-4/chunk=20000, CONTROL hier_l2=0, HIER hier_l2=1e-5 sole factor, immutable CURRICULUM byte target and zero-search/strength/promotion/bake boundary",
       "evidence": "2054 terminal runtime-provenance diagnostic plus 2055 terminal runtime-continuity proof: 318s boundary, zero intervening runner jobs, same cpx62 host, historical NumPy/SciPy 2.5.2/1.18.0; PR #1039",
       "status": "MITIGATED — fresh immutable same-science CONTROL rehearsal required under exact historical package pins"
+    },
+    {
+      "id": "TI-083",
+      "dedupe_key": "job:cpx62-2056-l3-cls-hier-l2-control-reproduction-rehearsal-v3",
+      "context": "CLS HIER-L2 CONTROL reproduction rehearsal 2056 / attempt 20260919T043639Z-4ed47cc5",
+      "symptom": "Launch-V2 failed TECHNICAL / STAGE_FAILED:EXECUTE, exit 2, under the exact historical NumPy/SciPy 2.5.2/1.18.0 replay; no scientific verdict",
+      "root_cause": "PENDING — exact bounded runner-owned stage stderr/receipt diagnostic required before repair",
+      "invariant": "diagnose only bounded runner-owned stage logs; preserve exact historical sources, CURRENT_2M split, CONTEXT_30 target, model-C prior, 8cf geometry, L2=1e-5, frozen optimizer/serialization, exact historical numeric runtime, CONTROL hier_l2=0 byte-reproduction requirement and zero-search/strength/promotion/bake boundary",
+      "evidence": "fresh 2056 control status plus bounded diagnostic introduced in this PR; PR #1040",
+      "status": "OPEN — exact mechanical witness pending 2056 diagnostic"
     }
   ]
 }
