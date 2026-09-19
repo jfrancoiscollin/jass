@@ -234,5 +234,22 @@ manifest={
 }
 open(f'{art}/manifest.json','w').write(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
 PY
+
+# 2059 completed the frozen CONTROL fit and sealed every scientific output, but
+# Launch-V2 rejected the run at OUTPUTS because this direct shell stage omitted
+# its required execution-evidence.json. Record exactly the completed fit phase
+# only after all frozen scientific outputs have been sealed.
+"$PY" - "$ART" "$LAUNCH_MODE" <<'PY'
+import sys
+from pathlib import Path
+from jobs.tools.launch_runtime_v2 import StageEvidence
+
+evidence = StageEvidence(Path(sys.argv[1]), sys.argv[2])
+evidence.begin('execute-cls-hier-l2-next-candidate')
+evidence.record_effect('fits', 1)
+evidence.complete()
+evidence.finish()
+PY
+
 say "terminal=$("$PY" -c 'import json,sys; print(json.load(open(sys.argv[1]))["terminal"])' "$ART/scientific-summary.json")"
 say "model_sha256=$MODEL_SHA"
