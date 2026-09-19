@@ -1,0 +1,21 @@
+name: cls-g0-2063-diagnostic
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/cls_g0_2063_failure_diagnostic.py'
+      - 'jobs/tests/test_cls_g0_2063_failure_diagnostic.py'
+      - 'jobs/launch_profiles/cls-g0-2063-failure-diagnostic-v1.json'
+      - '.github/workflows/cls-g0-2063-diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  diagnostic-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test all-root classification and fail-closed reads
+        run: python -m unittest jobs.tests.test_cls_g0_2063_failure_diagnostic -v
