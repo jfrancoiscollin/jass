@@ -1,0 +1,28 @@
+name: CLS HIER-L2 1340 to 1341 runtime continuity diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/cls_hier_l2_1340_1341_runtime_continuity_diagnostic.py'
+      - 'jobs/tests/test_cls_hier_l2_1340_1341_runtime_continuity_v1.py'
+      - 'jobs/launch_profiles/cls-hier-l2-1340-1341-runtime-continuity-v1.json'
+      - '.github/workflows/cls-hier-l2-1340-1341-runtime-continuity.yml'
+  push:
+    paths:
+      - 'jobs/tools/cls_hier_l2_1340_1341_runtime_continuity_diagnostic.py'
+      - 'jobs/tests/test_cls_hier_l2_1340_1341_runtime_continuity_v1.py'
+      - 'jobs/launch_profiles/cls-hier-l2-1340-1341-runtime-continuity-v1.json'
+      - '.github/workflows/cls-hier-l2-1340-1341-runtime-continuity.yml'
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile jobs/tools/cls_hier_l2_1340_1341_runtime_continuity_diagnostic.py
+      - run: python -m unittest jobs.tests.test_cls_hier_l2_1340_1341_runtime_continuity_v1 -v
