@@ -5,6 +5,7 @@ set -Eeuo pipefail
 : "${JASS_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"; : "${LAUNCH_MODE:?}"; : "${CLS_HIER_ARM:?}"
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"; IN="$JASS_RESULT_DIR/inputs"; ART="$JASS_ARTEFACT_DIR"; GEOM="$JASS_RESULT_DIR/geom8"
+HIST="$JASS_RESULT_DIR/historical-1341-code"
 mkdir -p "$W" "$IN" "$ART" "$GEOM"
 RES="$W/RESULTS.md"; : >"$RES"
 say(){ echo "$*" | tee -a "$RES"; }
@@ -25,6 +26,8 @@ CURRICULUM_ROOT="r2:jass-data/runs/$CURRICULUM_JOB/$CURRICULUM_ATTEMPT"
 CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
 TURNOVER_CORPUS_SHA="9b7db67a87025baf9115c72512312ac13ace076cef700c54ff1862f4ab240a2d"
 TURNOVER_META_SHA="acf3bbf4a28e7b44a1077df06bca9658cd4b189fc4cf11ee7f56720661626682"
+HIST_TRAIN_STREAM_BLOB="12ed5f0f743dadc07ebaab6de1dd9a837297b6c0"
+HIST_GEN_PATTERNS_BLOB="af5209654689521032bd56c2c328fd42d160e9d1"
 HOLDOUT_MOD=10; SPLIT_SEED=577215; RECORDS=2000000; TRAIN=1800796; HOLDOUT=199204
 MAXIT=2000; CHUNK=20000; L2="1e-5"; HIER_L2="1e-5"
 VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}"; PY="$VENV/bin/python"
@@ -33,7 +36,7 @@ finalize(){
   rc=$?; trap - EXIT ERR TERM INT; set +e
   cp "$RES" "$ART/RESULTS.md" 2>/dev/null || true
   (cd "$W" && find . -maxdepth 1 -type f -name '*.log' -print0 | tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true
-  rm -rf "$W/build" "$IN" "$GEOM" 2>/dev/null || true
+  rm -rf "$W/build" "$IN" "$GEOM" "$HIST" 2>/dev/null || true
   rm -f "$W"/*.jnnw "$W"/*.jsm "$W"/*.feat "$W"/*.npy "$W"/*.pjtw 2>/dev/null || true
   exit "$rc"
 }
@@ -63,7 +66,7 @@ if [ "$CLS_HIER_ARM" = HIER ]; then
     --out-dir "$IN" --report "$ART/verified-control-production.json" >"$W/fetch-control.log" 2>&1
   "$PY" - "$ART/verified-control-production.json" "$IN/control-summary.json" \
     "$CLS_HIER_CONTROL_JOB" "$CLS_HIER_CONTROL_ATTEMPT" "$CLS_HIER_CONTROL_CODE" "$CURRICULUM_SHA" <<'PY'
-import gzip,hashlib,json,sys
+import json,sys
 verify=json.load(open(sys.argv[1])); summary=json.load(open(sys.argv[2]))
 want=(sys.argv[3],sys.argv[4],sys.argv[5],'completed')
 got=(verify.get('job_id'),verify.get('attempt_id'),verify.get('code_sha'),verify.get('result_state'))
@@ -122,8 +125,39 @@ got_recipe=(recipe.get('architecture'),recipe.get('target'),recipe.get('l2'),rec
 if got_recipe != want: raise SystemExit(f'1340 fixed recipe drift: {got_recipe}')
 PY
 
-# Reproduce the exact CURRENT_2M split and current-code production feature geometry.
-python3 tools/selfplay_frontier.py split --data "$W/turnover.raw.jnnw" --meta "$W/turnover.raw.jsm" \
+# 2051 proved that the current-code CONTROL path does not reproduce 1341 bytes.
+# The preregistration requires the historical 1341 recipe mechanics, not a newer
+# feature/trainer implementation. Materialize that exact code tree and use it for
+# BOTH CONTROL and HIER; the sole fit-axis difference remains --hier-l2 1e-5.
+rm -rf "$HIST"; mkdir -p "$HIST"
+git cat-file -e "${CURRICULUM_CODE}^{commit}" || die "historical 1341 commit unavailable"
+[ "$(git rev-parse "$CURRICULUM_CODE:pattern_jass/tools/train_stream.py")" = "$HIST_TRAIN_STREAM_BLOB" ] || die "historical train_stream blob drift"
+[ "$(git rev-parse "$CURRICULUM_CODE:pattern_jass/tools/gen_patterns.py")" = "$HIST_GEN_PATTERNS_BLOB" ] || die "historical gen_patterns blob drift"
+git archive --format=tar "$CURRICULUM_CODE" | tar -xf - -C "$HIST"
+[ -f "$HIST/pattern_jass/tools/train_stream.py" ] || die "historical trainer missing after archive"
+[ -f "$HIST/tools/selfplay_frontier.py" ] || die "historical split tool missing after archive"
+grep -Fq -- "--hier-l2" "$HIST/pattern_jass/tools/train_stream.py" || die "historical trainer lacks preregistered hier-l2 support"
+"$PY" - "$ART/runtime-authentication.json" "$CURRICULUM_CODE" "$HIST_TRAIN_STREAM_BLOB" "$HIST_GEN_PATTERNS_BLOB" <<'PY'
+import json,platform,sys
+import numpy,scipy
+out,code,trainer_blob,patterns_blob=sys.argv[1:]
+payload={
+ 'schema':'jass.cls_hier_l2_runtime_authentication.v1',
+ 'historical_recipe_code_sha':code,
+ 'historical_train_stream_blob_sha':trainer_blob,
+ 'historical_gen_patterns_blob_sha':patterns_blob,
+ 'python':sys.version,
+ 'python_executable':sys.executable,
+ 'platform':platform.platform(),
+ 'numpy':numpy.__version__,
+ 'scipy':scipy.__version__,
+}
+open(out,'w').write(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+PY
+
+# Reproduce the exact CURRENT_2M split and feature geometry with the authoritative
+# 1341 code, then use the same historical trainer in both arms.
+python3 "$HIST/tools/selfplay_frontier.py" split --data "$W/turnover.raw.jnnw" --meta "$W/turnover.raw.jsm" \
   --out-data "$W/current.jnnw" --out-meta "$W/current.jsm" --holdout-mod "$HOLDOUT_MOD" --seed "$SPLIT_SEED" \
   --manifest "$W/current-manifest-reproduced.json" >"$W/split.log" 2>&1
 cmp "$W/current-manifest-reproduced.json" "$IN/current-manifest.json" || die "CURRENT_2M split/manifest drift"
@@ -134,18 +168,17 @@ PY
 )
 [ "$NR" -eq "$RECORDS" ] && [ "$NT" -eq "$TRAIN" ] && [ "$NH" -eq "$HOLDOUT" ] || die "CURRENT_2M cardinality drift"
 
-python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf >"$W/gen8.log" 2>&1
-cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
-cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON \
+(cd "$HIST" && python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf >"$W/gen8.log" 2>&1)
+cp "$HIST/pattern_jass/tools/patterns.py" "$GEOM/patterns.py"
+cmake -S "$HIST" -B "$W/build" -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON \
   -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON >"$W/cmake.log" 2>&1
 cmake --build "$W/build" -j16 --target jass >"$W/build.log" 2>&1
 timeout 7200s "$W/build/jass" --dump-eval-features "$W/current.jnnw" "$W/current.feat" >"$W/features.log" 2>&1
 
-# Recreate historical CURRICULUM fit exactly, adding only the preregistered HIER penalty in the HIER arm.
 HIER_ARGS=()
 [ "$CLS_HIER_ARM" = CONTROL ] || HIER_ARGS=(--hier-l2 "$HIER_L2")
-env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools:." PYTHONUNBUFFERED=1 \
-  timeout 14400s "$PY" pattern_jass/tools/train_stream.py \
+env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:$HIST/pattern_jass/tools:$HIST" PYTHONUNBUFFERED=1 \
+  timeout 14400s "$PY" "$HIST/pattern_jass/tools/train_stream.py" \
     --data "$W/current.jnnw" --feat "$W/current.feat" --out "$W/model.pjtw" \
     --target external --target-values "$W/current-context30.npy" \
     --targets-report "$ART/target-consumption.json" \
@@ -163,14 +196,14 @@ if [ "$CLS_HIER_ARM" = CONTROL ] && [ "$MODEL_SHA" != "$CURRICULUM_SHA" ]; then
 fi
 gzip -n -c "$W/model.pjtw" >"$ART/model.pjtw.gz"
 
-"$PY" - "$ART" "$IN" "$CLS_HIER_ARM" "$LAUNCH_MODE" "$EXPECTED_CODE_SHA" "$MODEL_SHA" "$CURRICULUM_SHA" <<'PY'
+"$PY" - "$ART" "$IN" "$CLS_HIER_ARM" "$LAUNCH_MODE" "$EXPECTED_CODE_SHA" "$MODEL_SHA" "$CURRICULUM_SHA" "$CURRICULUM_CODE" <<'PY'
 import hashlib,json,sys
-art,inp,arm,mode,code,model_sha,parent_sha=sys.argv[1:]
+art,inp,arm,mode,code,model_sha,parent_sha,historical_code=sys.argv[1:]
 sha=lambda p:hashlib.sha256(open(p,'rb').read()).hexdigest()
 terminal='CLS_HIER_CONTROL_REPRODUCTION_READY_V1' if arm=='CONTROL' else 'CLS_HIER_CANDIDATE_FIT_READY_V1'
 summary={
  'schema':'jass.cls_hier_l2_next_candidate.v1','state':'completed','terminal':terminal,
- 'arm':arm,'mode':mode,'code_sha':code,'model_sha256':model_sha,
+ 'arm':arm,'mode':mode,'code_sha':code,'historical_recipe_code_sha':historical_code,'model_sha256':model_sha,
  'direct_parent_sha256':parent_sha,'fixed_curriculum_anchor_sha256':parent_sha,
  'varied_factor':'hier_l2','l2':1e-5,'hier_l2':0.0 if arm=='CONTROL' else 1e-5,
  'fits':1,'target_reads':0,'confirmation_target_reads':0,'new_jass_searches':0,'new_scan_searches':0,
@@ -185,6 +218,8 @@ source={
  'verified_turnover':json.load(open(f'{art}/verified-turnover.json')),
  'verified_curriculum':json.load(open(f'{art}/verified-curriculum.json')),
  'curriculum_sha256':parent_sha,
+ 'historical_recipe_code_sha':historical_code,
+ 'runtime_authentication_sha256':sha(f'{art}/runtime-authentication.json'),
  'current_manifest_sha256':sha(f'{inp}/current-manifest.json'),
  'context30_gzip_sha256':sha(f'{inp}/current-context30.npy.gz'),
  'confirmation_target_reads':0,
@@ -195,6 +230,7 @@ manifest={
  'schema':'jass.cls_hier_l2_manifest.v1','arm':arm,'model_raw_sha256':model_sha,
  'model_gzip_sha256':sha(f'{art}/model.pjtw.gz'),'fit_receipt_sha256':sha(f'{art}/fit-receipt.json'),
  'source_authentication_sha256':sha(f'{art}/source-authentication.json'),
+ 'runtime_authentication_sha256':sha(f'{art}/runtime-authentication.json'),
 }
 open(f'{art}/manifest.json','w').write(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
 PY
