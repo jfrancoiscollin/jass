@@ -1,0 +1,26 @@
+name: CLS HIER-L2 2056 stage-log diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/cls_hier_l2_2056_stage_log_diagnostic.py'
+      - 'jobs/tests/test_cls_hier_l2_2056_stage_log_diagnostic_v1.py'
+      - 'jobs/launch_profiles/cls-hier-l2-2056-stage-log-diagnostic-v1.json'
+      - '.github/workflows/cls-hier-l2-2056-stage-log-diagnostic.yml'
+  push:
+    paths:
+      - 'jobs/tools/cls_hier_l2_2056_stage_log_diagnostic.py'
+      - 'jobs/tests/test_cls_hier_l2_2056_stage_log_diagnostic_v1.py'
+      - 'jobs/launch_profiles/cls-hier-l2-2056-stage-log-diagnostic-v1.json'
+      - '.github/workflows/cls-hier-l2-2056-stage-log-diagnostic.yml'
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile jobs/tools/cls_hier_l2_2056_stage_log_diagnostic.py
+      - run: python -m unittest jobs.tests.test_cls_hier_l2_2056_stage_log_diagnostic_v1 -v
