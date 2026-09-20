@@ -840,6 +840,16 @@
       "invariant": "emit only required Launch-V2 execution evidence after frozen scientific outputs are sealed; record exactly one fit; preserve exact historical source/target/prior/runtime/thread/optimizer/serialization/CURRICULUM contract and zero search/strength/promotion/bake boundary; HIER remains closed",
       "evidence": "2059 status artefact inventory + generated 2059 stage spec output contract + focused regression in this PR; PR #1042",
       "status": "MITIGATED — fresh immutable same-science CONTROL rehearsal required after green CI"
+    },
+    {
+      "id": "TI-085",
+      "dedupe_key": "job:cpx62-2067-l3-cls-g0-strength-main-rehearsal-v1:resource-envelope",
+      "context": "CLS separate strength-study representative rehearsal2067",
+      "symptom": "Technically completed32 same-model games and passing clock checks, but projected work2758.1859s exceeds2700s planning allowance; PREPARATION_BLOCKED, no cross-model games",
+      "root_cause": "Measured representative pair throughput does not fit the initial soft planning allowance; this is a resource block, not an engine defect or scientific negative",
+      "invariant": "Preserve2067 BLOCKED and HIER G0 FAIL; only separate3000s resource admission within unchanged3600/4200 hard caps; exact original openings, models, N, cadence and inference; new authenticated rehearsal required",
+      "evidence": "2067 attempt20260920T090324Z-553f4511 exit0,153.232551s representative block,clock_checks_passed=true,selection0a9497f6; tests preserve V1 block; PR #1048",
+      "status": "MITIGATED — separate resource-admission target-host proof pending"
     }
   ]
 }
