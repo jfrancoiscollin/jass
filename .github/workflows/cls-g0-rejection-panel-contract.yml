@@ -1,0 +1,19 @@
+name: cls-g0-rejection-panel-contract
+on:
+  pull_request:
+    paths:
+      - 'docs/experiments/CLS_G0_REJECTION_PANEL_V1_20260920.md'
+      - 'docs/experiments/CLS_G0_REJECTION_PANEL_V1_20260920.json'
+      - 'jobs/tests/test_cls_g0_rejection_panel_contract_v1.py'
+      - '.github/workflows/cls-g0-rejection-panel-contract.yml'
+permissions:
+  contents: read
+jobs:
+  protocol-fixtures-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s jobs/tests -p 'test_cls_g0_rejection_panel_contract_v1.py' -v
