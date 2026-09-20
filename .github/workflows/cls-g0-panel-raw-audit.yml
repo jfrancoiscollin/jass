@@ -4,6 +4,7 @@ on:
     paths:
       - 'jobs/tools/cls_g0_panel_*audit*.py'
       - 'jobs/tests/test_cls_g0_panel_raw_audit.py'
+      - 'jobs/tests/test_cls_g0_panel_inventory_types.py'
       - 'jobs/launch_profiles/cls-g0-panel-historical-audit-v1.json'
       - '.github/workflows/cls-g0-panel-raw-audit.yml'
 permissions:
@@ -17,4 +18,4 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m py_compile jobs/tools/cls_g0_panel_raw_audit.py jobs/tools/cls_g0_panel_audit_stage.py
-      - run: python -m unittest jobs.tests.test_cls_g0_panel_raw_audit jobs.tests.test_cls_g0_rejection_panel_contract_v1 -v
+      - run: python -m unittest jobs.tests.test_cls_g0_panel_raw_audit jobs.tests.test_cls_g0_rejection_panel_contract_v1 jobs.tests.test_cls_g0_panel_inventory_types -v

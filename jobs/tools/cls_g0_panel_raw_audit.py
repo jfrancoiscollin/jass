@@ -336,7 +336,16 @@ def g0_rows(arm: str, rows: list[dict], roots: list[str], phases: list[dict],
             "parent_move": parent["bestmove_canonical"], "candidate_move": candidate["bestmove_canonical"],
             "same_move": int(parent["bestmove_canonical"] == candidate["bestmove_canonical"])})
     for role in missing:
-        need(probe.get(role + "_nodes_to_depth_missing_roots") == missing[role], "G0_MISSING_INVENTORY")
+        # Native write_id_array emits uint32 JSON numbers; TSV IDs are text.
+        # Normalize representation only: retain exact order, identity and count.
+        reported = probe.get(role + "_nodes_to_depth_missing_roots")
+        need(isinstance(reported, list), "G0_MISSING_INVENTORY")
+        for value in reported:
+            need((type(value) is int and 0 <= value <= 0xffffffff) or
+                 (type(value) is str and
+                  re.fullmatch(r"0|[1-9][0-9]{0,9}", value) is not None and
+                  int(value) <= 0xffffffff), "G0_MISSING_INVENTORY")
+        need([str(value) for value in reported] == missing[role], "G0_MISSING_INVENTORY")
     need(probe.get("budget_nodes") == 200000 and probe.get("roots") == 512 and
          probe.get("trace_parity_mismatches") == 0 and probe.get("nodes_to_depth_surrogate_used") is False, "G0_PROBE_BOUNDARY")
     need(len(missing["candidate"]) == 56 and not missing["parent"], "G0_HISTORICAL_COUNTS")
