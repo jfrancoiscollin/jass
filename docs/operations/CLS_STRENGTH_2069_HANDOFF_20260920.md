@@ -1,14 +1,16 @@
 # CLS — suivi et reprise du match principal 2069
 
-Date de cette note : 20 septembre 2026. Document opérationnel, pas un nouveau protocole.
+Date : 20 septembre 2026. Document opérationnel, pas un nouveau protocole.
 
-## Dernière observation, non terminale
+## État terminal vérifié
 
-Au statut publié le 20 septembre 2026 à **10:28:04 UTC / 12:28:04 Europe/Paris**, le job est `running`, phase `execute-paired-stage`. Le compteur d'effets rapporte **518 parties démarrées**, et non 518 parties nécessairement terminées, sur 576 prévues ; 55 885 recherches ont été démarrées. Aucun verdict scientifique n'est publié à cet instant.
+Le match est **terminé** depuis le 20 septembre 2026 à **10:35:24 UTC / 12:35:24 Europe/Paris**, état `completed`, `exit_code=0`. Les **288 paires / 576 parties HIER-CURRICULUM** sont complètes. Terminal : `CLS_G0_STRENGTH_MAIN_COMPLETE_V1`. Verdict publié : **`SUBSTANTIAL_LOSS_EXCLUDED`**.
 
-Source immuable : [statut au commit de contrôle 46a51381](https://github.com/jfrancoiscollin/jass-control/blob/46a513814b881e010e584eb4ec7193b597b98c03/status/cpx62-2069-l3-cls-g0-strength-main-production-v1.json).
+[Rapport terminal et portée de la vérification](../experiments/CLS_G0_STRENGTH_VALIDATION_MAIN_RESULTS_20260920.md).
 
-Ne pas présenter cette observation comme un état temps réel après son horodatage. Relire le statut courant avant toute action.
+Source immuable : [statut au commit de contrôle 4a5b2e73](https://github.com/jfrancoiscollin/jass-control/blob/4a5b2e7379f5a0072b9d3c44558286992238a664/status/cpx62-2069-l3-cls-g0-strength-main-production-v1.json), blob `56760c8048efa72411b3da9202419500ce7a927d`.
+
+Les observations précédentes de 450 puis 518 parties démarrées étaient des points de progression non terminaux, désormais dépassés. Elles n'ont pas servi à une décision statistique ou à une modification du match.
 
 ## Identités de reprise
 
@@ -18,25 +20,30 @@ Ne pas présenter cette observation comme un état temps réel après son horoda
 - Lancement : [jass-control #776](https://github.com/jfrancoiscollin/jass-control/pull/776), fusion `d289a6f8e7adab76ef7979128d8826b8f44e7d32`.
 - Prérequis : `cpx62-2068-l3-cls-g0-strength-main-rehearsal-v2`, tentative `20260920T092427Z-0304fc16`.
 - Reçu de répétition : `cc2507e9863e8cb2ac5e05d6f7293cc4a5f92befa00fd7715a510c36a2e78b37`.
+- Reçu de production indiqué par le résumé : `b24bff3426acb91c8d526f82e002104830850a608f95db60ec9e95df91154633`.
 - Spécification normalisée : `a5e649643d516ce47939f6653b9c9d249584a98854c9e37fd31f43068203f315`.
-- Sélection des ouvertures : `0a9497f68387b1e0b65a36a9d0da538e9cfd7932167c0d2b0f664e15b81c53c1`.
+- Sélection : `0a9497f68387b1e0b65a36a9d0da538e9cfd7932167c0d2b0f664e15b81c53c1`.
 - HIER : `95bed3ac9fac4368809609fb1a981ee863401a30ca623fb7bfa3caf7eaddf628`.
 - CURRICULUM : `319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1`.
 
-## Contrat déjà gelé
+## Résultat et portée
 
-[Annexe principale](../experiments/CLS_G0_STRENGTH_VALIDATION_MAIN_V1_20260920.md), implémentation `jobs/tools/cls_g0_strength_main.py` et profil `jobs/launch_profiles/cls-g0-strength-main-resource-v2.json` au code ci-dessus. L'admission opérationnelle séparée de [#1048](https://github.com/jfrancoiscollin/jass/pull/1048) autorise 3 000 secondes de travail projeté, dans les plafonds durs inchangés de 3 600/4 200 secondes ; elle ne change ni cadence ni échantillon.
+62 005 recherches, initialisations comprises. Dix parties censurées au plafond administratif. Score HIER descriptif avec demi-point pour les plafonds : **50,2604 %**. Intervalle préenregistré à 95 %, censure comprise : **[41,3897 % ; 59,1312 %]**. Sa borne basse dépasse **35,9935 %**, frontière d'une perte de **100 Elo logistiques**.
 
-288 paires avec couleurs inversées, 576 parties. 100 ms nominales par coup, plafond bout-à-bout de 120 ms après initialisation ; quatre travailleurs, un thread par joueur, même binaire, mêmes paramètres compilés, même EGDB, TT 16 MiB, livre désactivé. Ouvertures consommées exactement depuis la répétition authentifiée, jamais régénérées en production.
+Le contrôle local du résumé a reproduit les comptes pentanomiaux, le score, les bornes de censure, l'intervalle et le verdict. La copie source est byte-identique au blob Git publié. Ce contrôle n'est pas une relecture indépendante de l'archive R2 des 576 trajectoires.
 
-Marge de perte substantielle : 100 Elo logistiques, frontière de score `1/(1+10**(100/400))`. Intervalle fixe de Hoeffding au niveau des 288 paires avec alpha propre à l'étude de 0,05. Une partie au plafond administratif de 160 demi-coups est censurée, avec bornes de score [0,1] pour l'inférence, pas une nulle certaine. Aucune inférence intermédiaire ni extension optionnelle.
+Le résultat exclut une perte d'au moins 100 Elo dans la population/cadence et sous les hypothèses du protocole. Il **ne démontre ni supériorité ni égalité de force ni absence de petite régression**, et ne calibre pas globalement G0 sur un seul cas. Le FAIL G0 est un résultat du filtre, pas un échec technique d'exécution ; il n'est pas réécrit.
 
-## Suite exacte
+## Contrat conservé
 
-1. Si le même job est sain et actif, ne pas le dupliquer, le redémarrer, modifier son code, son échantillon ou ses seuils.
-2. À la fin seulement, vérifier `completed/exit_code=0`, la tentative, les modèles, les 288 paires/576 parties, la sélection, l'admission de production et les identités de reçus.
-3. Relire le rapport publié, contrôler la cohérence des comptes pentanomiaux, de la censure, de l'intervalle et du verdict sous le contrat inchangé. Distinguer un contrôle du résumé GitOps d'une relecture indépendante des 576 trajectoires R2 ; ne pas prétendre avoir effectué cette dernière sans l'avoir réellement faite.
-4. En cas d'échec technique, préserver les données consommées, diagnostiquer le défaut prouvé, consigner l'incident central et ne jamais transformer une erreur en nulle/perte ni assouplir une limite après résultat.
-5. Publier l'interprétation bornée et le point de reprise. Les terminaux possibles sont `SUBSTANTIAL_LOSS_SUPPORTED`, `SUBSTANTIAL_LOSS_EXCLUDED`, `INDETERMINATE` ; aucun ne vaut supériorité, G0 PASS ou promotion.
+[Annexe principale](../experiments/CLS_G0_STRENGTH_VALIDATION_MAIN_V1_20260920.md), implémentation `jobs/tools/cls_g0_strength_main.py` et profil `jobs/launch_profiles/cls-g0-strength-main-resource-v2.json` au code scellé. L'admission opérationnelle séparée [#1048](https://github.com/jfrancoiscollin/jass/pull/1048) ne change ni cadence ni échantillon.
 
-**Le FAIL G0 V1 de HIER est immuable. CURRICULUM reste champion. Pas de promotion, réinjection, nouvelle dose, nouvelle cadence ou nouvelle direction scientifique automatique.**
+288 paires, 576 parties, 100 ms nominales par coup et plafond bout-à-bout de 120 ms après initialisation. Quatre travailleurs, un thread par joueur, même binaire/paramètres/EGDB, TT 16 MiB, livre désactivé, ouvertures reprises exactement de la répétition. Marge 100 Elo, intervalle fixe de Hoeffding par paire, alpha propre à l'étude 0,05, censure des plafonds de 160 demi-coups. Aucun changement après résultat.
+
+## Prochaine reprise
+
+**Ne pas recommencer 2066, 2068 ou 2069. L'étude est terminée et interprétée.** Relire le rapport terminal ci-dessus avant toute nouvelle décision.
+
+`INTERPRET_NO_AUTOMATIC_PROMOTION` reste la frontière. Aucun nouveau job n'est autorisé par cette note ; une éventuelle version future du filtre demanderait son propre protocole. La clôture de cette étude ne clôt pas automatiquement toute CLS.
+
+**Le FAIL G0 V1 de HIER demeure acquis. CURRICULUM reste champion. Pas de promotion, bake, réinjection, nouvelle dose, nouvelle cadence ou nouvelle direction scientifique automatique.**
