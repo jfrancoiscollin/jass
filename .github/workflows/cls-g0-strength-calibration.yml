@@ -1,0 +1,21 @@
+name: cls-g0-strength-calibration
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/cls_g0_strength_calibration.py'
+      - 'jobs/tests/test_cls_g0_strength_calibration.py'
+      - 'jobs/launch_profiles/cls-g0-strength-calibration-v1.json'
+      - 'docs/experiments/L3_CLS_G0_STRENGTH_VALIDATION_V1_20260920.md'
+      - '.github/workflows/cls-g0-strength-calibration.yml'
+permissions:
+  contents: read
+jobs:
+  focused-calibration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest jobs.tests.test_cls_g0_strength_calibration -v
