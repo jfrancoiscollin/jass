@@ -399,7 +399,7 @@ def analyze_main(rows: list[dict]) -> dict:
         "no_superiority_or_promotion_claim": True}
 
 
-def main() -> int:
+def main(*, projected_work_ceiling: int = MAIN_WORK_CAP, expected_selection_sha: str | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--worker", type=Path)
     args = ap.parse_args()
@@ -410,6 +410,7 @@ def main() -> int:
     result = Path(os.environ["JASS_RESULT_DIR"])
     art = Path(os.environ["JASS_ARTEFACT_DIR"])
     mode = os.environ["LAUNCH_MODE"]
+    need(projected_work_ceiling in (MAIN_WORK_CAP, 3000), "REGISTERED_RESOURCE_CEILING_REQUIRED")
     need(mode in ("rehearsal", "production"), "STAGE_MODE")
     work = result/"work"/"strength-main"
     work.mkdir(parents=True, exist_ok=False)
@@ -444,6 +445,8 @@ def main() -> int:
             need(read(previous/"runtime-identity.json") == runtime, "RUNTIME_ROUNDTRIP")
             seal = read(previous/"opening-freeze.json")
         validate_seal(seal)
+        if expected_selection_sha is not None:
+            need(seal["selection_sha256"] == expected_selection_sha, "ORIGINAL_2067_SELECTION_DRIFT")
         need(seal["exclusion_sha256"] == digest(sorted(excluded)) and
              all(r["canonical"] not in excluded for r in seal["main"]+seal["representative"]), "EXCLUSION_DRIFT")
         write(art/"opening-freeze.json", seal)
@@ -459,10 +462,10 @@ def main() -> int:
             trajectory = {fen_identity(f) for r in rows for g in r["games"] for f in g["fens"]}
             overlaps = sum(r["canonical"] in trajectory for r in seal["main"])
             projected = PAIRS*elapsed/len(rows)
-            report = {"terminal": READY, "production_ready": overlaps == 0 and projected <= MAIN_WORK_CAP,
+            report = {"terminal": READY, "production_ready": overlaps == 0 and projected <= projected_work_ceiling,
                 "representative_pairs": len(rows), "representative_games": 2*len(rows), "cross_model_games": 0,
                 "main_start_overlap_rehearsal_trajectories": overlaps, "representative_block_seconds": elapsed,
-                "projected_main_work_seconds": projected, "main_work_ceiling_seconds": MAIN_WORK_CAP,
+                "projected_main_work_seconds": projected, "main_work_ceiling_seconds": projected_work_ceiling,
                 "clock_checks_passed": True, "scientific_verdict": None}
             if not report["production_ready"]:
                 report["terminal"] = "CLS_G0_STRENGTH_MAIN_PREPARATION_BLOCKED_V1"
