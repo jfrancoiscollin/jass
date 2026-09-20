@@ -1,0 +1,20 @@
+name: cls-g0-panel-raw-audit
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/cls_g0_panel_*audit*.py'
+      - 'jobs/tests/test_cls_g0_panel_raw_audit.py'
+      - 'jobs/launch_profiles/cls-g0-panel-historical-audit-v1.json'
+      - '.github/workflows/cls-g0-panel-raw-audit.yml'
+permissions:
+  contents: read
+jobs:
+  independent-raw-audit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile jobs/tools/cls_g0_panel_raw_audit.py jobs/tools/cls_g0_panel_audit_stage.py
+      - run: python -m unittest jobs.tests.test_cls_g0_panel_raw_audit jobs.tests.test_cls_g0_rejection_panel_contract_v1 -v
