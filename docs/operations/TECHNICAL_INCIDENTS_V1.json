@@ -850,6 +850,16 @@
       "invariant": "Preserve2067 BLOCKED and HIER G0 FAIL; only separate3000s resource admission within unchanged3600/4200 hard caps; exact original openings, models, N, cadence and inference; new authenticated rehearsal required",
       "evidence": "2067 attempt20260920T090324Z-553f4511 exit0,153.232551s representative block,clock_checks_passed=true,selection0a9497f6; tests preserve V1 block; PR #1048",
       "status": "MITIGATED — separate resource-admission target-host proof pending"
+    },
+    {
+      "id": "TI-086",
+      "dedupe_key": "job:cpx62-2070-l3-cls-g0-panel-historical-audit-v1:root-id-json-tsv-types",
+      "context": "CLS rejection panel historical audit2070; source744c004c; attempt20260920T180309Z-744c004c",
+      "symptom": "AuditError at g0_rows:339 in audit-all-g0-roots; terminal failed exit2, no scientific verdict",
+      "root_cause": "Native write_id_array emits uint32 JSON numbers while TSV-derived missing-root IDs are strings; direct list equality rejects identical ordered identities",
+      "invariant": "Normalize representation only; preserve root order/count/identity, missing receipts, all frozen G0 FAILs, model and source pins, 2069 result, budgets and no-automatic-retry boundary; no new games or searches",
+      "evidence": "Published2070 status blob156018dddee8b63d17b51165f8b244da12dace26; native probe blob5a10ccd3ecf7feadd7bc8cc769b91bae27c2f771; exact pre-fix audit blob6810d0f213991e30685fa66cb7fb33532fc36d5e reproduces same AuditError in both512-root synthetic fixtures; corrected blob2aae455d2b6cb7c8d31fbef5c56dfe1e18f5cb87 passes12 tests; PR #1052",
+      "status": "MITIGATED — correction proposed and locally tested; CI and authorized target-host terminal proof pending"
     }
   ]
 }
