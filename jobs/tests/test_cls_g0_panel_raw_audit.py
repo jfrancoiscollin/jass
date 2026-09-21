@@ -16,6 +16,13 @@ from jobs.tools import cls_g0_panel_audit_stage as stage
 from jobs.tools.launch_runtime_v2 import StageEvidence
 
 
+def load_tests(loader, tests, pattern):
+    """Existing panel-audit CI also exercises the new readiness contract."""
+    from jobs.tests import test_cls_g0_panel_readiness
+    tests.addTests(loader.loadTestsFromModule(test_cls_g0_panel_readiness))
+    return tests
+
+
 def q(side, move="31-26", wall=.07):
     return {"side": side, "move": move, "wall_seconds": wall,
             "nodes": 12, "depth": 1, "eval_calls": 9}
