@@ -31,53 +31,51 @@ et 3 600/4 200 s pour chaque comparaison. La [proposition d'amendement
 d'admission](experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md) conserve
 le protocole scientifique et tous ses plafonds ; elle définit une version
 d'admission propre au plan complet. JFC l'a approuvée par « Je valide » ; son
-implémentation complète précède la readiness autorisée. Aucune nouvelle partie
-n'a encore été lancée. Les deux matchs principaux gardent une admission
-explicite distincte ; les tests locaux ne constituent pas une répétition réelle.
+implémentation complète a été fusionnée dans #1056, avec le dispatcher control
+#780 et l'admission unique #781. La readiness **2073**
+(`20260921T070922Z-54e30b98`) a échoué dans les régressions avant le stage :
+42 tests, une erreur de transport synthétique liée au `RCLONE_BIN` absolu de
+CPX62, **zéro partie et zéro recherche natives**. La publication d'échec R2
+est authentifiée ; elle ne fournit aucune preuve de readiness.
+[Résultat, correction et preuves](operations/CLS_PANEL_READINESS_2073_RESULTS_20260921.md).
+La version reste bloquée sans verdict conjoint ; aucune relance automatique
+n'est autorisée et aucun remplacement n'est en file. Les deux matchs principaux
+gardent une admission explicite distincte ; les tests locaux ne constituent
+pas une répétition réelle. CURRICULUM et les FAIL G0 restent inchangés.
 
-## Campagne autonome eval/search — candidat ED4-P1 scellé et authentifié
+## Campagne eval/search — ED4 et ED5 clos scientifiquement
 
-Le mandat du 9 septembre autorise la poursuite automatique de pistes scientifiques
-distinctes après un échec, avec préenregistrement et confirmations fraîches. Le
-[contrat de campagne](experiments/L3_EVAL_SEARCH_CANDIDATE_CAMPAIGN_V1_20260909.md)
-gèle les quatre gates candidat/décision/WDL/recherche et la dépense alpha. Le
-[fit réel ED4-P1](experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_FIT_V1_20260909.md)
-est préenregistré : répétition full512 puis production identique, un fit chacune.
+Les confirmations fraîches ont déjà eu lieu. ED4 k=1 et ED5 k=2 terminent avec
+`CAMPAIGN_ATTEMPT_SCIENTIFIC_NOT_SUPPORTED_V1` ; aucun candidat n'a franchi
+les gates décision/WDL/recherche. Le mandat de poursuite scientifique reste
+actif, avec préenregistrement et confirmations fraîches.
 
-Le pipeline passe ses 33 régressions locales et les vérifications natives avec
-publication/relecture sur fixtures synthétiques. [Preuves locales et limites](operations/ED4_P1_LOCAL_READINESS_20260909.md).
-Publication ED4-P1 et fusion #884 explicitement autorisées et effectuées. La
-CI complète du code `93e2fd1f` est verte ; ses reçus publiés sont authentifiés
-et relus. [Préparation du lancement réel](operations/ED4_P1_LAUNCH_READINESS_20260909.md).
-La répétition 1887 et la production 1888 sont terminées avec exit 0 et leurs
-résultats publiés sont authentifiés puis relus. Le modèle `ED4_CHOICE.pjtw`,
-SHA256 `2e856652efdd1d2758a949a5d4a29557fa31f4a64d55505ae6dc41482b641f5b`,
-et les cinq autres payloads purs sont identiques entre les deux exécutions.
-Deux fits réels au total, un candidat ; le premier gate technique passe.
-[Résultat, reçus et limites](experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_RESULTS_20260909.md).
-Les preuves de gain décisionnel, de calibration WDL indépendante et de transfert
-en recherche restent à obtenir. L'[audit prospectif C0A](experiments/L3_ED4_CONFIRMATION_SOURCE_AUDIT_V1_20260909.md)
-prépare les exclusions ; aucune confirmation ED4 n'a commencé. Aucun scale-up
-ni promotion.
+- [ED4 D, 14 septembre](experiments/L3_ED4_FRESH_D_CONFIRMATION_RESULTS_20260914.md) :
+  job 1970, tentative `20260914T163341Z-1dd1d078`, candidat `2e856652…`.
+  Trois gates sur quatre échouent ; `STOP_ED4_K1_SCIENTIFIC_NOT_SUPPORTED`.
+  Alpha D dépensé : `0.008333333333333333`.
+- [ED5 D, 15 septembre](experiments/L3_ED5_FRESH_D_CONFIRMATION_RESULTS_20260915.md) :
+  job 1997, tentative `20260915T194938Z-89d64dbc`, candidat `f4e35ad0…`.
+  Les quatre gates échouent ; `STOP_ED5_K2_SCIENTIFIC_NOT_SUPPORTED`.
+  Alpha D dépensé : `0.004166666666666667`.
 
-Le [diagnostic complet des formats C0C V2](experiments/L3_ED4_C0C_FULL_FORMAT_DIAGNOSTIC_V2_RESULTS_20260912.md)
-est terminé, publié, authentifié et relu : 726 descripteurs recensés, 21 rejets
-structurels correspondant à six contenus distincts, 66 régressions réussies et
-783 secondes jusqu'à publication. Les 231 récupérations V5/V6 et les six objets
-vides restent identiques. Cette étape ne produit aucune union d'exclusion ni
-preuve de gain scientifique. L'investigation des rejets et un nouveau protocole
-de récupération précèdent encore l'audit complet et les confirmations fraîches.
+Les deux publications ont été authentifiées et relues le 21 septembre :
+[reçus et empreintes](operations/EVAL_SEARCH_ED4_ED5_TERMINAL_READBACK_20260921.json).
+Les cohortes D sont consommées. Aucune cible W/S ED4 ou ED5 ne doit être lue
+pour prolonger ces tentatives. Dépense alpha cumulée : **0,0125**, sans remise
+à zéro ni recyclage. Aucun scale-up, promotion ou bake.
 
-Le [diagnostic exact de liaison C0C V1](experiments/L3_ED4_C0C_EXACT_LINKAGE_DIAGNOSTIC_V1_RESULTS_20260912.md)
-est terminé, publié, authentifié et relu : 21 descripteurs examinés, 84
-régressions de préflight réussies, cinq phases d'exécution terminées et terminal
-`ED4_C0C_V7_BLOCKED_BY_INCOMPLETE_STRUCTURAL_COVERAGE`. Les 21 descripteurs
-examinés comprennent 15 alias TSV dans quatre cas, trois FEN et trois JNNW ;
-les agrégats comprennent 7 568 parents et 49 181 lignes enfants. Trois alias
-FEN vides et 15 liaisons TSV sont prouvés, tandis que trois alias STM restent
-non résolus en fail-closed. La causalité des artefacts n'est pas établie. Le
-candidat, la partition V5/V6, le verdict scientifique nul, l'absence de
-confirmation et alpha zéro restent inchangés.
+Le [protocole ED4-FRESH](experiments/L3_ED4_FRESH_CONFIRMATION_V1_20260912.md)
+a remplacé la reconstruction des exclusions C0C comme chemin critique.
+Les [formats historiques](experiments/L3_ED4_C0C_FULL_FORMAT_DIAGNOSTIC_V2_RESULTS_20260912.md)
+et [liaisons historiques](experiments/L3_ED4_C0C_EXACT_LINKAGE_DIAGNOSTIC_V1_RESULTS_20260912.md)
+restent des preuves d'audit ; leurs alias non résolus ne sont plus un gate
+prospectif pour ED4-FRESH. Aucun nouveau job post-1932 n'est requis.
+
+**CLS est la suite opérationnelle active**, scientifiquement distincte ; aucun
+k=3 eval/search n'est lancé en parallèle. Son état actuel figure en tête de
+ce document. Les sections ED4-P0/ED3 et les programmes plus anciens ci-dessous
+conservent leurs décisions historiques, pas une nouvelle autorisation de lancement.
 
 ## ED4-P0 — objectif de choix et préflight synthétique validés
 

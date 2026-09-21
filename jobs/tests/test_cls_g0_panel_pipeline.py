@@ -96,18 +96,23 @@ class PanelPipelineTests(unittest.TestCase):
                 'materialized_spec_sha256':gate.digest(gate.materialize(plan,'readiness',{})),'authenticated_audit_2072':plan['audit_2072']}
             ap=control/'specs/test.admission.json';ap.write_bytes(gate.canonical(adm))
             args=SimpleNamespace(admission=ap,admission_sha256=gate.sha(ap),repo_root=repo,spec=sp,result_dir=result,artifact_dir=art)
-            env={'JASS_CONTROL_REPO_DIR':str(control),'EXPECTED_LAUNCH_TIMEOUT_SECONDS':'2400','JASS_JOB_ID':pointer['job_id'],'JASS_ATTEMPT_ID':pointer['attempt_id'],'PYTHONDONTWRITEBYTECODE':'1'}
+            env={'JASS_CONTROL_REPO_DIR':str(control),'EXPECTED_LAUNCH_TIMEOUT_SECONDS':'2400','JASS_JOB_ID':pointer['job_id'],'JASS_ATTEMPT_ID':pointer['attempt_id'],'PYTHONDONTWRITEBYTECODE':'1','RCLONE_BIN':'fixture-rclone'}
             with mock.patch.dict(os.environ,env),mock.patch.object(subprocess,'run',side_effect=run),mock.patch.object(subprocess,'Popen',side_effect=popen),mock.patch.object(core,'validate_resources',return_value={'hostname':'cpx62','nproc':16}),mock.patch.object(v2,'runtime_identity',return_value={'synthetic-runtime':True}):
                 self.assertEqual(gate.execute(args),0)
                 self.assertEqual(json.loads((result/'stage-receipt.json').read_text())['state'],'completed')
                 objects=publisher_objects(art,result,pointer,code);prefix=f"r2:jass-data/runs/{pointer['job_id']}/{pointer['attempt_id']}"
+                # CPX62 inherits an absolute RCLONE_BIN. Own the executable as
+                # well as the byte store; never fall through to host/network I/O.
+                rclone_bin=env['RCLONE_BIN']
                 def rclone(argv,*a,**kw):
-                    if argv[:2]==['rclone','cat']:
+                    self.assertGreaterEqual(len(argv),3)
+                    self.assertTrue(argv[2].startswith(prefix+'/'),argv)
+                    if argv[:2]==[rclone_bin,'cat']:
                         return SimpleNamespace(returncode=0,stdout=objects[argv[2][len(prefix)+1:]],stderr=b'')
-                    if argv[:2]==['rclone','copyto']:
+                    if argv[:2]==[rclone_bin,'copyto']:
                         Path(argv[3]).write_bytes(objects[argv[2][len(prefix)+1:]])
                         return SimpleNamespace(returncode=0,stdout=b'',stderr=b'')
-                    return run(argv,*a,**kw)
+                    raise AssertionError(f'unexpected fixture subprocess: {argv!r}')
                 with mock.patch.object(subprocess,'run',side_effect=rclone):
                     typed=gate.readiness_from_r2(pointer,plan,profile,root/'roundtrip')
                     self.assertEqual(typed['publisher_manifest_sha256'],__import__('hashlib').sha256(objects['manifest.json']).hexdigest())

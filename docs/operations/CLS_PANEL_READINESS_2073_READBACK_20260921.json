@@ -1,0 +1,188 @@
+{
+  "schema": "jass.cls_panel_readiness_failure_readback.v1",
+  "record": {
+    "job_id": "cpx62-2073-l3-cls-g0-panel-readiness-v1",
+    "attempt_id": "20260921T070922Z-54e30b98",
+    "code_sha": "54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+    "verdict": "TECHNICAL_FAILURE_BEFORE_PANEL_STAGE",
+    "scientific_verdict": null,
+    "readiness_proof_available": false,
+    "main_launch_admitted": false,
+    "retry_queued": false,
+    "terminal_control_commit": "7194f3c3f1ddcddc895c596aebb302b9da0c0431",
+    "terminal_status_blob": "70ad8edbe46bb65bf7aca8d8967b21033f31ee90",
+    "observed_host_rclone_bin": "/usr/bin/rclone",
+    "regression_wall_seconds_from_log": 3.603,
+    "outer_manifest_elapsed_seconds": 301,
+    "gitops_elapsed_seconds": 305,
+    "stage_entered": false,
+    "native_game_or_search_started": false,
+    "limits": "Failed publication is authenticated; it is not a successful readiness receipt. No automatic retry or main match is authorized."
+  },
+  "verification": {
+    "attempt_id": "20260921T070922Z-54e30b98",
+    "code_sha": "54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+    "exit_code": 2,
+    "files": [
+      {
+        "local_name": "execution-evidence.json",
+        "path": "artefacts/execution-evidence.json",
+        "sha256": "986a9975862460dcce3b4727fcf8e37e539868922d1f5c7ad4c3da25b2a20031",
+        "size_bytes": 617
+      },
+      {
+        "local_name": "runner-launch.json",
+        "path": "artefacts/runner-launch.json",
+        "sha256": "da1253f519f32759560bcd8ca2e5f3abc0041f7ce4f07f7700ef1cc882eba5bf",
+        "size_bytes": 712
+      },
+      {
+        "local_name": "panel-regressions.json",
+        "path": "panel-regressions.json",
+        "sha256": "0c1c9e5e01a523a277a5735389cde179dc5a93590cc8aefab1fe4fca70ea75b3",
+        "size_bytes": 593
+      },
+      {
+        "local_name": "manifest.json",
+        "path": "manifest.json",
+        "sha256": "dca78e63970b57e02700f62dcf2fd540dcba287db14b2d25b0200c92ddebee03",
+        "size_bytes": 541
+      },
+      {
+        "local_name": "metadata.json",
+        "path": "metadata.json",
+        "sha256": "c2b75f05b82cae9659ffb114bf8157fe019be6d06132a2b0f12902ade7065b31",
+        "size_bytes": 658
+      },
+      {
+        "local_name": "exit_code",
+        "path": "exit_code",
+        "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+        "size_bytes": 2
+      }
+    ],
+    "host": "cpx62",
+    "job_id": "cpx62-2073-l3-cls-g0-panel-readiness-v1",
+    "prefix": "r2:jass-data/runs/cpx62-2073-l3-cls-g0-panel-readiness-v1/20260921T070922Z-54e30b98",
+    "result_state": "failed",
+    "schema": 1,
+    "state": "verified"
+  },
+  "artifacts": {
+    "artefacts/execution-evidence.json": {
+      "actual_side_effects": {
+        "bakes": 0,
+        "fits": 0,
+        "new_jass_searches": 0,
+        "new_scan_searches": 0,
+        "promotions": 0,
+        "selfplay_games": 0,
+        "strength_games": 0,
+        "test_target_reads": 0
+      },
+      "completed_phases": [],
+      "error_type": "RegressionSuiteFailed",
+      "frames": [
+        {
+          "file": "fetch_t1bis_inputs.py",
+          "function": "jobs.tests.test_cls_g0_panel_pipeline.PanelPipelineTests.test_gate_core_transport_and_corrupt_payload_refusal",
+          "line": 67
+        }
+      ],
+      "mode": null,
+      "phase": "launch-regressions",
+      "schema": "jass.execution_evidence.v2",
+      "state": "failed"
+    },
+    "artefacts/runner-launch.json": {
+      "kill_mode": "control-group",
+      "launcher": "systemd-transient-service",
+      "parent_runner_cgroup_isolated": true,
+      "runtime_max": "infinity",
+      "schema": 4,
+      "single_start_guard": "/var/lib/jass-runner/runs/cpx62-2073-l3-cls-g0-panel-readiness-v1/20260921T070922Z-54e30b98/runner-wrapper.started",
+      "state": "running",
+      "systemd_run_mode": "no-block-persistent-wrapper",
+      "unit": "jass-job-bff51541b5faf3ce39db.service",
+      "working_directory": "/var/lib/jass-runner/work/cpx62-2073-l3-cls-g0-panel-readiness-v1/20260921T070922Z-54e30b98/repo",
+      "wrapper_pid": 531302,
+      "wrapper_script": "/var/lib/jass-runner/runs/cpx62-2073-l3-cls-g0-panel-readiness-v1/20260921T070922Z-54e30b98/runner-wrapper.sh"
+    },
+    "panel-regressions.json": {
+      "error_tests": [
+        "jobs.tests.test_cls_g0_panel_pipeline.PanelPipelineTests.test_gate_core_transport_and_corrupt_payload_refusal"
+      ],
+      "errors": 1,
+      "failure_tests": [],
+      "failures": 0,
+      "passed": false,
+      "schema": "jass.launch_regressions.v2",
+      "skipped": 0,
+      "skipped_tests": [],
+      "suites": [
+        "jobs.tests.test_launch_gate_v2",
+        "jobs.tests.test_launch_gate_pipeline_v2",
+        "jobs.tests.test_cls_g0_panel_readiness",
+        "jobs.tests.test_cls_g0_panel_gate_v1",
+        "jobs.tests.test_cls_g0_panel_stage",
+        "jobs.tests.test_cls_g0_panel_pipeline"
+      ],
+      "tests": 42
+    },
+    "manifest.json": {
+      "attempt_id": "20260921T070922Z-54e30b98",
+      "code_ref": "develop",
+      "code_sha": "54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+      "control_ref": "main",
+      "control_sha": "60fe8d199eaafeb8e4cf47a69e798902dc61564e",
+      "ended_at": "2026-09-21T07:14:28+00:00",
+      "exit_code": 2,
+      "host": "cpx62",
+      "job_id": "cpx62-2073-l3-cls-g0-panel-readiness-v1",
+      "runner_sha": "12b922e1cabac9ca6089b6f287d68c9e23bb52b6",
+      "script_name": "cpx62-2073-l3-cls-g0-panel-readiness-v1.sh",
+      "started_at": "2026-09-21T07:09:27+00:00",
+      "state": "failed"
+    },
+    "metadata.json": {
+      "attempt_id": "20260921T070922Z-54e30b98",
+      "code_ref": "develop",
+      "code_sha": "54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+      "control_ref": "main",
+      "control_sha": "60fe8d199eaafeb8e4cf47a69e798902dc61564e",
+      "host": "cpx62",
+      "job_id": "cpx62-2073-l3-cls-g0-panel-readiness-v1",
+      "launcher": "systemd-transient-service",
+      "launcher_state": "running",
+      "parent_runner_cgroup_isolated": true,
+      "runner_sha": "12b922e1cabac9ca6089b6f287d68c9e23bb52b6",
+      "script_name": "cpx62-2073-l3-cls-g0-panel-readiness-v1.sh",
+      "started_at": "2026-09-21T07:09:27+00:00",
+      "systemd_unit": "jass-job-bff51541b5faf3ce39db.service",
+      "wrapper_pid": 531302
+    },
+    "exit_code": 2
+  },
+  "gitops_status": {
+    "artefacts": [
+      {
+        "path": "execution-evidence.json",
+        "size_bytes": 617
+      },
+      {
+        "path": "runner-launch.json",
+        "size_bytes": 712
+      }
+    ],
+    "attempt_id": "20260921T070922Z-54e30b98",
+    "code_ref": "develop",
+    "code_sha": "54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+    "ended_at": "2026-09-21T07:14:32+00:00",
+    "exit_code": 2,
+    "host": "cpx62",
+    "job_id": "cpx62-2073-l3-cls-g0-panel-readiness-v1",
+    "result_uri": "r2:jass-data/runs/cpx62-2073-l3-cls-g0-panel-readiness-v1/20260921T070922Z-54e30b98",
+    "started_at": "2026-09-21T07:09:27+00:00",
+    "state": "failed"
+  }
+}
