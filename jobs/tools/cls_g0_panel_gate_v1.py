@@ -218,6 +218,16 @@ def fetch_panel_proof(*, pointer: dict, plan: dict, profile: dict, out_dir: Path
          (pointer["job_id"], pointer["attempt_id"], plan["code_sha"], "cpx62", "completed", 0), "PUBLISHED_IDENTITY")
     receipt = read(out_dir / "panel-admission-receipt.json")
     phase = receipt.get("phase"); need(phase in PHASES, "PUBLISHED_PHASE")
+    exception_hash = receipt.get("prior_attempt_exception_receipt_sha256")
+    if exception_hash is not None:
+        need(phase == "readiness" and isinstance(exception_hash, str) and HEX64.fullmatch(exception_hash), "PUBLISHED_EXCEPTION")
+        transport.fetch_files(rclone=os.environ.get("RCLONE_BIN", "rclone"), prefix=prefix,
+            selections=[("artefacts/prior-attempt-exception-receipt.json", "prior-attempt-exception-receipt.json")], out_dir=out_dir)
+        need(sha(out_dir / "prior-attempt-exception-receipt.json") == exception_hash, "PUBLISHED_EXCEPTION_HASH")
+        prior = read(out_dir / "prior-attempt-exception-receipt.json")
+        need(prior.get("schema") == "jass.cls_readiness_exception_receipt.v2" and
+             prior.get("successor") == {**pointer, "code_sha": plan["code_sha"], "common_plan_sha256": digest(plan)} and
+             prior.get("record", {}).get("predecessor") == dict(zip(("job_id", "attempt_id", "code_sha"), _READINESS_2073)), "PUBLISHED_EXCEPTION_IDENTITY")
     need(receipt.get("schema") == "jass.cls_panel_receipt.v1" and receipt.get("code_sha") == plan["code_sha"] and
          receipt.get("common_plan_sha256") == digest(plan) and receipt.get("profile_sha256") == plan["profile_sha256"] and
          all(receipt.get(k) == pointer[k] for k in pointer), "PUBLISHED_RECEIPT_IDENTITY")
@@ -379,13 +389,149 @@ def build_context(plan: dict, profile: dict, admission: dict, code_sha: str, pat
             "authenticated_dependencies": dependencies, "paths": paths or {}}
 
 
-def reject_prior_attempts(control: Path, admission: dict) -> None:
-    """No second claimed attempt for this phase, including failed starts."""
+_READINESS_2073 = ("cpx62-2073-l3-cls-g0-panel-readiness-v1", "20260921T070922Z-54e30b98",
+                   "54e30b98ece4aa1efda8befd8f5e8f66e5279178")
+_READINESS_2073_HASHES = {
+    "publisher_manifest_sha256": "dca78e63970b57e02700f62dcf2fd540dcba287db14b2d25b0200c92ddebee03",
+    "execution_evidence_sha256": "986a9975862460dcce3b4727fcf8e37e539868922d1f5c7ad4c3da25b2a20031",
+    "regression_report_sha256": "0c1c9e5e01a523a277a5735389cde179dc5a93590cc8aefab1fe4fca70ea75b3",
+    "terminal_status_git_blob": "70ad8edbe46bb65bf7aca8d8967b21033f31ee90",
+}
+_AMENDMENT_V2 = "docs/experiments/CLS_G0_PANEL_READINESS_ONE_ATTEMPT_AMENDMENT_V2_20260921.json"
+_NO_RETRY = "PHASE_PREVIOUS_ATTEMPT_NO_RETRY"
+
+
+def _git_object(repo: Path, reference: str) -> bytes:
+    return subprocess.check_output(["git", "-C", str(repo), "show", reference])
+
+
+def _authenticate_2073(control: Path, repo_root: Path, amendment: dict, out_dir: Path) -> dict:
+    """Read only the sealed failed publication and its immutable Git evidence."""
+    from jobs.tools import fetch_result_files as transport
+    e = amendment["failed_attempt_2073"]["evidence"]
+    need(all(e.get(k) == v for k, v in _READINESS_2073_HASHES.items()), _NO_RETRY)
+    status_path = "status/" + _READINESS_2073[0] + ".json"
+    status_raw = _git_object(control, e["terminal_control_commit"] + ":" + status_path)
+    from jobs.tools.cls_g0_panel_raw_audit import git_blob
+    need(git_blob(status_raw) == e["terminal_status_git_blob"], _NO_RETRY)
+    status = json.loads(status_raw)
+    need(tuple(status.get(k) for k in ("job_id", "attempt_id", "code_sha")) == _READINESS_2073 and
+         status.get("state") == "failed" and type(status.get("exit_code")) is int and status["exit_code"] == 2, _NO_RETRY)
+    documents = {
+        "results_document": "docs/operations/CLS_PANEL_READINESS_2073_RESULTS_20260921.md",
+        "readback_json": "docs/operations/CLS_PANEL_READINESS_2073_READBACK_20260921.json",
+    }
+    for key, name in documents.items():
+        pin = e[key]
+        raw = _git_object(repo_root, pin["source_commit"] + ":" + name)
+        need(git_blob(raw) == pin["git_blob"] and hashlib.sha256(raw).hexdigest() == pin["git_object_file_bytes_sha256"], _NO_RETRY)
+    prefix = f"r2:jass-data/runs/{_READINESS_2073[0]}/{_READINESS_2073[1]}"
+    selections = [("artefacts/execution-evidence.json", "execution-evidence.json"),
+                  ("artefacts/runner-launch.json", "runner-launch.json"),
+                  ("panel-regressions.json", "panel-regressions.json"),
+                  ("manifest.json", "publisher-manifest.json"),
+                  ("metadata.json", "metadata.json"), ("exit_code", "exit_code")]
+    verified = transport.fetch_files(rclone=os.environ.get("RCLONE_BIN", "rclone"), prefix=prefix,
+        selections=selections, out_dir=out_dir, expected_state="failed")
+    need(tuple(verified.get(k) for k in ("job_id", "attempt_id", "code_sha", "host", "result_state", "exit_code")) ==
+         (*_READINESS_2073, "cpx62", "failed", 2), _NO_RETRY)
+    pins = {"publisher-manifest.json": "publisher_manifest_sha256", "execution-evidence.json": "execution_evidence_sha256",
+            "panel-regressions.json": "regression_report_sha256", "runner-launch.json": "runner_launch_sha256",
+            "metadata.json": "metadata_sha256", "exit_code": "exit_code_file_sha256"}
+    need(set(x["local_name"] for x in verified["files"]) == set(pins), _NO_RETRY)
+    for name, key in pins.items():
+        need(sha(out_dir / name) == e[key], _NO_RETRY)
+    evidence = read(out_dir / "execution-evidence.json")
+    need(evidence.get("state") == "failed" and evidence.get("phase") == "launch-regressions" and
+         evidence.get("completed_phases") == [] and evidence.get("error_type") == "RegressionSuiteFailed", _NO_RETRY)
+    effects = evidence.get("actual_side_effects", {})
+    need(set(effects) == set(EFFECTS) and all(type(v) is int and v == 0 for v in effects.values()), _NO_RETRY)
+    regression = read(out_dir / "panel-regressions.json")
+    need(regression.get("passed") is False and regression.get("errors") == 1 and
+         regression.get("failures") == 0 and regression.get("skipped") == 0 and regression.get("tests") == 42, _NO_RETRY)
+    need(int((out_dir / "exit_code").read_text().strip()) == 2, _NO_RETRY)
+    return {"publication": verified, "effects": effects, "terminal_status_git_blob": e["terminal_status_git_blob"]}
+
+
+def _readiness_exception(control: Path, admission: dict, code_sha: str, *,
+                         repo_root: Path = ROOT, proof_dir: Path | None = None) -> dict | None:
+    """One explicit, authenticated predecessor; never a general retry switch."""
+    binding = admission.get("prior_attempt_exception")
+    if binding is None:
+        return None
+    try:
+        need(admission.get("phase") == "readiness" and type(binding) is dict and set(binding) == {"path", "sha256"}
+             and isinstance(binding["sha256"], str) and HEX64.fullmatch(binding["sha256"]), _NO_RETRY)
+        path = relative_file(control, binding["path"], _NO_RETRY)
+        need(sha(path) == binding["sha256"], _NO_RETRY)
+        record = read(path)
+        required = {"schema", "phase", "predecessor", "evidence", "effects", "successor_job_id",
+                    "successor_code_sha", "successor_common_plan_sha256", "max_successor_attempts",
+                    "automatic_retries", "amendment_sha256"}
+        need(set(record) == required and record["schema"] == "jass.cls_readiness_one_attempt_exception.v2" and
+             record["phase"] == "readiness" and type(record["max_successor_attempts"]) is int and
+             record["max_successor_attempts"] == 1 and type(record["automatic_retries"]) is int and
+             record["automatic_retries"] == 0, _NO_RETRY)
+        job, attempt = os.environ.get("JASS_JOB_ID"), os.environ.get("JASS_ATTEMPT_ID")
+        need(isinstance(job, str) and IDENT.fullmatch(job) and record["successor_job_id"] == admission.get("job_id") == job and
+             job != _READINESS_2073[0] and isinstance(attempt, str) and IDENT.fullmatch(attempt) and
+             attempt != _READINESS_2073[1] and isinstance(code_sha, str) and HEX40.fullmatch(code_sha) and
+             record["successor_code_sha"] == code_sha and code_sha != _READINESS_2073[2], _NO_RETRY)
+        need(record["predecessor"] == dict(zip(("job_id", "attempt_id", "code_sha"), _READINESS_2073)), _NO_RETRY)
+        amendment_raw = _git_object(repo_root, "HEAD:" + _AMENDMENT_V2)
+        need(hashlib.sha256(amendment_raw).hexdigest() == record["amendment_sha256"], _NO_RETRY)
+        amendment = json.loads(amendment_raw)
+        need(amendment.get("schema") == "jass.cls_g0_panel_readiness_one_attempt_amendment.v2" and
+             amendment["execution"]["attempts_authorized"] == 1 and amendment["execution"]["automatic_retries"] == 0 and
+             amendment["frozen_contract"]["main_launch_authorized"] is False and
+             record["evidence"] == amendment["failed_attempt_2073"]["evidence"], _NO_RETRY)
+        need(set(record["effects"]) == set(EFFECTS) and all(type(v) is int and v == 0 for v in record["effects"].values()), _NO_RETRY)
+        # Rebuild both plans, preserving every field except the new source identity.
+        old_raw = _git_object(control, record["evidence"]["terminal_control_commit"] + ":specs/cls-panel-v1/common-plan.json")
+        need(hashlib.sha256(old_raw).hexdigest() == amendment["frozen_contract"]["original_common_plan_json_sha256"], _NO_RETRY)
+        old = json.loads(old_raw)
+        profile_hash = amendment["frozen_contract"]["launch_profile_raw_git_object_bytes_sha256"]
+        need(old == build_plan(_READINESS_2073[2], profile_hash), _NO_RETRY)
+        new = read(relative_file(control, admission["common_plan"], _NO_RETRY))
+        need(new == build_plan(code_sha, profile_hash) and digest(new) == record["successor_common_plan_sha256"] == admission["common_plan_sha256"], _NO_RETRY)
+        old_normalized, new_normalized = dict(old), dict(new)
+        old_normalized.pop("code_sha"); new_normalized.pop("code_sha")
+        need(old_normalized == new_normalized, _NO_RETRY)
+        paths = {"profile": "jobs/launch_profiles/cls-g0-panel-v1.json", "stage": "jobs/tools/cls_g0_panel_stage.py",
+                 "readiness": "jobs/tools/cls_g0_panel_readiness.py", "raw_audit": "jobs/tools/cls_g0_panel_raw_audit.py",
+                 "experiment_stage_runner": "jobs/tools/run_experiment_stage.py", "launch_regression_runner": "jobs/tools/launch_regressions_v2.py"}
+        from jobs.tools.cls_g0_panel_raw_audit import git_blob
+        for key, name in paths.items():
+            need(git_blob(_git_object(repo_root, "HEAD:" + name)) == amendment["frozen_git_blobs_from_2073"][key], _NO_RETRY)
+        if proof_dir is None:
+            import tempfile
+            with tempfile.TemporaryDirectory(prefix="cls-prior-proof-") as tmp:
+                proof = _authenticate_2073(control, repo_root, amendment, Path(tmp))
+        else:
+            proof = _authenticate_2073(control, repo_root, amendment, proof_dir)
+        need(proof["effects"] == record["effects"], _NO_RETRY)
+        return {"schema": "jass.cls_readiness_exception_receipt.v2", **binding, "record": record,
+                "successor": {"job_id": job, "attempt_id": attempt, "code_sha": code_sha,
+                              "common_plan_sha256": digest(new)}, "authenticated_predecessor": proof,
+                "cumulative_limits": {"strength_games": 56, "new_jass_searches": 9072}}
+    except Exception as exc:
+        raise GateError(_NO_RETRY) from exc
+
+
+def reject_prior_attempts(control: Path, admission: dict, code_sha: str | None = None, *,
+                          repo_root: Path = ROOT, proof_dir: Path | None = None) -> dict | None:
+    """Keep the full same-phase history; authorize only the exact sealed exception."""
     current = os.environ.get("JASS_ATTEMPT_ID")
     job = os.environ.get("JASS_JOB_ID")
     need(isinstance(current, str) and IDENT.fullmatch(current) and admission.get("job_id") == job, "CURRENT_ATTEMPT_IDENTITY")
+    exception = _readiness_exception(control, admission, code_sha or "", repo_root=repo_root, proof_dir=proof_dir)
+    exception_uses, priors = 0, set()
     for path in (control / "specs").rglob("*.admission.json"):
         other = read(path)
+        binding = other.get("prior_attempt_exception")
+        if exception and isinstance(binding, dict) and binding.get("sha256") == exception["sha256"]:
+            exception_uses += 1
+            need(other.get("phase") == "readiness" and other.get("job_id") == job, _NO_RETRY)
         if other.get("schema") != SCHEMA or other.get("phase") != admission["phase"]:
             continue
         other_job = other.get("job_id")
@@ -393,10 +539,20 @@ def reject_prior_attempts(control: Path, admission: dict) -> None:
         status_path = "status/" + other_job + ".json"
         history = subprocess.check_output(["git", "-C", str(control), "log", "--format=%H", "--", status_path], text=True).splitlines()
         for commit in history:
-            raw = subprocess.check_output(["git", "-C", str(control), "show", commit + ":" + status_path])
-            status = json.loads(raw)
+            status = json.loads(_git_object(control, commit + ":" + status_path))
             if status.get("attempt_id"):
-                need(other_job == job and status["attempt_id"] == current, "PHASE_PREVIOUS_ATTEMPT_NO_RETRY")
+                if other_job == job and status["attempt_id"] == current:
+                    if exception:
+                        need(status.get("job_id") == job and status.get("code_sha") == code_sha, _NO_RETRY)
+                else:
+                    if exception:
+                        need(status.get("job_id") == other_job, _NO_RETRY)
+                    priors.add((other_job, status["attempt_id"], status.get("code_sha")))
+    if exception:
+        need(priors == {_READINESS_2073} and exception_uses == 1, _NO_RETRY)
+    else:
+        need(not priors, _NO_RETRY)
+    return exception
 
 
 def execute(args: argparse.Namespace) -> int:
@@ -415,7 +571,11 @@ def execute(args: argparse.Namespace) -> int:
     code_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
     need(not subprocess.check_output(["git", "-C", str(repo), "status", "--porcelain"], text=True).strip(), "DIRTY_CHECKOUT")
     need(code_sha == plan["code_sha"], "CODE_IDENTITY")
-    reject_prior_attempts(control, admission)
+    args.result_dir.mkdir(parents=True, exist_ok=True)
+    prior_exception = reject_prior_attempts(control, admission, code_sha, repo_root=repo,
+                                            proof_dir=args.result_dir / "authenticated-predecessor-2073")
+    if prior_exception:
+        atomic_json(args.result_dir / "prior-attempt-exception-receipt.json", prior_exception)
     material, dependencies = validate_admission(admission, plan, profile, code_sha, raw_profile_sha)
     validate_external_spec(args.spec, admission, material)
     args.result_dir.mkdir(parents=True, exist_ok=True)
@@ -443,6 +603,8 @@ def execute(args: argparse.Namespace) -> int:
     atomic_json(Path(paths["spec"]), material)
     context = build_context(plan, profile, admission, code_sha, paths, raw_profile_sha)
     context["authenticated_dependencies"] = dependencies
+    if prior_exception:
+        context["prior_attempt_exception"] = prior_exception
     atomic_json(args.result_dir / "panel-admission-context.json", context)
     regressions = args.result_dir / "panel-regressions.json"
     cp = subprocess.run([profile["command"][0], str(repo / "jobs/tools/launch_regressions_v2.py"), "--profile", str(profile_path),
@@ -457,7 +619,11 @@ def execute(args: argparse.Namespace) -> int:
     selection = read(args.artifact_dir / "opening-freeze.json")["selection_sha256"]
     bound = read(args.result_dir / "panel-admission-context.json")
     need(bound["opening_selection_sha256"] == selection, "PREGAME_SELECTION_CHECKPOINT")
-    atomic_json(args.artifact_dir / "panel-admission-receipt.json", {"schema": "jass.cls_panel_receipt.v1", "phase": admission["phase"],
+    exception_fields = {}
+    if prior_exception:
+        atomic_json(args.artifact_dir / "prior-attempt-exception-receipt.json", prior_exception)
+        exception_fields["prior_attempt_exception_receipt_sha256"] = sha(args.artifact_dir / "prior-attempt-exception-receipt.json")
+    atomic_json(args.artifact_dir / "panel-admission-receipt.json", {**exception_fields, "schema": "jass.cls_panel_receipt.v1", "phase": admission["phase"],
         "code_sha": code_sha, "common_plan_sha256": digest(plan), "profile_sha256": raw_profile_sha,
         "materialized_spec_sha256": digest(material), "admission_sha256": args.admission_sha256,
         "stage_receipt_sha256": sha(args.result_dir / "stage-receipt.json"), "main_activation_sha256": activation_sha,

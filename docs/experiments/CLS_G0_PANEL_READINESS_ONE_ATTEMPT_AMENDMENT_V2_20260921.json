@@ -1,0 +1,246 @@
+{
+  "schema": "jass.cls_g0_panel_readiness_one_attempt_amendment.v2",
+  "date": "2026-09-21",
+  "status": "AUTHORIZED_PENDING_SEALED_ACTIVATION",
+  "authorization": {
+    "quote": "oh punaise oui j'autorise allez enchaine ... arrête de me demander",
+    "decision": "ONE_NEW_SEPARATELY_RECORDED_TECHNICAL_READINESS_ADMISSION_AUTHORIZED_AFTER_SEALED_ACTIVATION",
+    "repeat_user_approval_required": false
+  },
+  "supersession": {
+    "kind": "NEW_ADMISSION_NOT_RETRY",
+    "does_not_modify_v1": true,
+    "original_automatic_retries_remains": 0,
+    "reuse_of_2073_identity_forbidden": true
+  },
+  "failed_attempt_2073": {
+    "job_id": "cpx62-2073-l3-cls-g0-panel-readiness-v1",
+    "attempt_id": "20260921T070922Z-54e30b98",
+    "code_sha": "54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+    "exit_code": 2,
+    "failure_stage": "launch_regressions_before_panel_stage",
+    "effects": {
+      "games": 0,
+      "new_jass_player_searches": 0,
+      "new_scan_searches": 0,
+      "fits": 0,
+      "bakes": 0,
+      "promotions": 0,
+      "target_reads": 0,
+      "selfplay_games": 0
+    },
+    "failure_mechanism": "fixture_intercepted_literal_rclone_but_reader_honored_inherited_nondefault_RCLONE_BIN_then_empty_synthetic_success_marker_was_rejected",
+    "evidence": {
+      "historical_result_pr": 1057,
+      "pr_source_commits": [
+        "f5ca290895c33300eae26ad0864d337bf3b1e601",
+        "9b09ef6e6267ba60c5a410b1c4c3a2121098f11f"
+      ],
+      "results_document": {
+        "source_commit": "9b09ef6e6267ba60c5a410b1c4c3a2121098f11f",
+        "git_blob": "5cd6632f194b7c13cf05331321980c32eb477bbe",
+        "git_object_file_bytes_sha256": "acc71625c974e4aaca7a56873c97d75e94faecb688a558d59144acb3abefcb17"
+      },
+      "readback_json": {
+        "source_commit": "9b09ef6e6267ba60c5a410b1c4c3a2121098f11f",
+        "git_blob": "f672ae18e66b82b7f9d7bd0bebd42e6bf6e2bc67",
+        "git_object_file_bytes_sha256": "f6ca519861e0b261f8ef7d424c6d0b4bc1005cb0edc1cf9d902cfb47197ca103"
+      },
+      "publisher_manifest_sha256": "dca78e63970b57e02700f62dcf2fd540dcba287db14b2d25b0200c92ddebee03",
+      "execution_evidence_sha256": "986a9975862460dcce3b4727fcf8e37e539868922d1f5c7ad4c3da25b2a20031",
+      "regression_report_sha256": "0c1c9e5e01a523a277a5735389cde179dc5a93590cc8aefab1fe4fca70ea75b3",
+      "runner_launch_sha256": "da1253f519f32759560bcd8ca2e5f3abc0041f7ce4f07f7700ef1cc882eba5bf",
+      "metadata_sha256": "c2b75f05b82cae9659ffb114bf8157fe019be6d06132a2b0f12902ade7065b31",
+      "exit_code_file_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "terminal_control_commit": "7194f3c3f1ddcddc895c596aebb302b9da0c0431",
+      "terminal_status_git_blob": "70ad8edbe46bb65bf7aca8d8967b21033f31ee90"
+    },
+    "admission_consumed": true,
+    "terminal_immutable": true
+  },
+  "frozen_contract": {
+    "base_commit": "12b922e1cabac9ca6089b6f287d68c9e23bb52b6",
+    "panel_contract_git_blob": "19e39b457e86d6131d028d26b1dc0e6bac881b06",
+    "launch_profile_raw_git_object_bytes_sha256": "4e1f9090e6f4dafdeac8d71e009ed1ca55730142781d5b428b5be2b843de3a47",
+    "original_common_plan_json_sha256": "d48c2ac854707064fc8d7d0ba12db70b1e186fb333e91bc60452e7f0f3ea169b",
+    "hash_source_rule": "GIT_OBJECT_BYTES_NOT_PLATFORM_MATERIALIZED_WORKTREE_BYTES",
+    "readiness_effect_ceiling": {
+      "games": 56,
+      "new_jass_player_searches": 9072,
+      "new_scan_searches": 0,
+      "fits": 0,
+      "bakes": 0,
+      "promotions": 0,
+      "target_reads": 0,
+      "selfplay_games": 0
+    },
+    "timeouts_seconds": {
+      "stage": 1800,
+      "dispatcher": 2400
+    },
+    "cumulative_effect_ceiling_including_2073": {
+      "games": 56,
+      "new_jass_player_searches": 9072
+    },
+    "frozen_model_inputs_required_by_readiness_authorized": true,
+    "new_or_unfrozen_model_inputs_authorized": false,
+    "main_launch_authorized": false,
+    "must_preserve": [
+      "model_identities",
+      "native_anchor",
+      "sources",
+      "seeds",
+      "exclusions",
+      "opening_recipe",
+      "phase_templates",
+      "effect_ceilings",
+      "timeouts"
+    ]
+  },
+  "permitted_delta": {
+    "class": "TEST_CI_MECHANICAL_CORRECTION_PLUS_EXACT_FAIL_CLOSED_CONTROL_GATE_EXCEPTION",
+    "requirements": [
+      "fixture_accepts_configured_RCLONE_BIN_including_inherited_nondefault_absolute_path",
+      "fixture_intercepts_exact_configured_executable",
+      "unexpected_subprocess_fails_closed",
+      "raw_audit_runs_exact_ordered_profile_regression_suite_including_test_launch_gate_v2_and_test_launch_gate_pipeline_v2",
+      "gate_recognizes_only_one_reviewed_exception_bound_to_exact_2073_predecessor_and_exact_new_successor"
+    ],
+    "forbidden_changes": [
+      "scientific_production_code_outside_exact_fail_closed_gate_exception",
+      "launch_profile",
+      "stage_code",
+      "readiness_code",
+      "raw_audit_code",
+      "native_runtime",
+      "scientific_contract"
+    ]
+  },
+  "prior_attempt_exception_semantics": {
+    "existing_guard": "FULL_GIT_HISTORY_SCAN_OF_ALL_SAME_PHASE_ADMISSIONS",
+    "existing_failure": "PHASE_PREVIOUS_ATTEMPT_NO_RETRY",
+    "history_must_not_be_hidden_scoped_filtered_deleted_or_reinterpreted": true,
+    "exception_record_required": true,
+    "exception_record_binding": {
+      "phase": "readiness",
+      "predecessor_job_id": "cpx62-2073-l3-cls-g0-panel-readiness-v1",
+      "predecessor_attempt_id": "20260921T070922Z-54e30b98",
+      "predecessor_code_sha": "54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+      "authenticated_full_hashes_required": [
+        "publisher_manifest_sha256",
+        "terminal_status_git_blob",
+        "execution_evidence_sha256",
+        "regression_report_sha256",
+        "results_document_git_blob_and_git_object_file_bytes_sha256",
+        "readback_json_git_blob_and_git_object_file_bytes_sha256"
+      ],
+      "predecessor_effects_must_equal": {
+        "games": 0,
+        "new_jass_player_searches": 0,
+        "new_scan_searches": 0,
+        "fits": 0,
+        "bakes": 0,
+        "promotions": 0,
+        "target_reads": 0,
+        "selfplay_games": 0
+      },
+      "successor_job_id_must_be_exact_and_new": true,
+      "successor_code_sha_must_be_exact": true,
+      "amendment_sha256_must_be_pinned": true,
+      "max_successor_attempts": 1,
+      "automatic_retries": 0
+    },
+    "validation_algorithm": [
+      "new_admission_pins_exception_path_and_sha256",
+      "enumerate_full_same_phase_history_exactly_as_existing_guard",
+      "after_excluding_current_tuple_distinct_prior_attempt_set_must_equal_exact_2073_tuple",
+      "authenticate_terminal_prestage_failure_and_all_zero_effect_counters",
+      "require_current_job_matches_pinned_successor_and_differs_from_2073_job",
+      "require_current_code_and_plan_match_pinned_successor",
+      "require_no_earlier_distinct_attempt_for_successor_job",
+      "require_exactly_one_admission_references_exception_digest",
+      "keep_core_materialized_scientific_spec_free_of_exception_fields",
+      "carry_exception_path_digest_and_predecessor_evidence_only_in_admission_wrapper_and_separate_control_receipt",
+      "copy_wrapper_provenance_into_result_and_readback",
+      "subtract_authenticated_predecessor_effects_from_cumulative_v2_ceiling"
+    ],
+    "reject_with": "PHASE_PREVIOUS_ATTEMPT_NO_RETRY",
+    "reject_cases": [
+      "missing_abbreviated_inconsistent_nonterminal_or_unauthenticated_predecessor_evidence",
+      "unknown_or_additional_prior_attempt",
+      "reused_job_or_attempt_identity",
+      "second_successor_attempt",
+      "non_readiness_phase",
+      "generalized_or_unpinned_exception"
+    ],
+    "consumption": "FIRST_SUCCESSOR_ATTEMPT_CONSUMES_EXCEPTION_EVEN_IF_FAILURE_OCCURS_BEFORE_STAGING_OR_GAMES",
+    "scientific_budget_rule": "NO_RESET_SUBTRACT_AUTHENTICATED_PREDECESSOR_EFFECTS_PREDECESSOR_2073_CHARGE_IS_ZERO"
+  },
+  "frozen_git_blobs_from_2073": {
+    "profile": "10e59a1670d32e71d437e0d155921cb131923c13",
+    "gate_review_baseline_not_unchanged_requirement": "9595a80fa8508597ac2b828cebe9546ba06d0274",
+    "stage": "668e0f35c84dd75884d8375a4abab13f92bc9503",
+    "readiness": "1e904ac5ec3df5b1751bf26c9d65f062b17cfc4c",
+    "raw_audit": "2aae455d2b6cb7c8d31fbef5c56dfe1e18f5cb87",
+    "experiment_stage_runner": "e892030965878e8acb685dac50d9f131d2a94712",
+    "launch_regression_runner": "c9fed2eb27a80138ec7415cbb8da6ac1e2688137"
+  },
+  "common_plan_compatibility": {
+    "old_plan_reuse_forbidden": true,
+    "reason": "code_sha_is_part_of_common_plan_identity",
+    "new_common_plan_required": true,
+    "proof": [
+      "authenticate_v1_common_plan_and_consumed_2073_admission",
+      "build_new_plan_from_new_code_sha_and_exact_frozen_profile_bytes",
+      "prove_all_production_profile_native_scientific_git_blobs_except_exact_gate_implementation_unchanged",
+      "record_new_gate_blob_and_prove_semantic_diff_from_9595a80fa8508597ac2b828cebe9546ba06d0274_is_limited_to_exact_exception_validation",
+      "canonicalize_old_and_new_plan_and_core_materialized_readiness_spec_after_removing_only_code_sha_and_fields_derived_exclusively_from_code_sha",
+      "require_exception_path_digest_and_predecessor_evidence_exist_only_in_admission_wrapper_control_receipt_result_and_readback_never_core_scientific_spec",
+      "require_normalized_canonical_json_byte_identity",
+      "record_old_new_digests_exact_normalization_fields_gate_baseline_new_blob_diff_proof_and_equality_result"
+    ],
+    "any_other_difference": "BLOCK_AS_SCIENTIFIC_CONTRACT_CHANGE"
+  },
+  "activation_fields_to_seal": [
+    "merged_pr_1057_with_source_commits_f5ca290895c33300eae26ad0864d337bf3b1e601_then_9b09ef6e6267ba60c5a410b1c4c3a2121098f11f",
+    "distinct_reviewed_amendment_and_narrow_gate_exception_commit",
+    "final_new_immutable_source_commit_with_no_unreviewed_delta",
+    "new_unique_readiness_job_id",
+    "reviewed_fully_populated_one_time_prior_attempt_exception_record_bound_to_new_job_and_source_commit",
+    "new_common_plan_digest",
+    "new_admission_record_digest",
+    "new_materialized_readiness_spec_digest",
+    "full_authenticated_2073_terminal_evidence_identities",
+    "clean_tree_attestation",
+    "unchanged_production_profile_native_scientific_blob_proof_excluding_only_reviewed_gate_exception",
+    "gate_baseline_new_blob_and_exact_semantic_diff_proof",
+    "common_plan_compatibility_proof",
+    "linux_cpx_equivalent_six_module_regression_receipt_with_inherited_nondefault_RCLONE_BIN",
+    "unexpected_subprocess_fail_closed_receipt",
+    "exception_accepts_only_authenticated_2073_plus_first_pinned_successor_receipt",
+    "exception_rejects_unknown_predecessors_altered_evidence_reused_identities_second_successor_and_non_readiness_phase_receipt",
+    "python_compilation_receipt",
+    "launch_profile_validation_receipt",
+    "reviewed_control_admission_naming_this_amendment_and_new_job"
+  ],
+  "execution": {
+    "attempts_authorized": 1,
+    "automatic_retries": 0,
+    "new_job_id_required": true,
+    "new_attempt_id_required": true,
+    "queue_before_activation_forbidden": true
+  },
+  "terminal_mapping": {
+    "any_preflight_regression_provenance_compatibility_staging_execution_publication_or_readback_failure": "CLS_G0_PANEL_READINESS_V2_TECHNICAL_FAILURE_BLOCKED",
+    "effect_ceiling_exceeded": "CLS_G0_PANEL_READINESS_V2_CONTRACT_BREACH",
+    "authenticated_readiness_success": "CLS_G0_PANEL_READINESS_V2_COMPLETE_MAIN_NOT_AUTHORIZED"
+  },
+  "post_success": {
+    "publish_and_read_back_readiness_only": true,
+    "main_local_games_authorized": 0,
+    "main_wdl_games_authorized": 0,
+    "promotion_authorized": false,
+    "separate_main_admission_required": true
+  },
+  "terminal_mapping_scope": "OPERATIONAL_CONTROL_WRAPPER_READBACK_ONLY_FROZEN_STAGE_UNCHANGED_SCIENTIFIC_VERDICT_NULL"
+}

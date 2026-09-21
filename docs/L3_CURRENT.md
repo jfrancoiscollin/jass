@@ -38,10 +38,16 @@ implémentation complète a été fusionnée dans #1056, avec le dispatcher cont
 CPX62, **zéro partie et zéro recherche natives**. La publication d'échec R2
 est authentifiée ; elle ne fournit aucune preuve de readiness.
 [Résultat, correction et preuves](operations/CLS_PANEL_READINESS_2073_RESULTS_20260921.md).
-La version reste bloquée sans verdict conjoint ; aucune relance automatique
-n'est autorisée et aucun remplacement n'est en file. Les deux matchs principaux
-gardent une admission explicite distincte ; les tests locaux ne constituent
-pas une répétition réelle. CURRICULUM et les FAIL G0 restent inchangés.
+2073 reste terminal et son admission est consommée. L'autorisation renouvelée
+du 21 septembre est enregistrée dans le [nouvel amendement technique
+V2](experiments/CLS_G0_PANEL_READINESS_ONE_ATTEMPT_AMENDMENT_V2_20260921.md) :
+une seule admission de remplacement, après vérification de l'échec publié,
+des huit compteurs nuls, de tout l'historique et des identités gelées.
+Le correctif et le suivi historique sont fusionnés dans #1057 ; la nouvelle
+admission attend encore son code et son contrôle scellés. Aucun remplacement
+n'est en file à ce stade. Les 56 parties et 9 072 recherches maximales sont
+cumulées avec 2073, sans remise à zéro. Les deux matchs principaux gardent
+une admission distincte ; CURRICULUM et les FAIL G0 restent inchangés.
 
 ## Campagne eval/search — ED4 et ED5 clos scientifiquement
 

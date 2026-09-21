@@ -445,3 +445,13 @@ class PanelFinalizationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PriorFailureEvidenceCompletenessTests(unittest.TestCase):
+    def test_missing_counter_wrong_failure_or_nonterminal_status_cannot_admit_successor(self):
+        from jobs.tests.test_cls_g0_panel_gate_v1 import ExplicitReadinessAdmissionTests
+        from jobs.tools.cls_g0_panel_gate_v1 import GateError
+        fixture = ExplicitReadinessAdmissionTests()
+        for change in ({"missing_counter": True}, {"error_type": "OtherFailure"}, {"status_state": "running"}):
+            with self.subTest(change=change), self.assertRaises(GateError):
+                fixture.publication_case(**change)
