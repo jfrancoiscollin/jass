@@ -25,6 +25,7 @@ class ChinookMiningTests(unittest.TestCase):
                 wk = 0
             board = fp(wm, wk, bm, 0, i % 2)
             legal = 2 if i % 3 else 4
+            is_gross_pattern = (i % 128) >= 112
             for j in range(legal):
                 sib.append({
                     "parent_id": str(i),
@@ -32,10 +33,10 @@ class ChinookMiningTests(unittest.TestCase):
                     "parent_stm": str(i % 2),
                     "parent_phase": f"P{(i // 128)}",
                     "parent_legal_moves": str(legal),
-                    "num_captures": "2" if (i < 64 and j == 0) else "0",
+                    "num_captures": "2" if (is_gross_pattern and j == 0) else "0",
                     "promotes": "1" if (i % 11 == 0 and j == 0) else "0",
                     "moving_king": "1" if (i % 2 == 0 and j == 0) else "0",
-                    "captured_kings": "1" if (i < 64 and j == 0) else "0",
+                    "captured_kings": "1" if (is_gross_pattern and j == 0) else "0",
                 })
         return diag, sib
 
