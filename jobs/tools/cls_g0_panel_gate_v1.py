@@ -107,7 +107,7 @@ def validate_profile(profile: dict) -> None:
     need(profile.get("required_phases") == ["authenticate", "build", "seal", "execute", "validate", "publish"], "PROFILE_PHASES")
     need(profile.get("evidence_outputs") == OUTPUTS, "PROFILE_OUTPUTS")
     need("code_sha" not in profile, "PROFILE_CODE_SHA_CIRCLE")
-    need(profile.get("regressions") == ["jobs.tests.test_cls_g0_panel_readiness", "jobs.tests.test_cls_g0_panel_gate_v1",
+    need(profile.get("regressions") == ["jobs.tests.test_launch_gate_v2", "jobs.tests.test_launch_gate_pipeline_v2", "jobs.tests.test_cls_g0_panel_readiness", "jobs.tests.test_cls_g0_panel_gate_v1",
          "jobs.tests.test_cls_g0_panel_stage", "jobs.tests.test_cls_g0_panel_pipeline"], "PROFILE_REGRESSIONS")
     for mode, phase in (("rehearsal", "readiness"), ("production", "local")):
         expected = {k: 0 for k in EFFECTS}
