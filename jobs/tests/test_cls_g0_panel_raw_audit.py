@@ -17,7 +17,7 @@ from jobs.tools.launch_runtime_v2 import StageEvidence
 
 
 def load_tests(loader, tests, pattern):
-    """Existing panel-audit CI also exercises the new readiness contract."""
+    """Panel-audit CI covers readiness, both sealed main admissions, and transport."""
     from jobs.tests import (test_cls_g0_panel_readiness, test_cls_g0_panel_gate_v1,
                            test_cls_g0_panel_stage, test_cls_g0_panel_pipeline)
     for module in (test_cls_g0_panel_readiness, test_cls_g0_panel_gate_v1, test_cls_g0_panel_stage, test_cls_g0_panel_pipeline):

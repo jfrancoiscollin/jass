@@ -63,6 +63,33 @@ class PanelGateTests(unittest.TestCase):
                 with self.subTest(key=key),self.assertRaises(gate.GateError):gate.validate_evidence(p,profile,'readiness')
         with self.assertRaises(gate.GateError):gate.validate_regressions({'schema':'jass.launch_regressions.v2','passed':True,'tests':0,'skipped':0,'failures':0,'errors':0,'suites':profile['regressions']},profile)
 
+    def test_both_main_admissions_and_specs_are_sealed_before_local(self):
+        profile,plan,local=self.fixture('local');_,_,wdl=self.fixture('wdl')
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);local['job_id']='cpx62-local';wdl['job_id']='cpx62-wdl'
+            activation={'schema':'jass.cls_panel_main_activation.v1','common_plan_sha256':gate.digest(plan),'code_sha':plan['code_sha'],'profile_sha256':plan['profile_sha256']}
+            for phase,record in (('local',local),('wdl',wdl)):
+                sp=root/(phase+'.json');sp.write_bytes(gate.canonical(gate.build_stage_spec(plan,phase)));record['spec_sha256']=gate.sha(sp)
+                if phase=='wdl':record['prebound_local_admission_sha256']=activation['local']['admission_sha256']
+                ap=root/(phase+'.admission.json');ap.write_bytes(gate.canonical(record))
+                activation[phase]={'admission':ap.name,'admission_sha256':gate.sha(ap),'spec':sp.name,'materialized_spec_sha256':record['materialized_spec_sha256']}
+            act=root/'main-activation.json';act.write_bytes(gate.canonical(activation))
+            gate.validate_main_activation(act,plan,local,activation['local']['admission_sha256'],root)
+            wdl_path=root/'wdl.admission.json';wdl_path.write_bytes(wdl_path.read_bytes()+b' ')
+            with self.assertRaisesRegex(gate.GateError,'MAIN_ACTIVATION_HASH'):
+                gate.validate_main_activation(act,plan,local,activation['local']['admission_sha256'],root)
+
+    def test_local_technical_resolution_requires_prebound_receipt_without_outcome_parse(self):
+        profile,plan,_=self.fixture('wdl')
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'panel-admission-receipt.json').write_text('{}');games=root/'stage-games.json.gz';games.write_bytes(b'synthetic raw data')
+            proof={'receipt':{'phase':'local','admission_sha256':'a'*64,'main_activation_sha256':'b'*64,'materialized_spec_sha256':'c'*64},'evidence':{'actual_side_effects':{'strength_games':576}},'games_path':games}
+            with mock.patch.object(gate,'fetch_panel_proof',return_value=proof) as fetch:
+                result=gate.local_technical_from_r2({'job_id':'cpx62-local','attempt_id':'attempt-1'},plan,profile,root,'cpx62-local','a'*64,'b'*64,'c'*64)
+                self.assertTrue(fetch.call_args.kwargs['technical_only']);self.assertIsNone(result['scientific_verdict'])
+                with self.assertRaisesRegex(gate.GateError,'LOCAL_TECHNICAL_IDENTITY'):
+                    gate.local_technical_from_r2({'job_id':'cpx62-local','attempt_id':'attempt-1'},plan,profile,root,'cpx62-local','d'*64,'b'*64,'c'*64)
+
     def test_wdl_prebind_is_mandatory(self):
         profile,plan,adm=self.fixture('wdl');gate.validate_admission(adm,plan,profile,'a'*40)
         del adm['prebound_local_admission_sha256']
