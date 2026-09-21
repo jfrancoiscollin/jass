@@ -870,6 +870,16 @@
       "invariant": "Replace only the current owned running launch-progress summary; reject foreign/final summaries, mismatched evidence and symlinks; preserve general no-clobber, full audit, zero effects, all identities and frozen science",
       "evidence": "Authenticated 2071 failure 662a773e and evidence 04841bcd; real StageEvidence full-stage synthetic finalization and negative tests; docs/operations/CLS_PANEL_AUDIT_PUBLICATION_REPAIR_20260921.md; PR #1053; Authenticated job cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3, attempt 20260921T053109Z-20a09597, companion readback SHA256 a23e9c8e267039531db4b41013bbb1dc322b616b64324297b648a9d7f1751f07; PR #1054",
       "status": "CLOSED — authenticated successful 2072 publication"
+    },
+    {
+      "id": "TI-088",
+      "dedupe_key": "protocol:cls-g0-rejection-panel-v1:launch-v2-phase-timeout-identity",
+      "context": "CLS panel readiness preparation, 2026-09-21; before any prospective game",
+      "symptom": "One 56-game readiness receipt cannot admit two separate main specs while preserving their unequal frozen timeouts",
+      "root_cause": "Launch-V2 common_spec removes only LAUNCH_MODE and retains stage timeout; panel requires 1800/2400 readiness versus 3600/4200 for each main, with no extra rehearsal games",
+      "invariant": "Keep frozen science, all per-phase and cumulative budgets, exact 56-game rehearsal and no retries; do not weaken V2 or reuse a nonmatching receipt; require explicit reviewed panel-admission version before execution",
+      "evidence": "docs/experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md; launch_gate_v2.common_spec and outer-timeout guard; frozen panel sections 6 and 8; no new game or queue mutation",
+      "status": "OPEN — proposed panel-admission amendment awaits approval and implementation"
     }
   ]
 }

@@ -1,0 +1,40 @@
+{
+  "schema": "jass.cls_g0_panel_admission_amendment_proposal.v1",
+  "status": "PROPOSED_NOT_APPROVED_NO_EXECUTION",
+  "frozen_panel_contract_blob": "19e39b457e86d6131d028d26b1dc0e6bac881b06",
+  "remote_launch_authorized": false,
+  "existing_launch_v2_unchanged": true,
+  "narrow_precedence": "panel_only_launch_v2_same_spec_and_timeout_mechanism",
+  "common_plan_commits_closed_phase_specification_templates": true,
+  "phase_selector_hashed_in_each_template": true,
+  "typed_late_dependency": {
+    "name": "authenticated_readiness",
+    "source": "successful_publisher_roundtrip_for_unique_authorized_readiness_attempt",
+    "fields": ["job_id", "attempt_id", "launch_receipt_sha256", "publisher_manifest_sha256", "opening_selection_sha256"],
+    "exact_materialized_spec_hash_required": true,
+    "other_field_substitution_allowed": false
+  },
+  "phase_selector": "PANEL_PHASE",
+  "phase_order": ["readiness", "local", "wdl"],
+  "phases": {
+    "readiness": {"games": 56, "player_searches_max": 9072, "stage_seconds": 1800, "dispatcher_seconds": 2400},
+    "local": {"arms": ["LOCAL", "CURRICULUM"], "pairs": 288, "games": 576, "player_searches_max": 93312, "stage_seconds": 3600, "dispatcher_seconds": 4200},
+    "wdl": {"arms": ["WDL", "CURRICULUM"], "pairs": 288, "games": 576, "player_searches_max": 93312, "stage_seconds": 3600, "dispatcher_seconds": 4200}
+  },
+  "actual_opening_seal_created_before_first_readiness_game": true,
+  "readiness_receipt_binds_actual_opening_seal": true,
+  "both_main_admissions_sealed_before_local": true,
+  "wdl_prebinds_local_job_and_admission_hash": true,
+  "wdl_resolves_only_unique_local_attempt_technical_completion": true,
+  "required_same_identity": ["code_sha", "command", "profile_sha256", "common_plan_sha256", "native_identity", "models", "source_identities", "runtime_identity", "opening_selection_sha256"],
+  "readiness_publication_roundtrip_required": true,
+  "main_outcomes_may_change_plan": false,
+  "all_three_branches_implemented_before_readiness": true,
+  "later_execution_uses_immutable_readiness_code_sha": true,
+  "cumulative_attempted_work_limits_required": true,
+  "scientific_parameters_changed": false,
+  "automatic_retries": 0,
+  "new_rehearsal_games_beyond_56": 0,
+  "implementation_complete": false,
+  "stage_or_queue_added": false
+}
