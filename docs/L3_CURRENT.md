@@ -29,10 +29,11 @@ préalable a détecté un conflit d'admission : Launch V2 conserve les délais d
 la spécification commune, alors que le panel fixe 1 800/2 400 s pour readiness
 et 3 600/4 200 s pour chaque comparaison. La [proposition d'amendement
 d'admission](experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md) conserve
-le protocole scientifique et tous ses plafonds ; elle demande une version
-d'admission propre au plan complet. Elle reste à approuver et à implémenter.
-Aucune nouvelle partie, aucun profil de lancement ni job en file. Les fonctions
-préparatoires et leurs tests ne constituent pas une répétition réelle.
+le protocole scientifique et tous ses plafonds ; elle définit une version
+d'admission propre au plan complet. JFC l'a approuvée par « Je valide » ; son
+implémentation complète précède la readiness autorisée. Aucune nouvelle partie
+n'a encore été lancée. Les deux matchs principaux gardent une admission
+explicite distincte ; les tests locaux ne constituent pas une répétition réelle.
 
 ## Campagne autonome eval/search — candidat ED4-P1 scellé et authentifié
 

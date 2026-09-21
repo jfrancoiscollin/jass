@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Frozen, study-local CLS panel readiness protocol helpers (not launch-ready).
+"""Frozen, study-local CLS panel player and opening contracts.
 
-This module deliberately does not schedule work or admit production.  A caller
-MUST first fetch and authenticate fresh R2 inputs.  A later, separately approved
-versioned panel-admission amendment may use these contracts.  It does not import
-or alter the historical 2066--2069 strength helpers.
+The stage owns admission, source authentication and publication.  This module
+only supplies deterministic opening selection and fresh-player match plumbing;
+it never schedules work or reads historical strength helpers.
 """
 from __future__ import annotations
 
@@ -12,6 +11,8 @@ import hashlib
 import json
 import math
 import re
+import os
+import signal
 import time
 from collections import Counter
 from pathlib import Path
@@ -90,8 +91,8 @@ def canonical_identity(fen: str) -> str:
 def require_authenticated_audit_2072(receipt: dict) -> None:
     """Fail closed unless the published historical audit is the exact admission."""
     # ``receipt`` must be the fresh, authenticated R2 readback envelope, not a
-    # locally reconstructed summary. A future stage MUST authenticate it with
-    # ``fetch_result_files`` before calling this parser; no such stage exists yet.
+    # locally reconstructed summary. The stage MUST authenticate it with
+    # ``fetch_result_files`` before calling this parser.
     readback = receipt.get("readback", receipt)
     record = receipt.get("record")
     summary = readback.get("summary", {})
@@ -196,22 +197,22 @@ def _task(work: Path, exe: Path, task_id: str, opening: str, arm: str, kind: str
 
 
 def validate_explicit_models(task: dict) -> None:
-    need(task.get("arm_a") == task.get("arm_b") in MODELS, "READINESS_SELF_PAIR_ONLY")
+    need(task.get("arm_a") in MODELS and task.get("arm_b") in MODELS, "EXPLICIT_MODEL_ARMS")
     for role in ("a", "b"):
         path = Path(task[f"model_{role}"])
         need(path.is_file() and not path.is_symlink(), "MODEL_REGULAR_INPUT")
         need(model_sha(path) == MODELS[task[f"arm_{role}"]], "MODEL_SHA:" + role)
 
 
-def native_self_pair(task: dict, a_white: bool, counts: dict, persist_counts) -> dict:
+def _native_pair(task: dict, a_white: bool, counts: dict, persist_counts) -> dict:
     """Run one fresh, explicitly loaded readiness game.
 
     Process construction is inside the measured wall clock.  Each player gets
     exactly one depth-one warmup at startpos and is then reset by ``play_game``.
     This deliberately has no arm inference or dependence on historical helpers.
     """
-    need(task.get("mode") == "rehearsal" and task.get("kind") in ("deterministic", "timed") and
-         task.get("arm_a") == task.get("arm_b") in MODELS, "READINESS_WORKER_SCOPE")
+    need(task.get("mode") in ("rehearsal", "production") and task.get("kind") in ("deterministic", "timed") and
+         task.get("arm_a") in MODELS and task.get("arm_b") in MODELS, "PANEL_WORKER_SCOPE")
     validate_explicit_models(task)
     from jobs.tools.calibrate_vs_scan import JassEngine, Referee, play_game
     requests, warmups, opened = [], [], []
@@ -245,6 +246,11 @@ def native_self_pair(task: dict, a_white: bool, counts: dict, persist_counts) ->
         def apply_move(self, move):
             need(super().apply_move(move), "ILLEGAL_MOVE")
             return True
+    previous_alarm = None
+    if os.name != "nt":
+        def expired(signum, frame): raise TimeoutError("GAME_HARD_TIMEOUT")
+        previous_alarm = signal.signal(signal.SIGALRM, expired)
+        signal.setitimer(signal.ITIMER_REAL, GAME_TIMEOUT)
     try:
         counts["strength_games"] += 1; persist_counts()
         for label, role in (("A", "a"), ("B", "b")):
@@ -271,12 +277,37 @@ def native_self_pair(task: dict, a_white: bool, counts: dict, persist_counts) ->
     finally:
         for engine in reversed(opened):
             engine.close()
+        if previous_alarm is not None:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            signal.signal(signal.SIGALRM, previous_alarm)
+
+
+def native_self_pair(task: dict, a_white: bool, counts: dict, persist_counts) -> dict:
+    """Readiness-only spelling: it may never execute a cross-arm pair."""
+    need(task.get("arm_a") == task.get("arm_b") in MODELS, "READINESS_SELF_PAIR_ONLY")
+    return _native_pair(task, a_white, counts, persist_counts)
 
 
 def run_self_pair(task: dict, counts: dict, persist_counts) -> dict:
     """Run both colours and record a wall time spanning all game startups."""
     started = time.monotonic()
     games = [native_self_pair(task, colour, counts, persist_counts) for colour in (True, False)]
+    row = {key: task[key] for key in ("task_id", "opening", "arm_a", "arm_b", "kind")}
+    row.update(games=games, pair_wall_seconds=time.monotonic() - started)
+    need(row["pair_wall_seconds"] <= PAIR_TIMEOUT, "PAIR_TIMEOUT")
+    validate_explicit_models(task)
+    return row
+
+
+def run_pair(task: dict, counts: dict, persist_counts) -> dict:
+    """Run a colour-swapped pair with two explicitly pinned model files.
+
+    ``run_self_pair`` remains the readiness spelling; production callers use
+    this name so a cross-arm comparison cannot be accidentally represented as
+    a readiness self-pair.
+    """
+    started = time.monotonic()
+    games = [_native_pair(task, colour, counts, persist_counts) for colour in (True, False)]
     row = {key: task[key] for key in ("task_id", "opening", "arm_a", "arm_b", "kind")}
     row.update(games=games, pair_wall_seconds=time.monotonic() - started)
     need(row["pair_wall_seconds"] <= PAIR_TIMEOUT, "PAIR_TIMEOUT")
