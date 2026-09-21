@@ -40,6 +40,13 @@ G0 V2 reste inactif. La recherche d'un mécanisme distinct continue sous le mand
 acquis, avec préenregistrement ; aucune ancienne famille D4/D4b/D4c n'est traitée
 comme jamais exécutée et aucun nouveau candidat n'est encore admis.
 
+La réconciliation technique PL8 1719/1720 est également close avec
+`PL8_BOUNDARY_B_TECHNICAL_RECOVERY_NOT_ADMISSIBLE_V1` : l'arrêt avant fit et
+confirmation est prouvé, mais sa cause mécanique unique reste indéterminée.
+[Décision et diagnostic authentifié](operations/PL8_BOUNDARY_B_1719_1720_RECOVERY_DECISION_20260921.md).
+TI-090 demeure ouvert ; aucune reprise PL8, variante, partie ou promotion n'est
+admise par ce contrôle. La recherche prospective d'un mécanisme distinct continue.
+
 ### Historique de l'admission du panel, désormais clos
 
 La tentative technique unique 2072 (`20260921T053109Z-20a09597`) est terminée avec le reçu

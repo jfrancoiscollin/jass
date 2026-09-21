@@ -46,6 +46,15 @@ Leurs décisions d'arrêt restent inchangées. Aucun match de force n'est autori
 et changer le nom, le parent ou le bootstrap ne suffit pas à présenter cette
 famille consommée comme une nouvelle confirmation indépendante.
 
+## PL8 — reprise technique non admise, aucun verdict scientifique
+
+La réconciliation bornée 1719/1720 du 21 septembre termine avec
+`PL8_BOUNDARY_B_TECHNICAL_RECOVERY_NOT_ADMISSIBLE_V1`. Le diagnostic publié est
+authentifié et le script exact prouve un arrêt avant fit, ancrage et confirmation
+fraîche ; la cause de l'échec Python n'est toutefois pas identifiée. Aucun correctif
+ou nouveau lancement n'est justifié par cette preuve. PL8 n'est pas déclaré
+scientifiquement négatif. [Décision et limites](operations/PL8_BOUNDARY_B_1719_1720_RECOVERY_DECISION_20260921.md).
+
 ## ED4 et ED5 — confirmations fraîches négatives, familles closes
 
 La validité technique du candidat ED4 `2e856652…` avait été acquise en 1888.
