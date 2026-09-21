@@ -20,8 +20,31 @@ fixée ; elle n'établit ni supériorité, ni sensibilité/spécificité génér
 Les intervalles contiennent 0,5. Les FAIL historiques ne changent pas, CURRICULUM
 reste champion. Décision : `STOP_INTERPRET_NO_AUTO_G0_V2_NO_PROMOTION`, sans extension
 du panel ni activation automatique d'une nouvelle porte. La seule suite recommandée est
-une [proposition G0 V2 séparée](experiments/CLS_G0_V2_THREE_STATE_VALIDATION_PROPOSAL_V1_20260921.md),
-dont la faisabilité sur de nouveaux cas reste à établir.
+une [proposition G0 V2 séparée](experiments/CLS_G0_V2_THREE_STATE_VALIDATION_PROPOSAL_V1_20260921.md).
+L'audit fini de faisabilité est depuis clos avec
+`G0_V2_PROPOSAL_BLOCKED_INDEPENDENT_CASES_UNAVAILABLE` : aucun ensemble indépendant
+répondant aux quatre prérequis n'est établi dans les sources locales examinées.
+[Preuve et portée bornée](experiments/CLS_G0_V2_CASE_FEASIBILITY_RESULTS_20260921.md).
+
+## D4 / D4b / D4c — ordonnancement par coupure déjà exécuté
+
+Ces pistes ne sont pas des propositions restées sans exécution. Le
+[relevé des statuts terminaux canoniques](operations/D4_D4B_D4C_TERMINAL_HISTORY_20260921.json)
+conserve leurs identités, sans prétendre à une nouvelle authentification R2 :
+
+- D4 : 4 000 recherches teacher en 1862, puis publication de clôture 1866 ;
+  `D4_SEARCH_UTILITY_OFFLINE_INVALID_V1` pour support exact/de phase insuffisant,
+  zéro fit réalisé. C'est une invalidité de support, pas un résultat scientifique négatif.
+- D4b 1868 : `D4B_MICRO_GATE0_NOT_SUPPORTED_V1`. Le signal offline favorable
+  n'a pas transféré au gate runtime : gain de regret nul et ratio de temps médian
+  1,0728213964, au-delà de son plafond 1,05.
+- D4c 1871 : `D4C_RANK_BREAKER_OFFLINE_NOT_SUPPORTED_V1`. Le taux de changement
+  TEST est 0,001 et la correction des étiquettes non premières 0,00363636,
+  sous les seuils préenregistrés 0,01 et 0,05.
+
+Leurs décisions d'arrêt restent inchangées. Aucun match de force n'est autorisé,
+et changer le nom, le parent ou le bootstrap ne suffit pas à présenter cette
+famille consommée comme une nouvelle confirmation indépendante.
 
 ## ED4 et ED5 — confirmations fraîches négatives, familles closes
 

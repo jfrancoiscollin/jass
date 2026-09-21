@@ -102,3 +102,8 @@ de force séparément préenregistrée ; elle ne vaudrait jamais PASS à elle se
 La préparation immédiate vérifie uniquement les métadonnées de cas et de cohortes
 indépendants. Les cas du panel servent à concevoir la proposition et sont exclus de sa
 validation. Aucun seuil G0 V1 ne change et aucune G0 V2 n'est activée par ce résultat.
+
+La [préparation de faisabilité](CLS_G0_V2_CASE_FEASIBILITY_RESULTS_20260921.md) est
+depuis close avec `G0_V2_PROPOSAL_BLOCKED_INDEPENDENT_CASES_UNAVAILABLE`, faute
+d'établir les prérequis indépendants dans son inventaire borné. Ce terminal
+de préparation ne modifie pas le résultat scientifique du panel.

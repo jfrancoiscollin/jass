@@ -1,0 +1,520 @@
+{
+  "schema": "jass.cls_g0_v2_local_metadata_inventory_public_summary.v1",
+  "date": "2026-09-21",
+  "scope": {
+    "enumerated_public_scoped_files": 25,
+    "enumerated_control_scoped_files": 175,
+    "enumerated_control_cls_directories": [
+      "cls-panel-v1",
+      "cls-readiness-v2-2074"
+    ],
+    "opened_file_count": 28,
+    "read_only": true,
+    "result_payloads_read": false,
+    "raw_games_read": false,
+    "r2_read": false,
+    "ed4_ed5_read": false,
+    "model_bytes_read": false,
+    "enumerated_public_paths": [
+      "docs/experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.json",
+      "docs/experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md",
+      "docs/experiments/CLS_G0_PANEL_FIXED_MAIN_ADMISSION_20260921.md",
+      "docs/experiments/CLS_G0_PANEL_READINESS_ONE_ATTEMPT_AMENDMENT_V2_20260921.json",
+      "docs/experiments/CLS_G0_PANEL_READINESS_ONE_ATTEMPT_AMENDMENT_V2_20260921.md",
+      "docs/experiments/CLS_G0_REJECTION_PANEL_V1_20260920.json",
+      "docs/experiments/CLS_G0_REJECTION_PANEL_V1_20260920.md",
+      "docs/experiments/CLS_G0_REJECTION_PANEL_V1_RESULTS_20260921.md",
+      "docs/experiments/CLS_G0_STRENGTH_RESOURCE_ADMISSION_V2_20260920.md",
+      "docs/experiments/CLS_G0_STRENGTH_VALIDATION_MAIN_RESULTS_20260920.md",
+      "docs/experiments/CLS_G0_STRENGTH_VALIDATION_MAIN_V1_20260920.md",
+      "docs/experiments/CLS_G0_V2_THREE_STATE_VALIDATION_PROPOSAL_V1_20260921.json",
+      "docs/experiments/CLS_G0_V2_THREE_STATE_VALIDATION_PROPOSAL_V1_20260921.md",
+      "docs/experiments/L3_CLS_BOTTLENECK_CLASSIFICATION_V1_20260916.md",
+      "docs/experiments/L3_CLS_DRAW_PENTANOMIAL_THROUGHPUT_V1_20260916.md",
+      "docs/experiments/L3_CLS_G0_2063_POST_TERMINAL_DIAGNOSTIC_V1_20260919.md",
+      "docs/experiments/L3_CLS_G0_RUNTIME_CATASTROPHE_CONTRACT_V1_20260916.json",
+      "docs/experiments/L3_CLS_G0_RUNTIME_CATASTROPHE_CONTRACT_V1_20260916.md",
+      "docs/experiments/L3_CLS_G0_STRENGTH_VALIDATION_V1_20260920.md",
+      "docs/experiments/L3_CLS_HIER_L2_NEXT_CANDIDATE_V1_20260918.md",
+      "docs/experiments/L3_CLS_HIER_SCAN_REFERENCE_DIAGNOSTIC_V1_20260920.md",
+      "docs/experiments/L3_CLS_L_OBJECTIVE_ATTRIBUTION_V1_20260916.json",
+      "docs/experiments/L3_CLS_L_OBJECTIVE_ATTRIBUTION_V1_20260916.md",
+      "docs/experiments/L3_CLS_MIRROR_SCALE_V1_20260916.md",
+      "docs/experiments/L3_CLS_SEARCH_PROFILE_V1_20260916.md"
+    ],
+    "enumerated_control_paths": [
+      "specs/cls-bottleneck-classification-v1-production-2015.admission.json",
+      "specs/cls-bottleneck-classification-v1-production-2015.json",
+      "specs/cls-bottleneck-classification-v1-rehearsal-2014.admission.json",
+      "specs/cls-bottleneck-classification-v1-rehearsal-2014.json",
+      "specs/cls-depth-growth-v2-full-production-2000.admission.json",
+      "specs/cls-depth-growth-v2-full-production-2000.json",
+      "specs/cls-depth-growth-v2-full-rehearsal-1999.admission.json",
+      "specs/cls-depth-growth-v2-full-rehearsal-1999.json",
+      "specs/cls-depth-growth-v2-rehearsal-1998.admission.json",
+      "specs/cls-depth-growth-v2-rehearsal-1998.json",
+      "specs/cls-draw-pentanomial-throughput-v1-production-2013.admission.json",
+      "specs/cls-draw-pentanomial-throughput-v1-production-2013.json",
+      "specs/cls-draw-pentanomial-throughput-v1-rehearsal-2011.admission.json",
+      "specs/cls-draw-pentanomial-throughput-v1-rehearsal-2011.json",
+      "specs/cls-draw-pentanomial-throughput-v1-rehearsal-2012.admission.json",
+      "specs/cls-draw-pentanomial-throughput-v1-rehearsal-2012.json",
+      "specs/cls-g0-2042-stage-log-diagnostic-v1-2043.admission.json",
+      "specs/cls-g0-2042-stage-log-diagnostic-v1-2043.json",
+      "specs/cls-g0-2044-stage-log-diagnostic-v1-2045.admission.json",
+      "specs/cls-g0-2044-stage-log-diagnostic-v1-2045.json",
+      "specs/cls-g0-2063-failure-diagnostic-v1-2064.admission.json",
+      "specs/cls-g0-2063-failure-diagnostic-v1-2064.json",
+      "specs/cls-g0-hier-runtime-v1-2063.admission.json",
+      "specs/cls-g0-hier-runtime-v1-2063.json",
+      "specs/cls-g0-local-runtime-v1-2042.admission.json",
+      "specs/cls-g0-local-runtime-v1-2042.json",
+      "specs/cls-g0-local-runtime-v1-2044.admission.json",
+      "specs/cls-g0-local-runtime-v1-2044.json",
+      "specs/cls-g0-local-runtime-v1-2046.admission.json",
+      "specs/cls-g0-local-runtime-v1-2046.json",
+      "specs/cls-g0-local-runtime-v1-2047.admission.json",
+      "specs/cls-g0-local-runtime-v1-2047.json",
+      "specs/cls-g0-panel-historical-audit-publication-retry-v3-2072.admission.json",
+      "specs/cls-g0-panel-historical-audit-publication-retry-v3-2072.json",
+      "specs/cls-g0-panel-historical-audit-retry-v2-2071.admission.json",
+      "specs/cls-g0-panel-historical-audit-retry-v2-2071.json",
+      "specs/cls-g0-panel-historical-audit-v1-2070.admission.json",
+      "specs/cls-g0-panel-historical-audit-v1-2070.json",
+      "specs/cls-g0-runtime-tooling-preflight-v1-2016.admission.json",
+      "specs/cls-g0-runtime-tooling-preflight-v1-2016.json",
+      "specs/cls-g0-runtime-tooling-preflight-v1-2017.admission.json",
+      "specs/cls-g0-runtime-tooling-preflight-v1-2017.json",
+      "specs/cls-g0-runtime-tooling-preflight-v1-2018.admission.json",
+      "specs/cls-g0-runtime-tooling-preflight-v1-2018.json",
+      "specs/cls-g0-strength-calibration-v1-2066.admission.json",
+      "specs/cls-g0-strength-calibration-v1-2066.json",
+      "specs/cls-g0-strength-main-resource-v2-2068.admission.json",
+      "specs/cls-g0-strength-main-resource-v2-2068.json",
+      "specs/cls-g0-strength-main-resource-v2-2069.admission.json",
+      "specs/cls-g0-strength-main-resource-v2-2069.json",
+      "specs/cls-g0-strength-main-v1-2067.admission.json",
+      "specs/cls-g0-strength-main-v1-2067.json",
+      "specs/cls-g0-wdl-runtime-v1-2048.admission.json",
+      "specs/cls-g0-wdl-runtime-v1-2048.json",
+      "specs/cls-g0-wdl-runtime-v1-2049.admission.json",
+      "specs/cls-g0-wdl-runtime-v1-2049.json",
+      "specs/cls-hier-l2-1340-1341-runtime-continuity-v1-2055.admission.json",
+      "specs/cls-hier-l2-1340-1341-runtime-continuity-v1-2055.json",
+      "specs/cls-hier-l2-2050-stage-log-diagnostic-v1-2051.admission.json",
+      "specs/cls-hier-l2-2050-stage-log-diagnostic-v1-2051.json",
+      "specs/cls-hier-l2-2052-runtime-provenance-diagnostic-v1-2054.admission.json",
+      "specs/cls-hier-l2-2052-runtime-provenance-diagnostic-v1-2054.json",
+      "specs/cls-hier-l2-2052-stage-log-diagnostic-v1-2053.admission.json",
+      "specs/cls-hier-l2-2052-stage-log-diagnostic-v1-2053.json",
+      "specs/cls-hier-l2-2056-fit-provenance-diagnostic-v1-2058.admission.json",
+      "specs/cls-hier-l2-2056-fit-provenance-diagnostic-v1-2058.json",
+      "specs/cls-hier-l2-2056-stage-log-diagnostic-v1-2057.admission.json",
+      "specs/cls-hier-l2-2056-stage-log-diagnostic-v1-2057.json",
+      "specs/cls-hier-l2-next-candidate-v1-2050.admission.json",
+      "specs/cls-hier-l2-next-candidate-v1-2050.json",
+      "specs/cls-hier-l2-next-candidate-v1-2052.admission.json",
+      "specs/cls-hier-l2-next-candidate-v1-2052.json",
+      "specs/cls-hier-l2-next-candidate-v1-2056.admission.json",
+      "specs/cls-hier-l2-next-candidate-v1-2056.json",
+      "specs/cls-hier-l2-next-candidate-v1-2059.admission.json",
+      "specs/cls-hier-l2-next-candidate-v1-2059.json",
+      "specs/cls-hier-l2-next-candidate-v1-2060.admission.json",
+      "specs/cls-hier-l2-next-candidate-v1-2060.json",
+      "specs/cls-hier-l2-next-candidate-v1-2061.admission.json",
+      "specs/cls-hier-l2-next-candidate-v1-2061.json",
+      "specs/cls-hier-l2-next-candidate-v1-2062.admission.json",
+      "specs/cls-hier-l2-next-candidate-v1-2062.json",
+      "specs/cls-hier-scan-reference-diagnostic-v1-2065.admission.json",
+      "specs/cls-hier-scan-reference-diagnostic-v1-2065.json",
+      "specs/cls-l-2020-failure-diagnostic-v1-2021.admission.json",
+      "specs/cls-l-2020-failure-diagnostic-v1-2021.json",
+      "specs/cls-l-2020-failure-diagnostic-v1-2022.admission.json",
+      "specs/cls-l-2020-failure-diagnostic-v1-2022.json",
+      "specs/cls-l-2020-failure-diagnostic-v1-2023.admission.json",
+      "specs/cls-l-2020-failure-diagnostic-v1-2023.json",
+      "specs/cls-l-2020-failure-diagnostic-v1-2024.admission.json",
+      "specs/cls-l-2020-failure-diagnostic-v1-2024.json",
+      "specs/cls-l-2025-failure-diagnostic-v1-2026.admission.json",
+      "specs/cls-l-2025-failure-diagnostic-v1-2026.json",
+      "specs/cls-l-2027-failure-diagnostic-v1-2028.admission.json",
+      "specs/cls-l-2027-failure-diagnostic-v1-2028.json",
+      "specs/cls-l-2029-failure-diagnostic-v1-2030.admission.json",
+      "specs/cls-l-2029-failure-diagnostic-v1-2030.json",
+      "specs/cls-l-2031-failure-diagnostic-v1-2032.admission.json",
+      "specs/cls-l-2031-failure-diagnostic-v1-2032.json",
+      "specs/cls-l-2031-stage-log-diagnostic-v2-2033.admission.json",
+      "specs/cls-l-2031-stage-log-diagnostic-v2-2033.json",
+      "specs/cls-l-2036-stage-log-diagnostic-v1-2037.admission.json",
+      "specs/cls-l-2036-stage-log-diagnostic-v1-2037.json",
+      "specs/cls-l-2038-fit-log-diagnostic-v1-2040.admission.json",
+      "specs/cls-l-2038-fit-log-diagnostic-v1-2040.json",
+      "specs/cls-l-2038-stage-log-diagnostic-v1-2039.admission.json",
+      "specs/cls-l-2038-stage-log-diagnostic-v1-2039.json",
+      "specs/cls-l-source-normalization-preflight-v1-2019.admission.json",
+      "specs/cls-l-source-normalization-preflight-v1-2019.json",
+      "specs/cls-l-source-normalization-preflight-v1-2020.admission.json",
+      "specs/cls-l-source-normalization-preflight-v1-2020.json",
+      "specs/cls-l-source-normalization-preflight-v1-2025.admission.json",
+      "specs/cls-l-source-normalization-preflight-v1-2025.json",
+      "specs/cls-l-source-normalization-preflight-v1-2027.admission.json",
+      "specs/cls-l-source-normalization-preflight-v1-2027.json",
+      "specs/cls-l-source-normalization-preflight-v1-2029.admission.json",
+      "specs/cls-l-source-normalization-preflight-v1-2029.json",
+      "specs/cls-l-source-normalization-preflight-v1-2031.admission.json",
+      "specs/cls-l-source-normalization-preflight-v1-2031.json",
+      "specs/cls-l-source-normalization-preflight-v1-2034.admission.json",
+      "specs/cls-l-source-normalization-preflight-v1-2034.json",
+      "specs/cls-l-source-normalization-preflight-v1-2035.admission.json",
+      "specs/cls-l-source-normalization-preflight-v1-2035.json",
+      "specs/cls-l-three-arm-fit-v1-2036.admission.json",
+      "specs/cls-l-three-arm-fit-v1-2036.json",
+      "specs/cls-l-three-arm-fit-v1-2038.admission.json",
+      "specs/cls-l-three-arm-fit-v1-2038.json",
+      "specs/cls-l-valid-arms-recovery-2038-v1-2041.admission.json",
+      "specs/cls-l-valid-arms-recovery-2038-v1-2041.json",
+      "specs/cls-mirror-2005-roundtrip-diagnostic-rehearsal-2006.admission.json",
+      "specs/cls-mirror-2005-roundtrip-diagnostic-rehearsal-2006.json",
+      "specs/cls-mirror-scale-v1-production-2003.admission.json",
+      "specs/cls-mirror-scale-v1-production-2003.json",
+      "specs/cls-mirror-scale-v1-production-2005.admission.json",
+      "specs/cls-mirror-scale-v1-production-2005.json",
+      "specs/cls-mirror-scale-v1-production-2008.admission.json",
+      "specs/cls-mirror-scale-v1-production-2008.json",
+      "specs/cls-mirror-scale-v1-rehearsal-2001.admission.json",
+      "specs/cls-mirror-scale-v1-rehearsal-2001.json",
+      "specs/cls-mirror-scale-v1-rehearsal-2002.admission.json",
+      "specs/cls-mirror-scale-v1-rehearsal-2002.json",
+      "specs/cls-mirror-scale-v1-rehearsal-2004.admission.json",
+      "specs/cls-mirror-scale-v1-rehearsal-2004.json",
+      "specs/cls-mirror-scale-v1-rehearsal-2007.admission.json",
+      "specs/cls-mirror-scale-v1-rehearsal-2007.json",
+      "specs/cls-panel-v1/common-plan.json",
+      "specs/cls-panel-v1/cpx62-2073-l3-cls-g0-panel-readiness-v1.admission.json",
+      "specs/cls-panel-v1/cpx62-2073-l3-cls-g0-panel-readiness-v1.json",
+      "specs/cls-readiness-v2-2074/activation-review.json",
+      "specs/cls-readiness-v2-2074/common-plan.json",
+      "specs/cls-readiness-v2-2074/cpx62-2074-l3-cls-g0-panel-readiness-authorized-v2.admission.json",
+      "specs/cls-readiness-v2-2074/cpx62-2074-l3-cls-g0-panel-readiness-authorized-v2.json",
+      "specs/cls-readiness-v2-2074/cpx62-2075-l3-cls-g0-panel-local-main-v1.admission.json",
+      "specs/cls-readiness-v2-2074/cpx62-2075-l3-cls-g0-panel-local-main-v1.json",
+      "specs/cls-readiness-v2-2074/cpx62-2076-l3-cls-g0-panel-wdl-main-v1.admission.json",
+      "specs/cls-readiness-v2-2074/cpx62-2076-l3-cls-g0-panel-wdl-main-v1.dispatch.sh",
+      "specs/cls-readiness-v2-2074/cpx62-2076-l3-cls-g0-panel-wdl-main-v1.json",
+      "specs/cls-readiness-v2-2074/cumulative-budget.json",
+      "specs/cls-readiness-v2-2074/local-2075-technical-readback.json",
+      "specs/cls-readiness-v2-2074/main-activation.json",
+      "specs/cls-readiness-v2-2074/main-authority.json",
+      "specs/cls-readiness-v2-2074/main-cumulative-budget.json",
+      "specs/cls-readiness-v2-2074/main-pre-admission-readback.json",
+      "specs/cls-readiness-v2-2074/one-attempt-exception.json",
+      "specs/cls-readiness-v2-2074/panel-terminal-budget.json",
+      "specs/cls-readiness-v2-2074/pre-admission-readback.json",
+      "specs/cls-readiness-v2-2074/source-compatibility.json",
+      "specs/cls-readiness-v2-2074/wdl-release-cumulative-budget.json",
+      "specs/cls-readiness-v2-2074/wdl-release-precheck.json",
+      "specs/cls-readiness-v2-2074/wdl-release-review.json",
+      "specs/cls-search-profile-v1-production-2010.admission.json",
+      "specs/cls-search-profile-v1-production-2010.json",
+      "specs/cls-search-profile-v1-rehearsal-2009.admission.json",
+      "specs/cls-search-profile-v1-rehearsal-2009.json"
+    ],
+    "max_files_content_read": 40,
+    "single_pass": true,
+    "scope_correction": "Initial prefix-only CLS* filename inventory corrected to *CLS*, including L3_CLS protocols, within original 40-file cap; no new scientific payloads read.",
+    "metadata_authentication_limit": "Local file hashes and already authenticated identity pins are checked; no new R2 authentication is claimed.",
+    "public_repository": "jfrancoiscollin/jass",
+    "public_base_commit": "26ea9f746b952de0b552ed4ff2e075c7cc3ae7dd",
+    "control_repository": "jfrancoiscollin/jass-control",
+    "control_inventory_commit": "bb626516ec1b3cfdc08b6a44f4e587d54b60e53f",
+    "control_terminal_budget_merge_commit": "8dd9e8d2c474ac6066537c9d6fbcbf0ace6e4459",
+    "file_hash_semantics": "Raw local file bytes at inventory time; checkout line endings may differ from Git blob bytes. These are source metadata, not fresh payload authenticity claims."
+  },
+  "joint_proof": {
+    "terminal": "G0_PANEL_LARGE_LOSS_DISCORDANCE_REPLICATED_V1",
+    "sha256": "556744fe2857c5f9af9ff593d8c7ee57d579b0a28b3f7ab88a36d25f73344d66",
+    "result_document": "docs/experiments/CLS_G0_REJECTION_PANEL_V1_RESULTS_20260921.md",
+    "used_as_metadata_only": true
+  },
+  "known_lineages": {
+    "curriculum": {
+      "job_id": "cpx62-1341-jass-megacorpus-arm-d-fit-v1",
+      "artifact": "D-c-prior-then-current.pjtw.gz",
+      "model_sha256": "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
+    },
+    "local": {
+      "model_sha256": "197998003db3d221d38e81577cfa381e8227d67705efc1c86b87205ddebbe450",
+      "source_role": "valid_arm_recovered_by_2041",
+      "development_only_for_v2": true
+    },
+    "wdl": {
+      "model_sha256": "eabe71068dbc6aeb519a61c730d18586e75c8b72308ecd340de08fe2e18deed6",
+      "source_role": "valid_arm_recovered_by_2041",
+      "development_only_for_v2": true
+    },
+    "hier": {
+      "model_sha256": "95bed3ac9fac4368809609fb1a981ee863401a30ca623fb7bfa3caf7eaddf628",
+      "source_role": "historical_only",
+      "development_only_for_v2": true
+    }
+  },
+  "source_and_selection_metadata": {
+    "native_source_commit": "7b789a0c675ce08868fe4a8fcef0becaa4193286",
+    "opening_pool_size": 2048,
+    "pool_seed": 2026092011,
+    "order_seed": 2026092012,
+    "selection_score_based": false,
+    "seed_retry_allowed": false,
+    "replacement_allowed": false,
+    "exclusion_sources": [
+      "1651_all_2000_parents",
+      "2066_all_trajectories",
+      "2067_all_trajectories",
+      "2068_all_trajectories",
+      "2069_all_trajectories",
+      "all_2069_main_and_representative_starts",
+      "standard_warmup_start"
+    ],
+    "new_v2_roster_evidenced": false,
+    "new_v2_holdout_evidenced": false
+  },
+  "control_identity": {
+    "code_sha": "e00900ff38e71afa88201871713d4765409c2ac4",
+    "common_plan_sha256": "ce341746adaf142a36c80db2b83cc3e2086515e6ef9db3313c8455a053b0dcee",
+    "main_activation_sha256": "d3837694b871e363d1c2d68d28b06d525c6b6d8638e5a539988a8bbfb02ea519",
+    "local_admission_sha256": "b3c7757517d02fc8bf44ad7e18d4412f3450d2c920578ea3b079afdc73971279",
+    "wdl_admission_sha256": "1ab61d3b609adcf601630b8b9e4f969c6a6c82140b23f1b394809591e143dbcf",
+    "wdl_prebound_local_job": "cpx62-2075-l3-cls-g0-panel-local-main-v1"
+  },
+  "availability": {
+    "finite_new_candidate_roster": null,
+    "direct_parent_and_generation_mechanism": null,
+    "untouched_score_blind_holdout": null,
+    "deep_reference_route": null,
+    "selection_and_exclusion_provenance_for_new_roster": null,
+    "prospective_case_count": null,
+    "abstain_strength_adjudication": null,
+    "activation_record": null
+  },
+  "bounded_conclusion": "No genuinely new candidate roster, preregistered new generation mechanism or untouched holdout is evidenced in this bounded protocol/identity inventory. This is not a global absence claim. The four activation prerequisites remain unestablished; scientific terminal requires root/scientist review.",
+  "proposal_status": "PROPOSAL_ONLY_CASE_FEASIBILITY_PENDING_NOT_ACTIVATED",
+  "stop_if_prerequisites_unavailable": "G0_V2_PROPOSAL_BLOCKED_INDEPENDENT_CASES_UNAVAILABLE",
+  "opened_paths": [
+    {
+      "path": "public/docs/experiments/CLS_G0_REJECTION_PANEL_V1_20260920.md",
+      "sha256": "de04dbdb2349db1e3a1dbc9704839d0b1ded90020c397eee29f3fe772deb238e",
+      "kind": "protocol"
+    },
+    {
+      "path": "public/docs/experiments/CLS_G0_REJECTION_PANEL_V1_20260920.json",
+      "sha256": "15167676b208bd835186f1b9614086b9597d804e491c81f6539a438e45ece459",
+      "kind": "protocol_metadata"
+    },
+    {
+      "path": "public/docs/experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md",
+      "sha256": "13bd5748b76bf92cfd6da25129695285bece30e0dac576e928b221f56d2af04a",
+      "kind": "admission_protocol"
+    },
+    {
+      "path": "public/docs/experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.json",
+      "sha256": "03c5419dc1eaabf5d14606c24e24343fbb09ab3b4cd6bbce6d0d9a2b7394a186",
+      "kind": "admission_metadata"
+    },
+    {
+      "path": "public/docs/experiments/CLS_G0_PANEL_READINESS_ONE_ATTEMPT_AMENDMENT_V2_20260921.md",
+      "sha256": "6b245784051db525e9edb16ec95ad74432ce9d9078cf698764356ec614d57be8",
+      "kind": "readiness_protocol"
+    },
+    {
+      "path": "public/docs/experiments/CLS_G0_PANEL_READINESS_ONE_ATTEMPT_AMENDMENT_V2_20260921.json",
+      "sha256": "ff47e1cae10bbef5d2482031d6439a634188975b148f032b250d941d217c0c3e",
+      "kind": "readiness_metadata"
+    },
+    {
+      "path": "public/docs/experiments/CLS_G0_PANEL_FIXED_MAIN_ADMISSION_20260921.md",
+      "sha256": "2107213429a7ea277b1579657a922e4205b816ca59de3d73b01ce2bc69887e82",
+      "kind": "fixed_admission_protocol"
+    },
+    {
+      "path": "control/specs/cls-panel-v1/common-plan.json",
+      "sha256": "d48c2ac854707064fc8d7d0ba12db70b1e186fb333e91bc60452e7f0f3ea169b",
+      "kind": "historical_common_plan"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/common-plan.json",
+      "sha256": "ce341746adaf142a36c80db2b83cc3e2086515e6ef9db3313c8455a053b0dcee",
+      "kind": "common_plan"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/activation-review.json",
+      "sha256": "11d17888d9ccbe21d7cbf81bfc44ec72da34745b13f1e717c27ecf4465d4de90",
+      "kind": "activation_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/main-authority.json",
+      "sha256": "a2089a177dc9570651ad5b889a486bce1f4b6a1c273b2c3c2a360c1867e6e3c2",
+      "kind": "authority_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/main-activation.json",
+      "sha256": "d3837694b871e363d1c2d68d28b06d525c6b6d8638e5a539988a8bbfb02ea519",
+      "kind": "activation_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/cpx62-2075-l3-cls-g0-panel-local-main-v1.admission.json",
+      "sha256": "b3c7757517d02fc8bf44ad7e18d4412f3450d2c920578ea3b079afdc73971279",
+      "kind": "admission_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/cpx62-2075-l3-cls-g0-panel-local-main-v1.json",
+      "sha256": "0e2f846729bab97b48866266790a6b8076709dd4f5f440408e25c5ea28d6d4d6",
+      "kind": "materialized_spec_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/cpx62-2076-l3-cls-g0-panel-wdl-main-v1.admission.json",
+      "sha256": "1ab61d3b609adcf601630b8b9e4f969c6a6c82140b23f1b394809591e143dbcf",
+      "kind": "admission_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/cpx62-2076-l3-cls-g0-panel-wdl-main-v1.json",
+      "sha256": "1b4b6552ed7c35b510661059c1ca860ee073032d0f15b86adbd465dfdffb8661",
+      "kind": "materialized_spec_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/local-2075-technical-readback.json",
+      "sha256": "1cafa1c74e18cf7d488218825c5394cf0a560148347c542e8dbb0defed4ba503",
+      "kind": "technical_readback_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/main-pre-admission-readback.json",
+      "sha256": "e10baa925406b1b5ad737db08e0477ac91972f8982f5be2ad0e3e0b33550778d",
+      "kind": "pre_admission_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/wdl-release-precheck.json",
+      "sha256": "22f24b5ed870b8ba22c3c607ad2e6282839bdbc62150e48418900ab4b38fe70d",
+      "kind": "release_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/wdl-release-review.json",
+      "sha256": "b620eb57f201a91f86f9b9c8bba8826a28e1bb3ec2d5e4ee0d18d07fa7bc48ac",
+      "kind": "release_metadata"
+    },
+    {
+      "path": "control/specs/cls-readiness-v2-2074/source-compatibility.json",
+      "sha256": "2ab127cc6a6d8307db43ecd9da00dfff0ed7bccdacbd3384ef15f15cabceedc9",
+      "kind": "compatibility_metadata"
+    },
+    {
+      "path": "public/docs/experiments/L3_CLS_L_OBJECTIVE_ATTRIBUTION_V1_20260916.md",
+      "sha256": "489f2582b5058aeb86be27e304f86f1e2a4ca0fc366f3cfc6c22714084aafdd1",
+      "kind": "protocol_lineage_or_source_metadata",
+      "read_scope": "generation, parent, inputs, source identities and sealed root/reference provenance only"
+    },
+    {
+      "path": "public/docs/experiments/L3_CLS_L_OBJECTIVE_ATTRIBUTION_V1_20260916.json",
+      "sha256": "1792484ce35a877c75aba88ff646cbfcc94f569f1c2e23110d7bac3995b1ca26",
+      "kind": "protocol_lineage_or_source_metadata",
+      "read_scope": "generation, parent, inputs, source identities and sealed root/reference provenance only"
+    },
+    {
+      "path": "public/docs/experiments/L3_CLS_HIER_L2_NEXT_CANDIDATE_V1_20260918.md",
+      "sha256": "b6d4cc735c0d640aa681d70d433115af0a3cedae85d4c45fad8bd5f995f0634d",
+      "kind": "protocol_lineage_or_source_metadata",
+      "read_scope": "generation, parent, inputs, source identities and sealed root/reference provenance only"
+    },
+    {
+      "path": "public/docs/experiments/L3_CLS_G0_RUNTIME_CATASTROPHE_CONTRACT_V1_20260916.md",
+      "sha256": "2f29da0dffc2a4363c38fa90a6ff770cf0d28d2767f871cc17c71a06d3706acb",
+      "kind": "protocol_lineage_or_source_metadata",
+      "read_scope": "generation, parent, inputs, source identities and sealed root/reference provenance only"
+    },
+    {
+      "path": "public/docs/experiments/L3_CLS_G0_RUNTIME_CATASTROPHE_CONTRACT_V1_20260916.json",
+      "sha256": "b41c81b286b1bb9f733403cb89a05681b85b6eb816e2b13875d274529f303544",
+      "kind": "protocol_lineage_or_source_metadata",
+      "read_scope": "generation, parent, inputs, source identities and sealed root/reference provenance only"
+    },
+    {
+      "path": "public/docs/experiments/L3_CLS_BOTTLENECK_CLASSIFICATION_V1_20260916.md",
+      "sha256": "94f4b99f26b2633bd67e4cdc9d9e19e52398f6a26903f684346547f0184310f3",
+      "kind": "protocol_lineage_or_source_metadata",
+      "read_scope": "generation, parent, inputs, source identities and sealed root/reference provenance only"
+    },
+    {
+      "path": "public/docs/experiments/L3_CLS_MIRROR_SCALE_V1_20260916.md",
+      "sha256": "a22654e561aa150af5d0ecd412f4e742de7ec311a8bd526b7f605a302e58a6b1",
+      "kind": "protocol_lineage_or_source_metadata",
+      "read_scope": "generation, parent, inputs, source identities and sealed root/reference provenance only"
+    }
+  ],
+  "candidate_generation_metadata": {
+    "cls_l": {
+      "protocol": "docs/experiments/L3_CLS_L_OBJECTIVE_ATTRIBUTION_V1_20260916.json",
+      "factor": "learning_objective",
+      "arms": [
+        "LOCAL",
+        "WDL",
+        "MIXED"
+      ],
+      "parent": {
+        "name": "CURRICULUM",
+        "sha256": "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1",
+        "source_job": "cpx62-1341-jass-megacorpus-arm-d-fit-v1",
+        "source_attempt": "20260814T191555Z-18c38a33",
+        "source_code_sha": "18c38a33ae78c9c2e8e2df62fca266da28dacead"
+      },
+      "distribution": {
+        "raw_job": "home-0977-l3-pure-turnover1to1-train-v1",
+        "raw_attempt": "20260726T071254Z-336bb984",
+        "jnnw_sha256": "9b7db67a87025baf9115c72512312ac13ace076cef700c54ff1862f4ab240a2d",
+        "jsm_sha256": "acf3bbf4a28e7b44a1077df06bca9658cd4b189fc4cf11ee7f56720661626682",
+        "current2m_certificate_job": "cpx62-1340-jass-megacorpus-comparative-fit-v1",
+        "current2m_certificate_attempt": "20260814T123246Z-2ce07222",
+        "current2m_certificate_code_sha": "2ce07222f86c1468a1081fbdc53e9e17a0c5326e",
+        "records": 2000000,
+        "holdout_mod": 10,
+        "split_seed": 577215,
+        "new_selfplay": 0
+      },
+      "new_mechanism_for_v2": false,
+      "eligibility": "Existing development family; LOCAL/WDL excluded; MIXED technical failure is not rescued."
+    },
+    "hier_l2": {
+      "protocol": "docs/experiments/L3_CLS_HIER_L2_NEXT_CANDIDATE_V1_20260918.md",
+      "factor": "hierarchical_shrinkage",
+      "control_hier_l2": 0,
+      "candidate_hier_l2": 1e-05,
+      "parent_sha256": "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1",
+      "source_fit": "cpx62-1341-jass-megacorpus-arm-d-fit-v1",
+      "distribution_identity": "9b7db67a87025baf9115c72512312ac13ace076cef700c54ff1862f4ab240a2d",
+      "new_mechanism_for_v2": false,
+      "eligibility": "Existing HIER development case; excluded, no dose/refit/retry."
+    }
+  },
+  "runtime_root_metadata": {
+    "roots_source_job": "cpx62-2000-l3-cls-depth-growth-full-production-v2",
+    "roots": 512,
+    "roots_per_phase": 128,
+    "phases": [
+      "P0",
+      "P1",
+      "P2",
+      "P3"
+    ],
+    "deep_reference_job": "cpx62-2008-l3-cls-mirror-scale-production-v3",
+    "deep_reference_attempt": "20260916T161938Z-92984c1f",
+    "deep_reference_receipt_sha256": "2ac13b1e61dffc7d73217a8daba111aed9028b7a006020d081ebd6aa3480b004",
+    "deep_reference_nodes": 1000000,
+    "eligibility": "Existing consumed FULL-512 / 2008 deep reference, not a newly sealed disjoint V2 holdout."
+  },
+  "available_scoped_case_identities": [
+    "CURRICULUM",
+    "LOCAL",
+    "WDL",
+    "MIXED",
+    "HIER"
+  ],
+  "eligible_new_cases_evidenced": [],
+  "full_source_inventory_sha256": "8396b0bfe71bbfcf13cb31669f0f6807764a9e59d5dccced75f6cd27a38bb78f"
+}
