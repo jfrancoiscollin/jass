@@ -868,7 +868,7 @@
       "symptom": "FAILED exit 2 at publish-audit after four completed phases; authenticated audit-failure.json says NO_CLOBBER; no scientific verdict",
       "root_cause": "StageEvidence created scientific-summary.json as a running progress checkpoint; final stage put incorrectly applied no-clobber to its own placeholder",
       "invariant": "Replace only the current owned running launch-progress summary; reject foreign/final summaries, mismatched evidence and symlinks; preserve general no-clobber, full audit, zero effects, all identities and frozen science",
-      "evidence": "Authenticated 2071 failure 662a773e and evidence 04841bcd; real StageEvidence full-stage synthetic finalization and negative tests; docs/operations/CLS_PANEL_AUDIT_PUBLICATION_REPAIR_20260921.md; PR #1053; Authenticated job cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3, attempt 20260921T053109Z-20a09597, companion readback SHA256 a23e9c8e267039531db4b41013bbb1dc322b616b64324297b648a9d7f1751f07",
+      "evidence": "Authenticated 2071 failure 662a773e and evidence 04841bcd; real StageEvidence full-stage synthetic finalization and negative tests; docs/operations/CLS_PANEL_AUDIT_PUBLICATION_REPAIR_20260921.md; PR #1053; Authenticated job cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3, attempt 20260921T053109Z-20a09597, companion readback SHA256 a23e9c8e267039531db4b41013bbb1dc322b616b64324297b648a9d7f1751f07; PR #1054",
       "status": "CLOSED — authenticated successful 2072 publication"
     }
   ]
