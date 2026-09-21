@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import json
 import os
 import re
@@ -16,28 +17,39 @@ if str(ROOT) not in sys.path:
 
 from jobs.tools.launch_runtime_v2 import StageEvidence
 
-CONTROL = Path(os.environ.get("JASS_CONTROL_REPO_DIR", "/srv/jass/control"))
 ART = Path(os.environ["JASS_ARTEFACT_DIR"])
-SCHEMA = "jass.r2_retention_audit.v1"
-TERMINAL = "R2_RETENTION_AUDIT_COMPLETE_V1"
-JOB_RE = re.compile(r"\b(?:cpx62|ccx33|home)-[A-Za-z0-9._-]+\b")
+SCHEMA = "jass.r2_retention_audit.v2"
+TERMINAL = "R2_RETENTION_PLAN_COMPLETE_V2"
+SMALL_LIMIT = 1 << 20
+
+ESSENTIAL_JOBS = {
+    "cpx62-1640-l3-t3-rf1-joint-ab-terminal-readout-v1",
+    "home-1651-l3-scan-ceiling-selection-v1",
+    "cpx62-2062-l3-cls-hier-l2-hier-candidate-rehearsal-v1",
+    "cpx62-2065-l3-cls-hier-scan-reference-diagnostic-v1",
+    "cpx62-2066-l3-cls-g0-strength-calibration-rehearsal-v1",
+    "cpx62-2069-l3-cls-g0-strength-main-production-v1",
+    "cpx62-2079-l3-chinook-error-mining-v1",
+    "cpx62-2080-l3-chinook-interaction-audit-v1",
+    "cpx62-2081-l3-chinook-hybrid-strength-rehearsal-v1",
+    "cpx62-2084-r2-retention-audit-v1",
+}
+
+MODEL_SUFFIXES = (".pjtw", ".pjtw.gz", ".jnnw", ".jnnw.gz", ".pl8p", ".pl8p.gz", ".onnx", ".safetensors")
+MODEL_WORDS = ("model", "weights", "candidate", "champion", "curriculum")
 
 
-def collect_refs(root: Path) -> set[str]:
-    out: set[str] = set()
-    if not root.exists():
-        return out
-    for p in root.rglob("*"):
-        if not p.is_file() or p.is_symlink():
-            continue
-        try:
-            if p.stat().st_size > 4 * 1024 * 1024:
-                continue
-            text = p.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
-            continue
-        out.update(JOB_RE.findall(text))
-    return out
+def keep_reason(path: str, size: int, job: str) -> str | None:
+    if not path.startswith("runs/"):
+        return "KEEP_NON_RUN_NAMESPACE"
+    if job in ESSENTIAL_JOBS:
+        return "KEEP_ESSENTIAL_JOB"
+    lower = path.lower()
+    if lower.endswith(MODEL_SUFFIXES) or any(word in Path(lower).name for word in MODEL_WORDS):
+        return "KEEP_MODEL_ARTIFACT"
+    if size <= SMALL_LIMIT:
+        return "KEEP_SMALL_METADATA"
+    return None
 
 
 def main() -> int:
@@ -46,50 +58,68 @@ def main() -> int:
     try:
         evidence.begin("inventory-r2")
         rclone = os.environ.get("RCLONE_BIN", "rclone")
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             [rclone, "lsf", "r2:jass-data", "--recursive", "--files-only", "--format", "sp", "--separator", ";"],
-            check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=1800,
+            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1,
         )
-
-        by_job = defaultdict(lambda: {"bytes": 0, "objects": 0})
+        assert proc.stdout is not None
         by_top = defaultdict(lambda: {"bytes": 0, "objects": 0})
-        for line in proc.stdout.splitlines():
-            if not line.strip():
-                continue
-            size_s, path = line.split(";", 1)
-            size = int(size_s)
-            top = path.split("/", 1)[0]
-            by_top[top]["bytes"] += size
-            by_top[top]["objects"] += 1
-            if path.startswith("runs/"):
-                parts = path.split("/")
-                if len(parts) >= 3:
-                    job = parts[1]
-                    by_job[job]["bytes"] += size
-                    by_job[job]["objects"] += 1
+        by_job = defaultdict(lambda: {"bytes": 0, "objects": 0, "delete_bytes": 0, "delete_objects": 0})
+        by_reason = defaultdict(lambda: {"bytes": 0, "objects": 0})
+        total_bytes = total_objects = 0
+        delete_bytes = delete_objects = 0
+        manifest_path = ART / "r2-delete-candidates.txt.gz"
+        with gzip.open(manifest_path, "xt", encoding="utf-8", compresslevel=6) as manifest:
+            for raw in proc.stdout:
+                line = raw.rstrip("\n")
+                if not line:
+                    continue
+                size_s, path = line.split(";", 1)
+                size = int(size_s)
+                total_bytes += size
+                total_objects += 1
+                top = path.split("/", 1)[0]
+                by_top[top]["bytes"] += size
+                by_top[top]["objects"] += 1
+                job = ""
+                if path.startswith("runs/"):
+                    parts = path.split("/")
+                    if len(parts) >= 3:
+                        job = parts[1]
+                        by_job[job]["bytes"] += size
+                        by_job[job]["objects"] += 1
+                reason = keep_reason(path, size, job)
+                if reason is None:
+                    delete_bytes += size
+                    delete_objects += 1
+                    by_reason["DELETE_BULK_REPRODUCIBLE"]["bytes"] += size
+                    by_reason["DELETE_BULK_REPRODUCIBLE"]["objects"] += 1
+                    if job:
+                        by_job[job]["delete_bytes"] += size
+                        by_job[job]["delete_objects"] += 1
+                    manifest.write(path + "\n")
+                else:
+                    by_reason[reason]["bytes"] += size
+                    by_reason[reason]["objects"] += 1
+        stderr = proc.stderr.read() if proc.stderr is not None else ""
+        rc = proc.wait(timeout=60)
+        if rc != 0:
+            raise RuntimeError(f"rclone_lsf_failed_rc_{rc}")
 
-        refs = collect_refs(ROOT) | collect_refs(CONTROL)
-        decisions = []
-        keep_bytes = 0
-        delete_bytes = 0
-        for job, stat in sorted(by_job.items(), key=lambda kv: kv[1]["bytes"], reverse=True):
-            keep = job in refs
-            decisions.append({
+        job_rows = []
+        for job, stat in sorted(by_job.items(), key=lambda kv: kv[1]["delete_bytes"], reverse=True):
+            job_rows.append({
                 "job_id": job,
-                "decision": "KEEP" if keep else "DELETE_CANDIDATE",
-                "reason": "referenced_by_current_repo_or_control" if keep else "unreferenced_run_candidate",
+                "decision": "KEEP_ALL" if job in ESSENTIAL_JOBS else ("TRIM_BULK" if stat["delete_bytes"] else "KEEP"),
                 "bytes": stat["bytes"],
                 "objects": stat["objects"],
+                "delete_candidate_bytes": stat["delete_bytes"],
+                "delete_candidate_objects": stat["delete_objects"],
             })
-            if keep:
-                keep_bytes += stat["bytes"]
-            else:
-                delete_bytes += stat["bytes"]
-
         with (ART / "r2-job-retention.csv").open("x", newline="", encoding="utf-8") as stream:
-            writer = csv.DictWriter(stream, fieldnames=["job_id", "decision", "reason", "bytes", "objects"])
+            writer = csv.DictWriter(stream, fieldnames=["job_id","decision","bytes","objects","delete_candidate_bytes","delete_candidate_objects"])
             writer.writeheader()
-            writer.writerows(decisions)
+            writer.writerows(job_rows)
 
         summary = {
             "schema": SCHEMA,
@@ -97,24 +127,28 @@ def main() -> int:
             "terminal": TERMINAL,
             "read_only": True,
             "bucket": "jass-data",
-            "total_bytes": sum(x["bytes"] for x in by_top.values()),
-            "total_objects": sum(x["objects"] for x in by_top.values()),
-            "top_level": dict(sorted(by_top.items())),
-            "run_jobs": len(by_job),
-            "referenced_jobs": sum(d["decision"] == "KEEP" for d in decisions),
-            "delete_candidate_jobs": sum(d["decision"] == "DELETE_CANDIDATE" for d in decisions),
-            "referenced_run_bytes": keep_bytes,
-            "delete_candidate_run_bytes": delete_bytes,
             "policy": {
-                "non_runs": "KEEP_BY_DEFAULT",
-                "runs_referenced_by_current_jass_or_control": "KEEP",
-                "unreferenced_runs": "DELETE_CANDIDATE_ONLY_NO_DELETION",
+                "non_run_namespaces": "KEEP_ALL",
+                "essential_jobs": sorted(ESSENTIAL_JOBS),
+                "all_models": "KEEP",
+                "objects_le_1MiB": "KEEP",
+                "other_run_objects_gt_1MiB": "DELETE_CANDIDATE",
             },
+            "total_bytes": total_bytes,
+            "total_objects": total_objects,
+            "delete_candidate_bytes": delete_bytes,
+            "delete_candidate_objects": delete_objects,
+            "keep_bytes": total_bytes - delete_bytes,
+            "keep_objects": total_objects - delete_objects,
+            "top_level": dict(sorted(by_top.items())),
+            "classification": dict(sorted(by_reason.items())),
+            "run_jobs": len(by_job),
+            "delete_manifest": "r2-delete-candidates.txt.gz",
         }
         payload = json.dumps(summary, indent=2, sort_keys=True) + "\n"
         (ART / "r2-retention-summary.json").write_text(payload, encoding="utf-8")
         (ART / "scientific-summary.json").write_text(payload, encoding="utf-8")
-        (ART / "RESULTS.md").write_text("# R2 retention audit\n\n" + payload, encoding="utf-8")
+        (ART / "RESULTS.md").write_text("# R2 retention plan v2\n\n" + payload, encoding="utf-8")
         evidence.complete()
         evidence.finish()
         return 0
