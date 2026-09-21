@@ -58,10 +58,13 @@ La projection de durée du stage principal reste sous le plafond gelé :
 de readiness n'est ni un résultat de gain ni une autorisation de match principal.
 [Résultat et readback authentifié](operations/CLS_PANEL_READINESS_2074_RESULTS_20260921.md).
 TI-089 est désormais `CLOSED` sur preuve terminale ; TI-088 reste `MITIGATED`.
-Les deux admissions principales 2075/2076 sont préparées sous le mandat déjà
+Les deux admissions principales 2075/2076 sont scellées sous le mandat déjà
 accordé, sans nouvelle demande utilisateur : [admission fixe](experiments/CLS_G0_PANEL_FIXED_MAIN_ADMISSION_20260921.md).
-Elles seront toutes deux scellées avant LOCAL, avec WDL prélié à son identité/hash,
-sans lecture du résultat LOCAL pour choisir WDL. Le contrôle attend sa fusion après CI. CURRICULUM et les FAIL G0
+Elles ont été fusionnées dans control #783 après CI verte, avec WDL prélié à l'identité/hash
+de LOCAL, sans lecture de son résultat pour choisir WDL. LOCAL 2075 tourne depuis
+11:08:24 Paris, tentative `20260921T090819Z-e00900ff`, code immuable e00900ff ;
+WDL 2076 attend uniquement sa publication technique authentifiée. Aucun score
+intermédiaire n'est consulté. CURRICULUM et les FAIL G0
 restent inchangés.
 
 ## Campagne eval/search — ED4 et ED5 clos scientifiquement
