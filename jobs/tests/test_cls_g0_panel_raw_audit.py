@@ -16,6 +16,15 @@ from jobs.tools import cls_g0_panel_audit_stage as stage
 from jobs.tools.launch_runtime_v2 import StageEvidence
 
 
+def load_tests(loader, tests, pattern):
+    """Panel-audit CI covers readiness, both sealed main admissions, and transport."""
+    from jobs.tests import (test_cls_g0_panel_readiness, test_cls_g0_panel_gate_v1,
+                           test_cls_g0_panel_stage, test_cls_g0_panel_pipeline)
+    for module in (test_cls_g0_panel_readiness, test_cls_g0_panel_gate_v1, test_cls_g0_panel_stage, test_cls_g0_panel_pipeline):
+        tests.addTests(loader.loadTestsFromModule(module))
+    return tests
+
+
 def q(side, move="31-26", wall=.07):
     return {"side": side, "move": move, "wall_seconds": wall,
             "nodes": 12, "depth": 1, "eval_calls": 9}

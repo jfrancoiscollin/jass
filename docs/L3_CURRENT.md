@@ -24,6 +24,17 @@ et la relecture sont consignés dans [le reçu 2072](operations/CLS_PANEL_AUDIT_
 Cette admission d'audit n'inclut aucun match en aval ; l'étape suivante reste
 `IMPLEMENT_FROZEN_PANEL_READINESS_NO_AUTOMATIC_MATCH`.
 
+Le « Ok go » du 21 septembre a engagé la préparation des 56 contrôles. La revue
+préalable a détecté un conflit d'admission : Launch V2 conserve les délais dans
+la spécification commune, alors que le panel fixe 1 800/2 400 s pour readiness
+et 3 600/4 200 s pour chaque comparaison. La [proposition d'amendement
+d'admission](experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md) conserve
+le protocole scientifique et tous ses plafonds ; elle définit une version
+d'admission propre au plan complet. JFC l'a approuvée par « Je valide » ; son
+implémentation complète précède la readiness autorisée. Aucune nouvelle partie
+n'a encore été lancée. Les deux matchs principaux gardent une admission
+explicite distincte ; les tests locaux ne constituent pas une répétition réelle.
+
 ## Campagne autonome eval/search — candidat ED4-P1 scellé et authentifié
 
 Le mandat du 9 septembre autorise la poursuite automatique de pistes scientifiques
