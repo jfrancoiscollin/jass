@@ -25,8 +25,11 @@ metadata and exit code. No environment file was read or copied.
 - Terminal control commit:
   `7194f3c3f1ddcddc895c596aebb302b9da0c0431`; status blob:
   `70ad8edbe46bb65bf7aca8d8967b21033f31ee90`.
-- [Persisted readback](CLS_PANEL_READINESS_2073_READBACK_20260921.json), SHA256:
-  `2627d8ef1e477584032dff12205083386db25d09a85ab7a3cd4c24a38e13da46`.
+- [Published readback](CLS_PANEL_READINESS_2073_READBACK_20260921.json), SHA256
+  of Git-object bytes: `f6ca519861e0b261f8ef7d424c6d0b4bc1005cb0edc1cf9d902cfb47197ca103`.
+  The original Windows CRLF copy was
+  `2627d8ef1e477584032dff12205083386db25d09a85ab7a3cd4c24a38e13da46`;
+  publication normalizes line endings without changing the JSON values.
 
 Started at **09:09:27 Europe/Paris** on 21 September 2026. The publisher manifest
 ended at **09:14:28** (301 seconds); the terminal GitOps status followed at
