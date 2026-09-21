@@ -31,7 +31,9 @@ void test_gate_components() {
 }
 
 void test_network_off_gate_uses_curriculum() {
-    auto pos = Position::initial();
+    auto parsed = Position::from_fen("W:W31-50:B1-20");
+    JASS_CHECK(parsed.has_value());
+    const Position pos = *parsed;
     chinook_hybrid::Network net(
         std::make_unique<ConstantNetwork>(11),
         std::make_unique<ConstantNetwork>(99));
