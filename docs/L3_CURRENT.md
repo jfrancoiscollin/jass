@@ -61,10 +61,14 @@ TI-089 est désormais `CLOSED` sur preuve terminale ; TI-088 reste `MITIGATED`.
 Les deux admissions principales 2075/2076 sont scellées sous le mandat déjà
 accordé, sans nouvelle demande utilisateur : [admission fixe](experiments/CLS_G0_PANEL_FIXED_MAIN_ADMISSION_20260921.md).
 Elles ont été fusionnées dans control #783 après CI verte, avec WDL prélié à l'identité/hash
-de LOCAL, sans lecture de son résultat pour choisir WDL. LOCAL 2075 tourne depuis
-11:08:24 Paris, tentative `20260921T090819Z-e00900ff`, code immuable e00900ff ;
-WDL 2076 attend uniquement sa publication technique authentifiée. Aucun score
-intermédiaire n'est consulté. CURRICULUM et les FAIL G0
+de LOCAL, sans lecture de son résultat pour choisir WDL. LOCAL 2075 est techniquement
+complet (`20260921T090819Z-e00900ff`, code immuable e00900ff), avec 576 parties,
+59 804 recherches, zéro autre effet et 49 régressions de lancement PASS. WDL 2076
+a été libéré par control #784 après CI verte et relecture de la dépendance technique.
+Il tourne depuis 12:04:38 Paris, tentative `20260921T100434Z-e00900ff`, avec le même
+code, plan, profil et scellement d'ouvertures. Aucun score, intervalle, verdict ou résultat LOCAL
+n'est lu ici ; le résultat conjoint reste en attente.
+[Preuve technique LOCAL](operations/CLS_PANEL_LOCAL_2075_TECHNICAL_RESULTS_20260921.md). CURRICULUM et les FAIL G0
 restent inchangés.
 
 ## Campagne eval/search — ED4 et ED5 clos scientifiquement

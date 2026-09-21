@@ -1,14 +1,19 @@
 # CLS panel — admission des deux comparaisons fixes
 
-Date : **21 septembre 2026**. Statut : **SEALED_MAIN_ADMISSIONS_LOCAL_RUNNING**.
+Date : **21 septembre 2026**. Statut : **LOCAL_TECHNICAL_COMPLETE_WDL_RUNNING**.
 
 L'autorité et la preuve sont fusionnées dans Jass #1059
 (`4612a655c9aed252715756dba7c1135146b18912`) ; les deux admissions sont scellées
 dans control #783 (`011d0d75bcb1f9cafe6af6a3892adda5b0188210`) après CI verte.
-LOCAL 2075 a effectivement démarré à **11:08:24 heure de Paris** (09:08:24 UTC),
-tentative `20260921T090819Z-e00900ff`, état canonique `running`, code immuable e00900ff.
-Ce constat de démarrage n'est pas un résultat scientifique ni une complétude technique.
-WDL 2076 attend la publication technique LOCAL selon la règle pré-liée ci-dessous.
+LOCAL 2075 a démarré à **11:08:24 heure de Paris** (09:08:24 UTC) et s'est terminé
+techniquement à **11:57:00 heure de Paris** (09:57:00 UTC), tentative
+`20260921T090819Z-e00900ff`, code immuable e00900ff, avec sortie 0. Le readback technique
+authentifie 576 parties, 59 804 recherches et zéro autre effet ; il ne lit aucun score,
+intervalle, verdict ou résultat scientifique. WDL 2076 a été libéré par control #784
+(`ea7f6854051211725fbfd68c46ed0ebff6d56fc4`) après CI verte et authentification
+de la seule dépendance technique. Il tourne depuis **12:04:38 Paris** (10:04:38 UTC),
+tentative `20260921T100434Z-e00900ff`, sous le même code immuable. Le résultat conjoint
+reste en attente de la complétude et de la publication WDL.
 
 Le mandat utilisateur répété autorise la poursuite autonome des évaluations préenregistrées.
 La dernière instruction est : « oh punaise oui j'autorise allez enchaine c'est pénible arrête de me demander ».
@@ -70,6 +75,16 @@ de stage, **10 411 / 12 300 s** extérieures. Les anciennes réservations expir�
 par les mesures réelles ; le travail consommé n'est jamais effacé. Plafonds globaux inchangés :
 1 208 parties et 195 696 recherches. Aucun entraînement, nouvelle sonde G0, Scan, promotion,
 bake, substitution de CURRICULUM ou scale-up.
+
+À la libération WDL, la mesure réelle LOCAL remplace sa réservation :
+**7 573,212516 / 9 900 s** de stage et **9 127 / 12 300 s** extérieures, réservation
+WDL complète incluse. Déjà consommés : 632 parties et 65 439 recherches ; maximum
+avec WDL : 1 208 parties et 158 751 recherches, sous le plafond gelé de 195 696.
+Le dispatch WDL est une copie exacte de celui scellé avant LOCAL, SHA256
+`46446d83f5fc932e097cbfe244914da96347861252a3fe5d1c0ebb1a63348344`.
+Les sept tests du dispatcher Linux, la syntaxe et la vérification réelle de sa dépendance
+pré-liée ont réussi, sans stage ni partie supplémentaires. Le nouveau contrôle CPX
+confirme 16 CPU et 572 520 MiB libres ; estimation WDL inchangée de 50–55 minutes.
 
 Les validations préalables requises sont la CI publique, les sept tests du dispatcher sur
 Linux CPX, la projection exacte des deux spécifications, le contrôle de tout l'historique

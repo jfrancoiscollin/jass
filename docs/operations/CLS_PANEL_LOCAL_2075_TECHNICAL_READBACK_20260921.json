@@ -1,0 +1,68 @@
+{
+  "schema": "jass.cls_local_public_technical_readback_summary.v1",
+  "job_id": "cpx62-2075-l3-cls-g0-panel-local-main-v1",
+  "attempt_id": "20260921T090819Z-e00900ff",
+  "code_sha": "e00900ff38e71afa88201871713d4765409c2ac4",
+  "host": "cpx62",
+  "state": "authenticated_and_reread",
+  "exit_code": 0,
+  "scientific_outputs_parsed": false,
+  "scientific_verdict": null,
+  "main_activation_sha256": "d3837694b871e363d1c2d68d28b06d525c6b6d8638e5a539988a8bbfb02ea519",
+  "effects": {
+    "strength_games": 576,
+    "new_jass_searches": 59804,
+    "new_scan_searches": 0,
+    "selfplay_games": 0,
+    "fits": 0,
+    "bakes": 0,
+    "promotions": 0,
+    "test_target_reads": 0
+  },
+  "technical_timing": {
+    "started_at_utc": "2026-09-21T09:08:24Z",
+    "ended_at_utc": "2026-09-21T09:57:00Z",
+    "outer_elapsed_seconds": 2916,
+    "stage_duration_seconds": 2774.983341,
+    "host_nproc": 16,
+    "game_workers": 4,
+    "launch_regressions": {
+      "tests": 49,
+      "passed": 49,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "identities": {
+    "prebound_local_admission_sha256": "b3c7757517d02fc8bf44ad7e18d4412f3450d2c920578ea3b079afdc73971279",
+    "prebound_local_job_id": "cpx62-2075-l3-cls-g0-panel-local-main-v1",
+    "launch_receipt_sha256": "e5e4e90548f109d813c3dee802f97fd83b2ccc8a284e7db5bf9f7ecbc0f6dc38",
+    "opening_freeze_sha256": "e36ce24d588a842fd6700d2e30514b5583c144083092c10e4b0ea581b2511669",
+    "stage_spec_sha256": "0e2f846729bab97b48866266790a6b8076709dd4f5f440408e25c5ea28d6d4d6",
+    "stage_games_sha256": "4e87f4e8c3d440f09d5c4ccba9598b8bfe83e2f6d261f8d9630979fc6e2c7fff",
+    "stage_receipt_sha256": "6429b26c581165d795ed743d19ceedfe2be4c419dc96baa17cd072dfebce09e8"
+  },
+  "artifact_hashes": {
+    "RESULTS.md": "a4217c015ba14ef1905649ba31638a9a15a4ef71b9063793791892dfaf7b5986",
+    "execution-evidence.json": "d11a6045120e3334a0aed93d3201b6f2605790d7b0e838c4168c2ef91c0171d8",
+    "manifest.json": "b490c9a342d2ded5c5e1cf5055ea438facc07a86226ff2d9d30c4edc13b9dedb",
+    "opening-freeze.json": "e36ce24d588a842fd6700d2e30514b5583c144083092c10e4b0ea581b2511669",
+    "panel-admission-receipt.json": "e5e4e90548f109d813c3dee802f97fd83b2ccc8a284e7db5bf9f7ecbc0f6dc38",
+    "panel-regressions.json": "3509d0654d86e03358e0c61a1cde45216fd19420abe26e7be2621c7cff879d0b",
+    "progress.json": "4586b0f664c536a5810c33634750ebce47e668c47fbb755d9c3d8381f8c193d3",
+    "publisher-manifest.json": "c5ffe2bbb786ce23f78bd6b68e624c75093c54a67c49367fab113ae9df9289fc",
+    "runtime-identity.json": "4244e45b491aab900ea4dee3159cdac46b0b5a7aacad2e11e4fd831032b2ab05",
+    "scientific-summary.json": "1dfcea60b7214d1a1e361499d4b35dc89c1331b4af196d23ff07f3fe2cd1dce8",
+    "source-authentication.json": "40137afdad45fdd6f7fd899054cce2e2d0811a862b23ee334f1e9d61a352b6f2",
+    "stage-games.json.gz": "4e87f4e8c3d440f09d5c4ccba9598b8bfe83e2f6d261f8d9630979fc6e2c7fff",
+    "stage-receipt.json": "6429b26c581165d795ed743d19ceedfe2be4c419dc96baa17cd072dfebce09e8",
+    "study-report.json": "d4aefbf8913f0dc65b7dda7a2581ef6d5e0e9c721b5b0520deba1989e354d2bd"
+  },
+  "next_action": "RELEASE_PRESEALED_WDL_2076_WITHOUT_LOCAL_OUTCOME_PEEKING",
+  "full_source_proof_sha256": "1cafa1c74e18cf7d488218825c5394cf0a560148347c542e8dbb0defed4ba503",
+  "scientific_boundary": "Technical completion only; no score, interval, scientific verdict or outcome was parsed. WDL and the final joint result remain pending.",
+  "tracking_status": "LOCAL_TECHNICAL_COMPLETE_WDL_RELEASE_PENDING",
+  "scientific_verdict_read_state": "NOT_READ_PENDING_JOINT_WDL_COMPLETION",
+  "canonical_terminal_control_commit": "a07b7e1cf4e95250f3d04eb5e27365228c3e18c1"
+}
