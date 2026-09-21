@@ -258,6 +258,7 @@ add_library(jass_lib STATIC
     src/pattern_jass_bridge.cpp
     src/scan_eval.cpp
     src/conversion_head.cpp
+    src/chinook_hybrid.cpp
     src/scan_sacs.cpp
     pattern_jass/src/pattern.cpp
     pattern_jass/src/weights.cpp
@@ -397,6 +398,7 @@ add_executable(jass_tests
     tests/test_hub.cpp
     tests/test_scan_eval.cpp
     tests/test_conversion_head.cpp
+    tests/test_chinook_hybrid.cpp
     tests/test_t3_f6.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
