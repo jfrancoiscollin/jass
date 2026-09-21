@@ -1,0 +1,135 @@
+{
+  "schema": "jass.pl8_boundary_b_technical_recovery_decision.v1",
+  "date": "2026-09-21",
+  "scope": {
+    "allowed_evidence": [
+      "1719 status",
+      "1720 status",
+      "authenticated 1720 diagnostic and authentication receipt",
+      "exact 1719 done wrapper",
+      "frozen PL8 V1 contract",
+      "corrected CLS next-action contract"
+    ],
+    "forbidden_actions_performed": false,
+    "payload_reads": false,
+    "compute_launched": false,
+    "queue_or_code_changed": false,
+    "worker_remote_reads": false,
+    "root_collection": "One authenticated 1720 diagnostic fetch from its exact R2 publication, followed by an exact referenced Git base commit fetch; no fit/anchor/deep payloads."
+  },
+  "jobs": {
+    "source_1719": {
+      "job_id": "cpx62-1719-l3-pl8-boundary-b-v2",
+      "attempt_id": "20260831T183547Z-3ca55d35",
+      "code_sha": "3ca55d350e9ec324c0c1e47ff96324f4b6af0f2b",
+      "state": "failed",
+      "exit_code": 1
+    },
+    "diagnostic_1720": {
+      "job_id": "cpx62-1720-l3-pl8-boundary-b-v2-diagnostic-v1",
+      "attempt_id": "20260831T185118Z-3ca55d35",
+      "code_sha": "3ca55d350e9ec324c0c1e47ff96324f4b6af0f2b",
+      "state": "completed",
+      "exit_code": 0,
+      "authentication_state": "verified"
+    }
+  },
+  "diagnostic": {
+    "source_phase": "fetch-target-blind-catalog-and-exclusions",
+    "abort_line": 145,
+    "abort_rc": 1,
+    "abort_cmd": "python3 - \"$W/normalized-identities.tsv\" \"${IDENTITY_FILES[@]}\" <<'PY'",
+    "counter_interpretation": "fit_runs/fresh_labels/strength_games zeros are hardcoded by the diagnostic wrapper and are not independent measurement evidence"
+  },
+  "topology": {
+    "outer_wrapper_verifies_base_then_materializes_then_execs_patched_script": true,
+    "recorded_command_is_identity_normalizer_heredoc": true,
+    "prefit_indication": true,
+    "materialized_normalizer_line": 145,
+    "build_stage_line": 166,
+    "selection_stage_line": 193,
+    "fit_stage_line": 207,
+    "anchor_stage_line": 219,
+    "fresh_stage_line": 229,
+    "no_fit_read_proven": true,
+    "no_anchor_target_read_proven": true,
+    "no_fresh_deep_label_read_proven": true,
+    "immutable_base_commit_available_locally": true,
+    "immutable_base_blob_available_locally": true,
+    "stderr_available": false,
+    "interpretation": "No fit execution, anchor target read or fresh deep-label read was reached. Upstream source downloads may precede the abort; this is not a claim of zero historical input download."
+  },
+  "root_cause": {
+    "status": "unresolved_ambiguous",
+    "uniquely_determined": false,
+    "minimal_repair_hypothesis": null,
+    "reason": "The exact materialized source is available and proves the prefit boundary, but rc=1 has several possible causes and no stderr, exception class or failing input row is available in the bounded evidence."
+  },
+  "admissibility": {
+    "authenticated_diagnostic_bound_to_source": true,
+    "source_and_diagnostic_identity_consistent": true,
+    "exact_mechanical_cause_proven": false,
+    "prefit_boundary_proven": true,
+    "scientific_invariants_preserved_by_repair_proven": false,
+    "result": "PL8_BOUNDARY_B_TECHNICAL_RECOVERY_NOT_ADMISSIBLE_V1",
+    "escalation": "SOL_ESCALATION_REQUIRED"
+  },
+  "hashes_sha256": {
+    "status_1719": "7ebe88964e008b9750f6b8000c334660e12d1ef774f61c2363f9b4ede3dc3d8f",
+    "status_1720": "21303392c19e60df1628074327e70aeac3884ff5f7c21bab718e11ab4209edf0",
+    "diagnostic_authenticated": "8182301ac14cd91fde3ebb94f4ee71cd1f96e0e35ac6682b64aba2056dc4b4ff",
+    "authentication_receipt": "a81c7c0449b2cae2c5e5e6903e548b77c455087fab5aee4082079104c902237c",
+    "wrapper_1719": "efc71d39958e8685322bf085f687dc7b9ab0abb242d1fa1e1b224001eda45691",
+    "base_1719_sha256_representation": "ed9f8371e8ce62411dcc95a8d5c351ff60f26ac11a7fb77ec45562cb22c83cac",
+    "materialized_1719_as_data": "c04743e84db50683dcadfdb89ab1325a2ff49fe86a6ebf84f9e3f9b77edf08c3",
+    "pl8_v1_contract": "46026b2a8f735fbd1a7314ff82d10d59633aaed9651e67fc5788a303ded13e7c",
+    "corrected_cls_contract": "d7b718232ed07c7d932ec54ad1a8b2ce64635afd323d091ad596697932c330d1"
+  },
+  "git_identities": {
+    "base_control_commit": "8c6b30801d191b734efa5e62c2df8fd4bd5954f3",
+    "base_control_path": "queue/pending/cpx62-1719-l3-pl8-boundary-b-v1.sh",
+    "base_control_blob": "bdcdb96eae6acb93609930bb8e6675553e8b630d"
+  },
+  "status": "PL8_BOUNDARY_B_TECHNICAL_RECOVERY_NOT_ADMISSIBLE_V1",
+  "full_source_reconciliation_sha256": "389aeda37e2749e21d545ab2073cfd2b313fc7ec1927e94ef42191694a93596f",
+  "launch_authorized": false,
+  "retry_authorized": false,
+  "scientific_verdict": null,
+  "incident": "TI-090",
+  "published_diagnostic": {
+    "abort_cmd": "python3 - \"$W/normalized-identities.tsv\" \"${IDENTITY_FILES[@]}\" <<'PY'",
+    "abort_line": 145,
+    "abort_rc": 1,
+    "code_sha": "3ca55d350e9ec324c0c1e47ff96324f4b6af0f2b",
+    "fit_runs": 0,
+    "fresh_labels": 0,
+    "schema": "jass.pl8_boundary_b_v2_failed_diagnostic.v1",
+    "scientific_decision": false,
+    "source_attempt": "20260831T183547Z-3ca55d35",
+    "source_job": "cpx62-1719-l3-pl8-boundary-b-v2",
+    "source_phase": "fetch-target-blind-catalog-and-exclusions",
+    "source_state": "failed",
+    "strength_games": 0,
+    "technical_abort": "TECHNICAL_ABORT line=145 rc=1 cmd=python3 - \"$W/normalized-identities.tsv\" \"${IDENTITY_FILES[@]}\" <<'PY'",
+    "technical_only": true
+  },
+  "diagnostic_authentication": {
+    "attempt_id": "20260831T185118Z-3ca55d35",
+    "code_sha": "3ca55d350e9ec324c0c1e47ff96324f4b6af0f2b",
+    "exit_code": 0,
+    "files": [
+      {
+        "local_name": "diagnostic.json",
+        "path": "artefacts/PL8_BOUNDARY_B_V2_FAILED_DIAGNOSTIC.json",
+        "sha256": "8182301ac14cd91fde3ebb94f4ee71cd1f96e0e35ac6682b64aba2056dc4b4ff",
+        "size_bytes": 694
+      }
+    ],
+    "host": "cpx62",
+    "job_id": "cpx62-1720-l3-pl8-boundary-b-v2-diagnostic-v1",
+    "prefix": "r2:jass-data/runs/cpx62-1720-l3-pl8-boundary-b-v2-diagnostic-v1/20260831T185118Z-3ca55d35",
+    "result_state": "completed",
+    "schema": 1,
+    "state": "verified"
+  }
+}

@@ -890,6 +890,16 @@
       "invariant": "Synthetic network fixtures must own their executable and byte store, reject unexpected subprocesses, and exercise real envelope/parser/checksum validation; CI loads the exact ordered panel profile suite. Preserve failed attempt, frozen code identity, budgets, no automatic retry and no main admission.",
       "evidence": "docs/operations/CLS_PANEL_READINESS_2073_RESULTS_20260921.md; authenticated execution evidence 986a9975862460dcce3b4727fcf8e37e539868922d1f5c7ad4c3da25b2a20031; nondefault inherited RCLONE_BIN reproduces bypass; 51 local tests passed; 81 launch profiles valid; Linux exact-suite CI pending; 78 exact-suite plus raw-audit tests passed on complete CPX Linux checkout with inherited absolute RCLONE_BIN; GitHub CI pending; PR #1057; PR #1057 merged after green CI; renewed user authorization recorded in CLS_G0_PANEL_READINESS_ONE_ATTEMPT_AMENDMENT_V2_20260921; exact failed-predecessor gate authenticated, 85 full Linux panel/raw-audit tests passed, 15 focused gate tests passed, 81 profiles valid; no replacement queued yet; Final validation: 86 complete Linux panel/raw-audit tests, 16 focused gate/completeness tests, 81 profiles; existing CI entry point retained, workflow configuration unchanged; PR #1058; Authenticated readiness 2074 completed all phases with 49 launch regressions PASS, exact RCLONE_BIN fixture guard exercised, and published readback SHA256 28666787f54b9f0ff195ba3fbd9b96d166c43983300ae9080330caee814f5e43; TI-088 remains MITIGATED pending separate durable admission proof.; PR #1059",
       "status": "CLOSED"
+    },
+    {
+      "id": "TI-090",
+      "dedupe_key": "job:cpx62-1719-l3-pl8-boundary-b-v2",
+      "context": "PL8 Boundary B 1719 technical failure; bounded 1720 diagnostic reconciliation on 2026-09-21",
+      "symptom": "Boundary B aborted at normalization of target-blind identities, line 145, rc 1, before any completed candidate or scientific verdict",
+      "root_cause": "Exact cause unproven: authenticated 1720 diagnostic identifies the normalization heredoc and phase but contains no failing row, traceback or exception class",
+      "invariant": "Preserve frozen PL8 science, source identities, single-fit limit, untouched anchor/fresh targets and no automatic strength/promotion; no repair or retry without proof of a purely mechanical cause and reviewed bounded admission",
+      "evidence": "1719/20260831T183547Z-3ca55d35 failed exit1; 1720/20260831T185118Z-3ca55d35 diagnostic published completed; authenticated diagnostic SHA2568182301ac14cd91fde3ebb94f4ee71cd1f96e0e35ac6682b64aba2056dc4b4ff; diagnostic counter fields are hardcoded and require independent wrapper-topology verification; docs/operations/PL8_BOUNDARY_B_1719_1720_RECOVERY_DECISION_20260921.md; Exact referenced base fetched and materialized as data, SHA256c04743e84db50683dcadfdb89ab1325a2ff49fe86a6ebf84f9e3f9b77edf08c3; abort line145 precedes fit207/anchor219/fresh229, independently proving prefit boundary; root cause still ambiguous without stderr/failing row. Terminal PL8_BOUNDARY_B_TECHNICAL_RECOVERY_NOT_ADMISSIBLE_V1; source reconciliation SHA256389aeda37e2749e21d545ab2073cfd2b313fc7ec1927e94ef42191694a93596f. No code change, new target, fit, or queue.",
+      "status": "OPEN - bounded recovery not admissible; unique root cause unproven, no retry"
     }
   ]
 }
