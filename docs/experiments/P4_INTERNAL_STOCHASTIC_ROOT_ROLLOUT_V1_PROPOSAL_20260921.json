@@ -1,0 +1,114 @@
+{
+  "schema_version": "jass.p4_internal_stochastic_root_rollout_proposal.v1",
+  "date": "2026-09-21",
+  "status": "P4_INTERNAL_ROOT_ROLLOUT_V1_PROSPECTIVE_CONTRACT_DEFINED__ACTIVATION_BLOCKED",
+  "proposal_only": true,
+  "mechanism_id": "P4_INTERNAL_STOCHASTIC_ROOT_ROLLOUT_V1",
+  "source_decision_sha256": "e2be4c03f8c7d0eeb553fa9b0b936ee0b1570d6d165a5aec033320eaa7880ce6",
+  "source_review_sha256": "f5b777d767e6531ec5d84016cffa68f874c032994f97977257a1700779e3a92b",
+  "current_code_addendum_sha256": "2a8684de09bbe51a02a06212e33bac2f9e4b189cf4216f69e4b0590b4b704f6e",
+  "engineering_base_commit": "ddcfbaadb2ca7e56f412267c671db5633a340181",
+  "eligibility": {
+    "legal": true,
+    "terminal": false,
+    "minimum_legal_moves": 2,
+    "material_per_side": "men + 3 * kings",
+    "equal_material": true,
+    "non_egdb_status": "explicit_outside_resolved_domain_required",
+    "freshness_contract_required": true,
+    "non_egdb_rejected_evidence": [
+      "disabled",
+      "missing files",
+      "unavailable backend",
+      "uninitialized handle",
+      "I/O error",
+      "generic no result"
+    ]
+  },
+  "control": {
+    "model_sha256": null,
+    "code_commit": null,
+    "root_node_cap": null,
+    "node_limit_mode": "Exact",
+    "threads": 1
+  },
+  "treatment": {
+    "base_cap_fraction": "1/2",
+    "root_candidates": 2,
+    "rollouts_per_candidate": 2,
+    "continuation_max_plies": 16,
+    "per_ply_cap_fraction": "1/128",
+    "cap_divisibility": 128,
+    "allocation_reuse": false,
+    "padding": false,
+    "continuation_policy": "uniform_top_two",
+    "aggregation": "arithmetic_mean_of_two_root_player_scores",
+    "tie_break": "base_candidate_rank",
+    "root_scores_clarification": "CERTIFIED_EXACT_TOP_TWO_WITHIN_ONE_ALREADY_BUDGETED_CALL",
+    "fresh_tt_per_call": true,
+    "threads": 1,
+    "seed_tuple": [
+      "contract_version",
+      "sealed_run_id",
+      "canonical_case_id",
+      "color",
+      "canonical_root_move",
+      "rollout_ordinal",
+      "continuation_ply"
+    ],
+    "admissible_attempt": {
+      "completed": true,
+      "all_actions_searched": true,
+      "cutoff": false,
+      "bound": "Exact",
+      "catalogue": "each semantic root action exactly once",
+      "action_completed": true,
+      "allowed_action_bounds": [
+        "Exact",
+        "Upper"
+      ],
+      "minimum_exact_actions": 2,
+      "exact_sort": "descending score then ascending canonical move encoding",
+      "upper_bound_rule": "strictly below second exact score",
+      "selection": "lexicographic maximum (depth,attempt) among admissible attempts",
+      "cross_attempt_combination": false,
+      "none_available": "P4_INTERNAL_ROOT_ROLLOUT_FEASIBILITY_NOT_ESTABLISHED_V1"
+    },
+    "horizon_score": {
+      "terminal": "canonical root-player rule/tablebase terminal score",
+      "at_max_plies": "one canonical root-player static evaluation with the same frozen evaluator",
+      "new_model": false,
+      "rescaling": false,
+      "clipping": false,
+      "score_order_and_arithmetic_proof_required": true
+    },
+    "forced_move_rule": "play only legal move without search; reserved cap stays unused",
+    "disabled_path": "existing control move, score, nodes and stop reason must match byte-for-byte"
+  },
+  "unresolved_before_activation": [
+    "engineering component and all synthetic fixture proofs",
+    "absolute root allowance from one named current control",
+    "complete consumed-cohort exclusion union including opening/game families",
+    "new case source and trigger support",
+    "primary endpoint and smallest effect of scientific interest",
+    "prospective alpha allocation and blind sample size",
+    "immutable code, evaluator, seed, source and result identities"
+  ],
+  "finite_scope": {
+    "synthetic_engineering_passes": 1,
+    "identity_only_source_reviews": 1,
+    "no_automatic_variant": true,
+    "failure_terminal": "P4_INTERNAL_ROOT_ROLLOUT_FEASIBILITY_NOT_ESTABLISHED_V1"
+  },
+  "authority": {
+    "standing_user_investigation_mandate": true,
+    "scientific_activation": false,
+    "source_generation": false,
+    "queue_admission": false,
+    "promotion": false,
+    "bake": false,
+    "scale_up": false
+  },
+  "scientific_verdict": null,
+  "source_clarification_sha256": "0833370a5f1010c256395fa5f26bf9d651e01e21778a1dd154e6dedd858687eb"
+}
