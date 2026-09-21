@@ -1,0 +1,403 @@
+{
+  "schema": "jass.d4_history_terminal_metadata_readback.v1",
+  "date": "2026-09-21",
+  "source": "Canonical local jass-control terminal status records; no new R2 authentication, raw target read, search, fit or game.",
+  "full_source_status_readback_sha256": "897428eed937d0641be46dd971ed8c1a50f5d94dbdd29a945313ee7ab94a321d",
+  "records": [
+    {
+      "job_id": "cpx62-1866-l3-decision-math-d4-offline-invalid-recovery-readout-v2",
+      "attempt_id": "20260907T202707Z-54a4eef1",
+      "code_sha": "54a4eef1bea97bb7848071f9da59c628cddb81e6",
+      "state": "completed",
+      "exit_code": 0,
+      "status_path": "status/cpx62-1866-l3-decision-math-d4-offline-invalid-recovery-readout-v2.json",
+      "status_sha256": "f34f570e481f2564e29584884632e54bbee06b34123ad1f8897a7edf09d815b2",
+      "status_git_blob": "5dc4a0f89e3e5dfea1f337617bfa829443a1df59",
+      "terminal": "D4_SEARCH_UTILITY_OFFLINE_INVALID_V1",
+      "next_stage": "STOP_D4_OFFLINE",
+      "strength_games": 0,
+      "scientific_summary": {
+        "bakes": 0,
+        "code_sha": "1c779cc87608a12b26432cad6a23872aeb5eabe8",
+        "d3_score_reads": 0,
+        "equal_node_authorized": false,
+        "full_ladder_1843_reads": 0,
+        "game_outcome_reads": 0,
+        "next_stage": "STOP_D4_OFFLINE",
+        "prepare": {
+          "bakes": 0,
+          "cross_split_event_occurrences_dropped": 0,
+          "cross_split_keys": 0,
+          "d3_score_reads": 0,
+          "eligible_after_cross_split_filter": {
+            "test": 67555,
+            "train": 527454,
+            "valid": 65153
+          },
+          "example_selector_prefix": "D4-EXAMPLE-2026111502:",
+          "feature_width": 24,
+          "features": [
+            "legacy_rank_norm",
+            "depth_norm",
+            "ply_norm",
+            "legal_count_norm",
+            "piece_count_norm",
+            "capture_node",
+            "zero_window",
+            "move_is_capture",
+            "capture_count_norm",
+            "promotes",
+            "mover_is_king",
+            "killer0_match",
+            "killer1_match",
+            "countermove_match",
+            "history_squash",
+            "conthist_squash",
+            "from_row_norm",
+            "from_col_norm",
+            "to_row_norm",
+            "to_col_norm",
+            "abs_row_delta_norm",
+            "abs_col_delta_norm",
+            "destination_edge",
+            "destination_center"
+          ],
+          "fits": 0,
+          "full_ladder_1843_reads": 0,
+          "game_outcome_reads": 0,
+          "model_width": 96,
+          "phase_blocks": 4,
+          "promotions": 0,
+          "qscore_reads": 0,
+          "root_counts": {
+            "test": 400,
+            "train": 3200,
+            "valid": 400
+          },
+          "schema": "jass.d4.search_utility_prepare.v1",
+          "search_decision_trace_reads": 0,
+          "selected_counts": {},
+          "selected_sha256": {
+            "test": "f6f3e63f41970bd88de2ab43222f7959f0d66c8b4cd377fc1e9b9c8c108b717d",
+            "train": "5397aa1900b419ee3183cec121cfc64de306f94f6dd24fbb0372aa2414e6fa31",
+            "valid": "eb9441a28536cad2fe4d907d7c3620310ef73bf42bb2e918b822ceebc563db13"
+          },
+          "strength_games": 0,
+          "teacher_event_rows": 660162,
+          "teacher_shards": 16,
+          "test_phase_counts": {},
+          "verdict": "D4_SEARCH_UTILITY_OFFLINE_INVALID_V1"
+        },
+        "promotions": 0,
+        "qscore_reads": 0,
+        "reason": "exact_or_phase_support_insufficient_after_frozen_selection",
+        "recovery": {
+          "new_fits": 0,
+          "new_games": 0,
+          "new_searches": 0,
+          "runner_exit_code": 2,
+          "source_stage_exit_code": 4,
+          "source_state": "failed"
+        },
+        "recovery_readout_code_sha": "54a4eef1bea97bb7848071f9da59c628cddb81e6",
+        "schema": "jass.d4.search_utility_offline_terminal.v1",
+        "science": {
+          "fits": 0,
+          "model_searches": 0,
+          "model_width": 96,
+          "target": "observed_beta_cutoff_causing_move_within_legacy_top4_non_tt",
+          "value_model_sha256": "e4d510fbb9b81cbe74574d92da48e8de6f61d8f98de6472eeb409713785f0de0"
+        },
+        "search_decision_trace_reads": 0,
+        "source_attempt": "20260907T182914Z-1c779cc8",
+        "source_job": "cpx62-1862-l3-decision-math-d4-search-utility-offline-cardinality-recovery-requeue-v1",
+        "strength_games": 0,
+        "teacher_searches": 4000,
+        "verdict": "D4_SEARCH_UTILITY_OFFLINE_INVALID_V1"
+      }
+    },
+    {
+      "job_id": "cpx62-1868-l3-d4b-search-utility-micro-screen-v1",
+      "attempt_id": "20260907T210728Z-34f48241",
+      "code_sha": "34f48241a9e99338c31e02c6561a410de7d56745",
+      "state": "completed",
+      "exit_code": 0,
+      "status_path": "status/cpx62-1868-l3-d4b-search-utility-micro-screen-v1.json",
+      "status_sha256": "76c0585d46f08d5017af8a71cf349208636c146963137e7ca3e02fbda4f874e7",
+      "status_git_blob": "78ddee3a49d5ba668e4693d1af1e986e6409d95e",
+      "terminal": "D4B_MICRO_GATE0_NOT_SUPPORTED_V1",
+      "next_stage": "STOP_D4B_MICRO",
+      "strength_games": 0,
+      "scientific_summary": {
+        "code_sha": "34f48241a9e99338c31e02c6561a410de7d56745",
+        "fits": 1,
+        "fresh_confirmation_required_before_strength": true,
+        "new_scan_searches": 0,
+        "next_stage": "STOP_D4B_MICRO",
+        "offline": {
+          "bakes": 0,
+          "gates": {
+            "test_lcb95_ce_gain_gt_0": true,
+            "test_mean_ce_gain_gt_0": true,
+            "test_top1_gt_baseline": true,
+            "valid_ce_gain_gt_0": true
+          },
+          "model_sha256": "2eb84e52232591eff01cbb3cbc8c3a0d1e99f3b7f89b38949cbfef6b8e1f2ac9",
+          "phase_quota_gate": false,
+          "promotions": 0,
+          "scan_gate0_authorized": true,
+          "schema": "jass.d4b.offline_terminal.v1",
+          "selfplay_games": 0,
+          "strength_authorized": false,
+          "strength_games": 0,
+          "teacher_nodes_per_root": 20000,
+          "teacher_searches": 512,
+          "test": {
+            "baseline_cross_entropy": 0.8972223464847463,
+            "baseline_top1": 0.725,
+            "bootstrap_ce_gain": {
+              "ci_high": 0.05629130125906997,
+              "ci_low": 0.021751315401445804,
+              "mean": 0.03890052053679459,
+              "repetitions": 20000,
+              "seed": 2026090703
+            },
+            "by_phase": {
+              "P0": {
+                "baseline_top1": 0.6676384839650146,
+                "ce_gain": 0.04039786079385312,
+                "d4b_top1": 0.6705539358600583,
+                "examples": 343
+              },
+              "P1": {
+                "baseline_top1": 0.7475409836065574,
+                "ce_gain": 0.03449579815553495,
+                "d4b_top1": 0.7475409836065574,
+                "examples": 610
+              },
+              "P2": {
+                "baseline_top1": 0.851063829787234,
+                "ce_gain": 0.08514079594950305,
+                "d4b_top1": 0.851063829787234,
+                "examples": 47
+              },
+              "P3": {
+                "baseline_top1": null,
+                "ce_gain": null,
+                "d4b_top1": null,
+                "examples": 0
+              }
+            },
+            "ce_gain": 0.03890052053679449,
+            "cross_entropy": 0.8583218259479518,
+            "mrr": 0.8366666666666668,
+            "top1": 0.726
+          },
+          "valid": {
+            "baseline_cross_entropy": 0.8239033229944267,
+            "baseline_top1": 0.75,
+            "ce_gain": 0.06777510308072521,
+            "cross_entropy": 0.7561282199137015,
+            "mrr": 0.8558333333333332,
+            "top1": 0.751
+          },
+          "value_model_sha256": "e4d510fbb9b81cbe74574d92da48e8de6f61d8f98de6472eeb409713785f0de0",
+          "verdict": "D4B_MICRO_OFFLINE_SUPPORTED_V1"
+        },
+        "runtime": {
+          "arm": "D4B",
+          "benchmark_only": true,
+          "book": false,
+          "budget_nodes": 20000,
+          "d4b_eligible_nodes": 216779,
+          "d4b_hoists": 71,
+          "egdb_max_pieces": 0,
+          "eval_calls": 4632382,
+          "exact_budget_failures": 0,
+          "external_egdb_enabled": false,
+          "fits": 0,
+          "fresh_engine_each_parent": true,
+          "invalid_rows": 0,
+          "node_limit_mode": "exact",
+          "nodes": 10181970,
+          "nshards": 1,
+          "processed_rows": 512,
+          "promotion_authorized": false,
+          "scan_searches": 0,
+          "schema": "jass.scan_oracle_gate0_runtime.v1",
+          "selected_rows": 512,
+          "shard": 0,
+          "source_rows": 2000,
+          "strength_games": 0,
+          "threads": 1,
+          "tt_mb": 16,
+          "wall_us": 1965062
+        },
+        "scan_gate0": {
+          "benchmark_only": true,
+          "bootstrap": {
+            "repetitions": 20000,
+            "seed": 2026090702
+          },
+          "candidate": {
+            "catastrophic_regret_ge_50": 0.111328125,
+            "mean_regret": 148.5859375,
+            "median_regret": 1.0,
+            "p95_regret": 109.0,
+            "top_hit": 0.478515625
+          },
+          "candidate_name": "D4B",
+          "control": {
+            "catastrophic_regret_ge_50": 0.111328125,
+            "mean_regret": 148.5859375,
+            "median_regret": 1.0,
+            "p95_regret": 109.0,
+            "top_hit": 0.478515625
+          },
+          "gate": {
+            "mean_regret_improvement_gt_0": false,
+            "median_wall_ratio_le_1p05": false,
+            "regret_lcb95_gt_0": false,
+            "top_hit_not_worse": true,
+            "verdict": "GATE0_NOT_SUPPORTED"
+          },
+          "guards": {
+            "bakes": 0,
+            "fits": 0,
+            "promotions": 0,
+            "scan_searches": 0,
+            "selfplay_games": 0,
+            "strength_games": 0
+          },
+          "paired": {
+            "mean_completed_depth_delta": 0.0,
+            "mean_eval_calls_delta": 0.279296875,
+            "mean_regret_improvement": 0.0,
+            "median_wall_ratio": 1.0728213964126572,
+            "regret_improvement_ci95": [
+              0.0,
+              0.0
+            ],
+            "top_hit_delta": 0.0
+          },
+          "parents": 512,
+          "retrospective_d3_would_have_been_rejected": null,
+          "scan_reference_nodes": 200000,
+          "schema": "jass.scan_oracle_gate0_readout.v1"
+        },
+        "schema": "jass.d4b.micro_terminal.v1",
+        "selfplay_games": 0,
+        "strength_authorized": false,
+        "strength_games": 0,
+        "teacher_nodes_per_root": 20000,
+        "teacher_searches": 512,
+        "verdict": "D4B_MICRO_GATE0_NOT_SUPPORTED_V1"
+      }
+    },
+    {
+      "job_id": "cpx62-1871-l3-d4c-post-teacher-recovery-v1",
+      "attempt_id": "20260908T090346Z-87c0bafa",
+      "code_sha": "87c0bafab522bcc7add997868328951d811848e5",
+      "state": "completed",
+      "exit_code": 0,
+      "status_path": "status/cpx62-1871-l3-d4c-post-teacher-recovery-v1.json",
+      "status_sha256": "1a9e0aecd4f27286c37dcb00154a36262cd40a74a4f617c6a1c4d623612ca08a",
+      "status_git_blob": "449c998ff588438ae6944146adc2341db06a4c49",
+      "terminal": "D4C_RANK_BREAKER_OFFLINE_NOT_SUPPORTED_V1",
+      "next_stage": "STOP_D4C_OFFLINE",
+      "strength_games": 0,
+      "scientific_summary": {
+        "code_sha": "87c0bafab522bcc7add997868328951d811848e5",
+        "fits": 1,
+        "new_scan_searches": 0,
+        "new_teacher_searches": 0,
+        "next_stage": "STOP_D4C_OFFLINE",
+        "offline": {
+          "bakes": 0,
+          "fits": 1,
+          "fixed_legacy_logit": false,
+          "gates": {
+            "test_change_rate_ge_0p01": false,
+            "test_change_rate_le_0p35": true,
+            "test_correct_nonfirst_override_rate_ge_0p05": false,
+            "test_paired_top1_gain_mean_gt_0": true,
+            "test_top1_gt_baseline": true,
+            "valid_top1_gt_baseline": true
+          },
+          "legacy_rank_feature_retained": true,
+          "model_sha256": "b5c45f079d1af9be64e93599f05558eb77026db2786bcca33c27361390c0162d",
+          "objective": "pairwise_label_vs_other_logistic",
+          "promotions": 0,
+          "scan_gate0_authorized": false,
+          "schema": "jass.d4c.rank_breaker_offline_terminal.v1",
+          "selfplay_games": 0,
+          "strength_authorized": false,
+          "strength_games": 0,
+          "teacher_nodes_per_root": 20000,
+          "teacher_searches": 512,
+          "test": {
+            "baseline_pairwise_accuracy": 0.843037112700034,
+            "baseline_top1": 0.725,
+            "change_rate": 0.001,
+            "correct_nonfirst_override_rate": 0.0036363636363636364,
+            "correct_nonfirst_overrides": 1,
+            "d4c_pairwise_accuracy": 0.8437180796731358,
+            "d4c_top1": 0.726,
+            "examples": 1000,
+            "false_override_rate_on_rank1_labels": 0.0,
+            "false_overrides_on_rank1_labels": 0,
+            "nonfirst_label_fraction": 0.275,
+            "nonfirst_labels": 275,
+            "paired_top1_gain_bootstrap": {
+              "ci_high": 0.003,
+              "ci_low": 0.0,
+              "mean": 0.001,
+              "repetitions": 20000,
+              "seed": 2026090803
+            },
+            "pairs": 2937,
+            "predicted_rank_counts": {
+              "rank1": 999,
+              "rank2": 1,
+              "rank3": 0,
+              "rank4": 0
+            },
+            "top1_gain": 0.001
+          },
+          "valid": {
+            "baseline_pairwise_accuracy": 0.8676219720232002,
+            "baseline_top1": 0.75,
+            "change_rate": 0.001,
+            "correct_nonfirst_override_rate": 0.004,
+            "correct_nonfirst_overrides": 1,
+            "d4c_pairwise_accuracy": 0.8683043329921528,
+            "d4c_top1": 0.751,
+            "examples": 1000,
+            "false_override_rate_on_rank1_labels": 0.0,
+            "false_overrides_on_rank1_labels": 0,
+            "nonfirst_label_fraction": 0.25,
+            "nonfirst_labels": 250,
+            "pairs": 2931,
+            "predicted_rank_counts": {
+              "rank1": 999,
+              "rank2": 1,
+              "rank3": 0,
+              "rank4": 0
+            },
+            "top1_gain": 0.001
+          },
+          "verdict": "D4C_RANK_BREAKER_OFFLINE_NOT_SUPPORTED_V1"
+        },
+        "schema": "jass.d4c.micro_terminal.v1",
+        "selfplay_games": 0,
+        "strength_authorized": false,
+        "strength_games": 0,
+        "teacher_searches_reused": 512,
+        "verdict": "D4C_RANK_BREAKER_OFFLINE_NOT_SUPPORTED_V1"
+      }
+    }
+  ],
+  "new_experiment_authorized": false,
+  "historical_stop_decisions_preserved": true,
+  "d4_never_executed_claim": false
+}

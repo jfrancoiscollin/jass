@@ -31,10 +31,14 @@ publications ; aucun résultat LOCAL n'a choisi WDL. TI-088 et TI-089 sont déso
 Décision maintenue : **`STOP_INTERPRET_NO_AUTO_G0_V2_NO_PROMOTION`**. Les FAIL G0 V1,
 CURRICULUM et l'interdiction de promotion/bake restent inchangés. Pas de troisième
 cellule, prolongation, retry ou modification de seuil. La revue recommande la
-[proposition distincte G0 V2 à trois états](experiments/CLS_G0_V2_THREE_STATE_VALIDATION_PROPOSAL_V1_20260921.md),
-au statut `PROPOSAL_ONLY_CASE_FEASIBILITY_PENDING_NOT_ACTIVATED`. Seul son audit fini
-de métadonnées est engagé : il doit établir des cas indépendants et un holdout intact
-avant tout contrat de validation exécutable. Aucun nouveau calcul n'est admis par cette proposition.
+[proposition distincte G0 V2 à trois états](experiments/CLS_G0_V2_THREE_STATE_VALIDATION_PROPOSAL_V1_20260921.md).
+Son audit fini est désormais clos : **`G0_V2_PROPOSAL_BLOCKED_INDEPENDENT_CASES_UNAVAILABLE`**.
+Les 28 fichiers de métadonnées examinés n'établissent pas les cas indépendants,
+le holdout intact, l'effectif prospectif et l'adjudication bornée nécessaires.
+[Faisabilité et limites](experiments/CLS_G0_V2_CASE_FEASIBILITY_RESULTS_20260921.md).
+G0 V2 reste inactif. La recherche d'un mécanisme distinct continue sous le mandat
+acquis, avec préenregistrement ; aucune ancienne famille D4/D4b/D4c n'est traitée
+comme jamais exécutée et aucun nouveau candidat n'est encore admis.
 
 ### Historique de l'admission du panel, désormais clos
 
