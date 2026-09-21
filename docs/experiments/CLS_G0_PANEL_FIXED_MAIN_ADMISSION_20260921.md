@@ -1,6 +1,14 @@
 # CLS panel — admission des deux comparaisons fixes
 
-Date : **21 septembre 2026**. Statut : **SEALED_MAIN_ADMISSIONS_PENDING_CONTROL_MERGE**.
+Date : **21 septembre 2026**. Statut : **SEALED_MAIN_ADMISSIONS_LOCAL_RUNNING**.
+
+L'autorité et la preuve sont fusionnées dans Jass #1059
+(`4612a655c9aed252715756dba7c1135146b18912`) ; les deux admissions sont scellées
+dans control #783 (`011d0d75bcb1f9cafe6af6a3892adda5b0188210`) après CI verte.
+LOCAL 2075 a effectivement démarré à **11:08:24 heure de Paris** (09:08:24 UTC),
+tentative `20260921T090819Z-e00900ff`, état canonique `running`, code immuable e00900ff.
+Ce constat de démarrage n'est pas un résultat scientifique ni une complétude technique.
+WDL 2076 attend la publication technique LOCAL selon la règle pré-liée ci-dessous.
 
 Le mandat utilisateur répété autorise la poursuite autonome des évaluations préenregistrées.
 La dernière instruction est : « oh punaise oui j'autorise allez enchaine c'est pénible arrête de me demander ».
