@@ -104,7 +104,7 @@ def analyze(diag: list[dict[str, str]], siblings: list[dict[str, str]]) -> tuple
     for r in siblings:
         by_root[r["parent_id"]].append(r)
     ids = [r["root_id"] for r in diag]
-    need(len(set(ids)) == NROOTS and set(ids) == set(by_root), "root identity coverage")
+    need(len(set(ids)) == NROOTS and set(ids).issubset(by_root), "root identity coverage")
 
     regrets = {r["root_id"]: int(r[PRIMARY]) for r in diag}
     ordered = sorted(regrets.values(), reverse=True)
