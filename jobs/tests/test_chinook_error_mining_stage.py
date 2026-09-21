@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 import unittest
 from unittest import mock
@@ -28,6 +29,13 @@ class ChinookStageTests(unittest.TestCase):
         with mock.patch.object(s.subprocess, "run", return_value=proc),              mock.patch.object(s.fetch, "inspect_result_inventory", side_effect=[good, dict(good, attempt_id="b")]):
             with self.assertRaises(ValueError):
                 s.unique_completed_attempt(s.REFERENCE_JOB)
+
+    def test_direct_script_import_bootstrap_precedes_jobs_imports(self):
+        source = inspect.getsource(s)
+        bootstrap = 'sys.path.insert(0, str(ROOT))'
+        first_jobs_import = 'from jobs.tools import chinook_error_mining as miner'
+        self.assertIn(bootstrap, source)
+        self.assertLess(source.index(bootstrap), source.index(first_jobs_import))
 
     def test_profile_is_zero_effect(self):
         path = s.Path(__file__).resolve().parents[1] / "launch_profiles" / "chinook-error-mining-v1.json"
