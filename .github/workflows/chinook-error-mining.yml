@@ -1,0 +1,26 @@
+name: chinook-error-mining
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/chinook_error_mining.py'
+      - 'jobs/tests/test_chinook_error_mining.py'
+      - 'docs/experiments/L3_CHINOOK_ERROR_MINING_V1_20260921.md'
+      - '.github/workflows/chinook-error-mining.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'jobs/tools/chinook_error_mining.py'
+      - 'jobs/tests/test_chinook_error_mining.py'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile jobs/tools/chinook_error_mining.py jobs/tests/test_chinook_error_mining.py
+      - run: python -m unittest jobs.tests.test_chinook_error_mining -v
