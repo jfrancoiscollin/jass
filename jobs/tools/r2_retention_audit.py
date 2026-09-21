@@ -6,12 +6,16 @@ import json
 import os
 import re
 import subprocess
+import sys
 from collections import defaultdict
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from jobs.tools.launch_runtime_v2 import StageEvidence
 
-ROOT = Path(__file__).resolve().parents[2]
 CONTROL = Path(os.environ.get("JASS_CONTROL_REPO_DIR", "/srv/jass/control"))
 ART = Path(os.environ["JASS_ARTEFACT_DIR"])
 SCHEMA = "jass.r2_retention_audit.v1"
