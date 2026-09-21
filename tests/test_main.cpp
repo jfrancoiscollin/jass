@@ -23,6 +23,7 @@ int main() {
     run_hub_tests();
     run_scan_eval_tests();
     run_conversion_head_tests();
+    run_chinook_hybrid_tests();
     run_t3_f6_tests();
 
     if (g_failures == 0) {
