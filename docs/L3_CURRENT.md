@@ -44,10 +44,25 @@ V2](experiments/CLS_G0_PANEL_READINESS_ONE_ATTEMPT_AMENDMENT_V2_20260921.md) :
 une seule admission de remplacement, après vérification de l'échec publié,
 des huit compteurs nuls, de tout l'historique et des identités gelées.
 Le correctif et le suivi historique sont fusionnés dans #1057 ; la nouvelle
-admission attend encore son code et son contrôle scellés. Aucun remplacement
-n'est en file à ce stade. Les 56 parties et 9 072 recherches maximales sont
-cumulées avec 2073, sans remise à zéro. Les deux matchs principaux gardent
-une admission distincte ; CURRICULUM et les FAIL G0 restent inchangés.
+admission 2074 (`20260921T083944Z-e00900ff`) a terminé avec toutes les phases
+complètes et le terminal authentifié
+`CLS_G0_PANEL_READINESS_V2_COMPLETE_MAIN_NOT_AUTHORIZED`. Elle couvre 56 parties
+sur 28 paires, 5 635 recherches natives, 49 régressions de lancement PASS, et
+aucun fit, bake, promotion ou lecture de cible. Avec 2073, les plafonds cumulés
+de readiness restent fixés à 56 parties et 9 072 recherches ; 2074 a consommé
+les 56 parties et 5 635 recherches de cette enveloppe. Le verdict scientifique
+reste `null`.
+
+La projection de durée du stage principal reste sous le plafond gelé :
+2 793,110803209336 s pour LOCAL et 2 780,972960489006 s pour WDL. Cette preuve
+de readiness n'est ni un résultat de gain ni une autorisation de match principal.
+[Résultat et readback authentifié](operations/CLS_PANEL_READINESS_2074_RESULTS_20260921.md).
+TI-089 est désormais `CLOSED` sur preuve terminale ; TI-088 reste `MITIGATED`.
+Les deux admissions principales 2075/2076 sont préparées sous le mandat déjà
+accordé, sans nouvelle demande utilisateur : [admission fixe](experiments/CLS_G0_PANEL_FIXED_MAIN_ADMISSION_20260921.md).
+Elles seront toutes deux scellées avant LOCAL, avec WDL prélié à son identité/hash,
+sans lecture du résultat LOCAL pour choisir WDL. Le contrôle attend sa fusion après CI. CURRICULUM et les FAIL G0
+restent inchangés.
 
 ## Campagne eval/search — ED4 et ED5 clos scientifiquement
 

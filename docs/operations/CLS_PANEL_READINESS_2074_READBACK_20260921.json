@@ -1,0 +1,91 @@
+{
+  "schema": "jass.cls_readiness_v2_public_readback_summary.v1",
+  "job_id": "cpx62-2074-l3-cls-g0-panel-readiness-authorized-v2",
+  "attempt_id": "20260921T083944Z-e00900ff",
+  "code_sha": "e00900ff38e71afa88201871713d4765409c2ac4",
+  "host": "cpx62",
+  "state": "completed",
+  "exit_code": 0,
+  "operational_terminal": "CLS_G0_PANEL_READINESS_V2_COMPLETE_MAIN_NOT_AUTHORIZED",
+  "scientific_verdict": null,
+  "main_launch_authorized": false,
+  "actual_side_effects": {
+    "strength_games": 56,
+    "new_jass_searches": 5635,
+    "new_scan_searches": 0,
+    "selfplay_games": 0,
+    "fits": 0,
+    "bakes": 0,
+    "promotions": 0,
+    "test_target_reads": 0
+  },
+  "readiness": {
+    "games": 56,
+    "pairs": 28,
+    "deterministic_pairs": 4,
+    "timed_pairs": 24,
+    "timed_block_wall_seconds": 230.439671671018,
+    "stage_duration_seconds": 340.137217,
+    "projected_main_work_seconds": {
+      "LOCAL": 2793.110803209336,
+      "WDL": 2780.972960489006
+    },
+    "launch_regressions": {
+      "tests": 49,
+      "passed": 49,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "identities": {
+    "admission_sha256": "391bd701aac85733df5754eafe769e8d8bc759cd03e19d5f825286775e780a94",
+    "common_plan_sha256": "ce341746adaf142a36c80db2b83cc3e2086515e6ef9db3313c8455a053b0dcee",
+    "materialized_spec_sha256": "8d8a105259c3161e53ec883ba10a1e48bf92ae5a772db12e4d1187677d68b38e",
+    "opening_selection_sha256": "b5a728c580ddb481663c0d6a336b45c4cf1c36f89d4fce368818d5a9a5a24aaf",
+    "profile_sha256": "4e1f9090e6f4dafdeac8d71e009ed1ca55730142781d5b428b5be2b843de3a47",
+    "stage_receipt_sha256": "3cdf37414ca187b9b2a9160778a6bda5abe9e045355005b57792e921a8e19544",
+    "publisher_manifest_sha256": "d4726bd7415d9e8cfd2589a6132085e23053be5ca51207efa05fdbb1318326ac"
+  },
+  "artifact_hashes": {
+    "RESULTS.md": "70e690b2dfbe3ed15f47767e06b162fad813007283d577d6ad762dfd104be1e3",
+    "execution-evidence.json": "3425ec7cd36056ab5b9bf1ddc9137b595122acec1ca3936410df2d6d0288a9b0",
+    "manifest.json": "7a4632863c4043751b6e95ce3202ca35e6d4d4fa003e32cb8f8864f1827f29a6",
+    "opening-freeze.json": "e36ce24d588a842fd6700d2e30514b5583c144083092c10e4b0ea581b2511669",
+    "panel-admission-receipt.json": "19c33657d2946e4f6d1aa85cdc08ba477bb0db2486bff627c608919a9b459c8b",
+    "panel-regressions.json": "3509d0654d86e03358e0c61a1cde45216fd19420abe26e7be2621c7cff879d0b",
+    "prior-attempt-exception-receipt.json": "46323d45de11c2fc618d0e625de8fd0562f85f488ce170264f6119a9d35d7c40",
+    "progress.json": "fc21a5e7565d987bd2520093f0375642f5369b094f4b95e6fb35c8b9a14f46e2",
+    "publisher-manifest.json": "d4726bd7415d9e8cfd2589a6132085e23053be5ca51207efa05fdbb1318326ac",
+    "runtime-identity.json": "4244e45b491aab900ea4dee3159cdac46b0b5a7aacad2e11e4fd831032b2ab05",
+    "scientific-summary.json": "1c0a08d618043a627d10b18e84ac755a0726623a2d585329deadd538973803cb",
+    "source-authentication.json": "40137afdad45fdd6f7fd899054cce2e2d0811a862b23ee334f1e9d61a352b6f2",
+    "stage-games.json.gz": "fd85234c6523768c1ec3374e8dc72eb91b53a494bd273bde42aa34cd6e2e5af4",
+    "stage-receipt.json": "3cdf37414ca187b9b2a9160778a6bda5abe9e045355005b57792e921a8e19544",
+    "study-report.json": "e3ce50aa85dd09f86d23fd4dbf128e9a15e9b2ef0e6479b51abdd82c9755de78"
+  },
+  "local_source_sha256": "28666787f54b9f0ff195ba3fbd9b96d166c43983300ae9080330caee814f5e43",
+  "next_step": "DISTINCT_SEALED_CONTROL_ADMISSION_PENDING",
+  "scientific_boundary": "No gain, promotion, bake, main-match result, threshold, sample, budget, candidate, baseline or verdict mapping is established or changed.",
+  "typed_readiness": {
+    "attempt_id": "20260921T083944Z-e00900ff",
+    "job_id": "cpx62-2074-l3-cls-g0-panel-readiness-authorized-v2",
+    "launch_receipt_sha256": "19c33657d2946e4f6d1aa85cdc08ba477bb0db2486bff627c608919a9b459c8b",
+    "opening_selection_sha256": "b5a728c580ddb481663c0d6a336b45c4cf1c36f89d4fce368818d5a9a5a24aaf",
+    "publisher_manifest_sha256": "d4726bd7415d9e8cfd2589a6132085e23053be5ca51207efa05fdbb1318326ac"
+  },
+  "prior_attempt_exception_receipt_sha256": "46323d45de11c2fc618d0e625de8fd0562f85f488ce170264f6119a9d35d7c40",
+  "runtime_identity": {
+    "host": "cpx62",
+    "interpreter_sha256": "52e0a13e60a981d8c4b6478be2ba5176f69da07948a056bf49cf6f077e30cb41",
+    "libc": [
+      "glibc",
+      "2.43"
+    ],
+    "machine": "x86_64",
+    "nproc": 16,
+    "numeric_environment_sha256": "6b6abacaca2145a375fcaf610b5e3392402031b2f5d25ecd8c1c5f5d062586e4",
+    "game_workers": 4
+  },
+  "authority_scope": "Readiness receipt only; fixed main authority is recorded separately under the standing user mandate."
+}
