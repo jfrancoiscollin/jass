@@ -1,6 +1,7 @@
 """Synthetic unit/integration tests; no historical outcomes or new native searches."""
 from __future__ import annotations
 from copy import deepcopy
+import csv
 import gzip
 import json
 import math
@@ -12,6 +13,7 @@ from unittest.mock import patch
 
 from jobs.tools import cls_g0_panel_raw_audit as a
 from jobs.tools import cls_g0_panel_audit_stage as stage
+from jobs.tools.launch_runtime_v2 import StageEvidence
 
 
 def q(side, move="31-26", wall=.07):
@@ -321,6 +323,116 @@ class StageTests(unittest.TestCase):
         source=Path(stage.__file__).read_text()
         self.assertNotIn("record_effect(", source)
         self.assertNotIn("run_candidate_probe(",source)
+
+
+def write_json(path: Path, value: object) -> None:
+    path.write_text(json.dumps(value, sort_keys=True), encoding="utf-8")
+
+
+class PanelFinalizationTests(unittest.TestCase):
+    def _sources(self, root: Path) -> dict[str, Path]:
+        raw, seal, summary = fixture()
+        historical = root / "historical"
+        historical.mkdir()
+        with gzip.open(historical / "stage-games.json.gz", "wt", encoding="utf-8") as f:
+            json.dump(raw, f)
+        write_json(historical / "opening-freeze.json", seal)
+        write_json(historical / "scientific-summary.json", summary)
+        write_json(historical / "study-report.json", summary)
+        write_json(historical / "runtime-identity.json", {})
+        out = {"historical_match": historical}
+        inputs = G0Tests().inputs()
+        for arm in ("LOCAL", "WDL"):
+            directory = root / arm.lower()
+            directory.mkdir()
+            rows, roots, phases, probe, g0_summary = inputs
+            with (directory / "probe.tsv").open("w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=rows[0], delimiter="\t")
+                writer.writeheader()
+                writer.writerows(rows)
+            with (directory / "g0-deep512.tsv").open("w", encoding="utf-8") as f:
+                f.write("parent_id\tphase\tcanonical_fingerprint\n")
+                for phase in phases:
+                    f.write(f"{phase['parent_id']}\t{phase['phase']}\t{phase['canonical_fingerprint']}\n")
+            (directory / "g0-root-ids.txt").write_text("\n".join(roots) + "\n", encoding="utf-8")
+            write_json(directory / "probe-report.json", probe)
+            write_json(directory / "scientific-summary.json", {**g0_summary, "candidate_arm": arm,
+                       "candidate_sha256": stage.audit.MODELS[arm]})
+            write_json(directory / "candidate-authentication.json", {
+                "model_sha256": stage.audit.MODELS[arm], "job_id": "synthetic"})
+            out["local_g0" if arm == "LOCAL" else "wdl_g0"] = directory
+        return out
+
+    def test_stage_run_replaces_only_owned_progress_and_hashes_final_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            art, work = root / "art", root / "work"
+            art.mkdir()
+            sources = self._sources(root)
+            evidence = StageEvidence(art, "rehearsal")
+            with patch.object(stage, "authenticate", return_value=(sources, {})), \
+                 patch.object(stage, "continuity", return_value=(Path("jass"), {"passed": True})), \
+                 patch.object(stage, "replay_native", side_effect=lambda _exe, _work, games, metas, _progress: oracle(games, metas)):
+                result = stage.run(work, art, evidence, {"sources": {
+                        "valid_arms": {"job_id": "synthetic"}, "historical_match": {"job_id": "synthetic"}}})
+                self.assertEqual(result["terminal"], stage.TERMINAL)
+                evidence_value = json.loads((art / "execution-evidence.json").read_text())
+                self.assertEqual(evidence_value["state"], "completed")
+                self.assertEqual(evidence_value["completed_phases"], stage.PHASES)
+                self.assertTrue(all(value == 0 for value in evidence_value["actual_side_effects"].values()))
+                published = json.loads((art / "scientific-summary.json").read_text())
+                self.assertEqual(published["schema"], "jass.cls_g0_panel_historical_audit.v1")
+                manifest = json.loads((art / "manifest.json").read_text())
+                for name in stage.OUTPUTS:
+                    self.assertTrue((art / name).is_file(), name)
+                    self.assertGreater((art / name).stat().st_size, 0, name)
+                for name, expected_hash in manifest["output_sha256"].items():
+                    self.assertEqual(expected_hash, stage.audit.sha(art / name), name)
+                self.assertEqual(set(manifest["output_sha256"]), set(stage.OUTPUTS) - {"manifest.json"})
+
+    def test_finalized_or_foreign_summary_collision_remains_immutable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            art = Path(temporary)
+            evidence = StageEvidence(art, "rehearsal")
+            path = art / "scientific-summary.json"
+            path.write_text(json.dumps({"schema": "jass.cls_g0_panel_historical_audit.v1", "state": "completed"}), encoding="utf-8")
+            before = path.read_bytes()
+            with self.assertRaises(stage.audit.AuditError):
+                stage.put_final_summary(path, {"schema": "replacement"}, evidence)
+            self.assertEqual(path.read_bytes(), before)
+
+    def test_progress_ownership_rejects_stale_or_foreign_placeholders(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            art = Path(temporary)
+            evidence = StageEvidence(art, "rehearsal")
+            for phase in stage.PHASES:
+                evidence.begin(phase)
+                if phase != stage.PHASES[-1]:
+                    evidence.complete()
+            path = art / "scientific-summary.json"
+            baseline = json.loads(path.read_text())
+            final_value = {"schema": "final"}
+            cases = {
+                "stale snapshot": {"snapshot_at": "stale"},
+                "mismatched phase": {"phase": "foreign"},
+                "mismatched effects": {"actual_side_effects": {"fits": 1}},
+                "unexpected field": {"foreign": True},
+            }
+            for label, mutation in cases.items():
+                with self.subTest(label=label):
+                    candidate = dict(baseline)
+                    candidate.update(mutation)
+                    path.write_text(json.dumps(candidate), encoding="utf-8")
+                    before = path.read_bytes()
+                    with self.assertRaises(stage.audit.AuditError):
+                        stage.put_final_summary(path, final_value, evidence)
+                    self.assertEqual(path.read_bytes(), before)
+            wrong_path = art / "wrong-summary.json"
+            wrong_path.write_text(json.dumps(baseline), encoding="utf-8")
+            before = wrong_path.read_bytes()
+            with self.assertRaises(stage.audit.AuditError):
+                stage.put_final_summary(wrong_path, final_value, evidence)
+            self.assertEqual(wrong_path.read_bytes(), before)
 
 
 if __name__ == "__main__":

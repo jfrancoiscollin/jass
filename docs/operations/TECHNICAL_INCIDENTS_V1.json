@@ -860,6 +860,16 @@
       "invariant": "Normalize representation only; preserve root order/count/identity, missing receipts, all frozen G0 FAILs, model and source pins, 2069 result, budgets and no-automatic-retry boundary; no new games or searches",
       "evidence": "Published2070 status blob156018dddee8b63d17b51165f8b244da12dace26; native probe blob5a10ccd3ecf7feadd7bc8cc769b91bae27c2f771; exact pre-fix audit blob6810d0f213991e30685fa66cb7fb33532fc36d5e reproduces same AuditError in both512-root synthetic fixtures; corrected blob2aae455d2b6cb7c8d31fbef5c56dfe1e18f5cb87 passes12 tests; PR #1052",
       "status": "MITIGATED — correction proposed and locally tested; CI and authorized target-host terminal proof pending"
+    },
+    {
+      "id": "TI-087",
+      "dedupe_key": "job:cpx62-2071-l3-cls-g0-panel-historical-audit-retry-v2:final-summary-ownership",
+      "context": "CLS panel audit 2071; attempt 20260920T201519Z-4ba9cfbf; source 4ba9cfbf",
+      "symptom": "FAILED exit 2 at publish-audit after four completed phases; authenticated audit-failure.json says NO_CLOBBER; no scientific verdict",
+      "root_cause": "StageEvidence created scientific-summary.json as a running progress checkpoint; final stage put incorrectly applied no-clobber to its own placeholder",
+      "invariant": "Replace only the current owned running launch-progress summary; reject foreign/final summaries, mismatched evidence and symlinks; preserve general no-clobber, full audit, zero effects, all identities and frozen science",
+      "evidence": "Authenticated 2071 failure 662a773e and evidence 04841bcd; real StageEvidence full-stage synthetic finalization and negative tests; docs/operations/CLS_PANEL_AUDIT_PUBLICATION_REPAIR_20260921.md",
+      "status": "MITIGATED — complete fresh target-host publication and authenticated readback pending"
     }
   ]
 }

@@ -43,6 +43,30 @@ def put(path: Path, value: dict, *, replace: bool = False) -> None:
     temp.replace(path)
 
 
+def put_final_summary(path: Path, value: dict, evidence) -> None:
+    """Publish the final summary over this run's launch-progress placeholder.
+
+    StageEvidence owns the placeholder it creates while a stage is running.  A
+    completed or foreign summary remains immutable, even though this one
+    publication is intentionally a replacement.
+    """
+    audit.need(not path.is_symlink() and path.exists(), "SUMMARY_OWNERSHIP")
+    previous = audit.read(path)
+    expected = evidence.value
+    owned_keys = {"schema", "state", "phase", "snapshot_at", "completed_phases",
+                  "scientific_verdict", "actual_side_effects"}
+    expected_progress = {"schema": "jass.launch_progress.v2", "state": expected["state"],
+                         "phase": expected["phase"], "snapshot_at": expected["snapshot_at"],
+                         "completed_phases": expected["completed_phases"],
+                         "scientific_verdict": None,
+                         "actual_side_effects": expected["actual_side_effects"]}
+    audit.need(path == evidence.path.parent / "scientific-summary.json", "SUMMARY_OWNERSHIP")
+    audit.need(set(previous) == owned_keys and previous == expected_progress, "SUMMARY_OWNERSHIP")
+    audit.need(previous["state"] == "running" and previous["phase"] == PHASES[-1] and
+               previous["completed_phases"] == PHASES[:-1], "SUMMARY_OWNERSHIP")
+    put(path, value, replace=True)
+
+
 def env() -> dict:
     # No evaluator, time or search-policy variable is inherited by replay/build.
     keep = ("PATH", "HOME", "LANG", "LC_ALL", "LD_LIBRARY_PATH")
@@ -302,7 +326,7 @@ def run(work: Path, art: Path, evidence, c: dict) -> dict:
         "actual_side_effects": evidence.value["actual_side_effects"], "alpha_spent": 0,
         "promotion_authorized": False, "bake_authorized": False, "new_games": 0, "new_jass_searches": 0,
         "main_match_admitted": False, "next_stage": "IMPLEMENT_FROZEN_PANEL_READINESS_NO_AUTOMATIC_MATCH"}
-    put(art / "scientific-summary.json", summary)
+    put_final_summary(art / "scientific-summary.json", summary, evidence)
     (art / "RESULTS.md").write_text("# CLS panel independent historical audit\n\n" + json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     put(art / "manifest.json", {"schema": "jass.cls_panel_audit_manifest.v1", "contract_blob_sha": CONTRACT_BLOB,
         "output_sha256": {name: audit.sha(art / name) for name in OUTPUTS if name != "manifest.json"}})
