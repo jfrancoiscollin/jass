@@ -1,0 +1,472 @@
+{
+  "readback": {
+    "actual_side_effects": {
+      "bakes": 0,
+      "fits": 0,
+      "new_jass_searches": 0,
+      "new_scan_searches": 0,
+      "promotions": 0,
+      "selfplay_games": 0,
+      "strength_games": 0,
+      "test_target_reads": 0
+    },
+    "attempt_id": "20260921T053109Z-20a09597",
+    "code_sha": "20a09597c6ccdf48829e16287e6ae3efd78d3805",
+    "completed_phases": [
+      "authenticate-archives",
+      "verify-native-continuity",
+      "replay-2069",
+      "audit-all-g0-roots",
+      "publish-audit"
+    ],
+    "g0": {
+      "LOCAL": {
+        "arm": "LOCAL",
+        "categories": {
+          "profondeur_cible_non_atteinte": 56,
+          "recu_exact_present": 456
+        },
+        "frozen_g0_verdict": "FAIL",
+        "g0_recomputed": false,
+        "imputed_receipts": 0,
+        "input_rows": 1024,
+        "roots": 512
+      },
+      "WDL": {
+        "arm": "WDL",
+        "categories": {
+          "profondeur_cible_non_atteinte": 56,
+          "recu_exact_present": 456
+        },
+        "frozen_g0_verdict": "FAIL",
+        "g0_recomputed": false,
+        "imputed_receipts": 0,
+        "input_rows": 1024,
+        "roots": 512
+      }
+    },
+    "job_id": "cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3",
+    "launch_receipt_sha256": "c490e576800d91d239e191effe52c4bfe4dae3e47d4c4ec1eb7b488af1b0857f",
+    "new_match_admitted": false,
+    "publication": {
+      "attempt_id": "20260921T053109Z-20a09597",
+      "code_sha": "20a09597c6ccdf48829e16287e6ae3efd78d3805",
+      "exit_code": 0,
+      "files": [
+        {
+          "local_name": "historical-2069-raw-audit.json",
+          "path": "artefacts/historical-2069-raw-audit.json",
+          "sha256": "dd5fd56e6782fc89459fbff936d127029b602fa648ab494d7ca50cc819c9f389",
+          "size_bytes": 1159
+        },
+        {
+          "local_name": "source-and-model-authentication.json",
+          "path": "artefacts/source-and-model-authentication.json",
+          "sha256": "cf6d31bc4f8c5dd2438e5898c8ff5b39ef1dd2857322ae6440bf1aaa4079eb65",
+          "size_bytes": 10477
+        },
+        {
+          "local_name": "native-continuity.json",
+          "path": "artefacts/native-continuity.json",
+          "sha256": "61eea4e4fc006955621a7f56c8d96294f3fcb5d8243a2faefba2f97ea7eae3ce",
+          "size_bytes": 2792
+        },
+        {
+          "local_name": "historical-g0-all-roots.tsv",
+          "path": "artefacts/historical-g0-all-roots.tsv",
+          "sha256": "4edf02242ceb8e1307a8d47babfafd9f44931240dbad22abc28ec28f63790217",
+          "size_bytes": 173712
+        },
+        {
+          "local_name": "g0-descriptive-summary.json",
+          "path": "artefacts/g0-descriptive-summary.json",
+          "sha256": "24a685c459a4cc76a0c032b62996e556c89f17bdb3669e6f29ead74b2f2470fc",
+          "size_bytes": 537
+        },
+        {
+          "local_name": "historical-2069-position-identities.json",
+          "path": "artefacts/historical-2069-position-identities.json",
+          "sha256": "3d1e63cfe1fa0b7b22d1da8c5ce8bc1592edba2751674e721714ed69196d20e8",
+          "size_bytes": 3857679
+        },
+        {
+          "local_name": "progress.json",
+          "path": "artefacts/progress.json",
+          "sha256": "073950ec59c37cf7dc563487ab96d8ada6d52691bc3b5783fc338f86167025a8",
+          "size_bytes": 130
+        },
+        {
+          "local_name": "scientific-summary.json",
+          "path": "artefacts/scientific-summary.json",
+          "sha256": "147cc67a658bac651c9549bb2d1f341cdd97f1f188de00930d1059617b3458c4",
+          "size_bytes": 2303
+        },
+        {
+          "local_name": "manifest.json",
+          "path": "artefacts/manifest.json",
+          "sha256": "27019bb5a364ef3ed97c6145b2563b150ac63210a06c6acdea399368059536e2",
+          "size_bytes": 1055
+        },
+        {
+          "local_name": "RESULTS.md",
+          "path": "artefacts/RESULTS.md",
+          "sha256": "5ece21add63de7802942ab9a941b6705d31aee04a5e9019cf9888a3685747aeb",
+          "size_bytes": 2041
+        },
+        {
+          "local_name": "execution-evidence.json",
+          "path": "artefacts/execution-evidence.json",
+          "sha256": "beb3b01e9c2797433b0062e5c274f56c277c0f56f2b866c71afa7262ae492c61",
+          "size_bytes": 545
+        },
+        {
+          "local_name": "launch-regressions.json",
+          "path": "artefacts/launch-regressions.json",
+          "sha256": "03b5ec13b2d9e6ee62017dd51a4abb88630f994acafbc1adb704fedc1b36c0bb",
+          "size_bytes": 452
+        },
+        {
+          "local_name": "launch-receipt.json",
+          "path": "artefacts/launch-receipt.json",
+          "sha256": "c490e576800d91d239e191effe52c4bfe4dae3e47d4c4ec1eb7b488af1b0857f",
+          "size_bytes": 2201
+        },
+        {
+          "local_name": "stage-receipt.json",
+          "path": "stage-receipt.json",
+          "sha256": "daa886fa4aed0b2fa92c9f8b4cb70bfd37c91f22e10dd195c3c0f274eae4277a",
+          "size_bytes": 3255
+        }
+      ],
+      "host": "cpx62",
+      "job_id": "cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3",
+      "prefix": "r2:jass-data/runs/cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3/20260921T053109Z-20a09597",
+      "result_state": "completed",
+      "schema": 1,
+      "state": "verified"
+    },
+    "raw_audit": {
+      "basis": "authenticated_raw_576_trajectories_and_native_legality_replay",
+      "historical_alpha_unchanged": true,
+      "historical_requests_verified": 62005,
+      "maximum_scored_response_seconds": 0.10174799500964582,
+      "native_moves_replayed": 60314,
+      "native_terminal_legality_checks": 576,
+      "new_engine_searches": 0,
+      "new_games": 0,
+      "no_new_scientific_verdict": true,
+      "passed": true,
+      "per_game_model_claim_basis": "authenticated_runtime_and_worker_source_receipts",
+      "recomputed_original_readout": {
+        "administratively_censored_games": 10,
+        "censored_pair_mean_bounds": [
+          0.4939236111111111,
+          0.5112847222222222
+        ],
+        "descriptive_half_point_ply_cap_score": 0.5026041666666666,
+        "descriptive_pentanomial_counts": {
+          "0.0": 34,
+          "0.5": 14,
+          "1.0": 189,
+          "1.5": 17,
+          "2.0": 34
+        },
+        "games": 576,
+        "hoeffding_radius": 0.08002689927666005,
+        "pairs": 288,
+        "score_boundary": 0.35993500019711494,
+        "score_interval": [
+          0.41389671183445104,
+          0.5913116214988823
+        ],
+        "statistical_verdict": "SUBSTANTIAL_LOSS_EXCLUDED"
+      },
+      "schema": "jass.cls_panel_2069_raw_audit.v1"
+    },
+    "regressions": {
+      "error_tests": [],
+      "errors": 0,
+      "failure_tests": [],
+      "failures": 0,
+      "passed": true,
+      "schema": "jass.launch_regressions.v2",
+      "skipped": 0,
+      "skipped_tests": [],
+      "suites": [
+        "jobs.tests.test_launch_gate_v2",
+        "jobs.tests.test_launch_gate_pipeline_v2",
+        "jobs.tests.test_cls_g0_rejection_panel_contract_v1",
+        "jobs.tests.test_cls_g0_panel_raw_audit",
+        "jobs.tests.test_cls_g0_panel_inventory_types"
+      ],
+      "tests": 85
+    },
+    "stage_receipt_sha256": "daa886fa4aed0b2fa92c9f8b4cb70bfd37c91f22e10dd195c3c0f274eae4277a",
+    "stage_seconds": 54.488958,
+    "summary": {
+      "actual_side_effects": {
+        "bakes": 0,
+        "fits": 0,
+        "new_jass_searches": 0,
+        "new_scan_searches": 0,
+        "promotions": 0,
+        "selfplay_games": 0,
+        "strength_games": 0,
+        "test_target_reads": 0
+      },
+      "alpha_spent": 0,
+      "bake_authorized": false,
+      "classification": "HISTORICAL_RAW_AUDIT_ONLY",
+      "contract_blob_sha": "19e39b457e86d6131d028d26b1dc0e6bac881b06",
+      "frozen_g0_verdicts": {
+        "HIER": "FAIL",
+        "LOCAL": "FAIL",
+        "WDL": "FAIL"
+      },
+      "g0_descriptive": {
+        "LOCAL": {
+          "arm": "LOCAL",
+          "categories": {
+            "profondeur_cible_non_atteinte": 56,
+            "recu_exact_present": 456
+          },
+          "frozen_g0_verdict": "FAIL",
+          "g0_recomputed": false,
+          "imputed_receipts": 0,
+          "input_rows": 1024,
+          "roots": 512
+        },
+        "WDL": {
+          "arm": "WDL",
+          "categories": {
+            "profondeur_cible_non_atteinte": 56,
+            "recu_exact_present": 456
+          },
+          "frozen_g0_verdict": "FAIL",
+          "g0_recomputed": false,
+          "imputed_receipts": 0,
+          "input_rows": 1024,
+          "roots": 512
+        }
+      },
+      "g0_roots_checked": 1024,
+      "historical_2069_raw_audit_passed": true,
+      "historical_games_replayed": 576,
+      "historical_moves_replayed": 60314,
+      "historical_requests_verified": 62005,
+      "launch": {
+        "common_spec_sha256": "76ed560e03af59a3b39fbb09a51632feb528eeb9b9c76a45ad464c2a35aaf48c",
+        "mode": "rehearsal",
+        "production_admitted": false,
+        "publisher_roundtrip_verified": false,
+        "receipt_sha256": "c490e576800d91d239e191effe52c4bfe4dae3e47d4c4ec1eb7b488af1b0857f"
+      },
+      "main_match_admitted": false,
+      "models": {
+        "CURRICULUM": "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1",
+        "HIER": "95bed3ac9fac4368809609fb1a981ee863401a30ca623fb7bfa3caf7eaddf628",
+        "LOCAL": "197998003db3d221d38e81577cfa381e8227d67705efc1c86b87205ddebbe450",
+        "WDL": "eabe71068dbc6aeb519a61c730d18586e75c8b72308ecd340de08fe2e18deed6"
+      },
+      "native_continuity_passed": true,
+      "new_games": 0,
+      "new_jass_searches": 0,
+      "next_stage": "IMPLEMENT_FROZEN_PANEL_READINESS_NO_AUTOMATIC_MATCH",
+      "promotion_authorized": false,
+      "schema": "jass.cls_g0_panel_historical_audit.v1",
+      "scientific_verdict": null,
+      "state": "completed",
+      "terminal": "CLS_G0_PANEL_HISTORICAL_RAW_AUDIT_COMPLETE_V1"
+    },
+    "verdict": "FULL_PIPELINE_REHEARSAL_PASS"
+  },
+  "record": {
+    "attempt_id": "20260921T053109Z-20a09597",
+    "attempt_to_terminal_commit_seconds": 393,
+    "code_sha": "20a09597c6ccdf48829e16287e6ae3efd78d3805",
+    "control_merge": "dab1f2bccc5f50594653af70a5cdab0b5b518d91",
+    "coverage": {
+      "g0_roots": 1024,
+      "historical_games": 576,
+      "new_games": 0,
+      "new_jass_searches": 0,
+      "scientific_verdict": null
+    },
+    "debits_reserved_seconds": {
+      "new_dispatcher": 700,
+      "new_stage": 100,
+      "prior_2070_dispatcher": 400,
+      "prior_2070_stage": 400,
+      "prior_2071_dispatcher": 400,
+      "prior_2071_stage": 400
+    },
+    "job_id": "cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3",
+    "launch_receipt_sha256": "c490e576800d91d239e191effe52c4bfe4dae3e47d4c4ec1eb7b488af1b0857f",
+    "outer_elapsed_seconds_measured": 389.0,
+    "outer_ended_at_europe_paris": "2026-09-21T07:37:42+02:00",
+    "outer_ended_at_utc": "2026-09-21T05:37:42+00:00",
+    "outer_started_at_europe_paris": "2026-09-21T07:31:13+02:00",
+    "outer_started_at_utc": "2026-09-21T05:31:13+00:00",
+    "publication_verdict": "FULL_PIPELINE_REHEARSAL_PASS",
+    "raw_readback_sha256": "52780b8b3404c8645f0c8851af95c6bd51b84fd58177296d737b59e345df4b25",
+    "regressions": {
+      "errors": 0,
+      "failures": 0,
+      "passed": true,
+      "skipped": 0,
+      "tests": 85
+    },
+    "schema": "jass.cls_g0_panel_audit_publication.v1",
+    "stage_seconds_measured": 54.488958,
+    "terminal": "CLS_G0_PANEL_HISTORICAL_RAW_AUDIT_COMPLETE_V1",
+    "terminal_control_commit": "1e64c15132d349e618a1e70fcb51faa427a04081",
+    "terminal_status_blob": "1083803748927680f87bd39d185172e3caf43fde"
+  },
+  "status": {
+    "artefacts": [
+      {
+        "path": "RESULTS.md",
+        "size_bytes": 2041
+      },
+      {
+        "path": "execution-evidence.json",
+        "size_bytes": 545
+      },
+      {
+        "path": "g0-descriptive-summary.json",
+        "size_bytes": 537
+      },
+      {
+        "path": "historical-2069-position-identities.json",
+        "size_bytes": 3857679
+      },
+      {
+        "path": "historical-2069-raw-audit.json",
+        "size_bytes": 1159
+      },
+      {
+        "path": "historical-g0-all-roots.tsv",
+        "size_bytes": 173712
+      },
+      {
+        "path": "launch-receipt.json",
+        "size_bytes": 2201
+      },
+      {
+        "path": "launch-regressions.json",
+        "size_bytes": 452
+      },
+      {
+        "path": "manifest.json",
+        "size_bytes": 1055
+      },
+      {
+        "path": "native-continuity.json",
+        "size_bytes": 2792
+      },
+      {
+        "path": "progress.json",
+        "size_bytes": 130
+      },
+      {
+        "path": "runner-launch.json",
+        "size_bytes": 787
+      },
+      {
+        "path": "scientific-summary.json",
+        "size_bytes": 2303
+      },
+      {
+        "path": "source-and-model-authentication.json",
+        "size_bytes": 10477
+      }
+    ],
+    "attempt_id": "20260921T053109Z-20a09597",
+    "code_ref": "develop",
+    "code_sha": "20a09597c6ccdf48829e16287e6ae3efd78d3805",
+    "ended_at": "2026-09-21T05:37:42+00:00",
+    "exit_code": 0,
+    "host": "cpx62",
+    "job_id": "cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3",
+    "result_uri": "r2:jass-data/runs/cpx62-2072-l3-cls-g0-panel-historical-audit-publication-retry-v3/20260921T053109Z-20a09597",
+    "scientific_summaries": {
+      "scientific-summary.json": {
+        "actual_side_effects": {
+          "bakes": 0,
+          "fits": 0,
+          "new_jass_searches": 0,
+          "new_scan_searches": 0,
+          "promotions": 0,
+          "selfplay_games": 0,
+          "strength_games": 0,
+          "test_target_reads": 0
+        },
+        "alpha_spent": 0,
+        "bake_authorized": false,
+        "classification": "HISTORICAL_RAW_AUDIT_ONLY",
+        "contract_blob_sha": "19e39b457e86d6131d028d26b1dc0e6bac881b06",
+        "frozen_g0_verdicts": {
+          "HIER": "FAIL",
+          "LOCAL": "FAIL",
+          "WDL": "FAIL"
+        },
+        "g0_descriptive": {
+          "LOCAL": {
+            "arm": "LOCAL",
+            "categories": {
+              "profondeur_cible_non_atteinte": 56,
+              "recu_exact_present": 456
+            },
+            "frozen_g0_verdict": "FAIL",
+            "g0_recomputed": false,
+            "imputed_receipts": 0,
+            "input_rows": 1024,
+            "roots": 512
+          },
+          "WDL": {
+            "arm": "WDL",
+            "categories": {
+              "profondeur_cible_non_atteinte": 56,
+              "recu_exact_present": 456
+            },
+            "frozen_g0_verdict": "FAIL",
+            "g0_recomputed": false,
+            "imputed_receipts": 0,
+            "input_rows": 1024,
+            "roots": 512
+          }
+        },
+        "g0_roots_checked": 1024,
+        "historical_2069_raw_audit_passed": true,
+        "historical_games_replayed": 576,
+        "historical_moves_replayed": 60314,
+        "historical_requests_verified": 62005,
+        "launch": {
+          "common_spec_sha256": "76ed560e03af59a3b39fbb09a51632feb528eeb9b9c76a45ad464c2a35aaf48c",
+          "mode": "rehearsal",
+          "production_admitted": false,
+          "publisher_roundtrip_verified": false,
+          "receipt_sha256": "c490e576800d91d239e191effe52c4bfe4dae3e47d4c4ec1eb7b488af1b0857f"
+        },
+        "main_match_admitted": false,
+        "models": {
+          "CURRICULUM": "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1",
+          "HIER": "95bed3ac9fac4368809609fb1a981ee863401a30ca623fb7bfa3caf7eaddf628",
+          "LOCAL": "197998003db3d221d38e81577cfa381e8227d67705efc1c86b87205ddebbe450",
+          "WDL": "eabe71068dbc6aeb519a61c730d18586e75c8b72308ecd340de08fe2e18deed6"
+        },
+        "native_continuity_passed": true,
+        "new_games": 0,
+        "new_jass_searches": 0,
+        "next_stage": "IMPLEMENT_FROZEN_PANEL_READINESS_NO_AUTOMATIC_MATCH",
+        "promotion_authorized": false,
+        "schema": "jass.cls_g0_panel_historical_audit.v1",
+        "scientific_verdict": null,
+        "state": "completed",
+        "terminal": "CLS_G0_PANEL_HISTORICAL_RAW_AUDIT_COMPLETE_V1"
+      }
+    },
+    "started_at": "2026-09-21T05:31:13+00:00",
+    "state": "completed"
+  }
+}

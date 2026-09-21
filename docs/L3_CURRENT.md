@@ -12,17 +12,17 @@
 
 ---
 
-## CLS — reprise de l'audit du panel G0
+## CLS — audit du panel G0 publié et relu
 
-Le 2071 a échoué techniquement à la publication finale (`NO_CLOBBER`), après
-les quatre phases d'audit. Sa tentative `20260920T201519Z-4ba9cfbf` et ses
-archives restent FAILED ; aucun match LOCAL/WDL n'est admis. La relecture R2
-authentifiée retrouve les 576 parties historiques et les 1 024 racines G0,
-sans constituer un reçu de succès. Le [correctif de publication et l'admission
-résiduelle](operations/CLS_PANEL_AUDIT_PUBLICATION_REPAIR_20260921.md) conservent
-les deux échecs et préparent une unique tentative intégrale à 100/700 secondes
-après validation du code. Aucun nouvel entraînement ni partie ; CURRICULUM et
-les FAIL G0 restent inchangés.
+La tentative technique unique 2072 (`20260921T053109Z-20a09597`) est terminée avec le reçu
+authentifié `FULL_PIPELINE_REHEARSAL_PASS`. Elle couvre 576 parties historiques et 1 024 racines
+G0 ; les cinq phases sont complètes, les effets sont nuls, aucun match n'est
+admis et le verdict scientifique reste `null`. Les FAIL G0 LOCAL/WDL/HIER,
+CURRICULUM, les identités gelées et les budgets restent inchangés. Le résultat
+et la relecture sont consignés dans [le reçu 2072](operations/CLS_PANEL_AUDIT_2072_RESULTS_20260921.md).
+
+Cette admission d'audit n'inclut aucun match en aval ; l'étape suivante reste
+`IMPLEMENT_FROZEN_PANEL_READINESS_NO_AUTOMATIC_MATCH`.
 
 ## Campagne autonome eval/search — candidat ED4-P1 scellé et authentifié
 
