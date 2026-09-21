@@ -68,4 +68,5 @@ void run_nnue_tests();
 void run_hub_tests();
 void run_scan_eval_tests();
 void run_conversion_head_tests();
+void run_chinook_hybrid_tests();
 void run_t3_f6_tests();
