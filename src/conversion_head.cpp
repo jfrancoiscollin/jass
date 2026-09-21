@@ -3,6 +3,8 @@
 
 #include "conversion_head.hpp"
 
+#include "chinook_hybrid.hpp"
+
 #include "bitboard.hpp"
 #include "board.hpp"
 #include "scan_eval.hpp"
@@ -312,6 +314,13 @@ std::unique_ptr<INetwork> load_eval_network(const std::string& path,
     // absent, the legacy OFF loader and optional conversion sidecar are exact.
     if (std::getenv("JASS_T3_F6_MODEL") != nullptr)
         return t3_f6::maybe_wrap_from_env(std::move(base), path, err);
+    if (const char* hier_path = std::getenv("JASS_CHINOOK_HIER_MODEL");
+        hier_path != nullptr && hier_path[0] != '\0') {
+        auto hier = load_eval_network_base(hier_path, err);
+        if (!hier) return nullptr;
+        return std::make_unique<chinook_hybrid::Network>(
+            std::move(base), std::move(hier));
+    }
     return conversion_head::maybe_wrap(std::move(base), path, err);
 }
 
