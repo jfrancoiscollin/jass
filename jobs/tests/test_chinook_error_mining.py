@@ -50,6 +50,12 @@ class ChinookMiningTests(unittest.TestCase):
         hit = [r for r in rows if r["feature"] == "multi_capture_available" and r["value"] == "true"][0]
         self.assertGreater(hit["lift"], 1.0)
 
+    def test_historical_sibling_superset_is_allowed(self):
+        diag, sib = self.fixture()
+        sib.append(dict(sib[0], parent_id="outside-root", parent_fingerprint=fp(1<<40,0,1<<10,0,0)))
+        summary, _ = m.analyze(diag, sib)
+        self.assertEqual(summary["roots"], 512)
+
     def test_root_coverage_is_fail_closed(self):
         diag, sib = self.fixture()
         sib = [r for r in sib if r["parent_id"] != "511"]
