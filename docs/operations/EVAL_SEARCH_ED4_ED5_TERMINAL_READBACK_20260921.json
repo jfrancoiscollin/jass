@@ -1,0 +1,138 @@
+{
+  "cumulative_alpha_spent": 0.0125,
+  "date_utc": "2026-09-21",
+  "readbacks": [
+    {
+      "alpha_spent": 0.008333333333333333,
+      "attempt_id": "20260914T163341Z-1dd1d078",
+      "block_verdict": "ED4_FRESH_D_CONFIRMATION_NOT_SUPPORTED_V1",
+      "candidate_sha256": "2e856652efdd1d2758a949a5d4a29557fa31f4a64d55505ae6dc41482b641f5b",
+      "code_sha": "1dd1d07806d50e766baef151b3dab3c5fe48fc31",
+      "exit_code": 0,
+      "files": [
+        {
+          "local_name": "scientific-summary.json",
+          "path": "artefacts/scientific-summary.json",
+          "sha256": "c2e2e61b02a1ffe099946fe31c7f274f538d969d177670c07189dd10e51056ec",
+          "size_bytes": 3696
+        },
+        {
+          "local_name": "confirmation-readout.json",
+          "path": "artefacts/confirmation-readout.json",
+          "sha256": "2252e2e16ed21dfa4ae910266a01fd05714298cb050e98c67cf63856ead39efc",
+          "size_bytes": 2216
+        },
+        {
+          "local_name": "launch-receipt.json",
+          "path": "artefacts/launch-receipt.json",
+          "sha256": "2fc3221aa6c3df35f5738232db1462092023807e540e6bfecc686a912d1cbacc",
+          "size_bytes": 1480
+        },
+        {
+          "local_name": "launch-regressions.json",
+          "path": "artefacts/launch-regressions.json",
+          "sha256": "e2c0735eee2b950b4af524819b23844ff31032bfe71e6bdffffe5a68939576e8",
+          "size_bytes": 344
+        },
+        {
+          "local_name": "execution-evidence.json",
+          "path": "artefacts/execution-evidence.json",
+          "sha256": "86a68bede5acc715384cb2a35e05cf08dd1208ae89bc25db0e18757c7f767de4",
+          "size_bytes": 612
+        },
+        {
+          "local_name": "cohort-authentication.json",
+          "path": "artefacts/cohort-authentication.json",
+          "sha256": "c35eb4867cdaf776f2da32bf769fef0125171ff35908412d93a927b779f9e8d1",
+          "size_bytes": 1765
+        },
+        {
+          "local_name": "manifest.json",
+          "path": "manifest.json",
+          "sha256": "1cf1bc8502f0825715f570cf1918413fc3a753dca88f09643d04aeb839e09264",
+          "size_bytes": 570
+        }
+      ],
+      "host": "cpx62",
+      "job_id": "cpx62-1970-l3-ed4-fresh-d-confirmation-production-v1",
+      "launch_identity_and_selected_output_hashes_match": true,
+      "local_second_hash_verification": true,
+      "next_stage": "STOP_ED4_K1_SCIENTIFIC_NOT_SUPPORTED",
+      "prefix": "r2:jass-data/runs/cpx62-1970-l3-ed4-fresh-d-confirmation-production-v1/20260914T163341Z-1dd1d078",
+      "readback_date_utc": "2026-09-21",
+      "result_state": "completed",
+      "schema": 1,
+      "scope": "Previously consumed D terminal summaries and admission metadata only; no W/S target or raw D target read.",
+      "state": "verified",
+      "summary_matches_readout": true,
+      "terminal": "CAMPAIGN_ATTEMPT_SCIENTIFIC_NOT_SUPPORTED_V1"
+    },
+    {
+      "alpha_spent": 0.004166666666666667,
+      "attempt_id": "20260915T194938Z-89d64dbc",
+      "block_verdict": "ED5_FRESH_D_CONFIRMATION_NOT_SUPPORTED_V1",
+      "candidate_sha256": "f4e35ad02704f822614eb5a0be6ce33fa21f7187c452cbef7819f91242812ea5",
+      "code_sha": "89d64dbc85300399d5e7b830389cc0030a023967",
+      "exit_code": 0,
+      "files": [
+        {
+          "local_name": "scientific-summary.json",
+          "path": "artefacts/scientific-summary.json",
+          "sha256": "95ac3554956c83550edb913fbccb997c8486f17ba8e5716d8c87a9e66587d816",
+          "size_bytes": 4482
+        },
+        {
+          "local_name": "confirmation-readout.json",
+          "path": "artefacts/confirmation-readout.json",
+          "sha256": "4dea849dd3dad35e22e00c905e7d46977432800e39b140a79a1ebc45abebad7b",
+          "size_bytes": 2318
+        },
+        {
+          "local_name": "launch-receipt.json",
+          "path": "artefacts/launch-receipt.json",
+          "sha256": "97b9c3bf5a605375754549d6cee1606f2b8e36445db9c345a987fb5af2e7d5e7",
+          "size_bytes": 1480
+        },
+        {
+          "local_name": "launch-regressions.json",
+          "path": "artefacts/launch-regressions.json",
+          "sha256": "a4e9c9f65f378d81f6b513a6f966c5c6a5653c914d9fc6ee28dc7033a2fef1d6",
+          "size_bytes": 344
+        },
+        {
+          "local_name": "execution-evidence.json",
+          "path": "artefacts/execution-evidence.json",
+          "sha256": "b82805b64f324cba04c4561d44808aeb8de0db08f8a3dd7d2a79945da6881471",
+          "size_bytes": 612
+        },
+        {
+          "local_name": "cohort-authentication.json",
+          "path": "artefacts/cohort-authentication.json",
+          "sha256": "a402d5078830060ba747737e91ca48ab4893531c68c8e193db029a0511f8f4d9",
+          "size_bytes": 2339
+        },
+        {
+          "local_name": "manifest.json",
+          "path": "manifest.json",
+          "sha256": "bea9cfdcf5d64b0ad9b3a382e879c9a287eac724ab8e700642cd94f0a5512f16",
+          "size_bytes": 570
+        }
+      ],
+      "host": "cpx62",
+      "job_id": "cpx62-1997-l3-ed5-fresh-d-confirmation-production-v1",
+      "launch_identity_and_selected_output_hashes_match": true,
+      "local_second_hash_verification": true,
+      "next_stage": "STOP_ED5_K2_SCIENTIFIC_NOT_SUPPORTED",
+      "prefix": "r2:jass-data/runs/cpx62-1997-l3-ed5-fresh-d-confirmation-production-v1/20260915T194938Z-89d64dbc",
+      "readback_date_utc": "2026-09-21",
+      "result_state": "completed",
+      "schema": 1,
+      "scope": "Previously consumed D terminal summaries and admission metadata only; no W/S target or raw D target read.",
+      "state": "verified",
+      "summary_matches_readout": true,
+      "terminal": "CAMPAIGN_ATTEMPT_SCIENTIFIC_NOT_SUPPORTED_V1"
+    }
+  ],
+  "schema": "jass.eval_search_terminal_reconciliation.v1",
+  "scope": "Existing ED4/ED5 consumed D summaries and admission metadata; no raw targets, W/S targets, fits or new scientific computation."
+}

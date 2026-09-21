@@ -17,11 +17,10 @@ from jobs.tools.launch_runtime_v2 import StageEvidence
 
 
 def load_tests(loader, tests, pattern):
-    """Panel-audit CI covers readiness, both sealed main admissions, and transport."""
-    from jobs.tests import (test_cls_g0_panel_readiness, test_cls_g0_panel_gate_v1,
-                           test_cls_g0_panel_stage, test_cls_g0_panel_pipeline)
-    for module in (test_cls_g0_panel_readiness, test_cls_g0_panel_gate_v1, test_cls_g0_panel_stage, test_cls_g0_panel_pipeline):
-        tests.addTests(loader.loadTestsFromModule(module))
+    """Panel CI runs the exact ordered launch suite, including its V2 prerequisites."""
+    profile = Path(__file__).resolve().parents[1] / 'launch_profiles/cls-g0-panel-v1.json'
+    names = json.loads(profile.read_text(encoding='utf-8'))['regressions']
+    tests.addTests(loader.loadTestsFromNames(names))
     return tests
 
 

@@ -878,8 +878,18 @@
       "symptom": "One 56-game readiness receipt cannot admit two separate main specs while preserving their unequal frozen timeouts",
       "root_cause": "Launch-V2 common_spec removes only LAUNCH_MODE and retains stage timeout; panel requires 1800/2400 readiness versus 3600/4200 for each main, with no extra rehearsal games",
       "invariant": "Keep frozen science, all per-phase and cumulative budgets, exact 56-game rehearsal and no retries; do not weaken V2 or reuse a nonmatching receipt; require explicit reviewed panel-admission version before execution",
-      "evidence": "docs/experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md; launch_gate_v2.common_spec and outer-timeout guard; frozen panel sections 6 and 8; no new game or queue mutation; PR #1056; JFC approved amendment by Je valide on 2026-09-21; companion dispatcher jass-control PR #780, no job queued; 49 local tests and 97 Linux panel tests passed on f1dfdca4a; added mandatory base-regression modules after full-profile CI caught omission",
-      "status": "MITIGATED - approved implementation; real readiness publication pending"
+      "evidence": "docs/experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md; launch_gate_v2.common_spec and outer-timeout guard; frozen panel sections 6 and 8; no new game or queue mutation; PR #1056; JFC approved amendment by Je valide on 2026-09-21; companion dispatcher jass-control PR #780, no job queued; 49 local tests and 97 Linux panel tests passed on f1dfdca4a; added mandatory base-regression modules after full-profile CI caught omission; source PR #1056 and dispatcher PR #780 merged; control PR #781 admitted unique readiness 2073; authenticated failed publication before stage, zero native games/searches; docs/operations/CLS_PANEL_READINESS_2073_RESULTS_20260921.md",
+      "status": "MITIGATED - implementation merged; readiness 2073 failed before stage, no successful proof"
+    },
+    {
+      "id": "TI-089",
+      "dedupe_key": "test:cls-panel-pipeline:inherited-rclone-bin-network-fallback",
+      "context": "CLS readiness 2073 / 20260921T070922Z-54e30b98 / source 54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+      "symptom": "Launch regressions: 42 tests, one synthetic pipeline error, exit 2 before panel stage; zero native games and searches; failed R2 publication authenticated",
+      "root_cause": "CPX62 inherits RCLONE_BIN=/usr/bin/rclone; synthetic subprocess mock matched only literal rclone and delegated other commands to the host, so the synthetic _SUCCESS read returned empty bytes. Previous panel CI omitted the two base modules from the exact launch suite.",
+      "invariant": "Synthetic network fixtures must own their executable and byte store, reject unexpected subprocesses, and exercise real envelope/parser/checksum validation; CI loads the exact ordered panel profile suite. Preserve failed attempt, frozen code identity, budgets, no automatic retry and no main admission.",
+      "evidence": "docs/operations/CLS_PANEL_READINESS_2073_RESULTS_20260921.md; authenticated execution evidence 986a9975862460dcce3b4727fcf8e37e539868922d1f5c7ad4c3da25b2a20031; nondefault inherited RCLONE_BIN reproduces bypass; 51 local tests passed; 81 launch profiles valid; Linux exact-suite CI pending; 78 exact-suite plus raw-audit tests passed on complete CPX Linux checkout with inherited absolute RCLONE_BIN; GitHub CI pending",
+      "status": "MITIGATED - hermetic fixture verified on CPX Linux; GitHub CI pending; no readiness proof"
     }
   ]
 }

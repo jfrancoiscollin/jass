@@ -1,6 +1,6 @@
 {
   "schema": "jass.cls_g0_panel_admission_amendment.v1",
-  "status": "IMPLEMENTED_VALIDATION_PENDING",
+  "status": "IMPLEMENTED_READINESS_2073_FAILED_NO_RETRY",
   "approval": {
     "date": "2026-09-21",
     "user_statement": "Je valide",
@@ -88,5 +88,17 @@
   "automatic_retries": 0,
   "new_rehearsal_games_beyond_56": 0,
   "implementation_complete": true,
-  "main_launch_authorized": false
+  "main_launch_authorized": false,
+  "readiness_attempt": {
+    "job_id": "cpx62-2073-l3-cls-g0-panel-readiness-v1",
+    "attempt_id": "20260921T070922Z-54e30b98",
+    "code_sha": "54e30b98ece4aa1efda8befd8f5e8f66e5279178",
+    "state": "failed",
+    "exit_code": 2,
+    "strength_games": 0,
+    "new_jass_searches": 0,
+    "successful_readiness_proof": false,
+    "authorization_consumed": true,
+    "automatic_retry_allowed": false
+  }
 }
