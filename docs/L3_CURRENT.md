@@ -12,7 +12,31 @@
 
 ---
 
-## CLS — audit du panel G0 publié et relu
+## CLS — panel G0 terminé, perte majeure exclue dans les deux cas
+
+LOCAL 2075 et WDL 2076 sont terminés, publiés, authentifiés et recalculés depuis leurs
+288 paires chacun. Les deux verdicts sont `SUBSTANTIAL_LOSS_EXCLUDED` ; terminal conjoint
+**`G0_PANEL_LARGE_LOSS_DISCORDANCE_REPLICATED_V1`**. Les intervalles sont respectivement
+[0,4145140661 ; 0,6011109339] et [0,4040973995 ; 0,5941664894], dont les bornes inférieures dépassent la frontière
+de score 0,3599350002 correspondant à la perte de 100 Elo testée. Ils contiennent
+0,5 : aucun gain de force ni candidat supérieur n'est établi.
+[Résultat conjoint et limites](experiments/CLS_G0_REJECTION_PANEL_V1_RESULTS_20260921.md) ·
+[relecture et empreintes](operations/CLS_PANEL_JOINT_2075_2076_READBACK_20260921.json).
+
+Budget clos, tentatives antérieures conservées : 1 208 parties, 126 125 recherches,
+6 754,105028 / 9 900 s de stage et 7 885 / 12 300 s extérieures. Aucun entraînement ni nouvelle
+recherche pour la relecture. La lecture conjointe a suivi l'authentification des deux
+publications ; aucun résultat LOCAL n'a choisi WDL. TI-088 et TI-089 sont désormais `CLOSED`.
+
+Décision maintenue : **`STOP_INTERPRET_NO_AUTO_G0_V2_NO_PROMOTION`**. Les FAIL G0 V1,
+CURRICULUM et l'interdiction de promotion/bake restent inchangés. Pas de troisième
+cellule, prolongation, retry ou modification de seuil. La revue recommande la
+[proposition distincte G0 V2 à trois états](experiments/CLS_G0_V2_THREE_STATE_VALIDATION_PROPOSAL_V1_20260921.md),
+au statut `PROPOSAL_ONLY_CASE_FEASIBILITY_PENDING_NOT_ACTIVATED`. Seul son audit fini
+de métadonnées est engagé : il doit établir des cas indépendants et un holdout intact
+avant tout contrat de validation exécutable. Aucun nouveau calcul n'est admis par cette proposition.
+
+### Historique de l'admission du panel, désormais clos
 
 La tentative technique unique 2072 (`20260921T053109Z-20a09597`) est terminée avec le reçu
 authentifié `FULL_PIPELINE_REHEARSAL_PASS`. Elle couvre 576 parties historiques et 1 024 racines
@@ -21,8 +45,9 @@ admis et le verdict scientifique reste `null`. Les FAIL G0 LOCAL/WDL/HIER,
 CURRICULUM, les identités gelées et les budgets restent inchangés. Le résultat
 et la relecture sont consignés dans [le reçu 2072](operations/CLS_PANEL_AUDIT_2072_RESULTS_20260921.md).
 
-Cette admission d'audit n'inclut aucun match en aval ; l'étape suivante reste
-`IMPLEMENT_FROZEN_PANEL_READINESS_NO_AUTOMATIC_MATCH`.
+Cette admission d'audit n'incluait aucun match en aval ; sa sortie était
+`IMPLEMENT_FROZEN_PANEL_READINESS_NO_AUTOMATIC_MATCH`. Les étapes distinctes qui ont
+suivi sont conservées ci-dessous comme historique d'admission.
 
 Le « Ok go » du 21 septembre a engagé la préparation des 56 contrôles. La revue
 préalable a détecté un conflit d'admission : Launch V2 conserve les délais dans
@@ -57,7 +82,7 @@ La projection de durée du stage principal reste sous le plafond gelé :
 2 793,110803209336 s pour LOCAL et 2 780,972960489006 s pour WDL. Cette preuve
 de readiness n'est ni un résultat de gain ni une autorisation de match principal.
 [Résultat et readback authentifié](operations/CLS_PANEL_READINESS_2074_RESULTS_20260921.md).
-TI-089 est désormais `CLOSED` sur preuve terminale ; TI-088 reste `MITIGATED`.
+TI-089 a été clos sur preuve terminale 2074 ; TI-088 a ensuite été clos après les deux mains.
 Les deux admissions principales 2075/2076 sont scellées sous le mandat déjà
 accordé, sans nouvelle demande utilisateur : [admission fixe](experiments/CLS_G0_PANEL_FIXED_MAIN_ADMISSION_20260921.md).
 Elles ont été fusionnées dans control #783 après CI verte, avec WDL prélié à l'identité/hash
@@ -65,9 +90,9 @@ de LOCAL, sans lecture de son résultat pour choisir WDL. LOCAL 2075 est techniq
 complet (`20260921T090819Z-e00900ff`, code immuable e00900ff), avec 576 parties,
 59 804 recherches, zéro autre effet et 49 régressions de lancement PASS. WDL 2076
 a été libéré par control #784 après CI verte et relecture de la dépendance technique.
-Il tourne depuis 12:04:38 Paris, tentative `20260921T100434Z-e00900ff`, avec le même
-code, plan, profil et scellement d'ouvertures. Aucun score, intervalle, verdict ou résultat LOCAL
-n'est lu ici ; le résultat conjoint reste en attente.
+Il s'est terminé à 12:53:56 Paris, tentative `20260921T100434Z-e00900ff`, avec le même
+code, plan, profil et scellement d'ouvertures. Aucun score, intervalle ou verdict LOCAL
+n'a été consulté pour décider sa libération ; la lecture conjointe a suivi sa publication.
 [Preuve technique LOCAL](operations/CLS_PANEL_LOCAL_2075_TECHNICAL_RESULTS_20260921.md). CURRICULUM et les FAIL G0
 restent inchangés.
 

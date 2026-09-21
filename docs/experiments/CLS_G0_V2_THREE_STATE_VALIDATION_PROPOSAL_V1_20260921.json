@@ -1,0 +1,166 @@
+{
+  "schema": "jass.cls_g0_v2_three_state_validation_proposal.v1",
+  "status": "PROPOSAL_ONLY_CASE_FEASIBILITY_PENDING_NOT_ACTIVATED",
+  "date": "2026-09-21",
+  "basis": {
+    "joint_terminal": "G0_PANEL_LARGE_LOSS_DISCORDANCE_REPLICATED_V1",
+    "joint_proof_sha256": "556744fe2857c5f9af9ff593d8c7ee57d579b0a28b3f7ab88a36d25f73344d66",
+    "joint_result_document": "CLS_G0_REJECTION_PANEL_V1_RESULTS_20260921.md",
+    "historical_g0_fails_preserved": [
+      "LOCAL",
+      "WDL",
+      "HIER"
+    ],
+    "standing_stop": "STOP_INTERPRET_NO_AUTO_G0_V2_NO_PROMOTION",
+    "frozen_v1_contract": {
+      "markdown_path": "docs/experiments/L3_CLS_G0_RUNTIME_CATASTROPHE_CONTRACT_V1_20260916.md",
+      "markdown_git_blob": "8e02bbf1d6ec83abec84ab0ae8c3e9ea38038eb7",
+      "json_path": "docs/experiments/L3_CLS_G0_RUNTIME_CATASTROPHE_CONTRACT_V1_20260916.json",
+      "json_git_blob": "74840fe31d082d1c32149a4c1448291251dd4f88"
+    },
+    "historical_case_identities": {
+      "LOCAL": {
+        "model_sha256": "197998003db3d221d38e81577cfa381e8227d67705efc1c86b87205ddebbe450",
+        "job_id": "cpx62-2047-l3-cls-g0-local-runtime-rehearsal-v4",
+        "attempt_id": "20260918T173102Z-82a717bd",
+        "code_sha": "82a717bd95ef2460c0357cda581331d51e7e3c02",
+        "status_blob_sha": "d5f2540f50e588834c80c3e3966e0f48665befd0"
+      },
+      "WDL": {
+        "model_sha256": "eabe71068dbc6aeb519a61c730d18586e75c8b72308ecd340de08fe2e18deed6",
+        "job_id": "cpx62-2049-l3-cls-g0-wdl-runtime-rehearsal-v2",
+        "attempt_id": "20260918T190318Z-6d46c5da",
+        "code_sha": "6d46c5dac8941594d3cbd0cb1e13404f95b27668",
+        "status_blob_sha": "b8fef61dd7ce63fb09eee91790ce3a8b587286e8"
+      },
+      "HIER": {
+        "model_sha256": "95bed3ac9fac4368809609fb1a981ee863401a30ca623fb7bfa3caf7eaddf628",
+        "job_id": "cpx62-2063-l3-cls-g0-hier-runtime-rehearsal-v1",
+        "attempt_id": "20260919T155826Z-a6f9fa6f",
+        "code_sha": "a6f9fa6fbdc66f8d89dd7a5e8c196422cf98a28a"
+      }
+    }
+  },
+  "scope": {
+    "question": "Can G0 preserve its catastrophe-screening role without treating a valid but absent same-search Exact/full-root G0-C receipt as scientific catastrophe?",
+    "hypothesis": "A three-state interpretation can preserve all frozen numerical safety floors while routing valid G0-C missingness to separate strength adjudication.",
+    "activation": false,
+    "scientific_payload_read": false,
+    "fit_search_game_or_queue_authorized": false,
+    "metadata_only_audit": true
+  },
+  "three_state_rule": {
+    "PASS": "Complete conforming G0-A/B/C/D data satisfy all frozen thresholds; opens only the already-preregistered strength stage, never promotion.",
+    "FAIL": "Observed A/B/D threshold failure, or complete-data G0-C threshold failure, retains the frozen FAIL mapping.",
+    "ABSTAIN": "Valid identity, trace parity and execution; no other observed threshold failure; required candidate G0-C Exact/full-root receipt absent. Its absence alone returns ABSTAIN_REQUIRES_SEPARATE_STRENGTH_ADJUDICATION, never PASS or scientific FAIL.",
+    "TECHNICAL": "Identity drift, malformed or incomplete trace provenance, or an unexecuted search is a technical block.",
+    "unchanged_thresholds": {
+      "g0_a": {
+        "metric": "exp(q025(mean(log(candidate_nps/parent_nps))))",
+        "operator": ">=",
+        "threshold": 0.8
+      },
+      "g0_b": {
+        "metric": "q025(mean(candidate_completed_depth-parent_completed_depth))",
+        "operator": ">=",
+        "threshold": -1.0
+      },
+      "g0_c_complete_data": {
+        "target_depth": "max(1,parent_completed_depth_at_200k-1)",
+        "metric": "exp(q975(mean(log(candidate_nodes_to_target/parent_nodes_to_target))))",
+        "operator": "<=",
+        "threshold": 1.5
+      },
+      "g0_d": {
+        "deep_reference": "CURRICULUM_1M",
+        "metric": "q025(mean(I_candidate_200k_matches_1m-I_parent_200k_matches_1m))",
+        "operator": ">=",
+        "threshold": -0.05
+      }
+    },
+    "precedence": [
+      "Invalid identity, execution or trace provenance -> TECHNICAL",
+      "Otherwise, any observed numerical threshold failure -> FAIL, even with absent C",
+      "Otherwise, valid missing required C Exact receipt -> ABSTAIN_REQUIRES_SEPARATE_STRENGTH_ADJUDICATION",
+      "Otherwise, complete conforming A/B/C/D -> PASS"
+    ]
+  },
+  "independence_requirements": {
+    "new_case_roster": null,
+    "new_case_mechanism": null,
+    "excluded_development_cases": [
+      "LOCAL",
+      "WDL",
+      "HIER"
+    ],
+    "untouched_score_blind_runtime_root_holdout": null,
+    "deep_reference_route": null,
+    "selection_seed_exclusions_phase_balance": null,
+    "blinding_until_roster_complete": true,
+    "case_count": null,
+    "case_count_rationale": null,
+    "development_evidence_excluded_from": [
+      "validation",
+      "threshold_selection",
+      "sample_size_selection"
+    ],
+    "all_required_case_outputs_complete_before_unblinding": true
+  },
+  "abstain_adjudication": {
+    "specification": null,
+    "opponent": null,
+    "opening_selection": null,
+    "censoring_rule": null,
+    "sample_size": null,
+    "margin": null,
+    "alpha": null,
+    "budgets": null,
+    "terminal_mapping": null,
+    "g0_metrics_may_change_design": false,
+    "promotion_bake_or_scale_up": false
+  },
+  "feasibility_audit": {
+    "allowed": [
+      "inventory_local_authenticated_manifests",
+      "inventory_candidate_lineages",
+      "define_eligibility_and_exclusions",
+      "derive_prospective_case_count_after_declared_target"
+    ],
+    "forbidden": [
+      "read_new_scientific_payload",
+      "fit",
+      "search",
+      "game",
+      "queue",
+      "choose_threshold_from_LOCAL_WDL_HIER"
+    ],
+    "required_gates": {
+      "finite_disjoint_new_case_roster": null,
+      "untouched_score_blind_holdout_and_reference": null,
+      "prospective_case_count_sufficient": null,
+      "fully_specified_abstain_adjudication_within_bounded_budget": null
+    },
+    "stop_terminal_if_any_gate_unavailable": "G0_V2_PROPOSAL_BLOCKED_INDEPENDENT_CASES_UNAVAILABLE",
+    "scope": {
+      "single_pass": true,
+      "public_directory": "docs/experiments/",
+      "public_filename_filter": "*CLS*.md or *CLS*.json; protocol metadata only",
+      "control_directories": "specs/*cls* or specs/*CLS*; metadata only",
+      "max_files_content_read": 40,
+      "remote_payload_fetch": false,
+      "recursive_provenance_hunt": false,
+      "opened_file_hash_inventory_required": true
+    }
+  },
+  "activation_requirements": {
+    "implementation_sha": null,
+    "tests": null,
+    "launch_profile": null,
+    "provenance_plan": null,
+    "fail_closed_readback": null,
+    "explicit_activation_decision": null
+  },
+  "numeric_science_change": "NONE",
+  "next_action": "BOUNDED_METADATA_ONLY_CASE_FEASIBILITY_AUDIT",
+  "terminal_if_unavailable": "G0_V2_PROPOSAL_BLOCKED_INDEPENDENT_CASES_UNAVAILABLE"
+}
