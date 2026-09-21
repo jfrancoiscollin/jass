@@ -1,6 +1,6 @@
 # CLS panel — admission des deux comparaisons fixes
 
-Date : **21 septembre 2026**. Statut : **LOCAL_TECHNICAL_COMPLETE_WDL_RUNNING**.
+Date : **21 septembre 2026**. Statut : **FIXED_MAIN_PANEL_COMPLETED**.
 
 L'autorité et la preuve sont fusionnées dans Jass #1059
 (`4612a655c9aed252715756dba7c1135146b18912`) ; les deux admissions sont scellées
@@ -11,9 +11,9 @@ techniquement à **11:57:00 heure de Paris** (09:57:00 UTC), tentative
 authentifie 576 parties, 59 804 recherches et zéro autre effet ; il ne lit aucun score,
 intervalle, verdict ou résultat scientifique. WDL 2076 a été libéré par control #784
 (`ea7f6854051211725fbfd68c46ed0ebff6d56fc4`) après CI verte et authentification
-de la seule dépendance technique. Il tourne depuis **12:04:38 Paris** (10:04:38 UTC),
-tentative `20260921T100434Z-e00900ff`, sous le même code immuable. Le résultat conjoint
-reste en attente de la complétude et de la publication WDL.
+de la seule dépendance technique. Il a démarré à **12:04:38 Paris** (10:04:38 UTC),
+tentative `20260921T100434Z-e00900ff`, sous le même code immuable. WDL a terminé et publié à **12:53:56 Paris**. Le [résultat conjoint authentifié](CLS_G0_REJECTION_PANEL_V1_RESULTS_20260921.md)
+est `G0_PANEL_LARGE_LOSS_DISCORDANCE_REPLICATED_V1` ; cette admission est consommée.
 
 Le mandat utilisateur répété autorise la poursuite autonome des évaluations préenregistrées.
 La dernière instruction est : « oh punaise oui j'autorise allez enchaine c'est pénible arrête de me demander ».

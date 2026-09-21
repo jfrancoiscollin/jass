@@ -1,20 +1,40 @@
 # Jass — synthèse consolidée des résultats du projet
 
-> **Mis à jour :** 2026-09-09
+> **Mis à jour :** 2026-09-21
 > **Rôle :** registre scientifique courant des directions établies/fermées ; empêcher de rouvrir une piste close sans fait nouveau.  
 > **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)  
 > **Historique consolidé antérieur complet :** [PROJECT_RESULTS_PRE_T3_20260830.md](PROJECT_RESULTS_PRE_T3_20260830.md)
 
 Le registre exhaustif antérieur reste archivé byte-identique au lien ci-dessus. Le présent fichier conserve seulement les résultats qui pilotent directement la frontière scientifique actuelle. En cas de contradiction, le verdict terminal le plus récent fondé sur un run complet et son manifest prévaut.
 
-## ED4-P1 — candidat valide, confirmation encore ouverte (9 septembre 2026)
+## CLS — discordance des rejets G0 avec une perte de 100 Elo, panel clos
 
-La répétition 1887 et la production 1888 sont publiées, authentifiées et relues.
-Le candidat `ED4_CHOICE.pjtw`, empreinte `2e856652…`, et ses cinq autres
-payloads purs sont identiques. Le fit, la quantification et le reload natif
-passent le premier gate technique de campagne. [Preuves et limites](experiments/L3_ED4_CHOICE_SET_REAL_CANDIDATE_RESULTS_20260909.md).
-Les trois gates prospectifs décision/WDL/recherche restent non évalués ; aucun
-gain scientifique, bake ou promotion n'est déclaré. Ce fait ne rouvre pas ED3.
+Le panel préenregistré LOCAL 2075/WDL 2076 est complet et authentifié : 288 paires/576 parties
+par contraste, mêmes ouvertures, alpha familial 0,05. Les deux verdicts sont
+`SUBSTANTIAL_LOSS_EXCLUDED`, avec intervalles [0,4145140661 ; 0,6011109339] et
+[0,4040973995 ; 0,5941664894]. Terminal : `G0_PANEL_LARGE_LOSS_DISCORDANCE_REPLICATED_V1`.
+[Résultat et preuves](experiments/CLS_G0_REJECTION_PANEL_V1_RESULTS_20260921.md).
+
+Cette discordance concerne deux cas déjà rejetés et la marge de 100 Elo à la cadence
+fixée ; elle n'établit ni supériorité, ni sensibilité/spécificité générale de G0.
+Les intervalles contiennent 0,5. Les FAIL historiques ne changent pas, CURRICULUM
+reste champion. Décision : `STOP_INTERPRET_NO_AUTO_G0_V2_NO_PROMOTION`, sans extension
+du panel ni activation automatique d'une nouvelle porte. La seule suite recommandée est
+une [proposition G0 V2 séparée](experiments/CLS_G0_V2_THREE_STATE_VALIDATION_PROPOSAL_V1_20260921.md),
+dont la faisabilité sur de nouveaux cas reste à établir.
+
+## ED4 et ED5 — confirmations fraîches négatives, familles closes
+
+La validité technique du candidat ED4 `2e856652…` avait été acquise en 1888.
+Sa confirmation D 1970 est depuis terminée avec `CAMPAIGN_ATTEMPT_SCIENTIFIC_NOT_SUPPORTED_V1`
+(trois gates échoués sur quatre). ED5 D 1997 porte le même terminal avec quatre gates
+échoués sur quatre. [ED4 D](experiments/L3_ED4_FRESH_D_CONFIRMATION_RESULTS_20260914.md) ·
+[ED5 D](experiments/L3_ED5_FRESH_D_CONFIRMATION_RESULTS_20260915.md).
+
+Les cohortes D sont consommées, aucune cible W/S abandonnée ne prolonge ces tentatives.
+Alpha D cumulé dépensé : 0,0125, sans recyclage. Aucun gain décisionnel avec calibration
+et recherche préservées n'est établi. Le mandat de recherche prospective demeure,
+avec préenregistrement et données nouvelles ; il ne transforme pas ces terminaux.
 
 ## ED3-T1 — diagnostic descriptif terminé (9 septembre 2026)
 
