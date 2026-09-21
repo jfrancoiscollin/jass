@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 12 septembre 2026**
+> **Mis à jour : 21 septembre 2026**
 > **Source de vérité active : ce document.**
 >
 > Résultats acquis / portes closes : [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md).  
@@ -11,6 +11,18 @@
 > Programme suivant : [E1/E2/E3](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md) · [amendment O1 terminal](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_O1_TERMINAL_AMENDMENT_20260830.md).
 
 ---
+
+## CLS — reprise de l'audit du panel G0
+
+Le 2071 a échoué techniquement à la publication finale (`NO_CLOBBER`), après
+les quatre phases d'audit. Sa tentative `20260920T201519Z-4ba9cfbf` et ses
+archives restent FAILED ; aucun match LOCAL/WDL n'est admis. La relecture R2
+authentifiée retrouve les 576 parties historiques et les 1 024 racines G0,
+sans constituer un reçu de succès. Le [correctif de publication et l'admission
+résiduelle](operations/CLS_PANEL_AUDIT_PUBLICATION_REPAIR_20260921.md) conservent
+les deux échecs et préparent une unique tentative intégrale à 100/700 secondes
+après validation du code. Aucun nouvel entraînement ni partie ; CURRICULUM et
+les FAIL G0 restent inchangés.
 
 ## Campagne autonome eval/search — candidat ED4-P1 scellé et authentifié
 
