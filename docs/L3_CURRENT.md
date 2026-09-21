@@ -31,9 +31,17 @@ et 3 600/4 200 s pour chaque comparaison. La [proposition d'amendement
 d'admission](experiments/CLS_G0_PANEL_ADMISSION_AMENDMENT_V1_20260921.md) conserve
 le protocole scientifique et tous ses plafonds ; elle définit une version
 d'admission propre au plan complet. JFC l'a approuvée par « Je valide » ; son
-implémentation complète précède la readiness autorisée. Aucune nouvelle partie
-n'a encore été lancée. Les deux matchs principaux gardent une admission
-explicite distincte ; les tests locaux ne constituent pas une répétition réelle.
+implémentation complète a été fusionnée dans #1056, avec le dispatcher control
+#780 et l'admission unique #781. La readiness **2073**
+(`20260921T070922Z-54e30b98`) a échoué dans les régressions avant le stage :
+42 tests, une erreur de transport synthétique liée au `RCLONE_BIN` absolu de
+CPX62, **zéro partie et zéro recherche natives**. La publication d'échec R2
+est authentifiée ; elle ne fournit aucune preuve de readiness.
+[Résultat, correction et preuves](operations/CLS_PANEL_READINESS_2073_RESULTS_20260921.md).
+La version reste bloquée sans verdict conjoint ; aucune relance automatique
+n'est autorisée et aucun remplacement n'est en file. Les deux matchs principaux
+gardent une admission explicite distincte ; les tests locaux ne constituent
+pas une répétition réelle. CURRICULUM et les FAIL G0 restent inchangés.
 
 ## Campagne autonome eval/search — candidat ED4-P1 scellé et authentifié
 
