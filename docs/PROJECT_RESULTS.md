@@ -320,4 +320,4 @@ Les détails exhaustifs et les portes historiques restent dans le [snapshot ant�
 9. E2/E3 restent fail-closed derrière leurs gates et GO distincts.
 10. Toute nouvelle force sur un evaluator optimisé/distillé exige une preregistration de force séparée, un fresh disjoint et un GO séparé.
 
-La frontière active est désormais `E1_COST_ATTRIBUTION_PENDING_EXPLICIT_GO`.
+Dans le programme F6, `E1_COST_ATTRIBUTION_PENDING_EXPLICIT_GO` reste non exécuté et inchangé. La frontière opérationnelle de reprise au 23 septembre est toutefois `CHINOOK_HYBRID_REHEARSAL_TECHNICAL_RECOVERY_PENDING`, conformément au handoff Chinook ; cela ne clôt ni ne réinterprète E1.
