@@ -25,6 +25,14 @@ class PauseCapsuleTests(unittest.TestCase):
         self.assertIn("/pause/", c.TARGET)
         self.assertNotIn("/runs/", c.TARGET)
 
+    def test_index_publisher_uses_resilient_copy(self):
+        import inspect
+        source = inspect.getsource(c.publish_index)
+        self.assertIn("\"copy\"", source)
+        self.assertIn("\"--immutable\"", source)
+        self.assertIn("\"--retries\"", source)
+        self.assertNotIn("\"copyto\"", source)
+
 
 if __name__ == "__main__":
     unittest.main()
