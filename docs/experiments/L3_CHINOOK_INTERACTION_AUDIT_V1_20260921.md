@@ -31,3 +31,19 @@ Before reading any joint interaction result, evaluate only:
 For each interaction report support, gross-error count/rate, baseline, lift, mean and median regret, and mean HIER-minus-CURRICULUM Scan delta.
 
 This is descriptive consumed-data analysis only. No threshold crossing authorizes a feature implementation. Any runtime feature must be preregistered separately and tested causally.
+
+## Executed result
+
+Job: `cpx62-2080-l3-chinook-interaction-audit-v1`  
+Attempt: `20260921T194709Z-c60dfd5a`  
+Terminal: `CHINOOK_INTERACTION_AUDIT_COMPLETE_V1`
+
+The strongest fixed interaction was `P2_CORE`: support **29**, gross-error count
+**13**, gross-error rate **0.4482758621**, lift **3.531034483** over the frozen
+baseline 0.126953125. `CORE`, `MOBILITY_BEHIND`, and `PHASE_MOBILITY` also
+showed lifts above 2.9.
+
+This remains descriptive consumed-data evidence only:
+`scientific_verdict=null`, no causal claim, no feature implementation authority,
+and no promotion authority. The subsequent causal candidate is documented in
+`L3_CHINOOK_HYBRID_CAUSAL_STRENGTH_V1_20260921.md`.
