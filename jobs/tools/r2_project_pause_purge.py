@@ -66,7 +66,8 @@ def gzip_raw_sha(path: Path) -> str:
 
 def main() -> int:
     ART.mkdir(parents=True, exist_ok=True)
-    evidence = StageEvidence(ART, os.environ["LAUNCH_MODE"])
+    mode = os.environ["LAUNCH_MODE"]
+    evidence = StageEvidence(ART, mode)
     try:
         evidence.begin("verify-capsule")
         marker = remote_json(f"{CAPSULE}/CAPSULE_COMPLETE.json")
@@ -94,23 +95,32 @@ def main() -> int:
         evidence.complete()
 
         evidence.begin("purge-bulk-history")
-        run([RCLONE, "purge", "r2:jass-data/runs", "--retries", "5", "--low-level-retries", "20"], timeout=10800, capture=False)
-        run([RCLONE, "purge", "r2:jass-data/historical", "--retries", "5", "--low-level-retries", "20"], timeout=3600, capture=False)
+        if mode == "production":
+            run([RCLONE, "purge", "r2:jass-data/runs", "--retries", "5", "--low-level-retries", "20"], timeout=10800, capture=False)
+            run([RCLONE, "purge", "r2:jass-data/historical", "--retries", "5", "--low-level-retries", "20"], timeout=3600, capture=False)
         evidence.complete()
 
         evidence.begin("verify-final-size")
-        after = remote_size("r2:jass-data")
-        if after["bytes"] > MAX_FINAL_BYTES:
-            raise ValueError(f"final_bucket_over_10GiB:{after['bytes']}")
+        if mode == "production":
+            after = remote_size("r2:jass-data")
+            final_bytes = after["bytes"]
+        else:
+            predicted = max(0, before["bytes"] - runs_before["bytes"] - hist_before["bytes"])
+            after = {"bytes": predicted, "count": None, "predicted": True}
+            final_bytes = predicted
+        if final_bytes > MAX_FINAL_BYTES:
+            raise ValueError(f"final_bucket_over_10GiB:{final_bytes}")
         if remote_size(CAPSULE)["bytes"] <= 0:
             raise ValueError("capsule_missing_after_purge")
         summary = {
             "schema": "jass.r2_project_pause_purge.v1",
-            "terminal": TERMINAL,
+            "terminal": "R2_PROJECT_PAUSE_PURGE_REHEARSAL_READY_V1" if mode == "rehearsal" else TERMINAL,
             "state": "completed",
+            "mode": mode,
+            "dry_run": mode == "rehearsal",
             "before": before,
-            "purged_runs": runs_before,
-            "purged_historical": hist_before,
+            "purged_runs": runs_before if mode == "production" else {"planned": runs_before},
+            "purged_historical": hist_before if mode == "production" else {"planned": hist_before},
             "after_before_runner_publish": after,
             "max_final_bytes": MAX_FINAL_BYTES,
             "capsule": cap,
