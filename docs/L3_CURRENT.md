@@ -40,7 +40,7 @@ n'est autorisée.
 
 Le détail exécutable, les identités et la séquence de reprise sont figés dans
 [le handoff Chinook](experiments/L3_CHINOOK_PAUSE_HANDOFF_V1_20260923.md).
-Le capsule de reprise R2 vérifié est `r2:jass-data/pause/jass-20260922`.
+La capsule de reprise R2 vérifiée est `r2:jass-data/pause/jass-20260922`.
 
 ## CLS — panel G0 terminé, perte majeure exclue dans les deux cas
 
@@ -183,10 +183,11 @@ et [liaisons historiques](experiments/L3_ED4_C0C_EXACT_LINKAGE_DIAGNOSTIC_V1_RES
 restent des preuves d'audit ; leurs alias non résolus ne sont plus un gate
 prospectif pour ED4-FRESH. Aucun nouveau job post-1932 n'est requis.
 
-**CLS est la suite opérationnelle active**, scientifiquement distincte ; aucun
-k=3 eval/search n'est lancé en parallèle. Son état actuel figure en tête de
-ce document. Les sections ED4-P0/ED3 et les programmes plus anciens ci-dessous
-conservent leurs décisions historiques, pas une nouvelle autorisation de lancement.
+Au 21 septembre, **CLS était la suite opérationnelle active**, scientifiquement
+distincte ; ce libellé est désormais historique. La frontière opérationnelle
+courante est le checkpoint Chinook de tête de document. Les sections ED4-P0/ED3,
+CLS et les programmes plus anciens ci-dessous conservent leurs décisions
+historiques, pas une nouvelle autorisation de lancement.
 
 ## ED4-P0 — objectif de choix et préflight synthétique validés
 
@@ -474,9 +475,10 @@ Même si projection + coût runtime passent, **ce document s'arrête avant toute
 
 ---
 
-## 6. État opérationnel exact
+## 6. État opérationnel exact au moment de la pause
 
 ```text
+project = PAUSED
 champion = CURRICULUM
 offline_T3 = F6_TRANSFER_ESTABLISHED_D1_NOT_ADDITIVE
 runtime_v4 = T3_F6_RUNTIME_STRENGTH_NOT_SUPPORTED
@@ -487,7 +489,13 @@ transfer_prereg = MERGED_PR_735
 E1 = NOT_STARTED
 E2 = LOCKED_BEHIND_E1
 E3 = LOCKED_BEHIND_E2
-next_stage = E1_COST_ATTRIBUTION_PENDING_EXPLICIT_GO
+chinook_2079 = CHINOOK_ERROR_MINING_COMPLETE_V1
+chinook_2080 = CHINOOK_INTERACTION_AUDIT_COMPLETE_V1
+chinook_2081 = TECHNICAL_FAILURE_BUILD_RUNTIME_NO_SCIENTIFIC_VERDICT
+next_stage = PROJECT_PAUSED__REPAIR_2081_AND_RERUN_EXACT_CHINOOK_REHEARSAL
 ```
 
-Aucun job E1/E2/E3 n'a été lancé au moment de cette mise à jour. La prochaine action compute exige les 12 checks permanents et un **GO JFC explicite** conforme au prereg E1.
+Aucun job E1/E2/E3 n'a été lancé ; leur état reste inchangé mais ce n'est pas la
+frontière opérationnelle de reprise. La prochaine action Jass, après reprise explicite
+du projet, est la réparation technique 2081 puis le même rehearsal Chinook, sans
+modification scientifique.
