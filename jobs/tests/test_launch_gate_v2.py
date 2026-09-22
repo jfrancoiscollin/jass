@@ -102,6 +102,14 @@ class LaunchGateTests(unittest.TestCase):
             atomic_json(path,decorated)
             self.assertNotEqual(g.published_output_sha(path,'scientific-summary.json'),expected)
 
+    def test_published_evidence_names_are_deduplicated(self):
+        profile = {'evidence_outputs': ['execution-evidence.json', 'scientific-summary.json',
+                                        'execution-evidence.json', 'RESULTS.md']}
+        names = g.published_names(profile)
+        self.assertEqual(names.count('execution-evidence.json'), 1)
+        self.assertEqual(names, ['launch-receipt.json', 'execution-evidence.json',
+                                 'launch-regressions.json', 'scientific-summary.json', 'RESULTS.md'])
+
     def test_cpu_guard_ignores_openmp_only_in_probe(self):
         with patch.dict(os.environ,{'OMP_NUM_THREADS':'1','OMP_THREAD_LIMIT':'1','KEEP':'yes'}):
             with patch('subprocess.check_output',return_value='16\n') as run:
