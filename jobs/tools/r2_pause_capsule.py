@@ -51,6 +51,18 @@ def remote_size(prefix: str) -> dict:
     return {"bytes": int(value.get("bytes", 0)), "count": int(value.get("count", 0))}
 
 
+def publish_index(files: dict[str, Path]) -> None:
+    publish = ART / "publish"
+    publish.mkdir(exist_ok=True)
+    for remote_name, source in files.items():
+        dest = publish / remote_name
+        dest.write_bytes(source.read_bytes())
+    run([RCLONE, "copy", str(publish), TARGET, "--checksum", "--immutable",
+         "--retries", "5", "--low-level-retries", "20"], timeout=1200, capture=False)
+    run([RCLONE, "check", str(publish), TARGET, "--one-way", "--checksum"],
+        timeout=1200, capture=False)
+
+
 def status_for(job: str) -> dict:
     p = CONTROL / "status" / f"{job}.json"
     if not p.is_file():
@@ -127,8 +139,7 @@ def main() -> int:
             "CLS strength evidence, and Chinook error-mining/interaction/hybrid boundary work.\n",
             encoding="utf-8",
         )
-        run([RCLONE, "copyto", str(manifest_path), f"{TARGET}/CAPSULE_MANIFEST.json", "--checksum"], capture=False)
-        run([RCLONE, "copyto", str(readme), f"{TARGET}/README.md", "--checksum"], capture=False)
+        publish_index({"CAPSULE_MANIFEST.json": manifest_path, "README.md": readme})
         evidence.complete()
 
         evidence.begin("verify-capsule-budget")
@@ -146,7 +157,7 @@ def main() -> int:
         }
         complete_path = ART / "capsule-complete.json"
         complete_path.write_text(json.dumps(complete, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        run([RCLONE, "copyto", str(complete_path), f"{TARGET}/CAPSULE_COMPLETE.json", "--checksum"], capture=False)
+        publish_index({"CAPSULE_COMPLETE.json": complete_path})
         summary = {**complete, "target": TARGET, "selected_source_bytes": selected_bytes, "selected_jobs": KEEP_JOBS}
         payload = json.dumps(summary, indent=2, sort_keys=True) + "\n"
         (ART / "scientific-summary.json").write_text(payload, encoding="utf-8")
