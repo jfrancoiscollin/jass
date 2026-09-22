@@ -109,3 +109,20 @@ experiment before any runtime adoption.
 - `chinook-error-patterns-v1.csv`
 
 The implementation is `jobs/tools/chinook_error_mining.py`.
+
+## Executed result
+
+Job: `cpx62-2079-l3-chinook-error-mining-v1`  
+Attempt: `20260921T173557Z-b97224af`  
+Terminal: `CHINOOK_ERROR_MINING_COMPLETE_V1`
+
+The frozen 512-root population produced a baseline gross-error rate of
+`0.126953125`. The nominal top-64 tail was tie-inclusive at **41 centi-Scan**,
+therefore contained **65 roots**. The strongest singleton rows included
+`white_men=5` (support 27, 11 gross errors, rate 0.407407, lift 3.2091),
+`black_men=5` (support 32, 13 gross errors, rate 0.40625, lift 3.2), and
+`legal_moves=5-8` (support 87, 31 gross errors, rate 0.356322, lift 2.8067).
+
+The result remains `EXPLORATORY_CONSUMED_DATA`, with `scientific_verdict=null`
+and no implementation or promotion authority. The next completed step was the
+fixed interaction audit 2080.
