@@ -22,6 +22,13 @@ class R2ProjectPausePurgeTests(unittest.TestCase):
         self.assertIn('if mode == "production":', source)
         self.assertIn('"dry_run": mode == "rehearsal"', source)
 
+    def test_pre_purge_snapshot_avoids_full_bucket_scan(self):
+        source = inspect.getsource(p.main)
+        self.assertNotIn('remote_size("r2:jass-data/runs")', source)
+        self.assertNotIn('remote_size("r2:jass-data/historical")', source)
+        self.assertIn('remote_size("r2:jass-data/inputs")', source)
+        self.assertIn('remote_size("r2:jass-data/runtime")', source)
+
 
 if __name__ == "__main__":
     unittest.main()
