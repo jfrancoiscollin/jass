@@ -1,0 +1,23 @@
+name: l3-r1-adjudicated-target
+
+on:
+  pull_request:
+    paths:
+      - 'jobs/tools/l3_r1_adjudicated_target.py'
+      - 'jobs/tests/test_l3_r1_adjudicated_target.py'
+      - '.github/workflows/l3-r1-adjudicated-target.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install numeric dependencies
+        run: python -m pip install numpy
+      - name: Compile target-builder tooling
+        run: python -m py_compile jobs/tools/l3_r1_adjudicated_target.py jobs/tests/test_l3_r1_adjudicated_target.py
+      - name: Run target-builder unit tests
+        run: python -m unittest jobs.tests.test_l3_r1_adjudicated_target -v
