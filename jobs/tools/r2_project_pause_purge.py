@@ -20,6 +20,9 @@ RCLONE = os.environ.get("RCLONE_BIN", "rclone")
 CAPSULE = "r2:jass-data/pause/jass-20260922"
 MAX_CAPSULE_BYTES = 8 * 1024**3
 MAX_FINAL_BYTES = 10 * 1024**3
+PURGE_CHECKERS = 64
+RUNS_PURGE_TIMEOUT_SECONDS = 12 * 3600
+HISTORICAL_PURGE_TIMEOUT_SECONDS = 4 * 3600
 TERMINAL = "R2_PROJECT_PAUSE_PURGE_COMPLETE_V1"
 CHAMPION_SHA = "319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
 HIER_SHA = "95bed3ac9fac4368809609fb1a981ee863401a30ca623fb7bfa3caf7eaddf628"
@@ -103,8 +106,15 @@ def main() -> int:
 
         evidence.begin("purge-bulk-history")
         if mode == "production":
-            run([RCLONE, "purge", "r2:jass-data/runs", "--retries", "5", "--low-level-retries", "20"], timeout=10800, capture=False)
-            run([RCLONE, "purge", "r2:jass-data/historical", "--retries", "5", "--low-level-retries", "20"], timeout=3600, capture=False)
+            common_purge = [
+                "--checkers", str(PURGE_CHECKERS),
+                "--retries", "5",
+                "--low-level-retries", "20",
+            ]
+            run([RCLONE, "purge", "r2:jass-data/runs", *common_purge],
+                timeout=RUNS_PURGE_TIMEOUT_SECONDS, capture=False)
+            run([RCLONE, "purge", "r2:jass-data/historical", *common_purge],
+                timeout=HISTORICAL_PURGE_TIMEOUT_SECONDS, capture=False)
         evidence.complete()
 
         evidence.begin("verify-final-size")
