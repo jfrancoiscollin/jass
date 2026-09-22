@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 21 septembre 2026**
+> **Mis à jour : 23 septembre 2026**
 > **Source de vérité active : ce document.**
 >
 > Résultats acquis / portes closes : [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md).  
@@ -8,9 +8,39 @@
 > T3 terminal : [`experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md`](experiments/L3_T3_RF1_JOINT_AB_V1_20260829.md).  
 > Runtime v4 : [prereg](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_20260829.md) · [terminal Pool1](experiments/L3_T3_F6_RUNTIME_STRENGTH_V4_RESULTS_20260829.md).  
 > O1 exact cache : [prereg](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_20260830.md) · [terminal](experiments/L3_T3_F6_RUNTIME_EXACT_CACHE_O1_RESULTS_20260830.md).  
-> Programme suivant : [E1/E2/E3](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md) · [amendment O1 terminal](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_O1_TERMINAL_AMENDMENT_20260830.md).
+> Programme suivant : [E1/E2/E3](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_20260830.md) · [amendment O1 terminal](experiments/L3_F6_TRANSFER_PROGRAM_E1_E3_O1_TERMINAL_AMENDMENT_20260830.md).  
+> Pause / reprise Chinook : [handoff du 23 septembre](experiments/L3_CHINOOK_PAUSE_HANDOFF_V1_20260923.md).
 
 ---
+
+## Projet en pause — frontière active Chinook
+
+Le projet est mis en pause avec une frontière scientifique explicite : **le diagnostic
+Chinook est terminé, mais le test causal de force du runtime hybride n'a pas encore
+produit de verdict scientifique**.
+
+- 2079 (`CHINOOK_ERROR_MINING_COMPLETE_V1`) a consommé les 512 racines gelées :
+  baseline gross-error 0,126953125, seuil tie-inclusive 41 centi-Scan, 65 racines.
+- 2080 (`CHINOOK_INTERACTION_AUDIT_COMPLETE_V1`) a terminé l'audit des interactions
+  fixes. `P2_CORE` est l'interaction descriptive la plus forte : support 29,
+  13 gross errors, taux 0,4482758621, lift 3,531034483.
+- Le candidat causal runtime est figé par `7a3a13679274079055262241c3829f4d1077d1d7` :
+  CURRICULUM hors gate, HIER dans le gate 9-19 pièces / 5-8 coups légaux /
+  side-to-move derrière en matériel pondéré.
+- 2081, tentative `20260921T200839Z-7a3a1367`, a échoué **techniquement** en
+  `build-runtime` avec `STAGE_FAILED:EXECUTE / ValueError`. Aucun verdict de force
+  n'existe, le rehearsal n'est pas validé et le main 288 paires / 576 parties n'a
+  pas été admis.
+
+La reprise doit commencer par la réparation technique exacte de 2081, sans retuning
+ni changement de protocole, puis rejouer le même rehearsal. Seulement après son
+terminal `CHINOOK_HYBRID_STRENGTH_REHEARSAL_READY_V1` et son round-trip publié,
+le main gelé peut être admis. `CURRICULUM` reste champion et aucune promotion/bake
+n'est autorisée.
+
+Le détail exécutable, les identités et la séquence de reprise sont figés dans
+[le handoff Chinook](experiments/L3_CHINOOK_PAUSE_HANDOFF_V1_20260923.md).
+Le capsule de reprise R2 vérifié est `r2:jass-data/pause/jass-20260922`.
 
 ## CLS — panel G0 terminé, perte majeure exclue dans les deux cas
 
