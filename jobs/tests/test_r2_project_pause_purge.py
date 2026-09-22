@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import unittest
 from jobs.tools import r2_project_pause_purge as p
 
@@ -15,6 +16,11 @@ class R2ProjectPausePurgeTests(unittest.TestCase):
 
     def test_required_restart_assets(self):
         self.assertEqual(set(p.REQUIRED), {"champion","context30","turnover","hier","scan_reference"})
+
+    def test_rehearsal_is_non_destructive(self):
+        source = inspect.getsource(p.main)
+        self.assertIn('if mode == "production":', source)
+        self.assertIn('"dry_run": mode == "rehearsal"', source)
 
 
 if __name__ == "__main__":
