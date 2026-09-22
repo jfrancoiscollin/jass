@@ -89,9 +89,16 @@ def main() -> int:
         evidence.complete()
 
         evidence.begin("snapshot-before-purge")
-        before = remote_size("r2:jass-data")
-        runs_before = remote_size("r2:jass-data/runs")
-        hist_before = remote_size("r2:jass-data/historical")
+        inputs_before = remote_size("r2:jass-data/inputs")
+        runtime_before = remote_size("r2:jass-data/runtime")
+        kept_before = {
+            "capsule": cap,
+            "inputs": inputs_before,
+            "runtime": runtime_before,
+        }
+        predicted_final_bytes = cap["bytes"] + inputs_before["bytes"] + runtime_before["bytes"]
+        if predicted_final_bytes > MAX_FINAL_BYTES:
+            raise ValueError(f"kept_namespaces_over_10GiB:{predicted_final_bytes}")
         evidence.complete()
 
         evidence.begin("purge-bulk-history")
@@ -105,9 +112,8 @@ def main() -> int:
             after = remote_size("r2:jass-data")
             final_bytes = after["bytes"]
         else:
-            predicted = max(0, before["bytes"] - runs_before["bytes"] - hist_before["bytes"])
-            after = {"bytes": predicted, "count": None, "predicted": True}
-            final_bytes = predicted
+            after = {"bytes": predicted_final_bytes, "count": None, "predicted": True}
+            final_bytes = predicted_final_bytes
         if final_bytes > MAX_FINAL_BYTES:
             raise ValueError(f"final_bucket_over_10GiB:{final_bytes}")
         if remote_size(CAPSULE)["bytes"] <= 0:
@@ -118,9 +124,9 @@ def main() -> int:
             "state": "completed",
             "mode": mode,
             "dry_run": mode == "rehearsal",
-            "before": before,
-            "purged_runs": runs_before if mode == "production" else {"planned": runs_before},
-            "purged_historical": hist_before if mode == "production" else {"planned": hist_before},
+            "kept_before_purge": kept_before,
+            "purged_namespaces": ["runs", "historical"] if mode == "production" else [],
+            "planned_purge_namespaces": ["runs", "historical"],
             "after_before_runner_publish": after,
             "max_final_bytes": MAX_FINAL_BYTES,
             "capsule": cap,
@@ -130,7 +136,14 @@ def main() -> int:
         (ART / "purge-summary.json").write_text(payload, encoding="utf-8")
         (ART / "scientific-summary.json").write_text(payload, encoding="utf-8")
         (ART / "RESULTS.md").write_text("# R2 project pause purge\n\n" + payload, encoding="utf-8")
-        run([RCLONE, "copyto", str(ART / "purge-summary.json"), f"{CAPSULE}/PURGE_SUMMARY.json", "--checksum"], capture=False)
+        publish = ART / "publish"
+        publish.mkdir(exist_ok=True)
+        published = publish / "PURGE_SUMMARY.json"
+        published.write_bytes((ART / "purge-summary.json").read_bytes())
+        run([RCLONE, "copy", str(publish), CAPSULE, "--checksum", "--retries", "5",
+             "--low-level-retries", "20"], timeout=1200, capture=False)
+        run([RCLONE, "check", str(publish), CAPSULE, "--one-way", "--checksum"],
+            timeout=1200, capture=False)
         evidence.complete()
         evidence.finish()
         return 0
