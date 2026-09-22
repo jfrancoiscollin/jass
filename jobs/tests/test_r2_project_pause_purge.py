@@ -29,6 +29,12 @@ class R2ProjectPausePurgeTests(unittest.TestCase):
         self.assertIn('remote_size("r2:jass-data/inputs")', source)
         self.assertIn('remote_size("r2:jass-data/runtime")', source)
 
+    def test_parallel_purge_contract(self):
+        source = inspect.getsource(p.main)
+        self.assertEqual(p.PURGE_CHECKERS, 64)
+        self.assertGreaterEqual(p.RUNS_PURGE_TIMEOUT_SECONDS, 12 * 3600)
+        self.assertIn('"--checkers", str(PURGE_CHECKERS)', source)
+
 
 if __name__ == "__main__":
     unittest.main()
