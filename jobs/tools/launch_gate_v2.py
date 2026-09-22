@@ -180,12 +180,19 @@ def runtime_identity(python):
                 numeric_environment_sha256=hashlib.sha256(raw).hexdigest())
 
 
+def published_names(profile):
+    return list(dict.fromkeys(
+        ['launch-receipt.json', 'execution-evidence.json', 'launch-regressions.json']
+        + profile['evidence_outputs']
+    ))
+
+
 def authenticate_published(admission, spec, profile, runtime, result):
     from jobs.tools.fetch_result_files import fetch_files
     r = admission['rehearsal']
     root = result / 'launch-prerequisite'
     prefix = 'r2:jass-data/runs/' + r['job_id'] + '/' + r['attempt_id']
-    names = ['launch-receipt.json', 'execution-evidence.json', 'launch-regressions.json'] + profile['evidence_outputs']
+    names = published_names(profile)
     selections = [('artefacts/' + x, x) for x in names] + [('stage-receipt.json', 'stage-receipt.json')]
     verified = fetch_files(rclone='rclone', prefix=prefix, selections=selections,
                            out_dir=root, expected_state='completed')
