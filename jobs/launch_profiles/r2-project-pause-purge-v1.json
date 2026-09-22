@@ -1,0 +1,46 @@
+{
+  "schema": "jass.launch_profile.v2",
+  "campaign": "r2-project-pause-purge-v1",
+  "stage": "r2-project-pause-purge-v1",
+  "command": [
+    "/usr/bin/python3",
+    "jobs/tools/r2_project_pause_purge.py"
+  ],
+  "regressions": [
+    "jobs.tests.test_launch_gate_v2",
+    "jobs.tests.test_launch_gate_pipeline_v2",
+    "jobs.tests.test_r2_project_pause_purge"
+  ],
+  "required_phases": [
+    "verify-capsule",
+    "snapshot-before-purge",
+    "purge-bulk-history",
+    "verify-final-size"
+  ],
+  "evidence_outputs": [
+    "purge-summary.json",
+    "scientific-summary.json",
+    "RESULTS.md",
+    "execution-evidence.json"
+  ],
+  "rehearsal_max_effects": {
+    "fits": 0,
+    "new_scan_searches": 0,
+    "new_jass_searches": 0,
+    "strength_games": 0,
+    "selfplay_games": 0,
+    "promotions": 0,
+    "bakes": 0,
+    "test_target_reads": 0
+  },
+  "production_max_effects": {
+    "fits": 0,
+    "new_scan_searches": 0,
+    "new_jass_searches": 0,
+    "strength_games": 0,
+    "selfplay_games": 0,
+    "promotions": 0,
+    "bakes": 0,
+    "test_target_reads": 0
+  }
+}
