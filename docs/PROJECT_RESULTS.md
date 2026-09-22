@@ -1,11 +1,35 @@
 # Jass — synthèse consolidée des résultats du projet
 
-> **Mis à jour :** 2026-09-21
+> **Mis à jour :** 2026-09-23
 > **Rôle :** registre scientifique courant des directions établies/fermées ; empêcher de rouvrir une piste close sans fait nouveau.  
 > **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)  
 > **Historique consolidé antérieur complet :** [PROJECT_RESULTS_PRE_T3_20260830.md](PROJECT_RESULTS_PRE_T3_20260830.md)
 
 Le registre exhaustif antérieur reste archivé byte-identique au lien ci-dessus. Le présent fichier conserve seulement les résultats qui pilotent directement la frontière scientifique actuelle. En cas de contradiction, le verdict terminal le plus récent fondé sur un run complet et son manifest prévaut.
+
+## Chinook — diagnostics terminés, force causale non encore testée
+
+La chaîne Chinook a atteint un candidat runtime causal, mais **aucun résultat de force
+CHINOOK_HYBRID vs CURRICULUM n'est encore établi**.
+[Handoff exact de reprise](experiments/L3_CHINOOK_PAUSE_HANDOFF_V1_20260923.md).
+
+2079 (`CHINOOK_ERROR_MINING_COMPLETE_V1`) a terminé l'exploration descriptive des
+512 racines gelées. 2080 (`CHINOOK_INTERACTION_AUDIT_COMPLETE_V1`) a terminé les
+interactions fixes ; `P2_CORE` est la plus forte observée (support 29, 13 gross
+errors, taux 0,4482758621, lift 3,531034483). Ces deux étapes sont
+`EXPLORATORY_CONSUMED_DATA` et n'autorisent aucune causalité ou promotion.
+
+Le runtime figé au commit `7a3a13679274079055262241c3829f4d1077d1d7` utilise
+CURRICULUM hors gate et HIER dans le gate 9-19 pièces / 5-8 coups légaux /
+side-to-move derrière. Le rehearsal 2081
+(`20260921T200839Z-7a3a1367`) a échoué techniquement à `build-runtime` avec
+`STAGE_FAILED:EXECUTE / ValueError`; il n'a donc produit **aucun verdict
+scientifique** et n'a pas admis le main de 288 paires / 576 parties.
+
+Statut de programme : **`CHINOOK_HYBRID_REHEARSAL_TECHNICAL_RECOVERY_PENDING`**.
+À la reprise, réparer uniquement le blocage technique 2081, rejouer le rehearsal
+inchangé, puis n'admettre le main gelé qu'après terminal READY publié. CURRICULUM
+reste champion ; aucun retuning, bake ou promotion automatique.
 
 ## CLS — discordance des rejets G0 avec une perte de 100 Elo, panel clos
 
