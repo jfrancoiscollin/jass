@@ -74,6 +74,14 @@ Weights need not sum to 100. Every choice must contain at least 1,000 nodes,
 every weight must be positive, and an overflowing cumulative weight is rejected.
 Log-uniform sampling is intentionally deferred.
 
+The current sampler is deliberately **position-agnostic**. A weighted draw can
+be held for one game or redrawn for every move, but board phase, legal moves,
+captures, material and model uncertainty never affect the selected budget.
+Phase-conditioned and position-adaptive allocation are not implemented. Their
+causal sequence and safety constraints are recorded separately in
+[`L3_SIGNAL_FACTORY_ADAPTIVE_NODE_BUDGET_EXTENSION_20260806.md`](experiments/L3_SIGNAL_FACTORY_ADAPTIVE_NODE_BUDGET_EXTENSION_20260806.md);
+that document does not authorize a job or change this CLI contract.
+
 ## Determinism
 
 Sampler version 1 hashes a dedicated stream tag with:
