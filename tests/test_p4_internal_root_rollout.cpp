@@ -184,7 +184,7 @@ void test_domain_receipts() {
         JASS_CHECK(!candidate.publish(bad));
         JASS_CHECK(!candidate.snapshot());
     }
-    const std::string p4::DomainIdentity::* fields[] = {
+    std::string p4::DomainIdentity::* fields[] = {
         &p4::DomainIdentity::code_commit, &p4::DomainIdentity::build_sha256,
         &p4::DomainIdentity::driver_sha256,
         &p4::DomainIdentity::database_manifest_sha256,
@@ -233,7 +233,7 @@ void test_score_receipts_and_arithmetic() {
     const auto expected = score_contract();
     JASS_CHECK(p4::verify_score_contract(expected, expected, 1));
     JASS_CHECK(!p4::verify_score_contract(expected, expected, 2));
-    const std::string p4::ScoreContract::* fields[] = {
+    std::string p4::ScoreContract::* fields[] = {
         &p4::ScoreContract::artifact_sha256,
         &p4::ScoreContract::implementation_commit,
         &p4::ScoreContract::build_sha256, &p4::ScoreContract::config_sha256,
