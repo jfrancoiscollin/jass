@@ -24,6 +24,8 @@ int main() {
     run_scan_eval_tests();
     run_conversion_head_tests();
     run_t3_f6_tests();
+    run_p4_internal_root_rollout_tests();
+    run_p4_native_trace_tests();
 
     if (g_failures == 0) {
         std::printf("All %d assertions passed.\n", g_assertions);

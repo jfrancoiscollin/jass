@@ -69,3 +69,5 @@ void run_hub_tests();
 void run_scan_eval_tests();
 void run_conversion_head_tests();
 void run_t3_f6_tests();
+void run_p4_internal_root_rollout_tests();
+void run_p4_native_trace_tests();
