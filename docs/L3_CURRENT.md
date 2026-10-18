@@ -77,7 +77,7 @@ confirmation est prouvé, mais sa cause mécanique unique reste indéterminée.
 TI-090 demeure ouvert ; aucune reprise PL8, variante, partie ou promotion n'est
 admise par ce contrôle. La recherche prospective d'un mécanisme distinct continue.
 
-## P4 — proposition de continuations internes, faisabilité en cours
+## P4 V1 — faisabilité non établie, piste fermée
 
 Une [proposition distincte](experiments/P4_INTERNAL_STOCHASTIC_ROOT_ROLLOUT_V1_PROPOSAL_20260921.md)
 fixe un sélecteur en ligne pour les racines à matériel égal, positivement prouvées
@@ -87,12 +87,17 @@ hors du domaine EGDB. À plafond exact de `R` nœuds, le traitement réserve `R/
 une seule recherche déjà comptabilisée ; une borne fail-soft ne devient pas
 un score exact. Aucun entraînement ni changement d'évaluateur.
 
-État : `P4_INTERNAL_ROOT_ROLLOUT_V1_PROSPECTIVE_CONTRACT_DEFINED__ACTIVATION_BLOCKED`.
-La passe autorisée porte uniquement sur le composant et des tests synthétiques.
-Elle doit démontrer l'isolation, la reproductibilité, la comptabilité totale et
-la disponibilité du choix de coups requis. Les cas frais, le plafond absolu,
-l'effectif, l'alpha et l'admission scientifique restent non établis. Aucun job,
-match ou scale-up n'est admis ; les résultats et cohortes déjà clos restent inchangés.
+Résultat engineering : `P4_INTERNAL_ROOT_ROLLOUT_FEASIBILITY_NOT_ESTABLISHED_V1`.
+La CI native/WASM et les tests du composant synthétique sont verts, mais la
+fixture native préenregistrée n’a pas fourni le top 2 certifié dans son appel
+unique (`top2=false`). La cause exacte de ce résultat n’est pas prouvée par le
+résumé de trace. Le setting diagnostic `root_order_schedule` n’est pas épinglé
+par P4 et n’est pas admissible pour réparer cette version. [Résultat et limites](experiments/P4_INTERNAL_STOCHASTIC_ROOT_ROLLOUT_V1_ENGINEERING_RESULTS_20261018.md).
+
+Aucune revue d’identités fraîches ni admission scientifique ne suit pour P4 V1.
+Les identités réelles, cas disjoints, reçu EGDB/évaluateur, plafond `R`,
+effectif `N` et alpha restent non établis. Aucun job ou match n’est admis ;
+`CURRICULUM` reste champion, sans bake, promotion ou scale-up.
 
 ## Historique de l'admission du panel CLS, désormais clos
 
