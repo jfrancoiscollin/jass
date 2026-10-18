@@ -400,6 +400,8 @@ add_executable(jass_tests
     tests/test_conversion_head.cpp
     tests/test_chinook_hybrid.cpp
     tests/test_t3_f6.cpp
+    tests/test_p4_internal_root_rollout.cpp
+    tests/test_p4_native_trace.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
 target_include_directories(jass_tests PRIVATE tests)

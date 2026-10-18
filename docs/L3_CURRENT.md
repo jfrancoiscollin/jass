@@ -94,7 +94,7 @@ la disponibilité du choix de coups requis. Les cas frais, le plafond absolu,
 l'effectif, l'alpha et l'admission scientifique restent non établis. Aucun job,
 match ou scale-up n'est admis ; les résultats et cohortes déjà clos restent inchangés.
 
-### Historique de l'admission du panel, désormais clos
+## Historique de l'admission du panel CLS, désormais clos
 
 La tentative technique unique 2072 (`20260921T053109Z-20a09597`) est terminée avec le reçu
 authentifié `FULL_PIPELINE_REHEARSAL_PASS`. Elle couvre 576 parties historiques et 1 024 racines
