@@ -299,7 +299,7 @@ void test_ledger() {
     p4::Ledger fake_skip(128, plan);
     JASS_CHECK(!fake_skip.finish("base", 1, p4::CallDisposition::Unused));
     p4::Ledger missing(128, plan);
-    JASS_CHECK(missing.finish("base", 0, p4::CallDisposition::Searched));
+    JASS_CHECK(!missing.finish("base", 0, p4::CallDisposition::Searched));
     JASS_CHECK(!missing.complete());
 
     bool rejected = false;

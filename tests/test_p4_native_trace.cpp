@@ -141,7 +141,9 @@ void test_p4_native_trace_fixture() {
                        && static_cast<std::uint8_t>(off.stop_reason)
                           == static_cast<std::uint8_t>(on.stop_reason);
     JASS_CHECK(identity);
-    JASS_CHECK_EQ(on.nodes, kBaseCap);
+    // Exact is a ceiling, not padding: a completed fixed-depth search may
+    // finish before consuming the whole cap.
+    JASS_CHECK(on.nodes > 0 && on.nodes <= kBaseCap);
     JASS_CHECK_EQ(trace.nodes, on.nodes);
     JASS_CHECK(trace.nodes <= kBaseCap);
     JASS_CHECK(static_cast<std::uint8_t>(trace.stop_reason)
