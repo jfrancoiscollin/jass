@@ -99,6 +99,14 @@ Les identités réelles, cas disjoints, reçu EGDB/évaluateur, plafond `R`,
 effectif `N` et alpha restent non établis. Aucun job ou match n’est admis ;
 `CURRICULUM` reste champion, sans bake, promotion ou scale-up.
 
+## Chinook — feasibility audit eval/search terminé
+
+L’audit metadata-only préenregistré se termine avec **`CAMPAIGN_BLOCKED_BY_EVIDENCE_OR_RESOURCE_V1`**. Les manifests canoniques complets des sources d’exclusion ne sont pas disponibles ensemble; aucune source D fraîche et source WDL indépendante avec preuve de disjonction n’est établie; le registre CLS G0 V2 indique qu’aucun nouveau roster/holdout n’est actuellement attesté et que les champs de capacité restent nuls. Les métadonnées ne permettent donc pas de dimensionner à l’aveugle une future confirmation.
+
+[Résultat détaillé et limites](experiments/CHINOOK_ROUTING_EVAL_SEARCH_FEASIBILITY_V1_RESULTS_20261031.md) · [préenregistrement](experiments/CHINOOK_ROUTING_EVAL_SEARCH_FEASIBILITY_V1_PREREG_20261031.md).
+
+Ce terminal n’est ni un résultat scientifique négatif sur CHINOOK_HYBRID ni une preuve d’impossibilité générale. L’essai de force CHINOOK V1 demeure distinct et son rehearsal technique ne peut établir le gate eval/search. Aucun V2 ni calcul n’est admis par cet audit. ED3/ED4/ED5 et l’alpha consommé restent inchangés; CURRICULUM demeure champion. Aucun bake, promotion ou scale-up.
+
 ## Historique de l'admission du panel CLS, désormais clos
 
 La tentative technique unique 2072 (`20260921T053109Z-20a09597`) est terminée avec le reçu
