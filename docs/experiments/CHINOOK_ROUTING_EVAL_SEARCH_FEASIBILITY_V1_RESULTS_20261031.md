@@ -35,3 +35,8 @@ The preregistered terminal is **`CAMPAIGN_BLOCKED_BY_EVIDENCE_OR_RESOURCE_V1`**.
 This is a feasibility result about currently evidenced metadata. It is **not** a scientific negative result about CHINOOK_HYBRID, an impossibility claim about all future sources, or authorization for a V2, compute, training, or match. CHINOOK V1 remains a separate strength-safety rehearsal path; it cannot establish the requested eval/search-and-calibration improvement gate. CURRICULUM remains champion. No bake, promotion, or scale-up is admitted.
 
 The V1 strength rehearsal's outstanding technical repair remains separate. A repair or rehearsal cannot satisfy this eval/search gate by itself.
+
+
+## Publication CI note
+
+The first CI for this documentation PR had a WASM compile failure in the existing source file `src/t3_f6.cpp`: `std::terminate()` lacked an explicit `<exception>` include. This was unrelated to the metadata audit and did not use any scientific artifacts. The minimal source fix was reviewed and merged separately as PR1089, commit `33f9a7eaae3f0bbcd82636ebb005df45d9fc62be`; its native, WASM, retirement-readiness, and incident-register checks all passed. This technical correction does not change the audit scope or terminal; the documentation PR must still pass checks on its updated head before merge.
