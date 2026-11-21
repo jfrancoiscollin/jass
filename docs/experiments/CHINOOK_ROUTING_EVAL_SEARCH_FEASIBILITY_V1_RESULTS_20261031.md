@@ -1,7 +1,7 @@
 # CHINOOK routing eval/search — metadata-only feasibility result
 
 Date: 2026-10-31  
-Audit freeze: `.codex-tmp/chinook-routing-eval-search-feasibility-v1-freeze.md`  
+Audit freeze: [preregistration](CHINOOK_ROUTING_EVAL_SEARCH_FEASIBILITY_V1_PREREG_20261031.md)  
 Freeze SHA256: `23d97c02ac715191e86c9ade1adf5c2f207d42bdb13c3437af167b8b761ac77`  
 Terminal: **`CAMPAIGN_BLOCKED_BY_EVIDENCE_OR_RESOURCE_V1`**
 
