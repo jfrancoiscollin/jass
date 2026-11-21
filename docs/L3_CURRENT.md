@@ -107,6 +107,13 @@ L’audit metadata-only préenregistré se termine avec **`CAMPAIGN_BLOCKED_BY_E
 
 Ce terminal n’est ni un résultat scientifique négatif sur CHINOOK_HYBRID ni une preuve d’impossibilité générale. L’essai de force CHINOOK V1 demeure distinct et son rehearsal technique ne peut établir le gate eval/search. Aucun V2 ni calcul n’est admis par cet audit. ED3/ED4/ED5 et l’alpha consommé restent inchangés; CURRICULUM demeure champion. Aucun bake, promotion ou scale-up.
 
+## Identités historiques — projections insuffisantes pour l’union complète
+
+L’audit metadata-only préenregistré se termine avec **`IDENTITY_PROJECTION_COVERAGE_NOT_ESTABLISHED_V1`**. Les reçus versionnés épinglent des digests ou des projections partielles, mais ne publient pas les ensembles canoniques complets pour 1651, 2066–2068, les groupes/trajectoires 2069 et 2075/2076, ni les listes et groupes complets des sources ED3/ED4/ED5. B2/B3 couvrent seulement leurs sous-ensembles historiques et des identités de positions.
+
+[Résultat détaillé](experiments/IDENTITY_PROJECTION_COVERAGE_AUDIT_V1_RESULTS_20261121.md) · [preregistration](experiments/IDENTITY_PROJECTION_COVERAGE_AUDIT_V1_PREREG_20261121.md).
+
+Les intersections non vérifiables restent inconnues, pas nulles. Aucun payload, cible W/S abandonnée, cas, R2 ou calcul n’a été ouvert/utilisé. La voie de génération D/W/S reste techniquement plausible seulement après preuve d’une union complète et de groupes canoniques. Cet audit n’admet aucun nouveau candidat, cohorte ou job; CURRICULUM reste champion et l’alpha 0,0125 est préservé.
 ## Historique de l'admission du panel CLS, désormais clos
 
 La tentative technique unique 2072 (`20260921T053109Z-20a09597`) est terminée avec le reçu
