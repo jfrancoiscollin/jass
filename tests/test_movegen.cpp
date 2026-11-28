@@ -203,6 +203,51 @@ void test_after_clears_captures_and_flips_stm() {
     JASS_CHECK(q.side_to_move() == Color::Black);
 }
 
+void test_composed_halfmove_clock_hash_alias() {
+    // Fixed synthetic witness: see TT_CLOCK_SYNTHETIC_ALIAS_WITNESS_V1_20261128.
+    // Only apply moves emitted by the legal generator, and stop on any mismatch.
+    auto replay = [](Position& position, const Square (&route)[4][2]) {
+        for (const auto& step : route) {
+            MoveList moves;
+            generate_legal_moves(position, moves);
+            const Move* selected = nullptr;
+            int matches = 0;
+            for (const auto& move : moves) {
+                if (move.from == step[0] && move.to == step[1]) {
+                    selected = &move;
+                    ++matches;
+                }
+            }
+            JASS_CHECK_EQ(matches, 1);
+            if (matches != 1) return false;
+            JASS_CHECK(selected->is_quiet());
+            JASS_CHECK(!selected->promotes);
+            if (!selected->is_quiet() || selected->promotes) return false;
+            position = position.after(*selected);
+        }
+        return true;
+    };
+
+    const Square route_a[4][2] = {{42, 37}, {9, 13}, {50, 45}, {1, 6}};
+    const Square route_b[4][2] = {{50, 45}, {1, 6}, {42, 37}, {9, 13}};
+    Position a = parse("W:W42,K50:B9,K1");
+    Position b = parse("W:W42,K50:B9,K1");
+    JASS_CHECK_EQ(a.halfmove_clock(), 0);
+    JASS_CHECK_EQ(b.halfmove_clock(), 0);
+    const bool a_complete = replay(a, route_a);
+    const bool b_complete = replay(b, route_b);
+    if (!a_complete || !b_complete) return;
+
+    const Position expected = parse("W:W37,K45:B13,K6");
+    JASS_CHECK(a == expected);
+    JASS_CHECK(b == expected);
+    JASS_CHECK(a == b);
+    JASS_CHECK_EQ(a.hash(), b.hash());
+    JASS_CHECK_EQ(a.halfmove_clock(), 2);
+    JASS_CHECK_EQ(b.halfmove_clock(), 0);
+    JASS_CHECK(a.halfmove_clock() != b.halfmove_clock());
+}
+
 // -----------------------------------------------------------------------------
 // Perft
 // -----------------------------------------------------------------------------
@@ -278,6 +323,7 @@ void run_movegen_tests() {
     test_king_capture_multiple_landings();
     test_king_equivalent_capture_paths_are_deduplicated();
     test_after_clears_captures_and_flips_stm();
+    test_composed_halfmove_clock_hash_alias();
     test_reach_all_dirs_matches_canonical();
     test_perft_start();
 }
